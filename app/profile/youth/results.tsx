@@ -13,7 +13,7 @@ import {LinearGradient} from "expo-linear-gradient";
 const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
-export default function ParentResults() {
+export default function YouthResults() {
     const router = useRouter();
 
     return (
@@ -29,7 +29,7 @@ export default function ParentResults() {
                     alignItems: IS_DESKTOP ? "center" : "stretch"
                 }}
             >
-                {/* ✅ ОБЁРТКА ШИРИНЫ */}
+                {/* ✅ ОБЁРТКА */}
                 <View style={{width: IS_DESKTOP ? "50%" : "100%"}}>
 
                     {/* TITLE */}
@@ -47,11 +47,11 @@ export default function ParentResults() {
                                 textAlign: "center",
                             }}
                         >
-                            Результаты тестирования
+                            Твои результаты
                         </Text>
                     </MotiView>
 
-                    {/* STAR */}
+                    {/* EMOJI */}
                     <MotiView
                         from={{opacity: 0, scale: 0.7}}
                         animate={{opacity: 1, scale: 1}}
@@ -62,7 +62,7 @@ export default function ParentResults() {
                             marginBottom: 30,
                         }}
                     >
-                        <Text style={{fontSize: 64}}>⭐</Text>
+                        <Text style={{fontSize: 64}}>🔥</Text>
                     </MotiView>
 
                     {/* TYPE CARD */}
@@ -75,7 +75,6 @@ export default function ParentResults() {
                             borderRadius: 24,
                             padding: 24,
                             marginBottom: 26,
-                            elevation: 8,
                             shadowColor: "#000",
                             shadowOpacity: 0.1,
                             shadowRadius: 10,
@@ -90,7 +89,7 @@ export default function ParentResults() {
                                 color: "#2E2C79",
                             }}
                         >
-                            Тип личности: Исследователь
+                            Тип: Техно-энтузиаст
                         </Text>
 
                         <Text
@@ -101,8 +100,8 @@ export default function ParentResults() {
                                 lineHeight: 20,
                             }}
                         >
-                            Ребёнок любознательный, любит разбираться в устройстве вещей,
-                            задаёт много вопросов и тянется к логике и экспериментам.
+                            Тебе нравится разбираться в технологиях, ты любишь пробовать новое,
+                            экспериментировать и работать с техникой и логикой.
                         </Text>
                     </MotiView>
 
@@ -126,7 +125,7 @@ export default function ParentResults() {
                                 height: 140,
                             }}
                         >
-                            {[60, 90, 45, 70].map((h, i) => (
+                            {[85, 70, 55, 90].map((h, i) => (
                                 <View
                                     key={i}
                                     style={{
@@ -149,7 +148,7 @@ export default function ParentResults() {
                             <Text style={{fontSize: 13}}>Логика</Text>
                             <Text style={{fontSize: 13}}>Креатив</Text>
                             <Text style={{fontSize: 13}}>Коммуник.</Text>
-                            <Text style={{fontSize: 13}}>Настойчив.</Text>
+                            <Text style={{fontSize: 13}}>Упорство</Text>
                         </View>
                     </MotiView>
 
@@ -166,13 +165,13 @@ export default function ParentResults() {
                         }}
                     >
                         <Text style={{fontSize: 16, marginBottom: 10}}>
-                            📌 Креативность — <Text style={{fontWeight: "700"}}>90%</Text>
+                            ⚡ Техника — <Text style={{fontWeight: "700"}}>88%</Text>
                         </Text>
                         <Text style={{fontSize: 16, marginBottom: 10}}>
-                            📌 Аналитика — <Text style={{fontWeight: "700"}}>65%</Text>
+                            🎨 Креатив — <Text style={{fontWeight: "700"}}>70%</Text>
                         </Text>
                         <Text style={{fontSize: 16}}>
-                            📌 Общение — <Text style={{fontWeight: "700"}}>72%</Text>
+                            💬 Общение — <Text style={{fontWeight: "700"}}>62%</Text>
                         </Text>
                     </MotiView>
 
@@ -186,8 +185,8 @@ export default function ParentResults() {
                         }}
                     >
                         <Text style={{fontSize: 15, lineHeight: 20}}>
-                            Рекомендуем обратить внимание на направления:
-                            робототехника, программирование, математика и естественные науки.
+                            Тебе отлично подойдут направления:
+                            программирование, UI/UX, робототехника и геймдизайн.
                         </Text>
                     </View>
 
@@ -208,7 +207,7 @@ export default function ParentResults() {
                                 fontWeight: "700",
                             }}
                         >
-                            Продолжить
+                            Перейти к курсам
                         </Text>
                     </TouchableOpacity>
 

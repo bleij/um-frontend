@@ -1,33 +1,10 @@
 import {Stack} from "expo-router";
 import {ThemeProvider, DarkTheme, DefaultTheme} from "@react-navigation/native";
 import {useColorScheme} from "react-native";
-
-import * as SplashScreen from "expo-splash-screen";
-import {useEffect} from "react";
-import {useFonts, ProstoOne_400Regular} from "@expo-google-fonts/prosto-one";
-
 import "../global.css";
-
-SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
     const colorScheme = useColorScheme();
-
-    // загружаем шрифт
-    const [fontsLoaded] = useFonts({
-        ProstoOne_400Regular,
-    });
-
-    // скрываем splash после загрузки
-    useEffect(() => {
-        if (fontsLoaded) {
-            SplashScreen.hideAsync();
-        }
-    }, [fontsLoaded]);
-
-    if (!fontsLoaded) {
-        return null;
-    }
 
     return (
         <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
@@ -37,17 +14,22 @@ export default function RootLayout() {
                     animation: "fade",
                 }}
             >
-                {/* AUTH + INTRO */}
+                {/* AUTH + INTRO (показываются первыми) */}
                 <Stack.Screen name="(auth)"/>
 
-                {/* ROLE + ONBOARDING */}
+                {/* ROLE + ONBOARDING (идут после авторизации) */}
                 <Stack.Screen name="onboarding"/>
 
-                {/* MAIN TABS */}
+                {/* MAIN TABS (доступно только после входа) */}
                 <Stack.Screen name="(tabs)"/>
 
-                {/* MODAL (если понадобится) */}
+                {/* если вдруг понадобится модальное окно */}
                 <Stack.Screen name="modal" options={{presentation: "modal"}}/>
+
+                <Stack.Screen
+                    name="modal/course"
+                    options={{presentation: "modal"}}
+                />
             </Stack>
         </ThemeProvider>
     );

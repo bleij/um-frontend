@@ -5,15 +5,19 @@ import {
     ScrollView,
     Image,
     Platform,
+    Dimensions,
 } from "react-native";
 import {useRouter} from "expo-router";
 import {MotiView} from "moti";
 import {LinearGradient} from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import {Feather} from "@expo/vector-icons";
+
+const {width} = Dimensions.get("window");
+const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 export default function RoleSelect() {
     const router = useRouter();
-    const isWeb = Platform.OS === "web";
 
     const handleSelect = async (role: string, route: string) => {
         await AsyncStorage.setItem("user_role", role);
@@ -21,139 +25,154 @@ export default function RoleSelect() {
     };
 
     const roles = [
-        {label: "родитель", role: "parent", route: "/profile/parent/create-profile"},
-        {label: "молодёжь", role: "youth", route: "/profile/youth/create-profile"},
-        {label: "ментор", role: "mentor", route: "/profile/mentor/create-profile"},
-        {label: "организация", role: "org", route: "/profile/org/create-profile"},
+        {
+            label: "Родитель",
+            role: "parent",
+            route: "/profile/parent/create-profile",
+            icon: "user",
+        },
+        {
+            label: "Молодёжь",
+            role: "youth",
+            route: "/profile/youth/create-profile",
+            icon: "zap",
+        },
+        {
+            label: "Ментор",
+            role: "mentor",
+            route: "/profile/mentor/create-profile",
+            icon: "briefcase",
+        },
+        {
+            label: "Организация",
+            role: "org",
+            route: "/profile/organization/create-profile",
+            icon: "layers",
+        },
     ];
 
     return (
-        <ScrollView
-            style={{
-                flex: 1,
-                backgroundColor: "#FFFFFF",
-            }}
-            contentContainerStyle={{
-                flexGrow: 1,
-                paddingBottom: 0,
-            }}
+        <LinearGradient
+            colors={["#3F3C9F", "#EDEBFF"]}
+            style={{flex: 1}}
         >
-            <View
-                style={{
-                    maxWidth: isWeb ? 680 : "100%",
-                    width: "100%",
-                    alignSelf: "center",
-                    backgroundColor: isWeb ? "#FFFFFF" : "transparent",
-                    borderRadius: isWeb ? 32 : 0,
-                    overflow: "hidden",
-
-                    shadowColor: isWeb ? "#000" : undefined,
-                    shadowOpacity: isWeb ? 0.07 : 0,
-                    shadowRadius: isWeb ? 18 : 0,
-                    shadowOffset: isWeb ? {width: 0, height: 6} : undefined,
+            <ScrollView
+                contentContainerStyle={{
+                    flexGrow: 1,
+                    paddingBottom: 40,
+                    alignItems: "center",
                 }}
             >
-
-                {/* TOP WHITE SECTION */}
                 <View
                     style={{
-                        backgroundColor: "#FFFFFF",
+                        width: IS_DESKTOP ? "50%" : "100%",
+                        paddingHorizontal: 24,
+                        paddingTop: 50,
                         alignItems: "center",
-                        paddingTop: 40,
-                        paddingBottom: 28,
                     }}
                 >
+                    {/* LOGO */}
                     <MotiView
-                        from={{opacity: 0, scale: 0.7, translateY: -20}}
-                        animate={{opacity: 1, scale: 1, translateY: 0}}
-                        transition={{duration: 450}}
+                        from={{opacity: 0, translateY: -12}}
+                        animate={{opacity: 1, translateY: 0}}
+                        transition={{duration: 400}}
+                        style={{marginBottom: 28}}
                     >
                         <Image
-                            source={require("../../assets/logo/logo_blue.png")}
-                            style={{
-                                width: 140,
-                                height: 140,
-                                resizeMode: "contain",
-                            }}
+                            source={require("../../assets/logo/logo_white.png")}
+                            style={{width: 140, height: 60, resizeMode: "contain"}}
                         />
                     </MotiView>
-                </View>
-
-                {/* GRADIENT SECTION */}
-                <LinearGradient
-                    colors={["#3F3C9F", "#F9F9F9"]}
-                    start={{x: 0, y: 0}}
-                    end={{x: 0, y: 1}}
-                    style={{
-                        borderTopLeftRadius: 60,
-                        borderTopRightRadius: 60,
-                        paddingTop: 40,
-                        paddingBottom: 80,
-                        alignItems: "center",
-                        paddingHorizontal: isWeb ? 80 : 32,
-                        width: "100%",
-                    }}
-                >
 
                     {/* TITLE */}
                     <MotiView
-                        from={{opacity: 0, translateY: -10}}
-                        animate={{opacity: 1, translateY: 0}}
+                        from={{opacity: 0}}
+                        animate={{opacity: 1}}
                         transition={{duration: 450}}
+                        style={{marginBottom: 36}}
                     >
                         <Text
                             style={{
                                 color: "white",
-                                fontSize: 28,
+                                fontSize: 24,
                                 fontWeight: "700",
                                 textAlign: "center",
-                                marginBottom: 40,
-                                lineHeight: 32,
+                                lineHeight: 30,
                             }}
                         >
-                            Выберите свою{"\n"}роль
+                            Выберите свою роль
                         </Text>
                     </MotiView>
 
-                    {/* ROLE BUTTONS */}
-                    {roles.map((item, idx) => (
-                        <MotiView
-                            key={idx}
-                            from={{opacity: 0, translateY: 20}}
-                            animate={{opacity: 1, translateY: 0}}
-                            transition={{duration: 350, delay: 150 + idx * 80}}
-                            style={{
-                                width: "100%",
-                                marginBottom: 20,
-                            }}
-                        >
-                            <TouchableOpacity
-                                onPress={() => handleSelect(item.role, item.route)}
+                    {/* GRID 2x2 */}
+                    <View
+                        style={{
+                            width: "100%",
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        {roles.map((item, idx) => (
+                            <MotiView
+                                key={idx}
+                                from={{opacity: 0, translateY: 20}}
+                                animate={{opacity: 1, translateY: 0}}
+                                transition={{
+                                    duration: 350,
+                                    delay: 120 + idx * 80,
+                                }}
                                 style={{
-                                    width: "100%",
-                                    paddingVertical: 16,
-                                    borderRadius: 30,
-                                    backgroundColor: "rgba(45,45,45,0.15)",
-                                    borderWidth: 2,
-                                    borderColor: "#2E2C79",
+                                    width: "48%",
+                                    marginBottom: 20,
                                 }}
                             >
-                                <Text
+                                <TouchableOpacity
+                                    onPress={() =>
+                                        handleSelect(item.role, item.route)
+                                    }
                                     style={{
-                                        textAlign: "center",
-                                        fontSize: 18,
-                                        fontWeight: "600",
-                                        color: "white",
+                                        backgroundColor: "rgba(255,255,255,0.14)",
+                                        borderRadius: 26,
+                                        paddingVertical: 22,
+                                        alignItems: "center",
+                                        borderWidth: 2,
+                                        borderColor: "rgba(255,255,255,0.35)",
                                     }}
                                 >
-                                    {item.label}
-                                </Text>
-                            </TouchableOpacity>
-                        </MotiView>
-                    ))}
+                                    <View
+                                        style={{
+                                            width: 58,
+                                            height: 58,
+                                            borderRadius: 29,
+                                            backgroundColor: "rgba(255,255,255,0.25)",
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                            marginBottom: 10,
+                                        }}
+                                    >
+                                        <Feather
+                                            name={item.icon as any}
+                                            size={26}
+                                            color="white"
+                                        />
+                                    </View>
 
-                </LinearGradient>
-            </View>
-        </ScrollView>
+                                    <Text
+                                        style={{
+                                            color: "white",
+                                            fontSize: 16,
+                                            fontWeight: "600",
+                                        }}
+                                    >
+                                        {item.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            </MotiView>
+                        ))}
+                    </View>
+                </View>
+            </ScrollView>
+        </LinearGradient>
     );
 }

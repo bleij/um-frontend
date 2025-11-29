@@ -3,248 +3,400 @@ import {
     Text,
     ScrollView,
     TouchableOpacity,
-    Image
+    Image,
+    Platform,
+    Dimensions,
 } from "react-native";
 import {useEffect, useState} from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {MotiView} from "moti";
+import {Ionicons} from "@expo/vector-icons";
+import {LinearGradient} from "expo-linear-gradient";
+import {useRouter} from "expo-router";
+
+const {width} = Dimensions.get("window");
+const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 export default function ProfileScreen() {
     const [role, setRole] = useState<string | null>(null);
+    const router = useRouter();
 
     useEffect(() => {
-        AsyncStorage.getItem("user_role").then((v) => setRole(v));
+        AsyncStorage.getItem("user_role").then(setRole);
     }, []);
 
-    const name = "Халилова Сабина"; // временно
+    const name = "Халилова Сабина";
     const phone = "87777777777";
     const email = "sab@bk.ru";
 
     return (
-        <ScrollView
-            style={{flex: 1, backgroundColor: "#FFFFFF"}}
-            contentContainerStyle={{padding: 24, paddingBottom: 120}}
-        >
-            {/* HEADER */}
-            <View style={{flexDirection: "row", justifyContent: "flex-end", marginBottom: 10}}>
-                <View
-                    style={{
-                        borderWidth: 1,
-                        borderColor: "#000",
-                        paddingVertical: 4,
-                        paddingHorizontal: 12,
-                        borderRadius: 10,
-                        marginRight: 12,
-                    }}
-                >
-                    <Text>RU</Text>
+        <LinearGradient colors={["#F4F5FF", "#FFFFFF"]} style={{flex: 1}}>
+            <ScrollView contentContainerStyle={{paddingBottom: 140}}>
+                {/* LOGO */}
+                <View style={{alignItems: "center", paddingTop: 40, marginBottom: 20}}>
+                    <Image
+                        source={require("../../../assets/logo/logo_blue.png")}
+                        style={{width: 140, height: 60, resizeMode: "contain"}}
+                    />
                 </View>
 
+                {/* WRAPPER */}
                 <View
                     style={{
-                        borderWidth: 1,
-                        borderColor: "#000",
-                        padding: 8,
-                        borderRadius: 10,
+                        width: IS_DESKTOP ? "50%" : "100%",
+                        alignSelf: "center",
+                        paddingHorizontal: 20,
                     }}
                 >
-                    <Text>⚙️</Text>
-                </View>
-            </View>
-
-            {/* AVATAR + NAME */}
-            <View style={{flexDirection: "row", alignItems: "center", marginBottom: 30}}>
-                <View
-                    style={{
-                        width: 110,
-                        height: 110,
-                        borderRadius: 999,
-                        backgroundColor: "#2E2C79",
-                        marginRight: 18,
-                    }}
-                />
-
-                <View style={{flex: 1}}>
-                    <Text style={{fontSize: 20, fontWeight: "600"}}>{name}</Text>
-                    <Text style={{marginTop: 4}}>телефон: {phone}</Text>
-                    <Text>email: {email}</Text>
-                </View>
-
-                <TouchableOpacity>
-                    <Text style={{fontSize: 20}}>📋</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* ROLE-BASED SECTIONS */}
-            {role === "parent" && <ParentChildrenBlock/>}
-            {role === "mentor" && <MentorBlock/>}
-            {role === "youth" && <YouthBlock/>}
-            {role === "org" && <OrgBlock/>}
-
-            {/* SUBSCRIPTION */}
-            <View style={{marginTop: 40}}>
-                <Text style={{textAlign: "center", fontSize: 20, fontWeight: "700", marginBottom: 18}}>
-                    Тариф
-                </Text>
-
-                <View
-                    style={{
-                        borderRadius: 25,
-                        borderWidth: 2,
-                        borderColor: "#2E2C79",
-                        padding: 22,
-                        backgroundColor: "#F4F1FF",
-                    }}
-                >
-                    <Text style={{fontSize: 20, textAlign: "center", marginBottom: 20}}>
-                        Premium
-                    </Text>
-
-                    <TouchableOpacity
+                    {/* HEADER */}
+                    <View
                         style={{
-                            backgroundColor: "black",
-                            paddingVertical: 12,
-                            borderRadius: 16,
-                            alignSelf: "center",
-                            paddingHorizontal: 26,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            marginBottom: 28,
                         }}
                     >
-                        <Text style={{color: "white", fontWeight: "500"}}>
-                            управлять подпиской
+                        <View
+                            style={{
+                                width: 90,
+                                height: 90,
+                                borderRadius: 999,
+                                backgroundColor: "#3F3C9F",
+                                marginRight: 18,
+                                justifyContent: "center",
+                                alignItems: "center",
+                            }}
+                        >
+                            <Ionicons name="person" size={44} color="white"/>
+                        </View>
+
+                        <View style={{flex: 1}}>
+                            <Text style={{fontSize: 20, fontWeight: "700"}}>{name}</Text>
+                            <Text style={{marginTop: 4, opacity: 0.7}}>
+                                {phone}
+                            </Text>
+                            <Text style={{opacity: 0.7}}>{email}</Text>
+                        </View>
+
+                        <TouchableOpacity>
+                            <Ionicons name="settings-outline" size={24} color="#3F3C9F"/>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* ROLE CONTENT */}
+                    {role === "parent" && <ParentBlock/>}
+                    {role === "mentor" && <MentorBlock/>}
+                    {role === "youth" && <YouthBlock/>}
+                    {role === "org" && <OrgBlock/>}
+
+                    {/* SUBSCRIPTION */}
+                    <View style={{marginTop: 40}}>
+                        <Text
+                            style={{
+                                fontSize: 22,
+                                fontWeight: "700",
+                                marginBottom: 16,
+                            }}
+                        >
+                            Подписка
                         </Text>
-                    </TouchableOpacity>
+
+                        <View
+                            style={{
+                                backgroundColor: "#EEF0FF",
+                                borderRadius: 24,
+                                padding: 24,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    fontSize: 20,
+                                    textAlign: "center",
+                                    marginBottom: 18,
+                                    fontWeight: "700",
+                                }}
+                            >
+                                Premium
+                            </Text>
+
+                            <TouchableOpacity
+                                onPress={() => router.push("profile/common/subscribe")}
+                                style={{
+                                    backgroundColor: "#3F3C9F",
+                                    paddingVertical: 14,
+                                    borderRadius: 20,
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        color: "white",
+                                        textAlign: "center",
+                                        fontWeight: "600",
+                                    }}
+                                >
+                                    Управлять подпиской
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
                 </View>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </LinearGradient>
     );
 }
 
-/* ----------------------  ROLE BLOCKS ---------------------- */
+/* ---------------- PARENT ---------------- */
 
-function ParentChildrenBlock() {
+function ParentBlock() {
+    const [activeChild, setActiveChild] = useState<null | { name: string; age: string }>(null);
+
     return (
         <View>
-            <Text style={{fontSize: 26, fontWeight: "700", marginBottom: 16}}>
+            <Text style={{fontSize: 24, fontWeight: "700", marginBottom: 16}}>
                 Мои дети
             </Text>
 
-            {/* Child 1 */}
-            <ChildCard name="Алия" age="8"/>
-            <ChildCard name="Асия" age="13"/>
+            <ChildCard
+                name="Алия"
+                age="8"
+                onPress={() => setActiveChild({name: "Алия", age: "8"})}
+            />
+            <ChildCard
+                name="Асия"
+                age="13"
+                onPress={() => setActiveChild({name: "Асия", age: "13"})}
+            />
 
-            {/* Add new child */}
             <TouchableOpacity
                 style={{
                     marginTop: 10,
-                    width: 42,
-                    height: 42,
+                    width: 46,
+                    height: 46,
                     borderRadius: 999,
-                    borderWidth: 2,
-                    borderColor: "#2E2C79",
+                    backgroundColor: "#3F3C9F",
                     justifyContent: "center",
                     alignItems: "center",
                 }}
             >
-                <Text style={{fontSize: 26, color: "#2E2C79"}}>+</Text>
+                <Ionicons name="add" size={24} color="white"/>
+            </TouchableOpacity>
+
+            {/* ✅ МОДАЛКА */}
+            {activeChild && (
+                <View
+                    style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: "rgba(0,0,0,0.4)",
+                        justifyContent: "center",
+                        alignItems: "center",
+                    }}
+                >
+                    <View
+                        style={{
+                            width: "85%",
+                            backgroundColor: "white",
+                            borderRadius: 24,
+                            padding: 24,
+                        }}
+                    >
+                        <Text style={{fontSize: 22, fontWeight: "700", marginBottom: 12}}>
+                            {activeChild.name}
+                        </Text>
+
+                        <Text style={{fontSize: 16, marginBottom: 20}}>
+                            Возраст: {activeChild.age} лет
+                        </Text>
+
+                        <TouchableOpacity
+                            style={{
+                                backgroundColor: "#3F3C9F",
+                                paddingVertical: 12,
+                                borderRadius: 14,
+                                marginBottom: 12,
+                            }}
+                        >
+                            <Text style={{color: "white", textAlign: "center"}}>
+                                Смотреть прогресс
+                            </Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => setActiveChild(null)}
+                            style={{
+                                paddingVertical: 12,
+                                borderRadius: 14,
+                                borderWidth: 1,
+                                borderColor: "#3F3C9F",
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: "#3F3C9F",
+                                    textAlign: "center",
+                                }}
+                            >
+                                Закрыть
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
+        </View>
+    );
+}
+
+function ChildCard({name, age, onPress}) {
+    return (
+        <TouchableOpacity
+            onPress={onPress}
+            style={{
+                backgroundColor: "#EEF0FF",
+                borderRadius: 22,
+                padding: 20,
+                marginBottom: 16,
+            }}
+        >
+            <View
+                style={{
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                }}
+            >
+                <Text style={{fontSize: 16, fontWeight: "600"}}>
+                    {name}, {age} лет
+                </Text>
+                <Ionicons name="chevron-forward" size={20} color="#3F3C9F"/>
+            </View>
+        </TouchableOpacity>
+    );
+}
+
+/* ---------------- MENTOR ---------------- */
+
+function MentorBlock() {
+    const router = useRouter();
+
+    return (
+        <View style={{marginBottom: 30}}>
+            <Text style={{fontSize: 24, fontWeight: "700", marginBottom: 16}}>
+                Мои ученики
+            </Text>
+
+            <View
+                style={{
+                    backgroundColor: "#EEF0FF",
+                    borderRadius: 22,
+                    padding: 20,
+                    marginBottom: 16,
+                }}
+            >
+                <Text style={{fontSize: 16, marginBottom: 6}}>
+                    Активных учеников: <Text style={{fontWeight: "700"}}>5</Text>
+                </Text>
+                <Text style={{fontSize: 16}}>
+                    Проверено заданий: <Text style={{fontWeight: "700"}}>32</Text>
+                </Text>
+            </View>
+
+            <TouchableOpacity
+                onPress={() => router.push("(tabs)/analytics")}
+                style={{
+                    backgroundColor: "#3F3C9F",
+                    paddingVertical: 14,
+                    borderRadius: 20,
+                }}
+            >
+                <Text style={{color: "white", textAlign: "center", fontWeight: "600"}}>
+                    Перейти в аналитику
+                </Text>
             </TouchableOpacity>
         </View>
     );
 }
 
-function ChildCard({name, age}) {
-    return (
-        <View
-            style={{
-                backgroundColor: "#2E2C79",
-                borderRadius: 20,
-                padding: 18,
-                marginBottom: 20,
-                height: 240,
-                justifyContent: "flex-end",
-            }}
-        >
-            <View
-                style={{
-                    backgroundColor: "white",
-                    padding: 14,
-                    borderRadius: 16,
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                }}
-            >
-                <Text style={{fontSize: 16, fontWeight: "600"}}>
-                    {name}{"\n"}{age} лет
-                </Text>
-                <Text style={{fontSize: 20}}>→</Text>
-            </View>
-        </View>
-    );
-}
-
-function MentorBlock() {
-    return (
-        <View style={{marginBottom: 20}}>
-            <Text style={{fontSize: 26, fontWeight: "700", marginBottom: 16}}>
-                Статус
-            </Text>
-
-            <View
-                style={{
-                    backgroundColor: "#E5E4F6",
-                    borderRadius: 20,
-                    padding: 18,
-                }}
-            >
-                <Text style={{fontSize: 16}}>
-                    Вы — ментор платформы.
-                    Скоро здесь появится аналитика по вашим ученикам.
-                </Text>
-            </View>
-        </View>
-    );
-}
+/* ---------------- YOUTH ---------------- */
 
 function YouthBlock() {
+    const router = useRouter();
+
     return (
-        <View style={{marginBottom: 20}}>
-            <Text style={{fontSize: 26, fontWeight: "700", marginBottom: 16}}>
+        <View style={{marginBottom: 30}}>
+            <Text style={{fontSize: 24, fontWeight: "700", marginBottom: 16}}>
                 Мой прогресс
             </Text>
 
             <View
                 style={{
-                    backgroundColor: "#EAE8FB",
-                    borderRadius: 20,
-                    padding: 18,
+                    backgroundColor: "#EEF0FF",
+                    borderRadius: 22,
+                    padding: 24,
+                    marginBottom: 16,
                 }}
             >
-                <Text style={{fontSize: 16}}>
-                    Здесь будет отображаться прогресс обучения и достижения.
+                <Text style={{fontSize: 16}}>Пройдено курсов: 3</Text>
+                <Text style={{fontSize: 16, marginTop: 6}}>
+                    Активный курс: Программирование
+                </Text>
+                <Text style={{fontSize: 16, marginTop: 6}}>
+                    Достижений: 7
                 </Text>
             </View>
+
+            <TouchableOpacity
+                onPress={() => router.push("(tabs)/analytics")}
+                style={{
+                    backgroundColor: "#3F3C9F",
+                    paddingVertical: 14,
+                    borderRadius: 20,
+                }}
+            >
+                <Text style={{color: "white", textAlign: "center", fontWeight: "600"}}>
+                    Смотреть достижения
+                </Text>
+            </TouchableOpacity>
         </View>
     );
 }
 
+/* ---------------- ORGANIZATION ---------------- */
+
 function OrgBlock() {
+    const router = useRouter();
+
     return (
-        <View style={{marginBottom: 20}}>
-            <Text style={{fontSize: 26, fontWeight: "700", marginBottom: 16}}>
+        <View style={{marginBottom: 30}}>
+            <Text style={{fontSize: 24, fontWeight: "700", marginBottom: 16}}>
                 Организация
             </Text>
 
             <View
                 style={{
-                    backgroundColor: "#EFEFFF",
-                    borderRadius: 20,
-                    padding: 18,
+                    backgroundColor: "#EEF0FF",
+                    borderRadius: 22,
+                    padding: 24,
+                    marginBottom: 16,
                 }}
             >
-                <Text style={{fontSize: 16}}>
-                    Раздел для организаций: команда, ученики, отчётность.
-                </Text>
+                <Text style={{fontSize: 16}}>Преподавателей: 12</Text>
+                <Text style={{fontSize: 16, marginTop: 6}}>Учеников: 248</Text>
+                <Text style={{fontSize: 16, marginTop: 6}}>Групп: 18</Text>
             </View>
+
+            <TouchableOpacity
+                onPress={() => router.push("(tabs)/analytics")}
+                style={{
+                    backgroundColor: "#3F3C9F",
+                    paddingVertical: 14,
+                    borderRadius: 20,
+                }}
+            >
+                <Text style={{color: "white", textAlign: "center", fontWeight: "600"}}>
+                    Панель управления
+                </Text>
+            </TouchableOpacity>
         </View>
     );
 }

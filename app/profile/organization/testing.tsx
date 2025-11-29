@@ -15,50 +15,69 @@ const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 /* ------------------- */
-/* ВОПРОСЫ ДЛЯ РОДИТЕЛЯ */
+/* ВОПРОСЫ ДЛЯ КРУЖКОВ */
 /* ------------------- */
 
-const PARENT_QUESTIONS = [
+const ORG_QUESTIONS = [
     {
         id: 1,
-        question: "Сколько лет вашему ребёнку?",
-        answers: ["6–8 лет", "9–11 лет", "12–14 лет", "15–17 лет"],
+        question: "Какого типа у вас организация?",
+        answers: [
+            "Образовательный центр",
+            "Частная школа",
+            "Кружок/студия",
+            "Онлайн-платформа",
+        ],
     },
     {
         id: 2,
-        question: "Что ему интересно больше всего?",
-        answers: ["Технологии", "Творчество", "Спорт", "Точные науки"],
+        question: "Основное направление занятий:",
+        answers: [
+            "IT и технологии",
+            "Творчество",
+            "Спорт",
+            "Точные науки",
+        ],
     },
     {
         id: 3,
-        question: "Какой формат обучения вам подходит?",
-        answers: ["Онлайн", "Офлайн", "Смешанный"],
+        question: "С каким возрастом вы работаете?",
+        answers: [
+            "6–9 лет",
+            "10–13 лет",
+            "14–17 лет",
+            "Все возраста",
+        ],
     },
     {
         id: 4,
-        question: "Какая цель обучения для вас важнее?",
+        question: "Какой формат занятий у вас основной?",
         answers: [
-            "Подготовка к экзаменам",
-            "Развитие мышления",
-            "Профориентация",
-            "Общее развитие",
+            "Офлайн",
+            "Онлайн",
+            "Смешанный",
         ],
     },
     {
         id: 5,
-        question: "Сколько времени в неделю ребёнок готов учиться дополнительно?",
-        answers: ["1–2 раза", "3–4 раза", "Каждый день"],
+        question: "Какая главная цель для вашей организации?",
+        answers: [
+            "Масштабирование",
+            "Привлечение учеников",
+            "Автоматизация процессов",
+            "Повышение качества обучения",
+        ],
     },
 ];
 
-export default function ParentTesting() {
+export default function OrgTesting() {
     const router = useRouter();
 
     const [step, setStep] = useState(0);
     const [answers, setAnswers] = useState<number[]>([]);
 
-    const current = PARENT_QUESTIONS[step];
-    const progress = ((step + 1) / PARENT_QUESTIONS.length) * 100;
+    const current = ORG_QUESTIONS[step];
+    const progress = ((step + 1) / ORG_QUESTIONS.length) * 100;
 
     const selectAnswer = (index: number) => {
         const updated = [...answers];
@@ -67,16 +86,16 @@ export default function ParentTesting() {
     };
 
     const next = () => {
-        if (step < PARENT_QUESTIONS.length - 1) {
+        if (step < ORG_QUESTIONS.length - 1) {
             setStep(step + 1);
         } else {
-            router.push("/profile/parent/results");
+            router.push("/profile/organization/results");
         }
     };
 
     return (
         <LinearGradient
-            colors={["#6A63D8", "#C7C4F2"]}
+            colors={["#3F3C9F", "#C7C4F2"]}
             start={{x: 0, y: 0}}
             end={{x: 0, y: 1}}
             style={{flex: 1}}
@@ -90,11 +109,8 @@ export default function ParentTesting() {
                 }}
             >
                 {/* ✅ ОБЁРТКА ШИРИНЫ */}
-                <View
-                    style={{
-                        width: IS_DESKTOP ? "50%" : "100%",
-                    }}
-                >
+                <View style={{width: IS_DESKTOP ? "50%" : "100%"}}>
+
                     {/* TITLE */}
                     <MotiView
                         from={{opacity: 0, translateY: -10}}
@@ -109,7 +125,7 @@ export default function ParentTesting() {
                                 marginBottom: 16,
                             }}
                         >
-                            Тестирование
+                            Тестирование организации
                         </Text>
                     </MotiView>
 
@@ -156,7 +172,7 @@ export default function ParentTesting() {
                                 marginBottom: 10,
                             }}
                         >
-                            Вопрос {step + 1} из {PARENT_QUESTIONS.length}
+                            Вопрос {step + 1} из {ORG_QUESTIONS.length}
                         </Text>
 
                         <Text
@@ -218,11 +234,12 @@ export default function ParentTesting() {
                                 fontWeight: "600",
                             }}
                         >
-                            {step === PARENT_QUESTIONS.length - 1
+                            {step === ORG_QUESTIONS.length - 1
                                 ? "Завершить"
                                 : "Следующий вопрос"}
                         </Text>
                     </TouchableOpacity>
+
                 </View>
             </ScrollView>
         </LinearGradient>

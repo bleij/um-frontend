@@ -15,50 +15,50 @@ const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 /* ------------------- */
-/* ВОПРОСЫ ДЛЯ РОДИТЕЛЯ */
+/* ВОПРОСЫ ДЛЯ МОЛОДЁЖИ */
 /* ------------------- */
 
-const PARENT_QUESTIONS = [
+const YOUTH_QUESTIONS = [
     {
         id: 1,
-        question: "Сколько лет вашему ребёнку?",
-        answers: ["6–8 лет", "9–11 лет", "12–14 лет", "15–17 лет"],
+        question: "Сколько тебе лет?",
+        answers: ["12–14", "15–17", "18–21", "22–25"],
     },
     {
         id: 2,
-        question: "Что ему интересно больше всего?",
-        answers: ["Технологии", "Творчество", "Спорт", "Точные науки"],
+        question: "Что тебе сейчас интереснее всего?",
+        answers: ["Программирование", "Дизайн", "Бизнес", "Игры"],
     },
     {
         id: 3,
-        question: "Какой формат обучения вам подходит?",
-        answers: ["Онлайн", "Офлайн", "Смешанный"],
+        question: "Как ты хочешь учиться?",
+        answers: ["Самостоятельно", "С наставником", "В группе"],
     },
     {
         id: 4,
-        question: "Какая цель обучения для вас важнее?",
+        question: "Какая цель у тебя сейчас?",
         answers: [
-            "Подготовка к экзаменам",
-            "Развитие мышления",
-            "Профориентация",
-            "Общее развитие",
+            "Найти профессию",
+            "Зарабатывать",
+            "Развиваться",
+            "Просто пробовать новое",
         ],
     },
     {
         id: 5,
-        question: "Сколько времени в неделю ребёнок готов учиться дополнительно?",
-        answers: ["1–2 раза", "3–4 раза", "Каждый день"],
+        question: "Сколько времени в неделю готов уделять обучению?",
+        answers: ["1–3 часа", "4–6 часов", "Каждый день"],
     },
 ];
 
-export default function ParentTesting() {
+export default function YouthTesting() {
     const router = useRouter();
 
     const [step, setStep] = useState(0);
     const [answers, setAnswers] = useState<number[]>([]);
 
-    const current = PARENT_QUESTIONS[step];
-    const progress = ((step + 1) / PARENT_QUESTIONS.length) * 100;
+    const current = YOUTH_QUESTIONS[step];
+    const progress = ((step + 1) / YOUTH_QUESTIONS.length) * 100;
 
     const selectAnswer = (index: number) => {
         const updated = [...answers];
@@ -67,10 +67,10 @@ export default function ParentTesting() {
     };
 
     const next = () => {
-        if (step < PARENT_QUESTIONS.length - 1) {
+        if (step < YOUTH_QUESTIONS.length - 1) {
             setStep(step + 1);
         } else {
-            router.push("/profile/parent/results");
+            router.push("/profile/youth/results");
         }
     };
 
@@ -89,12 +89,7 @@ export default function ParentTesting() {
                     alignItems: IS_DESKTOP ? "center" : "stretch",
                 }}
             >
-                {/* ✅ ОБЁРТКА ШИРИНЫ */}
-                <View
-                    style={{
-                        width: IS_DESKTOP ? "50%" : "100%",
-                    }}
-                >
+                <View style={{width: IS_DESKTOP ? "50%" : "100%"}}>
                     {/* TITLE */}
                     <MotiView
                         from={{opacity: 0, translateY: -10}}
@@ -156,7 +151,7 @@ export default function ParentTesting() {
                                 marginBottom: 10,
                             }}
                         >
-                            Вопрос {step + 1} из {PARENT_QUESTIONS.length}
+                            Вопрос {step + 1} из {YOUTH_QUESTIONS.length}
                         </Text>
 
                         <Text
@@ -218,7 +213,7 @@ export default function ParentTesting() {
                                 fontWeight: "600",
                             }}
                         >
-                            {step === PARENT_QUESTIONS.length - 1
+                            {step === YOUTH_QUESTIONS.length - 1
                                 ? "Завершить"
                                 : "Следующий вопрос"}
                         </Text>

@@ -1,8 +1,11 @@
-import {View, TouchableOpacity, Platform} from "react-native";
+import {View, TouchableOpacity, Platform, Dimensions} from "react-native";
 import {useRouter, useSegments} from "expo-router";
 import {Ionicons, Feather, FontAwesome5, MaterialCommunityIcons} from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {useEffect, useState} from "react";
+
+const {width} = Dimensions.get("window");
+const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 export default function CustomTabBar() {
     const router = useRouter();
@@ -11,16 +14,14 @@ export default function CustomTabBar() {
 
     const [role, setRole] = useState<string | null>(null);
 
-    // читаем роль
     useEffect(() => {
-        AsyncStorage.getItem("user_role").then((v) => setRole(v));
+        AsyncStorage.getItem("user_role").then(setRole);
     }, []);
 
     if (!role) return null;
 
-    const go = (route) => router.replace(`/(${"tabs"})/${route}`);
+    const go = (route: string) => router.replace(`/(${"tabs"})/${route}`);
 
-    // базовые табы
     let tabs = [
         {
             key: "home",
@@ -28,7 +29,6 @@ export default function CustomTabBar() {
             icon: ({color, size}) => <Ionicons name="home-outline" size={size} color={color}/>,
         },
 
-        // каталог — доступен всем кроме ментора
         ...(role !== "mentor"
             ? [{
                 key: "catalog",
@@ -62,16 +62,23 @@ export default function CustomTabBar() {
         <View
             style={{
                 position: "absolute",
-                bottom: Platform.OS === "ios" ? 30 : 20,
-                left: 20,
-                right: 20,
-                height: 75,
-                borderRadius: 40,
+                bottom: Platform.OS === "ios" ? 30 : 16,
+
+                // ✅ одинаково правильно для mobile + web
+                alignSelf: "center",
+                width: IS_DESKTOP ? 480 : width - 32,
+
+                height: 72,
+                borderRadius: 36,
                 backgroundColor: "#DFDDF4",
                 flexDirection: "row",
-                justifyContent: "space-around",
+                justifyContent: "space-between",
                 alignItems: "center",
-                elevation: 10,
+                paddingHorizontal: 16,
+
+                shadowColor: "#000",
+                shadowOpacity: 0.08,
+                shadowRadius: 10,
             }}
         >
             {tabs.map((item) => {
@@ -84,15 +91,15 @@ export default function CustomTabBar() {
                         style={{
                             justifyContent: "center",
                             alignItems: "center",
-                            width: 60,
-                            height: 60,
-                            borderRadius: 30,
+                            width: 52,
+                            height: 52,
+                            borderRadius: 26,
                             backgroundColor: active ? "#3430B5" : "transparent",
                         }}
                     >
                         {item.icon({
                             color: active ? "white" : "#8E8AA8",
-                            size: 28,
+                            size: 24,
                         })}
                     </TouchableOpacity>
                 );

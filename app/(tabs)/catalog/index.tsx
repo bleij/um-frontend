@@ -5,177 +5,225 @@ import {
     TouchableOpacity,
     TextInput,
     Image,
-    Platform
+    Platform,
+    Dimensions,
 } from "react-native";
 import {MotiView} from "moti";
 import {LinearGradient} from "expo-linear-gradient";
+import {useMemo, useState} from "react";
+import {useRouter} from "expo-router";
+import {courses} from "../../../data/courses"; // ✅ ВАЖНО: ПРОВЕРЬ ПУТЬ
+
+const {width} = Dimensions.get("window");
+const IS_DESKTOP = Platform.OS === "web" && width >= 900;
+
+const categories = [
+    "все",
+    "гум",
+    "мат",
+    "естеств",
+    "спорт",
+    "it",
+    "творчество",
+];
 
 export default function CatalogScreen() {
-    const isWeb = Platform.OS === "web";
+    const [activeCategory, setActiveCategory] = useState("все");
+    const [search, setSearch] = useState("");
+    const router = useRouter();
 
-    const categories = ["все", "гум", "мат", "естеств", "спорт"];
+    // ✅ ЗАЩИТА ОТ undefined
+    const safeCourses = Array.isArray(courses) ? courses : [];
 
-    const items = [
-        {id: 1, title: "Робототехника", gradient: ["#5374ff", "#87e2ff"]},
-        {id: 2, title: "Критическое мышление", gradient: ["#7f5cff", "#c1a0ff"]},
-        {id: 3, title: "Робототехника", gradient: ["#ff6bc3", "#ffbb99"]},
-        {id: 4, title: "Критическое мышление", gradient: ["#4373ff", "#b0e1ff"]},
-        {id: 5, title: "Робототехника", gradient: ["#6b73ff", "#c2ffe7"]},
-        {id: 6, title: "Критическое мышление", gradient: ["#5f3dff", "#cda8ff"]},
-    ];
+    const filteredItems = useMemo(() => {
+        return safeCourses.filter((item) => {
+            const byCategory =
+                activeCategory === "все" || item.tag === activeCategory;
+
+            const bySearch = item.title
+                .toLowerCase()
+                .includes(search.toLowerCase());
+
+            return byCategory && bySearch;
+        });
+    }, [activeCategory, search, safeCourses]);
 
     return (
-        <ScrollView
-            style={{flex: 1, backgroundColor: "#FFFFFF"}}
-            contentContainerStyle={{paddingBottom: 120}}
-        >
-            {/* HEADER GRADIENT */}
-            <LinearGradient
-                colors={["#5A4FF3", "#A8B4FF"]}
-                style={{
-                    paddingTop: 70,
-                    paddingBottom: 40,
-                    paddingHorizontal: 20,
-                    borderBottomLeftRadius: 40,
-                    borderBottomRightRadius: 40,
-                }}
-            >
-                <Text
-                    style={{
-                        fontSize: 72,
-                        color: "white",
-                        alignSelf: "center",
-                        fontWeight: "800",
-                        marginBottom: 20,
-                    }}
-                >
-                    UM
-                </Text>
-
-                {/* SEARCH */}
+        <LinearGradient colors={["#3430B5", "#FFFDFD"]} style={{flex: 1}}>
+            <ScrollView contentContainerStyle={{paddingBottom: 120}}>
+                {/* HEADER */}
                 <View
                     style={{
-                        backgroundColor: "white",
-                        borderRadius: 30,
-                        flexDirection: "row",
-                        alignItems: "center",
+                        paddingTop: 60,
                         paddingHorizontal: 20,
-                        height: 48,
-                        marginBottom: 18,
+                        alignItems: "center",
                     }}
                 >
-                    <TextInput
-                        placeholder="Поиск"
-                        placeholderTextColor="#888"
+                    <Image
+                        source={require("../../../assets/logo/logo_white.png")}
                         style={{
-                            flex: 1,
-                            fontSize: 16,
+                            width: 140,
+                            height: 60,
+                            resizeMode: "contain",
+                            marginBottom: 20,
                         }}
                     />
 
-                    <Text style={{fontSize: 20}}>🔍</Text>
-                </View>
-
-                {/* FILTER TABS */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    {categories.map((cat, i) => {
-                        const active = i === 0;
-
-                        return (
-                            <TouchableOpacity
-                                key={i}
-                                style={{
-                                    paddingVertical: 10,
-                                    paddingHorizontal: 26,
-                                    borderRadius: 30,
-                                    marginRight: 12,
-                                    backgroundColor: active ? "#2E2C79" : "white",
-                                    borderWidth: active ? 0 : 1,
-                                    borderColor: "#2E2C79",
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        color: active ? "white" : "#2E2C79",
-                                        fontWeight: "600",
-                                    }}
-                                >
-                                    {cat}
-                                </Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                </ScrollView>
-            </LinearGradient>
-
-            {/* LIST */}
-            <View style={{padding: 20, paddingTop: 30}}>
-
-                {items.map((item) => (
-                    <MotiView
-                        key={item.id}
-                        from={{opacity: 0, translateY: 20}}
-                        animate={{opacity: 1, translateY: 0}}
-                        transition={{duration: 350}}
-                        style={{
-                            marginBottom: 22,
-                            borderRadius: 24,
-                            overflow: "hidden",
-                        }}
-                    >
-                        <LinearGradient
-                            colors={item.gradient}
+                    {/* ШИРИНА */}
+                    <View style={{width: IS_DESKTOP ? "50%" : "100%"}}>
+                        {/* SEARCH */}
+                        <View
                             style={{
-                                height: 200,
-                                borderRadius: 24,
-                                justifyContent: "flex-end",
-                                padding: 14,
+                                backgroundColor: "white",
+                                borderRadius: 30,
+                                flexDirection: "row",
+                                alignItems: "center",
+                                paddingHorizontal: 20,
+                                height: 48,
+                                marginBottom: 16,
                             }}
                         >
-                            <View
-                                style={{
-                                    backgroundColor: "white",
-                                    paddingVertical: 10,
-                                    paddingHorizontal: 14,
-                                    borderRadius: 18,
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        fontSize: 18,
-                                        fontWeight: "600",
-                                        color: "#111",
-                                        marginBottom: 8,
-                                    }}
-                                >
-                                    {item.title}
-                                </Text>
+                            <TextInput
+                                placeholder="Поиск"
+                                value={search}
+                                onChangeText={setSearch}
+                                placeholderTextColor="#888"
+                                style={{flex: 1}}
+                            />
+                        </View>
 
-                                <TouchableOpacity
-                                    style={{
-                                        backgroundColor: "black",
-                                        paddingVertical: 8,
-                                        paddingHorizontal: 16,
-                                        borderRadius: 20,
-                                        alignSelf: "flex-start",
-                                    }}
-                                >
-                                    <Text
+                        {/* FILTERS */}
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                            {categories.map((cat) => {
+                                const active = cat === activeCategory;
+
+                                return (
+                                    <TouchableOpacity
+                                        key={cat}
+                                        onPress={() => setActiveCategory(cat)}
                                         style={{
-                                            color: "white",
-                                            fontSize: 14,
-                                            fontWeight: "600",
+                                            paddingVertical: 10,
+                                            paddingHorizontal: 22,
+                                            borderRadius: 30,
+                                            marginRight: 12,
+                                            backgroundColor: active ? "black" : "white",
                                         }}
                                     >
-                                        подробнее
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        </LinearGradient>
-                    </MotiView>
-                ))}
+                                        <Text
+                                            style={{
+                                                color: active ? "white" : "black",
+                                                fontWeight: "600",
+                                            }}
+                                        >
+                                            {cat}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+                </View>
 
-            </View>
-        </ScrollView>
+                {/* КОНТЕНТ */}
+                <View
+                    style={{
+                        width: IS_DESKTOP ? "50%" : "100%",
+                        alignSelf: "center",
+                    }}
+                >
+                    <View
+                        style={{
+                            padding: 20,
+                            paddingTop: 30,
+                            flexDirection: "row",
+                            flexWrap: "wrap",
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        {filteredItems.map((item, index) => (
+                            <MotiView
+                                key={item.id}
+                                from={{opacity: 0, translateY: 20}}
+                                animate={{opacity: 1, translateY: 0}}
+                                transition={{duration: 350, delay: index * 40}}
+                                style={{
+                                    width: "48%",
+                                    marginBottom: 20,
+                                    borderRadius: 24,
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <LinearGradient
+                                    colors={item.gradient}
+                                    style={{
+                                        height: 180,
+                                        justifyContent: "flex-end",
+                                        padding: 12,
+                                    }}
+                                >
+                                    <View
+                                        style={{
+                                            backgroundColor: "white",
+                                            paddingVertical: 10,
+                                            paddingHorizontal: 12,
+                                            borderRadius: 18,
+                                        }}
+                                    >
+                                        <Text
+                                            style={{
+                                                fontSize: 15,
+                                                fontWeight: "600",
+                                                marginBottom: 6,
+                                            }}
+                                        >
+                                            {item.title}
+                                        </Text>
+
+                                        <Text
+                                            style={{
+                                                fontSize: 12,
+                                                opacity: 0.6,
+                                                marginBottom: 10,
+                                            }}
+                                            numberOfLines={2}
+                                        >
+                                            {item.shortDescription}
+                                        </Text>
+
+                                        <TouchableOpacity
+                                            onPress={() =>
+                                                router.push({
+                                                    pathname: "/modal/course",
+                                                    params: {
+                                                        id: String(item.id),
+                                                    },
+                                                })
+                                            }
+                                            style={{
+                                                backgroundColor: "black",
+                                                paddingVertical: 8,
+                                                paddingHorizontal: 16,
+                                                borderRadius: 20,
+                                                alignSelf: "flex-start",
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    color: "white",
+                                                    fontSize: 13,
+                                                    fontWeight: "600",
+                                                }}
+                                            >
+                                                подробнее
+                                            </Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </LinearGradient>
+                            </MotiView>
+                        ))}
+                    </View>
+                </View>
+            </ScrollView>
+        </LinearGradient>
     );
 }

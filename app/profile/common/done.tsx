@@ -4,16 +4,20 @@ import {
     TouchableOpacity,
     ScrollView,
     Platform,
+    Image,
+    Dimensions,
 } from "react-native";
 import {useRouter} from "expo-router";
 import {MotiView} from "moti";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {useEffect, useState} from "react";
+import {LinearGradient} from "expo-linear-gradient";
+
+const {width} = Dimensions.get("window");
+const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 export default function DoneScreen() {
     const router = useRouter();
-    const isWeb = Platform.OS === "web";
-
     const [role, setRole] = useState<string | null>(null);
 
     // читаем сохранённую роль
@@ -24,124 +28,144 @@ export default function DoneScreen() {
     const handleStart = () => {
         if (!role) return;
 
-        // mentor — сразу в чаты
         if (role === "mentor") {
-            router.push("/(tabs)/chats");
+            router.push("/(tabs)/home");
             return;
         }
 
-        // parent — свой первый экран пути
         if (role === "parent") {
             router.push("/profile/parent/umo-intro");
             return;
         }
 
-        // youth — свой аналогичный экран
         if (role === "youth") {
             router.push("/profile/youth/umo-intro");
             return;
         }
 
-        // organization — свой первый экран
         if (role === "org") {
-            router.push("/profile/org/umo-intro");
+            router.push("/profile/organization/umo-intro");
             return;
         }
     };
 
     return (
-        <ScrollView
-            style={{
-                flex: 1,
-                backgroundColor: "#FFFFFF",
-            }}
-            contentContainerStyle={{paddingBottom: 40}}
+        <LinearGradient
+            colors={["#3F3C9F", "#8D88D9"]}
+            start={{x: 0, y: 0}}
+            end={{x: 0, y: 1}}
+            style={{flex: 1}}
         >
-            <View
-                style={{
-                    maxWidth: isWeb ? 680 : "100%",
-                    width: "100%",
-                    alignSelf: "center",
-                    backgroundColor: isWeb ? "#FFFFFF" : "transparent",
-                    borderRadius: isWeb ? 32 : 0,
-                    paddingHorizontal: isWeb ? 32 : 24,
-                    paddingBottom: 50,
-                    shadowColor: isWeb ? "#000" : undefined,
-                    shadowOpacity: isWeb ? 0.06 : 0,
-                    shadowRadius: isWeb ? 14 : 0,
-                    shadowOffset: isWeb ? {width: 0, height: 4} : undefined,
-                }}
-            >
-                {/* HEADER */}
+            <ScrollView contentContainerStyle={{flexGrow: 1}}>
                 <View
                     style={{
-                        height: 240,
-                        backgroundColor: "#2E2C79",
-                        borderBottomLeftRadius: 50,
-                        borderBottomRightRadius: 50,
-                        justifyContent: "center",
+                        flex: 1,
                         alignItems: "center",
-                        paddingTop: 20,
+                        paddingTop: 60,
+                        paddingHorizontal: 20,
                     }}
                 >
+                    {/* LOGO */}
                     <MotiView
-                        from={{opacity: 0, scale: 0.4}}
+                        from={{opacity: 0, translateY: -20}}
+                        animate={{opacity: 1, translateY: 0}}
+                        transition={{duration: 500}}
+                        style={{marginBottom: 30}}
+                    >
+                        <Image
+                            source={require("../../../assets/logo/logo_white.png")}
+                            style={{
+                                width: 200,
+                                height: 80,
+                                resizeMode: "contain",
+                            }}
+                        />
+                    </MotiView>
+
+                    {/* CARD */}
+                    <MotiView
+                        from={{opacity: 0, scale: 0.9}}
                         animate={{opacity: 1, scale: 1}}
                         transition={{duration: 500}}
                         style={{
-                            width: 140,
-                            height: 140,
-                            borderRadius: 999,
+                            width: IS_DESKTOP ? "50%" : "100%",
                             backgroundColor: "white",
-                            justifyContent: "center",
+                            borderRadius: 36,
+                            paddingVertical: 48,
+                            paddingHorizontal: 28,
                             alignItems: "center",
+                            shadowColor: "#000",
+                            shadowOpacity: 0.15,
+                            shadowRadius: 18,
+                            shadowOffset: {width: 0, height: 8},
                         }}
                     >
-                        <Text style={{fontSize: 70, color: "#2E2C79"}}>✓</Text>
-                    </MotiView>
+                        {/* CHECK ICON */}
+                        <LinearGradient
+                            colors={["#3F3C9F", "#8D88D9"]}
+                            style={{
+                                width: 140,
+                                height: 140,
+                                borderRadius: 70,
+                                justifyContent: "center",
+                                alignItems: "center",
+                                marginBottom: 26,
+                            }}
+                        >
+                            <Text style={{fontSize: 72, color: "white"}}>✓</Text>
+                        </LinearGradient>
 
-                    <MotiView
-                        from={{opacity: 0, translateY: 20}}
-                        animate={{opacity: 1, translateY: 0}}
-                        transition={{duration: 450, delay: 200}}
-                        style={{marginTop: 18}}
-                    >
+                        {/* TITLE */}
                         <Text
                             style={{
-                                color: "white",
-                                fontSize: 28,
-                                fontWeight: "700",
+                                fontSize: 30,
+                                fontWeight: "800",
+                                color: "#2E2C79",
+                                marginBottom: 12,
                                 textAlign: "center",
                             }}
                         >
-                            Готово
+                            Всё готово
                         </Text>
-                    </MotiView>
-                </View>
 
-                {/* BUTTON */}
-                <View style={{marginTop: 50}}>
-                    <TouchableOpacity
-                        onPress={handleStart}
-                        style={{
-                            backgroundColor: "#3430B5",
-                            paddingVertical: 15,
-                            borderRadius: 999,
-                        }}
-                    >
+                        {/* SUBTEXT */}
                         <Text
                             style={{
-                                color: "white",
-                                fontSize: 18,
-                                fontWeight: "600",
+                                fontSize: 16,
+                                color: "#555",
                                 textAlign: "center",
+                                lineHeight: 22,
+                                marginBottom: 36,
                             }}
                         >
-                            начать
+                            Профиль успешно создан
+                            {"\n"}можно начинать работу в системе
                         </Text>
-                    </TouchableOpacity>
+
+                        {/* BUTTON */}
+                        <TouchableOpacity
+                            onPress={handleStart}
+                            style={{
+                                width: "100%",
+                                backgroundColor: "#3430B5",
+                                paddingVertical: 18,
+                                borderRadius: 999,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    color: "white",
+                                    fontSize: 18,
+                                    fontWeight: "700",
+                                    textAlign: "center",
+                                }}
+                            >
+                                начать
+                            </Text>
+                        </TouchableOpacity>
+                    </MotiView>
                 </View>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </LinearGradient>
     );
 }

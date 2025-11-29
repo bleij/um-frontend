@@ -50,7 +50,7 @@ export default function UmoIntro() {
                     }).start(() => {
                         setCompleted(true);
                         setTimeout(() => {
-                            router.push("/profile/parent/testing");
+                            router.push("/profile/organization/testing");
                         }, 300);
                     });
                 } else {
