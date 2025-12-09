@@ -70,7 +70,7 @@ export default function HomeScreen() {
             <ScrollView
                 style={{flex: 1}}
                 contentContainerStyle={{
-                    paddingTop: 60,
+                    paddingTop: 40,
                     paddingBottom: 140,
                     paddingHorizontal: 20,
                     alignItems: IS_DESKTOP ? "center" : "stretch",
@@ -81,7 +81,7 @@ export default function HomeScreen() {
                     from={{opacity: 0, translateY: -10}}
                     animate={{opacity: 1, translateY: 0}}
                     transition={{duration: 400}}
-                    style={{alignItems: "center", marginBottom: 24}}
+                    style={{alignItems: "center", marginBottom: 24, marginTop: IS_DESKTOP ? 60 : 40}}
                 >
                     <Image
                         source={require("../../../assets/logo/logo_blue.png")}

@@ -4,253 +4,322 @@ import {
     ScrollView,
     TouchableOpacity,
     Platform,
-    Image,
-    Dimensions,
+    Dimensions, Image,
 } from "react-native";
-import {MotiView} from "moti";
-import {useEffect, useMemo, useState} from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import {LinearGradient} from "expo-linear-gradient";
+import {Calendar, LocaleConfig} from "react-native-calendars";
+import {Ionicons} from "@expo/vector-icons";
+import {useMemo, useState} from "react";
 
 const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
-const PERIODS = ["неделя", "месяц", "год"];
+/* ---------- русская локаль для календаря ---------- */
+LocaleConfig.locales["ru"] = {
+    monthNames: [
+        "Январь",
+        "Февраль",
+        "Март",
+        "Апрель",
+        "Май",
+        "Июнь",
+        "Июль",
+        "Август",
+        "Сентябрь",
+        "Октябрь",
+        "Ноябрь",
+        "Декабрь",
+    ],
+    monthNamesShort: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
+    dayNames: [
+        "Воскресенье",
+        "Понедельник",
+        "Вторник",
+        "Среда",
+        "Четверг",
+        "Пятница",
+        "Суббота",
+    ],
+    dayNamesShort: ["ВС", "ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ"],
+    today: "Сегодня",
+};
+LocaleConfig.defaultLocale = "ru";
 
-const ROLE_DATA = {
-    parent: {
-        name: "Олжас",
-        age: "10 лет",
-        charts: {
-            неделя: [20, 35, 50, 70],
-            месяц: [40, 60, 90, 120],
-            год: [60, 100, 140, 190],
-        },
-        notes: [
-            "улучшил внимание",
-            "стабильный интерес к математике",
-            "стал увереннее в заданиях",
-            "высокая вовлечённость",
-        ],
-    },
-
-    youth: {
-        name: "Ты",
-        age: "15 лет",
-        charts: {
-            неделя: [30, 50, 60, 90],
-            месяц: [70, 100, 130, 170],
-            год: [90, 140, 170, 210],
-        },
-        notes: [
-            "стало легче учиться",
-            "лучше концентрация",
-            "меньше прокрастинации",
-            "виден рост мотивации",
-        ],
-    },
-
-    mentor: {
-        name: "Группа учеников",
-        age: "12–16 лет",
-        charts: {
-            неделя: [40, 70, 90, 120],
-            месяц: [80, 120, 160, 200],
-            год: [120, 170, 210, 260],
-        },
-        notes: [
-            "ученики активны",
-            "стабильный рост",
-            "хороший отклик",
-            "низкий процент отсева",
-        ],
-    },
-
-    org: {
-        name: "Центр UM",
-        age: "все группы",
-        charts: {
-            неделя: [60, 90, 120, 160],
-            месяц: [120, 160, 210, 260],
-            год: [160, 220, 280, 340],
-        },
-        notes: [
-            "рост регистраций",
-            "высокая посещаемость",
-            "хорошее удержание",
-            "прибыль растёт",
-        ],
-    },
+/* ---------- демо-события ---------- */
+const EVENTS: Record<string, { id: string; time: string; title: string }[]> = {
+    "2025-12-11": [
+        {id: "1", time: "11:00–12:00", title: "Робототехника"},
+        {id: "2", time: "14:00–15:30", title: "Программирование"},
+    ],
+    "2025-12-03": [
+        {id: "3", time: "17:00–18:00", title: "Шахматный клуб"},
+    ],
 };
 
+function formatDate(dateStr: string) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const months = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+    return `${d} ${months[(m || 1) - 1]} ${y}`;
+}
+
 export default function AnalyticsScreen() {
-    const [role, setRole] = useState<string | null>(null);
-    const [period, setPeriod] = useState("неделя");
+    const today = new Date();
+    const initialDate = today.toISOString().slice(0, 10);
+    const [selectedDate, setSelectedDate] = useState(initialDate);
 
-    useEffect(() => {
-        AsyncStorage.getItem("user_role").then(setRole);
-    }, []);
+    const dayEvents = useMemo(
+        () => EVENTS[selectedDate] || [],
+        [selectedDate]
+    );
 
-    const data = ROLE_DATA[role ?? "parent"];
+    const markedDates = useMemo(() => {
+        const marked: any = {};
 
-    const chartData = data.charts[period];
+        // помечаем все даты с событиями точкой
+        Object.keys(EVENTS).forEach((date) => {
+            marked[date] = {
+                marked: true,
+                dotColor: "#3F3C9F",
+            };
+        });
+
+        // выделяем выбранную дату
+        marked[selectedDate] = {
+            ...(marked[selectedDate] || {}),
+            selected: true,
+            selectedColor: "#3F3C9F",
+            selectedTextColor: "white",
+        };
+
+        return marked;
+    }, [selectedDate]);
 
     return (
-        <ScrollView
-            style={{flex: 1, backgroundColor: "#FFFFFF"}}
-            contentContainerStyle={{
-                paddingTop: 60,
-                paddingBottom: 140,
-                paddingHorizontal: 20,
-                alignItems: IS_DESKTOP ? "center" : "stretch",
-            }}
+        <LinearGradient
+            colors={["#F4F5FF", "#FFFFFF"]}
+            style={{flex: 1}}
         >
-            {/* LOGO */}
-            <MotiView
-                from={{opacity: 0, translateY: -10}}
-                animate={{opacity: 1, translateY: 0}}
-                transition={{duration: 400}}
-                style={{alignItems: "center", marginBottom: 24}}
+            <ScrollView
+                contentContainerStyle={{
+                    paddingTop: 40,
+                    paddingBottom: 120,
+                    paddingHorizontal: 16,
+                    alignItems: "center",
+                }}
             >
-                <Image
-                    source={require("../../../assets/logo/logo_blue.png")}
-                    style={{width: 140, height: 60, resizeMode: "contain"}}
-                />
-            </MotiView>
-
-            {/* ✅ ОБЁРТКА ШИРИНЫ */}
-            <View style={{width: IS_DESKTOP ? "50%" : "100%"}}>
-
-                {/* PROFILE CARD */}
-                <View
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        backgroundColor: "#F2F2F2",
-                        borderRadius: 24,
-                        padding: 16,
-                        marginBottom: 25,
-                    }}
-                >
+                {/* ограничение ширины как в других экранах */}
+                <View style={{width: IS_DESKTOP ? "55%" : "100%"}}>
+                    {/* заголовок */}
+                    <View style={{alignItems: "center", paddingTop: 40, marginBottom: 20}}>
+                        <Image
+                            source={require("../../../assets/logo/logo_blue.png")}
+                            style={{width: 140, height: 60, resizeMode: "contain"}}
+                        />
+                    </View>
                     <View
                         style={{
-                            width: 90,
-                            height: 90,
-                            borderRadius: 50,
-                            backgroundColor: "#3430B5",
-                            marginRight: 20,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 16,
                         }}
-                    />
-
-                    <View style={{flex: 1}}>
-                        <Text style={{fontSize: 20, fontWeight: "700"}}>
-                            {data.name}
+                    >
+                        <Text
+                            style={{
+                                fontSize: 24,
+                                fontWeight: "700",
+                                color: "#2E2C79",
+                            }}
+                        >
+                            Календарь
                         </Text>
 
-                        <Text style={{opacity: 0.6, marginBottom: 10}}>
-                            {data.age}
-                        </Text>
-
-                        {/* PERIOD BUTTONS */}
-                        <View style={{flexDirection: "row", gap: 8}}>
-                            {PERIODS.map((p) => {
-                                const active = p === period;
-
-                                return (
-                                    <TouchableOpacity
-                                        key={p}
-                                        onPress={() => setPeriod(p)}
-                                        style={{
-                                            borderRadius: 12,
-                                            paddingVertical: 6,
-                                            paddingHorizontal: 12,
-                                            backgroundColor: active
-                                                ? "#3430B5"
-                                                : "white",
-                                            borderWidth: 1,
-                                            borderColor: "#3430B5",
-                                        }}
-                                    >
-                                        <Text
-                                            style={{
-                                                color: active ? "white" : "#3430B5",
-                                                fontWeight: "600",
-                                                fontSize: 13,
-                                            }}
-                                        >
-                                            {p}
-                                        </Text>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                    </View>
-                </View>
-
-                {/* CHART */}
-                <View
-                    style={{
-                        backgroundColor: "#F3F2FF",
-                        padding: 20,
-                        borderRadius: 24,
-                        marginBottom: 30,
-                        height: 260,
-                        justifyContent: "flex-end",
-                        alignItems: "center",
-                    }}
-                >
-                    <View style={{flexDirection: "row", alignItems: "flex-end", gap: 20}}>
-                        {chartData.map((value, i) => (
-                            <MotiView
-                                key={i}
-                                from={{height: 0, opacity: 0}}
-                                animate={{height: value, opacity: 1}}
-                                transition={{duration: 500, delay: i * 120}}
-                                style={{
-                                    width: 30,
-                                    backgroundColor: "#3430B5",
-                                    borderRadius: 8,
-                                }}
-                            />
-                        ))}
-                    </View>
-                </View>
-
-                {/* NOTES */}
-                <View
-                    style={{
-                        flexDirection: "row",
-                        gap: 20,
-                        marginBottom: 40,
-                    }}
-                >
-                    <View
-                        style={{
-                            width: "38%",
-                            height: 140,
-                            backgroundColor: "#3430B5",
-                            borderRadius: 20,
-                        }}
-                    />
-
-                    <View style={{flex: 1, justifyContent: "space-between"}}>
-                        {data.notes.map((t, i) => (
+                        <TouchableOpacity
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                paddingVertical: 6,
+                                paddingHorizontal: 12,
+                                borderRadius: 20,
+                                backgroundColor: "rgba(63,60,159,0.08)",
+                            }}
+                        >
+                            <Ionicons name="add" size={18} color="#3F3C9F"/>
                             <Text
-                                key={i}
                                 style={{
-                                    backgroundColor: "#F2F2F2",
-                                    paddingVertical: 8,
-                                    paddingHorizontal: 10,
-                                    borderRadius: 10,
-                                    fontSize: 13,
+                                    marginLeft: 6,
+                                    fontSize: 14,
+                                    color: "#3F3C9F",
+                                    fontWeight: "600",
                                 }}
                             >
-                                {t}
+                                новое занятие
                             </Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* карточка с месяцем */}
+                    <View
+                        style={{
+                            backgroundColor: "white",
+                            borderRadius: 24,
+                            padding: 8,
+                            marginBottom: 16,
+                            shadowColor: "#000",
+                            shadowOpacity: Platform.OS === "web" ? 0.06 : 0.12,
+                            shadowRadius: 10,
+                            shadowOffset: {width: 0, height: 4},
+                            elevation: 4,
+                        }}
+                    >
+                        <Calendar
+                            current={initialDate}
+                            onDayPress={(day) => setSelectedDate(day.dateString)}
+                            markedDates={markedDates}
+                            firstDay={1}
+                            enableSwipeMonths
+                            theme={{
+                                backgroundColor: "transparent",
+                                calendarBackground: "transparent",
+                                textSectionTitleColor: "#8E8AA8",
+                                monthTextColor: "#2E2C79",
+                                arrowColor: "#3F3C9F",
+                                todayTextColor: "#3F3C9F",
+                                dayTextColor: "#111",
+                                textDayFontSize: 14,
+                                textMonthFontSize: 18,
+                                textMonthFontWeight: "700",
+                                textDayHeaderFontSize: 12,
+                            }}
+                            style={{
+                                borderRadius: 20,
+                            }}
+                        />
+                    </View>
+
+                    {/* карточка списка занятий */}
+                    <View
+                        style={{
+                            backgroundColor: "white",
+                            borderRadius: 24,
+                            paddingVertical: 16,
+                            paddingHorizontal: 18,
+                            shadowColor: "#000",
+                            shadowOpacity: Platform.OS === "web" ? 0.04 : 0.08,
+                            shadowRadius: 8,
+                            shadowOffset: {width: 0, height: 3},
+                            elevation: 3,
+                        }}
+                    >
+                        <View
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                marginBottom: 12,
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    fontSize: 16,
+                                    fontWeight: "700",
+                                    color: "#2E2C79",
+                                }}
+                            >
+                                {formatDate(selectedDate)}
+                            </Text>
+
+                            <View
+                                style={{
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <Ionicons
+                                    name="calendar-clear-outline"
+                                    size={16}
+                                    color="#8E8AA8"
+                                />
+                                <Text
+                                    style={{
+                                        marginLeft: 6,
+                                        fontSize: 13,
+                                        color: "#8E8AA8",
+                                    }}
+                                >
+                                    {dayEvents.length
+                                        ? `${dayEvents.length} занятия`
+                                        : "нет занятий"}
+                                </Text>
+                            </View>
+                        </View>
+
+                        {dayEvents.length === 0 && (
+                            <Text
+                                style={{
+                                    fontSize: 14,
+                                    color: "#777",
+                                    paddingVertical: 8,
+                                }}
+                            >
+                                На выбранную дату занятий пока нет.
+                            </Text>
+                        )}
+
+                        {dayEvents.map((e) => (
+                            <View
+                                key={e.id}
+                                style={{
+                                    borderRadius: 18,
+                                    borderWidth: 1,
+                                    borderColor: "#E0E2FF",
+                                    paddingVertical: 10,
+                                    paddingHorizontal: 12,
+                                    marginBottom: 10,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                }}
+                            >
+                                <View
+                                    style={{
+                                        width: 6,
+                                        height: 40,
+                                        borderRadius: 999,
+                                        backgroundColor: "#3F3C9F",
+                                        marginRight: 10,
+                                    }}
+                                />
+
+                                <View style={{flex: 1}}>
+                                    <Text
+                                        style={{
+                                            fontSize: 13,
+                                            color: "#8E8AA8",
+                                            marginBottom: 2,
+                                        }}
+                                    >
+                                        {e.time}
+                                    </Text>
+                                    <Text
+                                        style={{
+                                            fontSize: 16,
+                                            fontWeight: "600",
+                                        }}
+                                    >
+                                        {e.title}
+                                    </Text>
+                                </View>
+
+                                <Ionicons
+                                    name="chevron-forward"
+                                    size={18}
+                                    color="#8E8AA8"
+                                />
+                            </View>
                         ))}
                     </View>
                 </View>
-
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </LinearGradient>
     );
 }

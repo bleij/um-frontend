@@ -32,7 +32,7 @@ export default function ProfileScreen() {
         <LinearGradient colors={["#F4F5FF", "#FFFFFF"]} style={{flex: 1}}>
             <ScrollView contentContainerStyle={{paddingBottom: 140}}>
                 {/* LOGO */}
-                <View style={{alignItems: "center", paddingTop: 40, marginBottom: 20}}>
+                <View style={{alignItems: "center", paddingTop: 40, marginBottom: 20, marginTop: IS_DESKTOP ? 60 : 40}}>
                     <Image
                         source={require("../../../assets/logo/logo_blue.png")}
                         style={{width: 140, height: 60, resizeMode: "contain"}}

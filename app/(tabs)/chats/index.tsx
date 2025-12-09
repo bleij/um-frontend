@@ -108,7 +108,7 @@ export default function ChatsScreen() {
             style={{
                 flex: 1,
                 backgroundColor: "#FFFFFF",
-                paddingTop: Platform.OS === "ios" ? 60 : 40,
+                paddingTop: 40,
             }}
         >
             {/* LOGO */}
@@ -116,7 +116,7 @@ export default function ChatsScreen() {
                 from={{opacity: 0, translateY: -10}}
                 animate={{opacity: 1, translateY: 0}}
                 transition={{duration: 400}}
-                style={{alignItems: "center", marginBottom: 20}}
+                style={{alignItems: "center", marginBottom: 20, marginTop: IS_DESKTOP ? 60 : 40}}
             >
                 <Image
                     source={require("../../../assets/logo/logo_blue.png")}
