@@ -11,6 +11,7 @@ import {
 import {MotiView} from "moti";
 import {LinearGradient} from "expo-linear-gradient";
 import {useMemo, useState} from "react";
+import {Ionicons} from "@expo/vector-icons";
 import {useRouter} from "expo-router";
 import {courses} from "../../../data/courses"; // ✅ ВАЖНО: ПРОВЕРЬ ПУТЬ
 
@@ -30,6 +31,7 @@ const categories = [
 export default function CatalogScreen() {
     const [activeCategory, setActiveCategory] = useState("все");
     const [search, setSearch] = useState("");
+    const [titleIsTwoLines, setTitleIsTwoLines] = useState<Record<number, boolean>>({});
     const router = useRouter();
 
     // ✅ ЗАЩИТА ОТ undefined
@@ -47,6 +49,9 @@ export default function CatalogScreen() {
             return byCategory && bySearch;
         });
     }, [activeCategory, search, safeCourses]);
+
+    // Высота строки для заголовка (используется для вычисления количества строк)
+    const TITLE_LINE_HEIGHT = 19;
 
     return (
         <LinearGradient colors={["#3430B5", "#FFFDFD"]} style={{flex: 1}}>
@@ -169,11 +174,42 @@ export default function CatalogScreen() {
                                             borderRadius: 18,
                                         }}
                                     >
+                                        <View style={{flexDirection: "row", alignItems: "center", marginBottom: 8}}>
+                                            <View
+                                                style={{
+                                                    width: 34,
+                                                    height: 34,
+                                                    borderRadius: 12,
+                                                    backgroundColor: "rgba(0,0,0,0.06)",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    marginRight: 10,
+                                                }}
+                                            >
+                                                <Ionicons name={(item as any).icon} size={18} color="black" />
+                                            </View>
+
+                                            <Text style={{fontSize: 12, opacity: 0.6}}>
+                                                {item.tag}
+                                            </Text>
+                                        </View>
                                         <Text
+                                            numberOfLines={2}
+                                            onLayout={(e) => {
+                                                const h = e.nativeEvent.layout.height;
+                                                const lines = Math.round(h / TITLE_LINE_HEIGHT);
+                                                const isTwo = lines >= 2;
+                                                setTitleIsTwoLines((prev) => {
+                                                    const prevVal = prev[item.id];
+                                                    if (prevVal === isTwo) return prev;
+                                                    return {...prev, [item.id]: isTwo};
+                                                });
+                                            }}
                                             style={{
                                                 fontSize: 15,
+                                                lineHeight: TITLE_LINE_HEIGHT,
                                                 fontWeight: "600",
-                                                marginBottom: 6,
+                                                marginBottom: 4,
                                             }}
                                         >
                                             {item.title}
@@ -185,7 +221,7 @@ export default function CatalogScreen() {
                                                 opacity: 0.6,
                                                 marginBottom: 10,
                                             }}
-                                            numberOfLines={2}
+                                            numberOfLines={titleIsTwoLines[item.id] ? 1 : 2}
                                         >
                                             {item.shortDescription}
                                         </Text>

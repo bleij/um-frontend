@@ -13,7 +13,7 @@ export default function TabsLayout() {
     // пока роль грузится — можно вернуть null (иначе моргнёт лишнее)
     if (!role) return null;
 
-    const hideForMentor = role === "mentor";
+    const hideForMentor = role === "mentor" || role === "org";
 
     return (
         <>

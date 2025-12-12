@@ -134,28 +134,6 @@ export default function AnalyticsScreen() {
                             Календарь
                         </Text>
 
-                        <TouchableOpacity
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                paddingVertical: 6,
-                                paddingHorizontal: 12,
-                                borderRadius: 20,
-                                backgroundColor: "rgba(63,60,159,0.08)",
-                            }}
-                        >
-                            <Ionicons name="add" size={18} color="#3F3C9F"/>
-                            <Text
-                                style={{
-                                    marginLeft: 6,
-                                    fontSize: 14,
-                                    color: "#3F3C9F",
-                                    fontWeight: "600",
-                                }}
-                            >
-                                новое занятие
-                            </Text>
-                        </TouchableOpacity>
                     </View>
 
                     {/* карточка с месяцем */}

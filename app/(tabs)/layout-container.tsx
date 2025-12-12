@@ -1,60 +1,76 @@
+import React from "react";
 import {View, TouchableOpacity, Platform, Dimensions} from "react-native";
 import {useRouter, useSegments} from "expo-router";
-import {Ionicons, Feather, FontAwesome5, MaterialCommunityIcons} from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useEffect, useState} from "react";
+import {
+    Ionicons,
+    Feather,
+    FontAwesome5,
+    MaterialCommunityIcons,
+} from "@expo/vector-icons";
 
 const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
-export default function CustomTabBar() {
+export type Role = "parent" | "youth" | "mentor" | "org";
+
+type Props = {
+    role: Role;
+};
+
+export default function CustomTabBar({role}: Props) {
     const router = useRouter();
     const segments = useSegments();
     const current = segments[segments.length - 1];
 
-    const [role, setRole] = useState<string | null>(null);
-
-    useEffect(() => {
-        AsyncStorage.getItem("user_role").then(setRole);
-    }, []);
-
-    if (!role) return null;
-
     const go = (route: string) => router.replace(`/(${"tabs"})/${route}`);
 
-    let tabs = [
+    const hideCatalog = role === "mentor" || role === "org";
+
+    const tabs = [
         {
             key: "home",
             route: "home",
-            icon: ({color, size}) => <Ionicons name="home-outline" size={size} color={color}/>,
+            icon: ({color, size}: any) => (
+                <Ionicons name="home-outline" size={size} color={color}/>
+            ),
         },
 
-        ...(role !== "mentor"
-            ? [{
-                key: "catalog",
-                route: "catalog",
-                icon: ({color, size}) => (
-                    <MaterialCommunityIcons name="view-grid-outline" size={size} color={color}/>
-                ),
-            }]
+        ...(!hideCatalog
+            ? [
+                {
+                    key: "catalog",
+                    route: "catalog",
+                    icon: ({color, size}: any) => (
+                        <MaterialCommunityIcons
+                            name="view-grid-outline"
+                            size={size}
+                            color={color}
+                        />
+                    ),
+                },
+            ]
             : []),
 
         {
             key: "chats",
             route: "chats",
-            icon: ({color, size}) => (
+            icon: ({color, size}: any) => (
                 <Ionicons name="chatbubble-ellipses-outline" size={size} color={color}/>
             ),
         },
         {
             key: "analytics",
             route: "analytics",
-            icon: ({color, size}) => <Feather name="bar-chart-2" size={size} color={color}/>,
+            icon: ({color, size}: any) => (
+                <Feather name="bar-chart-2" size={size} color={color}/>
+            ),
         },
         {
             key: "profile",
             route: "profile",
-            icon: ({color, size}) => <FontAwesome5 name="user" size={size} color={color}/>,
+            icon: ({color, size}: any) => (
+                <FontAwesome5 name="user" size={size} color={color}/>
+            ),
         },
     ];
 
@@ -63,11 +79,8 @@ export default function CustomTabBar() {
             style={{
                 position: "absolute",
                 bottom: Platform.OS === "ios" ? 30 : 16,
-
-                // ✅ одинаково правильно для mobile + web
                 alignSelf: "center",
                 width: IS_DESKTOP ? 480 : width - 32,
-
                 height: 72,
                 borderRadius: 36,
                 backgroundColor: "#DFDDF4",
@@ -75,7 +88,6 @@ export default function CustomTabBar() {
                 justifyContent: "space-between",
                 alignItems: "center",
                 paddingHorizontal: 16,
-
                 shadowColor: "#000",
                 shadowOpacity: 0.08,
                 shadowRadius: 10,

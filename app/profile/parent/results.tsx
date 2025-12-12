@@ -193,6 +193,27 @@ export default function ParentResults() {
 
                     {/* BUTTON */}
                     <TouchableOpacity
+                        onPress={() => router.push("/profile/parent/testing")}
+                        style={{
+                            backgroundColor: "#433fd2",
+                            paddingVertical: 16,
+                            borderRadius: 30,
+                            marginBottom: 12,
+                        }}
+                    >
+                        <Text
+                            style={{
+                                textAlign: "center",
+                                color: "white",
+                                fontSize: 18,
+                                fontWeight: "700",
+                            }}
+                        >
+                            Пройти тестирование заново для другого ребёнка
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
                         onPress={() => router.push("/profile/common/subscribe")}
                         style={{
                             backgroundColor: "#2E2C79",
