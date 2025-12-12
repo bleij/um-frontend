@@ -89,55 +89,57 @@ export default function ProfileScreen() {
                     {role === "org" && <OrgBlock/>}
 
                     {/* SUBSCRIPTION */}
-                    <View style={{marginTop: 40}}>
-                        <Text
-                            style={{
-                                fontSize: 22,
-                                fontWeight: "700",
-                                marginBottom: 16,
-                            }}
-                        >
-                            Подписка
-                        </Text>
-
-                        <View
-                            style={{
-                                backgroundColor: "#EEF0FF",
-                                borderRadius: 24,
-                                padding: 24,
-                            }}
-                        >
+                    {role !== "mentor" && (
+                        <View style={{marginTop: 40}}>
                             <Text
                                 style={{
-                                    fontSize: 20,
-                                    textAlign: "center",
-                                    marginBottom: 18,
+                                    fontSize: 22,
                                     fontWeight: "700",
+                                    marginBottom: 16,
                                 }}
                             >
-                                Premium
+                                Подписка
                             </Text>
 
-                            <TouchableOpacity
-                                onPress={() => router.push("profile/common/subscribe")}
+                            <View
                                 style={{
-                                    backgroundColor: "#3F3C9F",
-                                    paddingVertical: 14,
-                                    borderRadius: 20,
+                                    backgroundColor: "#EEF0FF",
+                                    borderRadius: 24,
+                                    padding: 24,
                                 }}
                             >
                                 <Text
                                     style={{
-                                        color: "white",
+                                        fontSize: 20,
                                         textAlign: "center",
-                                        fontWeight: "600",
+                                        marginBottom: 18,
+                                        fontWeight: "700",
                                     }}
                                 >
-                                    Управлять подпиской
+                                    Premium
                                 </Text>
-                            </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    onPress={() => router.push("profile/common/subscribe")}
+                                    style={{
+                                        backgroundColor: "#3F3C9F",
+                                        paddingVertical: 14,
+                                        borderRadius: 20,
+                                    }}
+                                >
+                                    <Text
+                                        style={{
+                                            color: "white",
+                                            textAlign: "center",
+                                            fontWeight: "600",
+                                        }}
+                                    >
+                                        Управлять подпиской
+                                    </Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
-                    </View>
+                    )}
                 </View>
             </ScrollView>
         </LinearGradient>

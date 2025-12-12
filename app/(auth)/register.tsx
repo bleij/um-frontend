@@ -5,7 +5,7 @@ import {
     TouchableOpacity,
     ScrollView,
     Image,
-    Platform,
+    Platform, Dimensions,
 } from "react-native";
 import {useRouter} from "expo-router";
 import {MotiView} from "moti";
@@ -15,6 +15,8 @@ export default function RegisterScreen() {
     const router = useRouter();
 
     const isWeb = Platform.OS === "web";
+    const {width} = Dimensions.get("window");
+    const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
     return (
         <ScrollView
@@ -48,7 +50,7 @@ export default function RegisterScreen() {
 
                 {/* HEADER */}
                 <View
-                    className="h-[260px] px-6 pt-12"
+                    className="h-[380px] px-6 pt-12"
                     style={{
                         backgroundColor: "#2E2C79",
                         borderBottomLeftRadius: 50,
@@ -65,10 +67,16 @@ export default function RegisterScreen() {
                             from={{opacity: 0, scale: 0.8}}
                             animate={{opacity: 1, scale: 1}}
                             transition={{duration: 450}}
+                            style={{marginBottom: 6}}
                         >
-                            <Text className="text-white text-[64px] font-extrabold tracking-[12px]">
-                                UM
-                            </Text>
+                            <Image
+                                source={require("../../assets/logo/logo_white.png")}
+                                style={{
+                                    width: 180,
+                                    height: 180,
+                                    resizeMode: "contain",
+                                }}
+                            />
                         </MotiView>
 
                         <MotiView
@@ -97,7 +105,7 @@ export default function RegisterScreen() {
                 {/* INPUTS */}
                 <View className="mt-8" style={{paddingHorizontal: isWeb ? 0 : 24}}>
 
-                    {["Enter first name", "Enter last name", "Enter email", "Enter password"].map(
+                    {["Enter email", "Enter password", "Repeat password"].map(
                         (placeholder, i) => (
                             <MotiView
                                 key={i}
@@ -127,6 +135,7 @@ export default function RegisterScreen() {
                     style={{flexDirection: "row", justifyContent: "center"}}
                 >
                     <TouchableOpacity
+                        onPress={() => router.push("/(auth)/role")}
                         className="bg-[#2B1F9A] h-14 rounded-full items-center justify-center"
                         style={{width: 230}}
                     >

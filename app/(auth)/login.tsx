@@ -45,7 +45,7 @@ export default function LoginScreen() {
                 {/* HEADER */}
                 <View
                     style={{
-                        height: 320,
+                        height: 380,
                         backgroundColor: "#2E2C79",
                         borderBottomLeftRadius: 50,
                         borderBottomRightRadius: 50,
@@ -54,11 +54,8 @@ export default function LoginScreen() {
                     }}
                 >
                     {/* Назад */}
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={{ marginBottom: 10 }}  // фиксированный нижний отступ для баланса
-                    >
-                        <Text style={{ color: "white", fontSize: 16 }}>← Назад</Text>
+                    <TouchableOpacity onPress={() => router.back()}>
+                        <Text className="text-white text-base">← Назад</Text>
                     </TouchableOpacity>
 
                     {/* Центрированный блок */}
@@ -67,9 +64,6 @@ export default function LoginScreen() {
                             flex: 1,
                             justifyContent: "center",
                             alignItems: "center",
-
-                            // немного поднимаем только середину, кнопка не страдает
-                            marginTop: -20,
                         }}
                     >
 
@@ -176,7 +170,7 @@ export default function LoginScreen() {
                     style={{flexDirection: "row", justifyContent: "center"}}
                 >
                     <TouchableOpacity
-                        onPress={() => router.push("/(auth)/role")}
+                        onPress={() => router.push("/(tabs)/home")}
                         className="bg-[#2E2C79] h-14 rounded-full items-center justify-center"
                         style={{width: 230}}
                     >
