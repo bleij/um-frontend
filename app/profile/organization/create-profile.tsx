@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import {
     View,
     Text,
@@ -5,231 +6,142 @@ import {
     TouchableOpacity,
     ScrollView,
     Platform,
-    Image,
-    Dimensions,
+    KeyboardAvoidingView,
 } from "react-native";
-import {useRouter} from "expo-router";
-import {MotiView} from "moti";
-import {Feather} from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker";
-import {useState} from "react";
-import {LinearGradient} from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-const {width} = Dimensions.get("window");
-const IS_DESKTOP = Platform.OS === "web" && width >= 900;
-
-export default function OrganizationCreateProfile() {
+export default function CreateProfileOrganization() {
     const router = useRouter();
-    const [logo, setLogo] = useState<string | null>(null);
+    const [formData, setFormData] = useState({
+        orgName: "",
+        orgType: "",
+        contactPerson: "",
+        email: "",
+        phone: "",
+        city: "",
+        address: "",
+        description: "",
+        capacity: "",
+    });
 
-    async function pickImage() {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 0.9,
-        });
-
-        if (!result.canceled) {
-            setLogo(result.assets[0].uri);
-        }
-    }
-
-    const fields = [
-        {label: "Название организации", icon: "home"},
-        {label: "Направление (робототехника, спорт…)", icon: "grid"},
-        {label: "Город", icon: "map-pin"},
-        {label: "Адрес", icon: "navigation"},
-        {label: "Телефон", icon: "phone"},
-        {label: "Описание кружка", icon: "edit-3"},
-    ];
+    const handleMockSubmit = () => {
+        router.push("/profile/common/done");
+    };
 
     return (
-        <LinearGradient colors={["#3F3C9F", "#EDEBFF"]} style={{flex: 1}}>
-            <ScrollView contentContainerStyle={{paddingTop: 40, paddingBottom: 80}}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+            <LinearGradient colors={["#FFF7ED", "#FEFCE8"]} style={{ flex: 1 }}>
+                
+                {/* Header */}
+                <LinearGradient colors={["#F97316", "#EA580C"]} className="pt-12 pb-4 px-4 shadow-sm z-10 rounded-b-3xl">
+                    <SafeAreaView edges={["top"]} style={{ flexDirection: "row", alignItems: "center" }}>
+                        <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
+                            <Feather name="arrow-left" size={24} color="white" />
+                        </TouchableOpacity>
+                        <Text className="text-xl font-bold text-white">Создать профиль организации</Text>
+                    </SafeAreaView>
+                </LinearGradient>
 
-                {/* ✅ КОНТЕЙНЕР */}
-                <View
-                    style={{
-                        width: IS_DESKTOP ? "50%" : "100%",
-                        alignSelf: "center",
-                        paddingHorizontal: IS_DESKTOP ? 36 : 24,
-                    }}
-                >
+                <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+                    
+                    {/* Organization Info */}
+                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-orange-50">
+                        <View className="flex-row items-center mb-4">
+                            <MaterialCommunityIcons name="office-building" size={20} color="#EA580C" />
+                            <Text className="text-lg font-semibold text-gray-900 ml-2">Информация об организации</Text>
+                        </View>
 
-                    {/* ✅ ЛОГО */}
-                    <MotiView
-                        from={{opacity: 0, translateY: -20}}
-                        animate={{opacity: 1, translateY: 0}}
-                        transition={{duration: 400}}
-                        style={{alignItems: "center", marginBottom: 24}}
+                        <View className="space-y-4">
+                            <View>
+                                <Text className="text-sm font-medium text-gray-700 mb-1">Название организации</Text>
+                                <TextInput
+                                    value={formData.orgName}
+                                    onChangeText={(text) => setFormData({ ...formData, orgName: text })}
+                                    placeholder="Введите название"
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                                />
+                            </View>
+                            <View>
+                                <Text className="text-sm font-medium text-gray-700 mb-1">Тип организации</Text>
+                                <TextInput
+                                    value={formData.orgType}
+                                    onChangeText={(text) => setFormData({ ...formData, orgType: text })}
+                                    placeholder="Школа, клуб, студия..."
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                                />
+                            </View>
+                            <View>
+                                <Text className="text-sm font-medium text-gray-700 mb-1">Вместимость учеников</Text>
+                                <TextInput
+                                    value={formData.capacity}
+                                    onChangeText={(text) => setFormData({ ...formData, capacity: text })}
+                                    placeholder="Количество мест"
+                                    keyboardType="numeric"
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* Contact Person */}
+                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-orange-50">
+                        <View className="flex-row items-center mb-4">
+                            <Feather name="user" size={20} color="#EA580C" />
+                            <Text className="text-lg font-semibold text-gray-900 ml-2">Контактное лицо</Text>
+                        </View>
+                        <View>
+                            <Text className="text-sm font-medium text-gray-700 mb-1">ФИО представителя</Text>
+                            <TextInput
+                                value={formData.contactPerson}
+                                onChangeText={(text) => setFormData({ ...formData, contactPerson: text })}
+                                placeholder="Полное имя"
+                                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                            />
+                        </View>
+                    </View>
+
+                    {/* Address */}
+                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-orange-50">
+                        <View className="flex-row items-center mb-4">
+                            <Feather name="map-pin" size={20} color="#EA580C" />
+                            <Text className="text-lg font-semibold text-gray-900 ml-2">Локация</Text>
+                        </View>
+                        <View className="space-y-4">
+                            <View>
+                                <Text className="text-sm font-medium text-gray-700 mb-1">Город</Text>
+                                <TextInput
+                                    value={formData.city}
+                                    onChangeText={(text) => setFormData({ ...formData, city: text })}
+                                    placeholder="Алматы"
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                                />
+                            </View>
+                            <View>
+                                <Text className="text-sm font-medium text-gray-700 mb-1">Адрес</Text>
+                                <TextInput
+                                    value={formData.address}
+                                    onChangeText={(text) => setFormData({ ...formData, address: text })}
+                                    placeholder="Улица, дом, офис"
+                                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    <TouchableOpacity
+                        onPress={handleMockSubmit}
+                        className="w-full rounded-xl overflow-hidden shadow-md mt-2"
                     >
-                        <Image
-                            source={require("../../../assets/logo/logo_white.png")}
-                            style={{width: 160, height: 60, resizeMode: "contain"}}
-                        />
-                    </MotiView>
+                        <LinearGradient colors={["#F97316", "#EA580C"]} className="w-full py-4 items-center justify-center">
+                            <Text className="text-white font-bold text-lg">Создать профиль</Text>
+                        </LinearGradient>
+                    </TouchableOpacity>
 
-                    {/* ✅ ЗАГОЛОВОК */}
-                    <MotiView
-                        from={{opacity: 0, translateY: -10}}
-                        animate={{opacity: 1, translateY: 0}}
-                        transition={{duration: 400}}
-                        style={{marginBottom: 20}}
-                    >
-                        <Text
-                            style={{
-                                fontSize: 28,
-                                fontWeight: "800",
-                                color: "white",
-                                textAlign: "center",
-                            }}
-                        >
-                            Профиль организации
-                        </Text>
-                        <Text
-                            style={{
-                                textAlign: "center",
-                                color: "rgba(255,255,255,0.8)",
-                                marginTop: 6,
-                            }}
-                        >
-                            Заполните данные о вашем кружке
-                        </Text>
-                    </MotiView>
-
-                    {/* ✅ КАРТОЧКА */}
-                    <MotiView
-                        from={{opacity: 0, scale: 0.95}}
-                        animate={{opacity: 1, scale: 1}}
-                        transition={{duration: 400}}
-                        style={{
-                            backgroundColor: "rgba(255,255,255,0.96)",
-                            borderRadius: 32,
-                            padding: 26,
-                            shadowColor: "#000",
-                            shadowOpacity: 0.12,
-                            shadowRadius: 16,
-                            shadowOffset: {width: 0, height: 8},
-                        }}
-                    >
-
-                        {/* ✅ ЗАГРУЗКА ЛОГО */}
-                        <MotiView
-                            from={{opacity: 0, scale: 0.8}}
-                            animate={{opacity: 1, scale: 1}}
-                            transition={{duration: 400}}
-                            style={{
-                                alignSelf: "center",
-                                marginBottom: 30,
-                            }}
-                        >
-                            <TouchableOpacity
-                                onPress={pickImage}
-                                activeOpacity={0.85}
-                                style={{
-                                    width: 140,
-                                    height: 140,
-                                    borderRadius: 999,
-                                    backgroundColor: "#3F3C9F",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    overflow: "hidden",
-                                }}
-                            >
-                                {logo ? (
-                                    <Image
-                                        source={{uri: logo}}
-                                        style={{width: "100%", height: "100%"}}
-                                        resizeMode="cover"
-                                    />
-                                ) : (
-                                    <Feather name="image" size={36} color="#FFFFFF"/>
-                                )}
-                            </TouchableOpacity>
-
-                            <Text
-                                style={{
-                                    textAlign: "center",
-                                    marginTop: 10,
-                                    color: "#555",
-                                }}
-                            >
-                                логотип организации
-                            </Text>
-                        </MotiView>
-
-                        {/* ✅ ПОЛЯ */}
-                        {fields.map((f, index) => (
-                            <MotiView
-                                key={index}
-                                from={{opacity: 0, translateY: 18}}
-                                animate={{opacity: 1, translateY: 0}}
-                                transition={{duration: 350, delay: 120 + index * 60}}
-                                style={{marginBottom: 16}}
-                            >
-                                <View
-                                    style={{
-                                        borderWidth: 1.5,
-                                        borderColor: "#3F3C9F",
-                                        borderRadius: 16,
-                                        paddingVertical: 12,
-                                        paddingHorizontal: 16,
-                                        flexDirection: "row",
-                                        alignItems: "center",
-                                        backgroundColor: "#F7F8FF",
-                                    }}
-                                >
-                                    <TextInput
-                                        placeholder={f.label}
-                                        placeholderTextColor="#777"
-                                        style={{
-                                            flex: 1,
-                                            fontSize: 16,
-                                        }}
-                                    />
-
-                                    <Feather
-                                        name={f.icon as any}
-                                        size={20}
-                                        color="#3F3C9F"
-                                    />
-                                </View>
-                            </MotiView>
-                        ))}
-
-                        {/* ✅ КНОПКА */}
-                        <MotiView
-                            from={{opacity: 0, scale: 0.9}}
-                            animate={{opacity: 1, scale: 1}}
-                            transition={{duration: 350, delay: 450}}
-                            style={{alignItems: "center", marginTop: 24}}
-                        >
-                            <TouchableOpacity
-                                onPress={() => router.push("/profile/common/done")}
-                                style={{
-                                    width: "100%",
-                                    backgroundColor: "#2E2C79",
-                                    paddingVertical: 16,
-                                    borderRadius: 999,
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        color: "white",
-                                        fontSize: 16,
-                                        fontWeight: "700",
-                                        textAlign: "center",
-                                    }}
-                                >
-                                    продолжить
-                                </Text>
-                            </TouchableOpacity>
-                        </MotiView>
-
-                    </MotiView>
-                </View>
-            </ScrollView>
-        </LinearGradient>
+                </ScrollView>
+            </LinearGradient>
+        </KeyboardAvoidingView>
     );
 }

@@ -1,15 +1,15 @@
-import React, {useState} from "react";
+import React from "react";
 import {
     View,
     Text,
     TouchableOpacity,
-    Image,
     Platform,
     StyleSheet,
 } from "react-native";
 import {LinearGradient} from "expo-linear-gradient";
 import {useRouter} from "expo-router";
 import {MotiView} from "moti";
+import { StatusBar } from "expo-status-bar";
 
 export default function IntroScreen() {
     const router = useRouter();
@@ -18,42 +18,51 @@ export default function IntroScreen() {
     return (
         <View style={styles.root(isWeb)}>
             <View style={styles.card(isWeb)}>
+                <StatusBar style="light" />
                 <LinearGradient
-                    colors={["#5A4FF3", "#A8B4FF"]}
+                    colors={["#6C5CE7", "#8B7FE8"]}
                     style={styles.gradient}
                 >
-                    {/* LOGO */}
-                    <View style={styles.logoWrap}>
+                    {/* Status Bar simulation wrapper for web layout spacing if needed */}
+                    <View className="w-full flex-row justify-between items-center px-6 pt-12 pb-4">
+                        {/* We use Expo StatusBar instead of mock UI */}
+                    </View>
+
+                    {/* Logo Section */}
+                    <View className="flex-1 items-center justify-center">
                         <MotiView
                             from={{opacity: 0, scale: 0.4}}
                             animate={{opacity: 1, scale: 1}}
                             transition={{duration: 600}}
                         >
-                            <Image
-                                source={require("../../assets/logo/logo_white.png")}
-                                style={styles.logo(isWeb)}
-                            />
+                            <View className="items-center justify-center flex-col">
+                                <Text className="text-[120px] font-black text-white leading-[120px] tracking-tight">
+                                    UM
+                                </Text>
+                                <View className="mt-4 gap-y-1 items-center">
+                                    <View className="h-2 w-32 bg-white/20 rounded-full" />
+                                    <View className="h-2 w-24 bg-white/20 rounded-full" />
+                                </View>
+                            </View>
                         </MotiView>
                     </View>
 
-                    {/* LOWER BUTTON BAR, STRICT 50/50 */}
-                    <View style={styles.bottomBar}>
-                        {/* LEFT BUTTON */}
+                    {/* Buttons Section */}
+                    <View className="w-full max-w-md px-6 space-y-4 pb-8 self-center mb-8">
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={() => router.push("/(auth)/login")}
-                            style={styles.leftBox}
+                            className="w-full py-4 bg-white rounded-3xl items-center justify-center shadow-lg mb-4"
                         >
-                            <Text style={styles.btnText}>Sign in</Text>
+                            <Text className="text-[#6C5CE7] font-semibold text-lg">Войти</Text>
                         </TouchableOpacity>
 
-                        {/* RIGHT BUTTON */}
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={() => router.push("/(auth)/register")}
-                            style={styles.rightBox}
+                            className="w-full py-4 bg-[#5548C8] rounded-3xl items-center justify-center shadow-lg"
                         >
-                            <Text style={styles.btnText}>Sign up</Text>
+                            <Text className="text-white font-semibold text-lg">Регистрация</Text>
                         </TouchableOpacity>
                     </View>
                 </LinearGradient>
@@ -62,14 +71,12 @@ export default function IntroScreen() {
     );
 }
 
-const BOX_HEIGHT = 120;
-
 const styles = {
     root: (isWeb: boolean) => ({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: isWeb ? "#FFFFFF" : "#FFFFFF",
+        backgroundColor: "#FFFFFF",
     }),
 
     card: (isWeb: boolean) => ({
@@ -78,55 +85,11 @@ const styles = {
         height: isWeb ? 680 : "100%",
         borderRadius: isWeb ? 28 : 0,
         overflow: "hidden",
-        backgroundColor: isWeb ? "#FFFFFF" : "transparent",
+        backgroundColor: "transparent",
     }),
 
     gradient: {
         flex: 1,
-        position: "relative",
-    },
-
-    logoWrap: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-
-    logo: (isWeb: boolean) => ({
-        width: isWeb ? 320 : 220,
-        height: isWeb ? 320 : 220,
-        resizeMode: "contain",
-    }),
-
-    bottomBar: {
-        flexDirection: "row",
-        width: "100%",
-        position: "absolute",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: BOX_HEIGHT,
-    },
-
-    leftBox: {
-        flex: 1,
-        backgroundColor: "#2E2C79",
-        justifyContent: "center",
-        alignItems: "center",
-        borderTopRightRadius: 100,
-    },
-
-    rightBox: {
-        flex: 1,
-        backgroundColor: "#3F2CCF",
-        justifyContent: "center",
-        alignItems: "center",
-        borderTopLeftRadius: 100,
-    },
-
-    btnText: {
-        fontSize: 28,
-        fontWeight: "700",
-        color: "white",
+        position: "relative" as const,
     },
 };

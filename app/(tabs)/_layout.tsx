@@ -41,6 +41,28 @@ export default function TabsLayout() {
                         href: hideForMentor ? null : "/catalog",
                     }}
                 />
+
+                {/* PARENT SCREENS */}
+                <Tabs.Screen name="parent/calendar" options={{ href: null }} />
+                <Tabs.Screen name="parent/clubs" options={{ href: null }} />
+                <Tabs.Screen name="parent/reports" options={{ href: null }} />
+                <Tabs.Screen name="parent/club/[id]" options={{ href: null }} />
+
+                {/* YOUTH SCREENS */}
+                <Tabs.Screen name="youth/goals" options={{ href: null }} />
+                <Tabs.Screen name="youth/tasks" options={{ href: null }} />
+                <Tabs.Screen name="youth/achievements" options={{ href: null }} />
+
+                {/* MENTOR SCREENS */}
+                <Tabs.Screen name="mentor/learning-path" options={{ href: null }} />
+                <Tabs.Screen name="mentor/student/[id]" options={{ href: null }} />
+
+                {/* ORGANIZATION SCREENS */}
+                <Tabs.Screen name="organization/clubs" options={{ href: null }} />
+                <Tabs.Screen name="organization/students" options={{ href: null }} />
+                <Tabs.Screen name="organization/applications" options={{ href: null }} />
+                <Tabs.Screen name="organization/attendance" options={{ href: null }} />
+                <Tabs.Screen name="organization/tasks" options={{ href: null }} />
             </Tabs>
 
             <CustomTabBar role={role}/>

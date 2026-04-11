@@ -1,199 +1,245 @@
+import React, { useState } from "react";
 import {
     View,
     Text,
     TextInput,
     TouchableOpacity,
+    Platform,
+    KeyboardAvoidingView,
     ScrollView,
-    Image,
-    Platform, Dimensions,
 } from "react-native";
-import {useRouter} from "expo-router";
-import {MotiView} from "moti";
-import WebOnly from "../../components/WebOnly";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import { MotiView } from "moti";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function RegisterScreen() {
     const router = useRouter();
+    
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [smsCode, setSmsCode] = useState("");
+    const [codeSent, setCodeSent] = useState(false);
+    const [codeVerified, setCodeVerified] = useState(false);
+    
+    const [firstName, setFirstName] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const isWeb = Platform.OS === "web";
-    const {width} = Dimensions.get("window");
-    const IS_DESKTOP = Platform.OS === "web" && width >= 900;
+    const formatPhone = (text: string) => {
+        const cleaned = text.replace(/\D/g, "");
+        setPhoneNumber(cleaned);
+    };
+
+    const handleAction = () => {
+        if (!codeSent) {
+            setCodeSent(true);
+        } else if (!codeVerified) {
+            setCodeVerified(true);
+        } else {
+            // mock logic: navigate to role selection
+            router.push("/(auth)/role");
+        }
+    };
+
+    const isButtonEnabled = () => {
+        if (!codeSent) return phoneNumber.length >= 10;
+        if (!codeVerified) return smsCode.length >= 4;
+        return firstName && password && confirmPassword && (password === confirmPassword);
+    };
 
     return (
-        <ScrollView
-            className="flex-1"
-            style={{
-                backgroundColor: isWeb ? "#2E2C79" : "#FFFFFF",
-            }}
-            contentContainerStyle={{paddingBottom: 60}}
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+            style={{ flex: 1 }}
         >
-            {/* MAIN CONTAINER */}
-            <View
-                style={{
-                    maxWidth: isWeb ? 680 : "100%",   // ⬅ шире
-                    width: "100%",
-                    alignSelf: "center",
-
-                    backgroundColor: isWeb ? "#FFFFFF" : "transparent",
-
-                    paddingHorizontal: isWeb ? 36 : 0, // чуть больше паддинг, только web
-
-                    borderRadius: isWeb ? 32 : 0,      // ⬅ красивое скругление
-                    overflow: "hidden",
-
-                    // лёгкая тень, только web
-                    shadowColor: isWeb ? "#000" : undefined,
-                    shadowOpacity: isWeb ? 0.07 : 0,
-                    shadowRadius: isWeb ? 18 : 0,
-                    shadowOffset: isWeb ? {width: 0, height: 6} : undefined,
-                }}
-            >
-
-                {/* HEADER */}
-                <View
-                    className="h-[380px] px-6 pt-12"
-                    style={{
-                        backgroundColor: "#2E2C79",
-                        borderBottomLeftRadius: 50,
-                        borderBottomRightRadius: 50,
-                    }}
-                >
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Text className="text-white text-base">← Назад</Text>
-                    </TouchableOpacity>
-
-                    <View className="items-center mt-4">
-
-                        <MotiView
-                            from={{opacity: 0, scale: 0.8}}
-                            animate={{opacity: 1, scale: 1}}
-                            transition={{duration: 450}}
-                            style={{marginBottom: 6}}
-                        >
-                            <Image
-                                source={require("../../assets/logo/logo_white.png")}
-                                style={{
-                                    width: 180,
-                                    height: 180,
-                                    resizeMode: "contain",
-                                }}
-                            />
-                        </MotiView>
-
-                        <MotiView
-                            from={{opacity: 0, translateY: -10}}
-                            animate={{opacity: 1, translateY: 0}}
-                            transition={{duration: 450, delay: 150}}
-                        >
-                            <Text className="text-white text-[26px] mt-2 font-bold text-center">
-                                Создайте свой аккаунт
-                            </Text>
-                        </MotiView>
-
-                        <MotiView
-                            from={{opacity: 0}}
-                            animate={{opacity: 1}}
-                            transition={{duration: 450, delay: 250}}
-                        >
-                            <Text className="text-white opacity-80 mt-1 text-center text-[14px] leading-5">
-                                Мы здесь, чтобы ты достиг цели{"\n"}Ты готов?
-                            </Text>
-                        </MotiView>
-
-                    </View>
-                </View>
-
-                {/* INPUTS */}
-                <View className="mt-8" style={{paddingHorizontal: isWeb ? 0 : 24}}>
-
-                    {["Enter email", "Enter password", "Repeat password"].map(
-                        (placeholder, i) => (
-                            <MotiView
-                                key={i}
-                                from={{opacity: 0, translateY: 20}}
-                                animate={{opacity: 1, translateY: 0}}
-                                transition={{duration: 350, delay: 100 + i * 50}}
-                                style={{marginBottom: 20}}
-                            >
-                                <TextInput
-                                    placeholder={placeholder}
-                                    placeholderTextColor="#A5A5A5"
-                                    secureTextEntry={placeholder === "Enter password"}
-                                    className="border-2 border-[#5E4BF5] rounded-2xl p-4 text-lg"
-                                />
-                            </MotiView>
-                        )
-                    )}
-
-                </View>
-
-                {/* BUTTON */}
-                <MotiView
-                    from={{opacity: 0, scale: 0.9}}
-                    animate={{opacity: 1, scale: 1}}
-                    transition={{duration: 350, delay: 350}}
-                    className="w-full mt-2 mb-4"
-                    style={{flexDirection: "row", justifyContent: "center"}}
-                >
-                    <TouchableOpacity
-                        onPress={() => router.push("/(auth)/role")}
-                        className="bg-[#2B1F9A] h-14 rounded-full items-center justify-center"
-                        style={{width: 230}}
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+                <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+                    <StatusBar style="light" />
+                    <LinearGradient
+                        colors={["#6C5CE7", "#8B7FE8"]}
+                        style={{ flex: 1 }}
                     >
-                        <Text className="text-white text-lg font-semibold">
-                            начать
-                        </Text>
-                    </TouchableOpacity>
-                </MotiView>
+                        <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+                            {/* Back Button */}
+                            <TouchableOpacity
+                                onPress={() => router.back()}
+                                className="px-6 py-2 flex-row items-center"
+                            >
+                                <Feather name="arrow-left" size={20} color="white" />
+                                <Text className="text-white ml-2 font-medium">Назад</Text>
+                            </TouchableOpacity>
 
-                {/* DIVIDER */}
-                <View className="flex-row items-center justify-center mt-10">
-                    <View className="flex-1 h-[1px] bg-gray-300"/>
-                    <Text className="mx-3 text-gray-500 text-sm">
-                        зарегистрироваться через
-                    </Text>
-                    <View className="flex-1 h-[1px] bg-gray-300"/>
+                            {/* Title Section */}
+                            <View className="px-6 py-4 items-center mb-4">
+                                <Text className="text-6xl font-black text-white mb-4">UM</Text>
+                                <Text className="text-2xl font-bold text-white mb-2">Создайте свой аккаунт</Text>
+                                <Text className="text-white/80 text-sm text-center px-4">
+                                    {!codeSent 
+                                      ? "Введите номер телефона для регистрации" 
+                                      : !codeVerified 
+                                        ? "Введите код из СМС, отправленный на ваш номер" 
+                                        : "Заполните данные для завершения регистрации"}
+                                </Text>
+                            </View>
+
+                            {/* Form Section */}
+                            <View className="flex-1 bg-gray-50 rounded-t-[40px] px-6 py-8">
+                                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+                                    
+                                    {/* Phone Number Input */}
+                                    <View className="relative justify-center mb-4">
+                                        <View className="absolute left-4 z-10">
+                                            <Feather name="phone" size={20} color="#6C5CE7" />
+                                        </View>
+                                        <TextInput
+                                            placeholder="+7 (999) 123-45-67"
+                                            placeholderTextColor="#A5A5A5"
+                                            value={phoneNumber}
+                                            onChangeText={formatPhone}
+                                            keyboardType="phone-pad"
+                                            editable={!codeSent}
+                                            className={`w-full pl-12 pr-4 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base ${codeSent ? "opacity-60" : ""}`}
+                                        />
+                                    </View>
+
+                                    {/* SMS Code (Animated In) */}
+                                    {codeSent && !codeVerified && (
+                                        <MotiView 
+                                            from={{opacity: 0, translateY: 10}}
+                                            animate={{opacity: 1, translateY: 0}}
+                                            className="relative justify-center mb-4"
+                                        >
+                                            <TextInput
+                                                placeholder="Введите код из СМС"
+                                                placeholderTextColor="#A5A5A5"
+                                                value={smsCode}
+                                                onChangeText={setSmsCode}
+                                                keyboardType="numeric"
+                                                maxLength={6}
+                                                className="w-full px-4 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base text-center tracking-[10px] font-bold"
+                                            />
+                                            <TouchableOpacity 
+                                                onPress={() => { setCodeSent(false); setSmsCode(""); }}
+                                                className="mt-3 items-center"
+                                            >
+                                                <Text className="text-[#6C5CE7] font-semibold text-sm">Отправить код повторно</Text>
+                                            </TouchableOpacity>
+                                        </MotiView>
+                                    )}
+
+                                    {/* Post Verification Fields */}
+                                    {codeVerified && (
+                                        <MotiView 
+                                            from={{opacity: 0, translateY: 10}}
+                                            animate={{opacity: 1, translateY: 0}}
+                                            className="space-y-4"
+                                        >
+                                            <View className="relative justify-center mb-4">
+                                                <View className="absolute left-4 z-10">
+                                                    <Feather name="user" size={20} color="#6C5CE7" />
+                                                </View>
+                                                <TextInput
+                                                    placeholder="Введите имя"
+                                                    placeholderTextColor="#A5A5A5"
+                                                    value={firstName}
+                                                    onChangeText={setFirstName}
+                                                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base"
+                                                />
+                                            </View>
+
+                                            <View className="relative justify-center mb-4">
+                                                <View className="absolute left-4 z-10">
+                                                    <Feather name="lock" size={20} color="#6C5CE7" />
+                                                </View>
+                                                <TextInput
+                                                    placeholder="Введите пароль"
+                                                    placeholderTextColor="#A5A5A5"
+                                                    value={password}
+                                                    onChangeText={setPassword}
+                                                    secureTextEntry={!showPassword}
+                                                    className="w-full pl-12 pr-12 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base"
+                                                />
+                                                <TouchableOpacity 
+                                                    onPress={() => setShowPassword(!showPassword)}
+                                                    className="absolute right-4 z-10"
+                                                >
+                                                    <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="#6C5CE7" />
+                                                </TouchableOpacity>
+                                            </View>
+
+                                            <View className="relative justify-center mb-4">
+                                                <View className="absolute left-4 z-10">
+                                                    <Feather name="lock" size={20} color="#6C5CE7" />
+                                                </View>
+                                                <TextInput
+                                                    placeholder="Подтвердите пароль"
+                                                    placeholderTextColor="#A5A5A5"
+                                                    value={confirmPassword}
+                                                    onChangeText={setConfirmPassword}
+                                                    secureTextEntry={!showConfirmPassword}
+                                                    className="w-full pl-12 pr-12 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base"
+                                                />
+                                                <TouchableOpacity 
+                                                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-4 z-10"
+                                                >
+                                                    <Feather name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#6C5CE7" />
+                                                </TouchableOpacity>
+                                            </View>
+                                        </MotiView>
+                                    )}
+
+                                    {/* Action Button */}
+                                    <TouchableOpacity
+                                        onPress={handleAction}
+                                        disabled={!isButtonEnabled()}
+                                        className={`w-full py-4 rounded-2xl items-center justify-center shadow-lg mt-4 mb-6 ${
+                                            isButtonEnabled() ? 'bg-[#6C5CE7]' : 'bg-gray-300'
+                                        }`}
+                                    >
+                                        <Text className={`text-lg font-semibold ${isButtonEnabled() ? 'text-white' : 'text-gray-500'}`}>
+                                            {codeSent ? (codeVerified ? "Создать аккаунт" : "Подтвердить код") : "Получить СМС-код"}
+                                        </Text>
+                                    </TouchableOpacity>
+
+                                    {/* Divider */}
+                                    <View className="flex-row items-center justify-center mb-4">
+                                        <View className="flex-1 h-px bg-gray-300" />
+                                        <Text className="mx-3 text-gray-400 text-sm">зарегистрироваться через</Text>
+                                        <View className="flex-1 h-px bg-gray-300" />
+                                    </View>
+
+                                    {/* Social Icons (mock) */}
+                                    <View className="flex-row justify-center space-x-6 items-center">
+                                        <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md">
+                                            <Feather name="github" size={24} color="#000" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md ml-4 mr-4">
+                                            <Text className="text-2xl font-bold text-[#ea4335]">G</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md">
+                                            <Feather name="twitter" size={24} color="#1DA1F2" />
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    {/* Go to Login */}
+                                    <View className="flex-row justify-center mt-6">
+                                        <Text className="text-gray-600 text-sm">уже есть аккаунт? </Text>
+                                        <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
+                                            <Text className="text-[#6C5CE7] font-semibold text-sm">Войти</Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                </ScrollView>
+                            </View>
+                         </SafeAreaView>
+                    </LinearGradient>
                 </View>
-
-                {/* ICONS */}
-                <MotiView
-                    from={{opacity: 0, translateY: 10}}
-                    animate={{opacity: 1, translateY: 0}}
-                    transition={{duration: 300, delay: 450}}
-                    className="mt-6 mb-10"
-                    style={{
-                        flexDirection: "row",
-                        justifyContent: "center",
-                        alignItems: "center",
-                    }}
-                >
-                    <Image source={require("../../assets/icons/apple.png")} className="w-9 h-9 mx-4"/>
-                    <Image source={require("../../assets/icons/google.png")} className="w-9 h-9 mx-4"/>
-                    <Image source={require("../../assets/icons/facebook.png")} className="w-9 h-9 mx-4"/>
-                </MotiView>
-
-                {/* LOGIN */}
-                <MotiView
-                    from={{opacity: 0}}
-                    animate={{opacity: 1}}
-                    transition={{duration: 300, delay: 500}}
-                    className="items-center mb-12"
-                >
-                    <Text className="text-gray-600 text-[13px]">
-                        уже есть аккаунт?{" "}
-                        <Text
-                            className="text-[#2B1F9A] font-semibold"
-                            onPress={() => router.push("./login")}
-                        >
-                            Войти
-                        </Text>
-                    </Text>
-
-                    {/* ДОП ОТСТУП ТОЛЬКО НА WEB */}
-                    <WebOnly style={{height: 20}}/>
-                </MotiView>
-
-            </View>
-
-        </ScrollView>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }

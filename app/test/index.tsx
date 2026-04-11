@@ -1,0 +1,193 @@
+import React, { useState } from "react";
+import { View, Text, Pressable, ActivityIndicator, Alert, SafeAreaView, Platform } from "react-native";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import { useParentData } from "../../contexts/ParentDataContext";
+import { LinearGradient } from "expo-linear-gradient";
+
+const QUESTIONS = [
+  {
+    id: 1,
+    text: "Что ребенку нравится делать больше всего в свободное время?",
+    options: [
+      { id: "a", text: "Рисовать, лепить, создавать что-то руками.", value: "creative" },
+      { id: "b", text: "Играть в подвижные игры, бегать, танцевать.", value: "physical" },
+      { id: "c", text: "Собирать конструкторы по схемам, решать задачки.", value: "logical" },
+      { id: "d", text: "Общаться с друзьями, придумывать совместные игры.", value: "social" },
+      { id: "e", text: "Слушать сказки, сочинять истории, много болтать.", value: "linguistic" },
+    ]
+  },
+  {
+    id: 2,
+    text: "Как ребенок относится к новым правилам или сложным задачам?",
+    options: [
+      { id: "a", text: "Часто находит нестандартное решение в обход правил.", value: "creative" },
+      { id: "b", text: "Любит соревновательный элемент, старается сделать физически быстрее.", value: "physical" },
+      { id: "c", text: "Пытается понять систему, почему правило именно такое.", value: "logical" },
+      { id: "d", text: "Просит помощи или договаривается с другими.", value: "social" },
+      { id: "e", text: "Пытается обсудить или переубедить вас словами.", value: "linguistic" },
+    ]
+  },
+  {
+    id: 3,
+    text: "Какая любимая игрушка или игра?",
+    options: [
+      { id: "a", text: "Краски, пластилин, наборы для творчества.", value: "creative" },
+      { id: "b", text: "Мяч, велосипед, спортивный инвентарь.", value: "physical" },
+      { id: "c", text: "Головоломки, шашки, кубики с цифрами.", value: "logical" },
+      { id: "d", text: "Настольные игры для компании, ролевые игры.", value: "social" },
+      { id: "e", text: "Книжки, аудиосказки, карточки со словами.", value: "linguistic" },
+    ]
+  }
+];
+
+export default function DiagnosticTest() {
+  const router = useRouter();
+  const { childId } = useLocalSearchParams();
+  const { childrenProfile, updateChildDiagnostic } = useParentData();
+  
+  const child = childrenProfile.find(c => c.id === childId);
+  
+  const [currentQ, setCurrentQ] = useState(0);
+  const [answers, setAnswers] = useState<string[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  if (!child) return null;
+
+  const handleSelectOption = (value: string) => {
+    const newAnswers = [...answers, value];
+    
+    if (currentQ < QUESTIONS.length - 1) {
+      setAnswers(newAnswers);
+      setCurrentQ(prev => prev + 1);
+    } else {
+      processWithAI(newAnswers);
+    }
+  };
+
+  const processWithAI = async (finalAnswers: string[]) => {
+    setIsAnalyzing(true);
+    try {
+      const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) {
+         throw new Error("Missing Gemini API Key in .env. Please add EXPO_PUBLIC_GEMINI_API_KEY.");
+      }
+
+      // Prepare data summary
+      const answersSummary = finalAnswers.join(", ");
+      const prompt = `Analyze this child based on Howard Gardner's theory of multiple intelligences.
+      Child Name: ${child.name}, Age: ${child.age}, Interests: ${child.interests.join(", ")}.
+      Quiz trait tendencies selected by parent: ${answersSummary}.
+      
+      Respond STRICTLY in the following JSON format (no markdown, no quotes around JSON):
+      {
+        "scores": {
+          "creative": number 0-100,
+          "logical": number 0-100,
+          "social": number 0-100,
+          "physical": number 0-100,
+          "linguistic": number 0-100
+        },
+        "summary": "1 sentence summarizing their strongest trait or personality type in Russian",
+        "recommendedConstellation": "A short 1-3 word title in Russian (e.g. 'Юный Исследователь', 'Инженер')"
+      }`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+              temperature: 0.7,
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (data.error) {
+        throw new Error(data.error.message);
+      }
+
+      const textOutput = data.candidates[0].content.parts[0].text;
+      
+      let parsed;
+      try {
+          parsed = JSON.parse(textOutput.replace(/```json/g, "").replace(/```/g, ""));
+      } catch (e) {
+          throw new Error("Failed to parse AI output: " + textOutput);
+      }
+
+      updateChildDiagnostic(child.id, {
+          childId: child.id,
+          scores: parsed.scores,
+          summary: parsed.summary,
+          recommendedConstellation: parsed.recommendedConstellation
+      });
+
+      router.back();
+
+    } catch (error: any) {
+      console.error("AI Diagnostic Error:", error);
+      if (Platform.OS === 'web') {
+          window.alert("Ошибка тестирования ИИ: " + error.message);
+      } else {
+          Alert.alert("Ошибка тестирования ИИ", error.message);
+      }
+      setIsAnalyzing(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#6C5CE7" }}>
+      <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={{ flex: 1, padding: 20 }}>
+        <View style={{flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 30}}>
+             <Pressable onPress={() => router.back()} disabled={isAnalyzing}>
+                 <Text style={{color: "rgba(255,255,255,0.7)", fontWeight: "600"}}>Отмена</Text>
+             </Pressable>
+             <Text style={{color: "white", fontWeight: "800"}}>Анализ: {child.name}</Text>
+             <View style={{width: 50}} />
+        </View>
+
+        {isAnalyzing ? (
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <ActivityIndicator size="large" color="#FFFFFF" />
+            <Text style={{ color: "white", fontSize: 18, fontWeight: "700", marginTop: 24, textAlign: "center" }}>
+              ИИ Gemini составляет карту талантов...
+            </Text>
+            <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, fontWeight: "500", marginTop: 12, textAlign: "center" }}>
+              Это может занять пару секунд.
+            </Text>
+          </View>
+        ) : (
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: "rgba(255, 255, 255, 0.7)", fontWeight: "800", marginBottom: 12 }}>
+              ВОПРОС {currentQ + 1} ИЗ {QUESTIONS.length}
+            </Text>
+            <Text style={{ color: "white", fontSize: 24, fontWeight: "900", marginBottom: 32 }}>
+              {QUESTIONS[currentQ].text}
+            </Text>
+            
+            {QUESTIONS[currentQ].options.map((opt) => (
+              <Pressable
+                key={opt.id}
+                onPress={() => handleSelectOption(opt.value)}
+                style={({ pressed }) => ({
+                  backgroundColor: "rgba(255, 255, 255, 0.15)",
+                  padding: 20,
+                  borderRadius: 16,
+                  marginBottom: 12,
+                  borderWidth: 1,
+                  borderColor: "rgba(255, 255, 255, 0.1)",
+                  opacity: pressed ? 0.7 : 1
+                })}
+              >
+                <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>{opt.text}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+      </LinearGradient>
+    </SafeAreaView>
+  );
+}

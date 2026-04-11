@@ -1,212 +1,156 @@
+import React, { useState } from "react";
 import {
     View,
     Text,
     TextInput,
     TouchableOpacity,
-    ScrollView,
-    Image,
     Platform,
+    KeyboardAvoidingView,
+    Keyboard,
+    ScrollView,
 } from "react-native";
-import {useRouter} from "expo-router";
-import {MotiView} from "moti";
-import WebOnly from "../../components/WebOnly";
+import { useRouter } from "expo-router";
+import { LinearGradient } from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
 
 export default function LoginScreen() {
     const router = useRouter();
     const isWeb = Platform.OS === "web";
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+
+    const handleLogin = () => {
+        // mock logic: navigate to home
+        router.push("/(tabs)/home");
+    };
 
     return (
-        <ScrollView
-            style={{
-                flex: 1,
-                backgroundColor: isWeb ? "#2E2C79" : "#FFFFFF",
-            }}
-            contentContainerStyle={{paddingBottom: 60}}
+        <KeyboardAvoidingView 
+            behavior={Platform.OS === "ios" ? "padding" : "height"} 
+            style={{ flex: 1 }}
         >
-
-            {/* MAIN CONTAINER (WEB CARD) */}
-            <View
-                style={{
-                    maxWidth: isWeb ? 680 : "100%",
-                    width: "100%",
-                    alignSelf: "center",
-                    backgroundColor: isWeb ? "#FFFFFF" : "transparent",
-                    paddingHorizontal: isWeb ? 36 : 0,
-                    borderRadius: isWeb ? 32 : 0,
-                    overflow: "hidden",
-
-                    shadowColor: isWeb ? "#000" : undefined,
-                    shadowOpacity: isWeb ? 0.07 : 0,
-                    shadowRadius: isWeb ? 18 : 0,
-                    shadowOffset: isWeb ? {width: 0, height: 6} : undefined,
-                }}
-            >
-
-                {/* HEADER */}
-                <View
-                    style={{
-                        height: 380,
-                        backgroundColor: "#2E2C79",
-                        borderBottomLeftRadius: 50,
-                        borderBottomRightRadius: 50,
-                        paddingHorizontal: 24,
-                        paddingTop: 20,          // возвращаем комфортный верхний отступ для кнопки
-                    }}
-                >
-                    {/* Назад */}
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Text className="text-white text-base">← Назад</Text>
-                    </TouchableOpacity>
-
-                    {/* Центрированный блок */}
-                    <View
-                        style={{
-                            flex: 1,
-                            justifyContent: "center",
-                            alignItems: "center",
-                        }}
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+                <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
+                    <StatusBar style="light" />
+                    <LinearGradient
+                        colors={["#6C5CE7", "#8B7FE8"]}
+                        style={{ flex: 1 }}
                     >
+                        {/* Header Spacer for Status Bar */}
+                        <View className="w-full flex-row justify-between items-center px-6 pt-12 pb-4" />
 
-                        {/* Лого */}
-                        <MotiView
-                            from={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 450 }}
-                            style={{ marginBottom: 6 }}
+                        {/* Back Button */}
+                        <TouchableOpacity
+                            onPress={() => router.back()}
+                            className="px-6 py-2 flex-row items-center"
                         >
-                            <Image
-                                source={require("../../assets/logo/logo_white.png")}
-                                style={{
-                                    width: 180,
-                                    height: 180,
-                                    resizeMode: "contain",
-                                }}
-                            />
-                        </MotiView>
+                            <Feather name="arrow-left" size={20} color="white" />
+                            <Text className="text-white ml-2 font-medium">Назад</Text>
+                        </TouchableOpacity>
 
-                        {/* Заголовок */}
-                        <MotiView
-                            from={{ opacity: 0, translateY: -10 }}
-                            animate={{ opacity: 1, translateY: 0 }}
-                            transition={{ duration: 450, delay: 150 }}
-                        >
-                            <Text
-                                style={{
-                                    color: "white",
-                                    fontSize: 28,
-                                    fontWeight: "700",
-                                    textAlign: "center",
-                                }}
-                            >
-                                Добро пожаловать!
+                        {/* Title Section */}
+                        <View className="px-6 py-8 items-center">
+                            <Text className="text-6xl font-black text-white mb-4">UM</Text>
+                            <Text className="text-2xl font-bold text-white mb-2">Войти в аккаунт</Text>
+                            <Text className="text-white/80 text-sm text-center">
+                                Добро пожаловать!{"\n"}Продолжим твой путь к успеху
                             </Text>
-                        </MotiView>
+                        </View>
 
-                        {/* Подзаголовок */}
-                        <MotiView
-                            from={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 450, delay: 250 }}
-                        >
-                            <Text
-                                style={{
-                                    color: "white",
-                                    opacity: 0.8,
-                                    marginTop: 4,
-                                    fontSize: 15,
-                                    lineHeight: 20,
-                                    textAlign: "center",
-                                }}
+                        {/* Form Section */}
+                        <View className="flex-1 bg-gray-50 rounded-t-[40px] px-6 py-8">
+                            
+                            {/* Email Input */}
+                            <View className="relative justify-center mb-4">
+                                <View className="absolute left-4 z-10">
+                                    <Feather name="mail" size={20} color="#6C5CE7" />
+                                </View>
+                                <TextInput
+                                    placeholder="Введите email"
+                                    placeholderTextColor="#A5A5A5"
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    keyboardType="email-address"
+                                    autoCapitalize="none"
+                                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base"
+                                />
+                            </View>
+
+                            {/* Password Input */}
+                            <View className="relative justify-center mb-4">
+                                <View className="absolute left-4 z-10">
+                                    <Feather name="lock" size={20} color="#6C5CE7" />
+                                </View>
+                                <TextInput
+                                    placeholder="Введите пароль"
+                                    placeholderTextColor="#A5A5A5"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    secureTextEntry={!showPassword}
+                                    className="w-full pl-12 pr-12 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base"
+                                />
+                                <TouchableOpacity 
+                                    onPress={() => setShowPassword(!showPassword)}
+                                    className="absolute right-4 z-10"
+                                >
+                                    <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="#6C5CE7" />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Forgot Password */}
+                            <TouchableOpacity className="items-end mb-6">
+                                <Text className="text-[#6C5CE7] text-sm font-medium">
+                                    Забыли пароль?
+                                </Text>
+                            </TouchableOpacity>
+
+                            {/* Submit Button */}
+                            <TouchableOpacity
+                                onPress={handleLogin}
+                                className={`w-full py-4 rounded-2xl items-center justify-center shadow-lg mb-6 ${
+                                    email && password ? 'bg-[#6C5CE7]' : 'bg-gray-300'
+                                }`}
+                                disabled={!email || !password}
                             >
-                                Готов продолжить путь?
-                            </Text>
-                        </MotiView>
+                                <Text className={`text-lg font-semibold ${email && password ? 'text-white' : 'text-gray-500'}`}>
+                                    Войти
+                                </Text>
+                            </TouchableOpacity>
 
-                    </View>
+                            {/* Divider */}
+                            <View className="flex-row items-center justify-center mb-4">
+                                <View className="flex-1 h-px bg-gray-300" />
+                                <Text className="mx-3 text-gray-400 text-sm">или войти через</Text>
+                                <View className="flex-1 h-px bg-gray-300" />
+                            </View>
+
+                            {/* Social Icons (mock) */}
+                            <View className="flex-row justify-center space-x-6 items-center">
+                                <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md">
+                                    <Feather name="github" size={24} color="#000" />
+                                </TouchableOpacity>
+                                <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md ml-4 mr-4">
+                                    <Text className="text-2xl font-bold text-[#ea4335]">G</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md">
+                                    <Feather name="twitter" size={24} color="#1DA1F2" />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Go to Register */}
+                            <View className="flex-row justify-center mt-6">
+                                <Text className="text-gray-600 text-sm">нет аккаунта? </Text>
+                                <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+                                    <Text className="text-[#6C5CE7] font-semibold text-sm">Зарегистрироваться</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                        </View>
+                    </LinearGradient>
                 </View>
-
-                {/* INPUTS */}
-                <View
-                    className="mt-8"
-                    style={{paddingHorizontal: isWeb ? 0 : 24}}
-                >
-                    {["Enter email", "Enter password"].map((placeholder, i) => (
-                        <MotiView
-                            key={i}
-                            from={{opacity: 0, translateY: 20}}
-                            animate={{opacity: 1, translateY: 0}}
-                            transition={{duration: 350, delay: 120 + i * 70}}
-                            style={{marginBottom: 20}}
-                        >
-                            <TextInput
-                                placeholder={placeholder}
-                                placeholderTextColor="#A5A5A5"
-                                secureTextEntry={placeholder === "Enter password"}
-                                className="border-2 border-[#2E2C79] rounded-2xl p-4 text-lg bg-white"
-                            />
-                        </MotiView>
-                    ))}
-                </View>
-
-                {/* REMEMBER + FORGOT */}
-                <View
-                    className="flex-row justify-between items-center mt-2"
-                    style={{paddingHorizontal: isWeb ? 0 : 24}}
-                >
-                    <View className="flex-row items-center">
-                        <View className="w-5 h-5 rounded border border-gray-400 mr-2"/>
-                        <Text className="text-sm">Запомнить меня</Text>
-                    </View>
-
-                    <Text className="text-[#2E2C79] text-sm">Забыли пароль?</Text>
-                </View>
-
-                {/* LOGIN BUTTON */}
-                <MotiView
-                    from={{opacity: 0, scale: 0.9}}
-                    animate={{opacity: 1, scale: 1}}
-                    transition={{duration: 350, delay: 350}}
-                    className="w-full mt-10 mb-4"
-                    style={{flexDirection: "row", justifyContent: "center"}}
-                >
-                    <TouchableOpacity
-                        onPress={() => router.push("/(tabs)/home")}
-                        className="bg-[#2E2C79] h-14 rounded-full items-center justify-center"
-                        style={{width: 230}}
-                    >
-                        <Text className="text-white text-lg font-semibold">
-                            ВОЙТИ
-                        </Text>
-                    </TouchableOpacity>
-                </MotiView>
-
-                {/* SOCIAL DIVIDER */}
-                <View className="flex-row items-center justify-center mt-14 px-10">
-                    <View className="flex-1 h-[1px] bg-gray-300"/>
-                    <Text className="mx-4 text-gray-500">войти с</Text>
-                    <View className="flex-1 h-[1px] bg-gray-300"/>
-                </View>
-
-                {/* SOCIAL ICONS */}
-                <MotiView
-                    from={{opacity: 0, translateY: 12}}
-                    animate={{opacity: 1, translateY: 0}}
-                    transition={{duration: 350, delay: 450}}
-                    className="mt-6 mb-12"
-                    style={{
-                        flexDirection: "row",
-                        justifyContent: "center",
-                        alignItems: "center",
-                    }}
-                >
-                    <Image source={require("../../assets/icons/apple.png")} className="w-9 h-9 mx-4"/>
-                    <Image source={require("../../assets/icons/google.png")} className="w-9 h-9 mx-4"/>
-                    <Image source={require("../../assets/icons/facebook.png")} className="w-9 h-9 mx-4"/>
-                </MotiView>
-
-                <WebOnly style={{height: 20}}/>
-
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </KeyboardAvoidingView>
     );
 }
