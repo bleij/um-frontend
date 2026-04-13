@@ -95,7 +95,7 @@ export default function OrgTesting() {
 
     return (
         <LinearGradient
-            colors={["#3F3C9F", "#C7C4F2"]}
+            colors={["#6C5CE7", "#C7C4F2"]}
             start={{x: 0, y: 0}}
             end={{x: 0, y: 1}}
             style={{flex: 1}}
@@ -193,7 +193,7 @@ export default function OrgTesting() {
                                     key={i}
                                     onPress={() => selectAnswer(i)}
                                     style={{
-                                        backgroundColor: active ? "#3F3C9F" : "#EFEFFE",
+                                        backgroundColor: active ? "#6C5CE7" : "#EFEFFE",
                                         borderRadius: 30,
                                         paddingVertical: 14,
                                         paddingHorizontal: 20,
@@ -221,7 +221,7 @@ export default function OrgTesting() {
                         onPress={next}
                         style={{
                             backgroundColor:
-                                answers[step] === undefined ? "#999" : "#2E2C79",
+                                answers[step] === undefined ? "#999" : "#6C5CE7",
                             paddingVertical: 16,
                             borderRadius: 30,
                         }}

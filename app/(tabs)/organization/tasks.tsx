@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const MOCK_TASKS = [
     {
@@ -55,8 +56,8 @@ export default function OrgTasks() {
     const filtered = selectedClub === "all" ? MOCK_TASKS : MOCK_TASKS.filter(t => t.clubId === selectedClub);
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#FFF7F0" }}>
-            <LinearGradient colors={["#EA580C", "#F97316"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
                 <SafeAreaView edges={["top"]}>
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
                         <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
@@ -82,7 +83,7 @@ export default function OrgTasks() {
                                 paddingVertical: 10, 
                                 borderRadius: 14, 
                                 marginRight: 8,
-                                backgroundColor: selectedClub === club.id ? "#F97316" : "white",
+                                backgroundColor: selectedClub === club.id ? COLORS.primary : COLORS.muted,
                                 shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 5
                             }}
                         >
@@ -101,7 +102,7 @@ export default function OrgTasks() {
                                     <Text style={{ fontSize: 18, fontWeight: "800", color: "#1F1F2E" }}>{task.title}</Text>
                                     <Text style={{ fontSize: 13, color: "#6B7280", marginTop: 2 }}>{task.club}</Text>
                                 </View>
-                                <View style={{ backgroundColor: "#0D9488", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, height: 24 }}>
+                                <View style={{ backgroundColor: COLORS.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, height: 24 }}>
                                     <Text style={{ color: "white", fontSize: 11, fontWeight: "700" }}>+{task.xp} XP</Text>
                                 </View>
                             </View>
@@ -120,16 +121,16 @@ export default function OrgTasks() {
                             <View style={{ marginBottom: 16 }}>
                                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
                                     <Text style={{ fontSize: 13, fontWeight: "600", color: "#4B5563" }}>Выполнено: {task.completed} / {task.total}</Text>
-                                    <Text style={{ fontSize: 13, fontWeight: "800", color: "#F97316" }}>{percent}%</Text>
+                                    <Text style={{ fontSize: 13, fontWeight: "800", color: COLORS.primary }}>{percent}%</Text>
                                 </View>
                                 <View style={{ height: 8, backgroundColor: "#F3F4F6", borderRadius: 4, overflow: "hidden" }}>
-                                    <View style={{ height: 8, width: `${percent}%`, backgroundColor: "#F97316", borderRadius: 4 }} />
+                                    <View style={{ height: 8, width: `${percent}%`, backgroundColor: COLORS.primary, borderRadius: 4 }} />
                                 </View>
                             </View>
 
                             <View style={{ flexDirection: "row", gap: 10 }}>
-                                <TouchableOpacity style={{ flex: 1, height: 40, borderRadius: 10, backgroundColor: "#FFF7ED", alignItems: "center", justifyContent: "center" }}>
-                                    <Text style={{ color: "#F97316", fontWeight: "700", fontSize: 13 }}>Изменить</Text>
+                                <TouchableOpacity style={{ flex: 1, height: 40, borderRadius: 10, backgroundColor: `${COLORS.primary}10`, alignItems: "center", justifyContent: "center" }}>
+                                    <Text style={{ color: COLORS.primary, fontWeight: "700", fontSize: 13 }}>Изменить</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity style={{ height: 40, width: 40, borderRadius: 10, backgroundColor: "#FEF2F2", alignItems: "center", justifyContent: "center" }}>
                                     <Feather name="trash-2" size={18} color="#EF4444" />

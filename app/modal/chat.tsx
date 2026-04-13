@@ -55,7 +55,7 @@ export default function ChatModal() {
 
     return (
         <LinearGradient
-            colors={["#3F3C9F", "#FFFFFF", "#3F3C9F"]}
+            colors={["#6C5CE7", "#FFFFFF", "#6C5CE7"]}
             start={{x: 0, y: 0}}   // слева
             end={{x: 1, y: 0}}     // вправо
             style={{flex: 1}}
@@ -115,7 +115,7 @@ export default function ChatModal() {
                                 style={{
                                     alignSelf: mine ? "flex-end" : "flex-start",
                                     backgroundColor: mine
-                                        ? "#3F3C9F"
+                                        ? "#6C5CE7"
                                         : "#F1F1F1",
                                     paddingVertical: 10,
                                     paddingHorizontal: 14,
@@ -168,7 +168,7 @@ export default function ChatModal() {
 
                     <TouchableOpacity
                         style={{
-                            backgroundColor: "#3F3C9F",
+                            backgroundColor: "#6C5CE7",
                             paddingHorizontal: 16,
                             paddingVertical: 10,
                             borderRadius: 20,

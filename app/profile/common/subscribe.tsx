@@ -92,7 +92,7 @@ export default function SubscribeScreen() {
     }
 
     return (
-        <LinearGradient colors={["#3F3C9F", "#ECEBFF"]} style={{flex: 1}}>
+        <LinearGradient colors={["#6C5CE7", "#ECEBFF"]} style={{flex: 1}}>
             <ScrollView
                 contentContainerStyle={{
                     paddingTop: 60,
@@ -143,7 +143,7 @@ export default function SubscribeScreen() {
                                     padding: 22,
                                     marginBottom: 24,
                                     borderWidth: plan.popular || isSelected ? 2 : 1,
-                                    borderColor: isSelected ? "#2E2C79" : plan.popular ? "#3F3C9F" : "rgba(15, 23, 42, 0.08)",
+                                    borderColor: isSelected ? "#6C5CE7" : plan.popular ? "#6C5CE7" : "rgba(15, 23, 42, 0.08)",
                                 }}
                             >
                                 <View style={{
@@ -154,7 +154,7 @@ export default function SubscribeScreen() {
                                     {plan.popular ? (
                                         <View
                                             style={{
-                                                backgroundColor: "#3F3C9F",
+                                                backgroundColor: "#6C5CE7",
                                                 paddingVertical: 4,
                                                 paddingHorizontal: 10,
                                                 borderRadius: 10,
@@ -170,7 +170,7 @@ export default function SubscribeScreen() {
                                     {isSelected ? (
                                         <View
                                             style={{
-                                                backgroundColor: "#2E2C79",
+                                                backgroundColor: "#6C5CE7",
                                                 paddingVertical: 4,
                                                 paddingHorizontal: 10,
                                                 borderRadius: 10,
@@ -188,14 +188,14 @@ export default function SubscribeScreen() {
 
                                 <Text style={{fontSize: 22, fontWeight: "700", marginBottom: 6}}>{plan.title}</Text>
 
-                                <Text style={{fontSize: 18, fontWeight: "800", color: "#3F3C9F", marginBottom: 16}}>
+                                <Text style={{fontSize: 18, fontWeight: "800", color: "#6C5CE7", marginBottom: 16}}>
                                     {plan.price}
                                 </Text>
 
                                 {plan.features.map((f, idx) => (
                                     <View key={idx}
                                           style={{flexDirection: "row", alignItems: "center", marginBottom: 8}}>
-                                        <Feather name="check" size={18} color="#3F3C9F"/>
+                                        <Feather name="check" size={18} color="#6C5CE7"/>
                                         <Text style={{marginLeft: 10, fontSize: 15}}>{f}</Text>
                                     </View>
                                 ))}
@@ -203,7 +203,7 @@ export default function SubscribeScreen() {
                                 <TouchableOpacity
                                     onPress={() => choosePlan(plan.title)}
                                     style={{
-                                        backgroundColor: isSelected ? "#2E2C79" : "#3F3C9F",
+                                        backgroundColor: isSelected ? "#6C5CE7" : "#6C5CE7",
                                         marginTop: 20,
                                         paddingVertical: 14,
                                         borderRadius: 999,

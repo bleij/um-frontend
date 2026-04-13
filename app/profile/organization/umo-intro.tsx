@@ -65,7 +65,7 @@ export default function UmoIntro() {
 
     return (
         <LinearGradient
-            colors={["#3F3C9F", "#FFFFFF", "#8D88D9"]}
+            colors={["#6C5CE7", "#FFFFFF", "#8B7FE8"]}
             start={{x: 0.5, y: 0}}
             end={{x: 0.5, y: 1}}
             style={{flex: 1}}
@@ -122,7 +122,7 @@ export default function UmoIntro() {
                     >
                         <Text
                             style={{
-                                color: "#2E2C79",
+                                color: "#6C5CE7",
                                 fontSize: 16,
                                 fontWeight: "600",
                                 textAlign: "center",
@@ -141,7 +141,7 @@ export default function UmoIntro() {
                         height: 64,
                         borderRadius: 40,
                         borderWidth: 2,
-                        borderColor: "#3F3C9F",
+                        borderColor: "#6C5CE7",
                         backgroundColor: "#E6E9FF",
                         overflow: "hidden",
                         justifyContent: "center",
@@ -153,7 +153,7 @@ export default function UmoIntro() {
                             position: "absolute",
                             height: "100%",
                             width: fillWidth,
-                            backgroundColor: "#3F3C9F",
+                            backgroundColor: "#6C5CE7",
                         }}
                     />
 
@@ -162,7 +162,7 @@ export default function UmoIntro() {
                         style={{
                             position: "absolute",
                             alignSelf: "center",
-                            color: completed ? "white" : "#3F3C9F",
+                            color: completed ? "white" : "#6C5CE7",
                             fontWeight: "700",
                             fontSize: 18,
                         }}
@@ -177,7 +177,7 @@ export default function UmoIntro() {
                             width: HANDLE_SIZE,
                             height: HANDLE_SIZE,
                             borderRadius: HANDLE_SIZE / 2,
-                            backgroundColor: completed ? "#2E2C79" : "#3F3C9F",
+                            backgroundColor: completed ? "#6C5CE7" : "#6C5CE7",
                             justifyContent: "center",
                             alignItems: "center",
                             transform: [{translateX: sliderX}],

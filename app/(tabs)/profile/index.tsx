@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { COLORS } from "../../../constants/theme";
 
 import ParentProfile from "../../profile/parent/index";
 import YouthProfile from "../../profile/youth/index";
@@ -21,8 +22,8 @@ export default function ProfileScreenRouter() {
 
     if (!role) {
         return (
-            <View style={{ flex: 1, backgroundColor: "#6C5CE7", justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator size="large" color="#FFFFFF" />
+            <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: "center", alignItems: "center" }}>
+                <ActivityIndicator size="large" color={COLORS.primary} />
             </View>
         );
     }

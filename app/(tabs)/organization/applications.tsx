@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const MOCK_APPLICATIONS = [
     {
@@ -53,8 +54,8 @@ export default function OrgApplications() {
     const newApps = apps.filter(a => a.status === 'new');
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#FFF7F0" }}>
-            <LinearGradient colors={["#EA580C", "#F97316"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
                 <SafeAreaView edges={["top"]}>
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
                         <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
@@ -76,7 +77,7 @@ export default function OrgApplications() {
                     </View>
                 ) : (
                     newApps.map(app => (
-                        <View key={app.id} style={{ backgroundColor: "white", borderRadius: 20, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: "#F97316", shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 10 }}>
+                        <View key={app.id} style={{ backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: COLORS.primary, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.md }}>
                             <View style={{ flexDirection: "row", marginBottom: 16 }}>
                                 <Image source={{ uri: app.avatar }} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "#F3F4F6" }} />
                                 <View style={{ flex: 1, marginLeft: 12 }}>
@@ -88,8 +89,8 @@ export default function OrgApplications() {
                                 </View>
                             </View>
 
-                            <View style={{ backgroundColor: "#FFF7ED", padding: 12, borderRadius: 14, marginBottom: 16 }}>
-                                <Text style={{ fontSize: 13, color: "#9A3412" }}>
+                            <View style={{ backgroundColor: `${COLORS.primary}08`, padding: 12, borderRadius: 14, marginBottom: 16 }}>
+                                <Text style={{ fontSize: 13, color: COLORS.foreground }}>
                                     <Text style={{ fontWeight: "700" }}>Кружок: </Text>
                                     {app.club}
                                 </Text>

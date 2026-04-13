@@ -49,7 +49,7 @@ export default function CreateProfileChild() {
             <LinearGradient colors={["#FDF2F8", "#FAF5FF"]} style={{ flex: 1 }}>
                 
                 {/* Header */}
-                <LinearGradient colors={["#EC4899", "#DB2777"]} className="pt-12 pb-4 px-4 shadow-sm z-10 rounded-b-3xl">
+                <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} className="pt-12 pb-4 px-4 shadow-sm z-10 rounded-b-3xl">
                     <SafeAreaView edges={["top"]} style={{ flexDirection: "row", alignItems: "center" }}>
                         <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
                             <Feather name="arrow-left" size={24} color="white" />
@@ -63,7 +63,7 @@ export default function CreateProfileChild() {
                     {/* Personal Info */}
                     <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-pink-50">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="user" size={20} color="#DB2777" />
+                            <Feather name="user" size={20} color="#8B7FE8" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">О ребенке</Text>
                         </View>
 
@@ -113,7 +113,7 @@ export default function CreateProfileChild() {
                     {/* Interests */}
                     <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-pink-50">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="heart" size={20} color="#DB2777" />
+                            <Feather name="heart" size={20} color="#8B7FE8" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Интересы</Text>
                         </View>
 
@@ -171,7 +171,7 @@ export default function CreateProfileChild() {
                     {/* Goals */}
                     <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-pink-50">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="target" size={20} color="#DB2777" />
+                            <Feather name="target" size={20} color="#8B7FE8" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Твоя цель</Text>
                         </View>
                         <Text className="text-sm font-medium text-gray-700 mb-1">Чему ваш ребенок хочет научиться?</Text>
@@ -190,7 +190,7 @@ export default function CreateProfileChild() {
                         onPress={() => router.push("/profile/youth/testing")}
                         className="w-full rounded-xl overflow-hidden shadow-md mt-2"
                     >
-                        <LinearGradient colors={["#EC4899", "#DB2777"]} className="w-full py-4 items-center justify-center">
+                        <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} className="w-full py-4 items-center justify-center">
                             <Text className="text-white font-bold text-lg">Перейти к тестам</Text>
                         </LinearGradient>
                     </TouchableOpacity>

@@ -4,92 +4,105 @@ import {
     Text,
     TouchableOpacity,
     Platform,
-    StyleSheet,
 } from "react-native";
-import {LinearGradient} from "expo-linear-gradient";
-import {useRouter} from "expo-router";
-import {MotiView} from "moti";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { MotiView } from "moti";
 import { StatusBar } from "expo-status-bar";
+import { COLORS } from "../../constants/theme";
 
 export default function IntroScreen() {
     const router = useRouter();
     const isWeb = Platform.OS === "web";
 
     return (
-        <View style={styles.root(isWeb)}>
-            <View style={styles.card(isWeb)}>
+        <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
+            <View style={{ width: "100%", maxWidth: isWeb ? 428 : "100%", height: isWeb ? 680 : "100%", borderRadius: isWeb ? 28 : 0, overflow: "hidden" }}>
                 <StatusBar style="light" />
                 <LinearGradient
-                    colors={["#6C5CE7", "#8B7FE8"]}
-                    style={styles.gradient}
+                    colors={[COLORS.primary, COLORS.secondary]}
+                    style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
                 >
-                    {/* Status Bar simulation wrapper for web layout spacing if needed */}
-                    <View className="w-full flex-row justify-between items-center px-6 pt-12 pb-4">
-                        {/* We use Expo StatusBar instead of mock UI */}
-                    </View>
-
-                    {/* Logo Section */}
-                    <View className="flex-1 items-center justify-center">
+                    {/* Logo */}
+                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                         <MotiView
-                            from={{opacity: 0, scale: 0.4}}
-                            animate={{opacity: 1, scale: 1}}
-                            transition={{duration: 600}}
+                            from={{ opacity: 0, scale: 0.5 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 800, type: "timing" }}
                         >
-                            <View className="items-center justify-center flex-col">
-                                <Text className="text-[120px] font-black text-white leading-[120px] tracking-tight">
+                            <View style={{
+                                width: 128,
+                                height: 128,
+                                borderRadius: 32,
+                                backgroundColor: "rgba(255,255,255,0.1)",
+                                borderWidth: 2,
+                                borderColor: "rgba(255,255,255,0.2)",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                marginBottom: 24,
+                            }}>
+                                <Text style={{ fontSize: 56, fontWeight: "800", color: "white", letterSpacing: -1 }}>
                                     UM
                                 </Text>
-                                <View className="mt-4 gap-y-1 items-center">
-                                    <View className="h-2 w-32 bg-white/20 rounded-full" />
-                                    <View className="h-2 w-24 bg-white/20 rounded-full" />
-                                </View>
                             </View>
+                        </MotiView>
+
+                        <MotiView
+                            from={{ opacity: 0, translateY: 10 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ duration: 500, delay: 400 }}
+                        >
+                            <Text style={{ fontSize: 22, fontWeight: "700", color: "white", marginBottom: 4, textAlign: "center" }}>
+                                Universal Mind
+                            </Text>
+                            <Text style={{ fontSize: 14, color: "rgba(255,255,255,0.7)", textAlign: "center" }}>
+                                Раскрой потенциал своего ребёнка
+                            </Text>
                         </MotiView>
                     </View>
 
-                    {/* Buttons Section */}
-                    <View className="w-full max-w-md px-6 space-y-4 pb-8 self-center mb-8">
+                    {/* Buttons */}
+                    <MotiView
+                        from={{ opacity: 0, translateY: 20 }}
+                        animate={{ opacity: 1, translateY: 0 }}
+                        transition={{ duration: 500, delay: 600 }}
+                        style={{ width: "100%", paddingHorizontal: 24, paddingBottom: 48, maxWidth: 400, alignSelf: "center" }}
+                    >
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={() => router.push("/(auth)/login")}
-                            className="w-full py-4 bg-white rounded-3xl items-center justify-center shadow-lg mb-4"
+                            style={{
+                                width: "100%",
+                                paddingVertical: 16,
+                                backgroundColor: "white",
+                                borderRadius: 20,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                marginBottom: 12,
+                            }}
                         >
-                            <Text className="text-[#6C5CE7] font-semibold text-lg">Войти</Text>
+                            <Text style={{ color: COLORS.primary, fontWeight: "600", fontSize: 16 }}>Войти</Text>
                         </TouchableOpacity>
 
                         <TouchableOpacity
                             activeOpacity={0.8}
                             onPress={() => router.push("/(auth)/register")}
-                            className="w-full py-4 bg-[#5548C8] rounded-3xl items-center justify-center shadow-lg"
+                            style={{
+                                width: "100%",
+                                paddingVertical: 16,
+                                backgroundColor: "rgba(255,255,255,0.15)",
+                                borderRadius: 20,
+                                alignItems: "center",
+                                justifyContent: "center",
+                                borderWidth: 1.5,
+                                borderColor: "rgba(255,255,255,0.3)",
+                            }}
                         >
-                            <Text className="text-white font-semibold text-lg">Регистрация</Text>
+                            <Text style={{ color: "white", fontWeight: "600", fontSize: 16 }}>Регистрация</Text>
                         </TouchableOpacity>
-                    </View>
+                    </MotiView>
                 </LinearGradient>
             </View>
         </View>
     );
 }
-
-const styles = {
-    root: (isWeb: boolean) => ({
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "#FFFFFF",
-    }),
-
-    card: (isWeb: boolean) => ({
-        width: "100%",
-        maxWidth: isWeb ? 720 : "100%",
-        height: isWeb ? 680 : "100%",
-        borderRadius: isWeb ? 28 : 0,
-        overflow: "hidden",
-        backgroundColor: "transparent",
-    }),
-
-    gradient: {
-        flex: 1,
-        position: "relative" as const,
-    },
-};

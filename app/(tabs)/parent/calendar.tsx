@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const MONTHS = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
 const WEEKDAYS = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
@@ -40,8 +41,11 @@ export default function ParentCalendar() {
     };
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F8F7FF" }}>
-            <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <LinearGradient
+                colors={[COLORS.primary, COLORS.secondary]}
+                style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}
+            >
                 <SafeAreaView edges={["top"]}>
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
                         <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
@@ -53,31 +57,31 @@ export default function ParentCalendar() {
             </LinearGradient>
 
             <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-                {/* Calendar Card */}
-                <View style={{ backgroundColor: "white", borderRadius: 20, padding: 16, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, marginBottom: 16 }}>
-                    {/* Month Switcher */}
+                <View style={{
+                    backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 16,
+                    borderWidth: 1, borderColor: COLORS.border, marginBottom: 16,
+                    ...SHADOWS.md,
+                }}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                        <TouchableOpacity onPress={prevMonth} style={{ padding: 8, backgroundColor: "#F3F0FF", borderRadius: 10 }}>
-                            <Feather name="chevron-left" size={20} color="#6C5CE7" />
+                        <TouchableOpacity onPress={prevMonth} style={{ padding: 8, backgroundColor: `${COLORS.primary}10`, borderRadius: 10 }}>
+                            <Feather name="chevron-left" size={20} color={COLORS.primary} />
                         </TouchableOpacity>
-                        <Text style={{ fontSize: 17, fontWeight: "700", color: "#1F1F2E" }}>
+                        <Text style={{ fontSize: 17, fontWeight: "700", color: COLORS.foreground }}>
                             {MONTHS[currentDate.month]} {currentDate.year}
                         </Text>
-                        <TouchableOpacity onPress={nextMonth} style={{ padding: 8, backgroundColor: "#F3F0FF", borderRadius: 10 }}>
-                            <Feather name="chevron-right" size={20} color="#6C5CE7" />
+                        <TouchableOpacity onPress={nextMonth} style={{ padding: 8, backgroundColor: `${COLORS.primary}10`, borderRadius: 10 }}>
+                            <Feather name="chevron-right" size={20} color={COLORS.primary} />
                         </TouchableOpacity>
                     </View>
 
-                    {/* Weekday Headers */}
                     <View style={{ flexDirection: "row", marginBottom: 8 }}>
                         {WEEKDAYS.map(d => (
                             <View key={d} style={{ flex: 1, alignItems: "center" }}>
-                                <Text style={{ fontSize: 12, fontWeight: "600", color: "#9CA3AF" }}>{d}</Text>
+                                <Text style={{ fontSize: 12, fontWeight: "600", color: COLORS.mutedForeground }}>{d}</Text>
                             </View>
                         ))}
                     </View>
 
-                    {/* Days Grid */}
                     <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                         {days.map((day, index) => (
                             <View key={index} style={{ width: "14.28%", aspectRatio: 1, padding: 2 }}>
@@ -85,11 +89,16 @@ export default function ParentCalendar() {
                                     <TouchableOpacity
                                         onPress={() => setSelectedDay(day)}
                                         style={{
-                                            flex: 1, borderRadius: 10, alignItems: "center", justifyContent: "center",
-                                            backgroundColor: day === selectedDay ? "#6C5CE7" : "transparent"
+                                            flex: 1, borderRadius: 10,
+                                            alignItems: "center", justifyContent: "center",
+                                            backgroundColor: day === selectedDay ? COLORS.primary : "transparent",
                                         }}
                                     >
-                                        <Text style={{ fontSize: 14, fontWeight: day === selectedDay ? "700" : "400", color: day === selectedDay ? "white" : "#374151" }}>{day}</Text>
+                                        <Text style={{
+                                            fontSize: 14,
+                                            fontWeight: day === selectedDay ? "700" : "400",
+                                            color: day === selectedDay ? "white" : COLORS.foreground,
+                                        }}>{day}</Text>
                                     </TouchableOpacity>
                                 ) : <View style={{ flex: 1 }} />}
                             </View>
@@ -97,14 +106,16 @@ export default function ParentCalendar() {
                     </View>
                 </View>
 
-                {/* Classes */}
-                <View style={{ backgroundColor: "white", borderRadius: 20, padding: 16, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8 }}>
-                    <Text style={{ fontSize: 16, fontWeight: "700", color: "#1F1F2E", marginBottom: 12 }}>
+                <View style={{
+                    backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 16,
+                    borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
+                }}>
+                    <Text style={{ fontSize: 16, fontWeight: "700", color: COLORS.foreground, marginBottom: 12 }}>
                         Занятия на {selectedDay} {MONTHS[currentDate.month].toLowerCase()}
                     </Text>
                     <View style={{ alignItems: "center", paddingVertical: 32 }}>
-                        <Feather name="calendar" size={40} color="#D1D5DB" />
-                        <Text style={{ color: "#9CA3AF", marginTop: 12, textAlign: "center" }}>
+                        <Feather name="calendar" size={40} color={COLORS.mutedForeground} />
+                        <Text style={{ color: COLORS.mutedForeground, marginTop: 12, textAlign: "center" }}>
                             На этот день нет запланированных занятий
                         </Text>
                     </View>

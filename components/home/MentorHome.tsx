@@ -1,9 +1,10 @@
 import React from "react";
-import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS, SHADOWS } from "../../constants/theme";
 
 const MOCK_STUDENTS = [
     {
@@ -24,16 +25,20 @@ const SKILL_LABELS = ["Ком.", "Лид.", "Кре.", "Лог.", "Дис."];
 
 export default function MentorHome() {
     const router = useRouter();
-
     const avgProgress = Math.round(MOCK_STUDENTS.reduce((s, st) => s + st.progress, 0) / MOCK_STUDENTS.length);
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F0FDF9" }}>
-            <LinearGradient colors={["#0D9488", "#14B8A6"]} style={{ paddingBottom: 28, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <LinearGradient
+                colors={[COLORS.primary, COLORS.secondary]}
+                style={{ paddingBottom: 28, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
+            >
                 <SafeAreaView edges={["top"]}>
                     <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
                         <Text style={{ fontSize: 22, fontWeight: "800", color: "white" }}>Мои подопечные</Text>
-                        <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 2 }}>Ментор • Анна Сергеевна</Text>
+                        <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 13, marginTop: 2 }}>
+                            Ментор • Анна Сергеевна
+                        </Text>
                     </View>
 
                     {/* Stats */}
@@ -43,7 +48,15 @@ export default function MentorHome() {
                             { label: "Планов", value: "15" },
                             { label: "Ср. прогресс", value: `${avgProgress}%` },
                         ].map(stat => (
-                            <View key={stat.label} style={{ flex: 1, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: 14, padding: 12, alignItems: "center" }}>
+                            <View key={stat.label} style={{
+                                flex: 1,
+                                backgroundColor: "rgba(255,255,255,0.15)",
+                                borderRadius: 16,
+                                padding: 12,
+                                alignItems: "center",
+                                borderWidth: 1,
+                                borderColor: "rgba(255,255,255,0.2)",
+                            }}>
                                 <Text style={{ fontSize: 22, fontWeight: "800", color: "white" }}>{stat.value}</Text>
                                 <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", marginTop: 2 }}>{stat.label}</Text>
                             </View>
@@ -53,7 +66,9 @@ export default function MentorHome() {
             </LinearGradient>
 
             <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
-                <Text style={{ fontSize: 17, fontWeight: "700", color: "#1F1F2E", marginBottom: 12 }}>Список учеников</Text>
+                <Text style={{ fontSize: 17, fontWeight: "700", color: COLORS.foreground, marginBottom: 12 }}>
+                    Список учеников
+                </Text>
 
                 {MOCK_STUDENTS.map(student => {
                     const skillVals = Object.values(student.skills);
@@ -62,25 +77,50 @@ export default function MentorHome() {
                         <TouchableOpacity
                             key={student.id}
                             onPress={() => router.push(`/(tabs)/mentor/student/${student.id}` as any)}
-                            style={{ backgroundColor: "white", borderRadius: 20, padding: 18, marginBottom: 14, shadowColor: "#0D9488", shadowOpacity: 0.08, shadowRadius: 12 }}
+                            style={{
+                                backgroundColor: COLORS.card,
+                                borderRadius: RADIUS.lg,
+                                padding: 18,
+                                marginBottom: 14,
+                                borderWidth: 1,
+                                borderColor: COLORS.border,
+                                ...SHADOWS.md,
+                            }}
                         >
                             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
-                                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: "#CCFBF1", alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-                                    <Text style={{ fontSize: 22, fontWeight: "700", color: "#0D9488" }}>{student.name.charAt(0)}</Text>
+                                <View style={{
+                                    width: 52, height: 52, borderRadius: 26,
+                                    backgroundColor: `${COLORS.primary}10`,
+                                    alignItems: "center", justifyContent: "center",
+                                    marginRight: 14,
+                                }}>
+                                    <Text style={{ fontSize: 20, fontWeight: "700", color: COLORS.primary }}>
+                                        {student.name.charAt(0)}
+                                    </Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={{ fontWeight: "700", fontSize: 16, color: "#1F1F2E" }}>{student.name}</Text>
-                                    <Text style={{ color: "#6B7280", fontSize: 13 }}>{student.age} лет</Text>
+                                    <Text style={{ fontWeight: "700", fontSize: 16, color: COLORS.foreground }}>
+                                        {student.name}
+                                    </Text>
+                                    <Text style={{ color: COLORS.mutedForeground, fontSize: 13 }}>{student.age} лет</Text>
                                     <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-                                        <View style={{ backgroundColor: "#EDE9FE", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, marginRight: 8 }}>
-                                            <Text style={{ color: "#6C5CE7", fontSize: 11, fontWeight: "600" }}>Level {student.level}</Text>
+                                        <View style={{
+                                            backgroundColor: `${COLORS.primary}10`,
+                                            paddingHorizontal: 8, paddingVertical: 2,
+                                            borderRadius: 20, marginRight: 8,
+                                        }}>
+                                            <Text style={{ color: COLORS.primary, fontSize: 11, fontWeight: "600" }}>
+                                                Level {student.level}
+                                            </Text>
                                         </View>
-                                        <Text style={{ color: "#9CA3AF", fontSize: 12 }}>{student.xp} XP</Text>
+                                        <Text style={{ color: COLORS.mutedForeground, fontSize: 12 }}>{student.xp} XP</Text>
                                     </View>
                                 </View>
                                 <View style={{ alignItems: "flex-end" }}>
-                                    <Text style={{ fontSize: 28, fontWeight: "800", color: "#0D9488" }}>{student.progress}%</Text>
-                                    <Text style={{ fontSize: 11, color: "#9CA3AF" }}>Прогресс</Text>
+                                    <Text style={{ fontSize: 28, fontWeight: "800", color: COLORS.primary }}>
+                                        {student.progress}%
+                                    </Text>
+                                    <Text style={{ fontSize: 11, color: COLORS.mutedForeground }}>Прогресс</Text>
                                 </View>
                             </View>
 
@@ -89,9 +129,16 @@ export default function MentorHome() {
                                 {skillVals.map((val, i) => (
                                     <View key={i} style={{ flex: 1, alignItems: "center" }}>
                                         <View style={{ width: "100%", height: 50, justifyContent: "flex-end" }}>
-                                            <View style={{ height: (val / maxSkill) * 44, backgroundColor: "#14B8A6", borderRadius: 4 }} />
+                                            <View style={{
+                                                height: (val / maxSkill) * 44,
+                                                backgroundColor: COLORS.primary,
+                                                borderRadius: 4,
+                                                opacity: 0.7 + (val / maxSkill) * 0.3,
+                                            }} />
                                         </View>
-                                        <Text style={{ fontSize: 9, color: "#9CA3AF", marginTop: 3 }}>{SKILL_LABELS[i]}</Text>
+                                        <Text style={{ fontSize: 9, color: COLORS.mutedForeground, marginTop: 3 }}>
+                                            {SKILL_LABELS[i]}
+                                        </Text>
                                     </View>
                                 ))}
                             </View>
@@ -99,17 +146,34 @@ export default function MentorHome() {
                             {/* Actions */}
                             <View style={{ flexDirection: "row", gap: 8 }}>
                                 <TouchableOpacity
-                                    onPress={() => router.push(`/(tabs)/mentor/learning-path` as any)}
-                                    style={{ flex: 1, backgroundColor: "#0D9488", borderRadius: 12, paddingVertical: 10, flexDirection: "row", alignItems: "center", justifyContent: "center" }}
+                                    onPress={() => router.push("/(tabs)/mentor/learning-path" as any)}
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: COLORS.primary,
+                                        borderRadius: 14,
+                                        paddingVertical: 10,
+                                        flexDirection: "row",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
                                 >
                                     <Feather name="map" size={14} color="white" />
-                                    <Text style={{ color: "white", fontWeight: "700", fontSize: 13, marginLeft: 6 }}>План развития</Text>
+                                    <Text style={{ color: "white", fontWeight: "700", fontSize: 13, marginLeft: 6 }}>
+                                        План развития
+                                    </Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity
                                     onPress={() => router.push("/(tabs)/chats" as any)}
-                                    style={{ backgroundColor: "#CCFBF1", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, alignItems: "center", justifyContent: "center" }}
+                                    style={{
+                                        backgroundColor: `${COLORS.primary}10`,
+                                        borderRadius: 14,
+                                        paddingHorizontal: 14,
+                                        paddingVertical: 10,
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
                                 >
-                                    <Feather name="message-circle" size={18} color="#0D9488" />
+                                    <Feather name="message-circle" size={18} color={COLORS.primary} />
                                 </TouchableOpacity>
                             </View>
                         </TouchableOpacity>
@@ -117,19 +181,38 @@ export default function MentorHome() {
                 })}
 
                 {/* Quick Stats */}
-                <View style={{ backgroundColor: "white", borderRadius: 20, padding: 18, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8 }}>
+                <View style={{
+                    backgroundColor: COLORS.card,
+                    borderRadius: RADIUS.lg,
+                    padding: 18,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                    ...SHADOWS.sm,
+                }}>
                     <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 14 }}>
-                        <Feather name="trending-up" size={18} color="#0D9488" />
-                        <Text style={{ fontSize: 15, fontWeight: "700", color: "#1F1F2E", marginLeft: 8 }}>Общая статистика</Text>
+                        <Feather name="trending-up" size={18} color={COLORS.primary} />
+                        <Text style={{ fontSize: 15, fontWeight: "700", color: COLORS.foreground, marginLeft: 8 }}>
+                            Общая статистика
+                        </Text>
                     </View>
                     <View style={{ flexDirection: "row", gap: 10 }}>
-                        <View style={{ flex: 1, backgroundColor: "#EDE9FE", borderRadius: 14, padding: 14, alignItems: "center" }}>
-                            <Text style={{ fontSize: 24, fontWeight: "800", color: "#6C5CE7" }}>42</Text>
-                            <Text style={{ fontSize: 12, color: "#6B7280", textAlign: "center", marginTop: 2 }}>Рекомендаций</Text>
+                        <View style={{
+                            flex: 1, backgroundColor: `${COLORS.primary}10`,
+                            borderRadius: 14, padding: 14, alignItems: "center",
+                        }}>
+                            <Text style={{ fontSize: 24, fontWeight: "800", color: COLORS.primary }}>42</Text>
+                            <Text style={{ fontSize: 12, color: COLORS.mutedForeground, textAlign: "center", marginTop: 2 }}>
+                                Рекомендаций
+                            </Text>
                         </View>
-                        <View style={{ flex: 1, backgroundColor: "#F0FDF4", borderRadius: 14, padding: 14, alignItems: "center" }}>
-                            <Text style={{ fontSize: 24, fontWeight: "800", color: "#22C55E" }}>28</Text>
-                            <Text style={{ fontSize: 12, color: "#6B7280", textAlign: "center", marginTop: 2 }}>Целей достигнуто</Text>
+                        <View style={{
+                            flex: 1, backgroundColor: `${COLORS.success}10`,
+                            borderRadius: 14, padding: 14, alignItems: "center",
+                        }}>
+                            <Text style={{ fontSize: 24, fontWeight: "800", color: COLORS.success }}>28</Text>
+                            <Text style={{ fontSize: 12, color: COLORS.mutedForeground, textAlign: "center", marginTop: 2 }}>
+                                Целей достигнуто
+                            </Text>
                         </View>
                     </View>
                 </View>

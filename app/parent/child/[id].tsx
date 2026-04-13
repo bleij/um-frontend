@@ -17,10 +17,10 @@ export default function ParentChildDetails() {
 
     const SKILLS = [
         { label: "Коммуникация", value: 75, color: "#6C5CE7" },
-        { label: "Лидерство", value: 65, color: "#9333EA" },
-        { label: "Креативность", value: 80, color: "#EC4899" },
-        { label: "Логика", value: 70, color: "#3B82F6" },
-        { label: "Дисциплина", value: 75, color: "#10B981" },
+        { label: "Лидерство", value: 65, color: "#6C5CE7" },
+        { label: "Креативность", value: 80, color: "#6C5CE7" },
+        { label: "Логика", value: 70, color: "#6C5CE7" },
+        { label: "Дисциплина", value: 75, color: "#6C5CE7" },
     ];
 
     return (

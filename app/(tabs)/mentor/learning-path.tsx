@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const PATH_STEPS = [
     {
@@ -25,9 +26,9 @@ const PATH_STEPS = [
     {
         id: 3, phase: "Рекомендованные кружки", status: "active",
         items: [
-            { text: "Театральная студия 🎭", done: false },
-            { text: "Ораторское искусство 🎤", done: false },
-            { text: "Командные виды спорта ⚽", done: false },
+            { text: "Театральная студия", done: false },
+            { text: "Ораторское искусство", done: false },
+            { text: "Командные виды спорта", done: false },
         ],
     },
     {
@@ -70,8 +71,8 @@ export default function MentorLearningPath() {
     const router = useRouter();
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F0FDF9" }}>
-            <LinearGradient colors={["#0D9488", "#14B8A6"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
                 <SafeAreaView edges={["top"]}>
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, marginBottom: 4 }}>
                         <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
@@ -163,7 +164,7 @@ export default function MentorLearningPath() {
 
                 {/* Action Buttons */}
                 <View style={{ flexDirection: "row", gap: 10 }}>
-                    <LinearGradient colors={["#0D9488", "#14B8A6"]} style={{ flex: 1, borderRadius: 16 }}>
+                    <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ flex: 1, borderRadius: 16 }}>
                         <TouchableOpacity style={{ padding: 14, alignItems: "center" }}>
                             <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>Сохранить изменения</Text>
                         </TouchableOpacity>

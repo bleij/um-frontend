@@ -51,7 +51,7 @@ export default function DoneScreen() {
 
     return (
         <LinearGradient
-            colors={["#3F3C9F", "#8D88D9"]}
+            colors={["#6C5CE7", "#8B7FE8"]}
             start={{x: 0, y: 0}}
             end={{x: 0, y: 1}}
             style={{flex: 1}}
@@ -102,7 +102,7 @@ export default function DoneScreen() {
                     >
                         {/* CHECK ICON */}
                         <LinearGradient
-                            colors={["#3F3C9F", "#8D88D9"]}
+                            colors={["#6C5CE7", "#8B7FE8"]}
                             style={{
                                 width: 140,
                                 height: 140,
@@ -120,7 +120,7 @@ export default function DoneScreen() {
                             style={{
                                 fontSize: 30,
                                 fontWeight: "800",
-                                color: "#2E2C79",
+                                color: "#6C5CE7",
                                 marginBottom: 12,
                                 textAlign: "center",
                             }}

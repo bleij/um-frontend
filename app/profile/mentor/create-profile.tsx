@@ -33,10 +33,10 @@ export default function MentorCreateProfile() {
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-            <LinearGradient colors={["#CCFBF1", "#ECFEFF"]} style={{ flex: 1 }}>
+            <LinearGradient colors={["#F8F7FF", "#EDE9FE"]} style={{ flex: 1 }}>
                 
                 {/* Header */}
-                <LinearGradient colors={["#14B8A6", "#0D9488"]} className="pt-12 pb-4 px-4 shadow-sm z-10 rounded-b-3xl">
+                <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} className="pt-12 pb-4 px-4 shadow-sm z-10 rounded-b-3xl">
                     <SafeAreaView edges={["top"]} style={{ flexDirection: "row", alignItems: "center" }}>
                         <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
                             <Feather name="arrow-left" size={24} color="white" />
@@ -50,7 +50,7 @@ export default function MentorCreateProfile() {
                     {/* Personal Info */}
                     <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="user" size={20} color="#0D9488" />
+                            <Feather name="user" size={20} color="#6C5CE7" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Личная информация</Text>
                         </View>
 
@@ -79,7 +79,7 @@ export default function MentorCreateProfile() {
                     {/* Contact Info */}
                     <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="mail" size={20} color="#0D9488" />
+                            <Feather name="mail" size={20} color="#6C5CE7" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Контакты</Text>
                         </View>
 
@@ -111,7 +111,7 @@ export default function MentorCreateProfile() {
                     {/* Professional Info */}
                     <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="briefcase" size={20} color="#0D9488" />
+                            <Feather name="briefcase" size={20} color="#6C5CE7" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Профессиональная информация</Text>
                         </View>
 
@@ -153,7 +153,7 @@ export default function MentorCreateProfile() {
                         onPress={handleMockSubmit}
                         className="w-full rounded-xl overflow-hidden shadow-md mt-2"
                     >
-                        <LinearGradient colors={["#14B8A6", "#0D9488"]} className="w-full py-4 items-center justify-center">
+                        <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} className="w-full py-4 items-center justify-center">
                             <Text className="text-white font-bold text-lg">Создать профиль</Text>
                         </LinearGradient>
                     </TouchableOpacity>

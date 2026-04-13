@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const MOCK_CLUBS = [
     { id: "1", title: "Лего-конструирование", category: "Технологии", age: "6-11", rating: 4.9, price: 8000, enrolled: true },
@@ -15,9 +16,6 @@ const MOCK_CLUBS = [
 ];
 
 const CATEGORIES = ["Все", "Технологии", "Искусство", "Спорт", "Мышление"];
-const CATEGORY_COLORS: Record<string, string> = {
-    "Технологии": "#6C5CE7", "Искусство": "#EC4899", "Спорт": "#22C55E", "Мышление": "#F59E0B"
-};
 
 export default function ParentClubs() {
     const router = useRouter();
@@ -34,8 +32,11 @@ export default function ParentClubs() {
     const available = filtered.filter(c => !c.enrolled);
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#F8F7FF" }}>
-            <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <LinearGradient
+                colors={[COLORS.primary, COLORS.secondary]}
+                style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}
+            >
                 <SafeAreaView edges={["top"]}>
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
                         <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
@@ -48,14 +49,18 @@ export default function ParentClubs() {
 
             <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
                 {/* Search */}
-                <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "white", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6 }}>
-                    <Feather name="search" size={18} color="#9CA3AF" style={{ marginRight: 8 }} />
+                <View style={{
+                    flexDirection: "row", alignItems: "center",
+                    backgroundColor: COLORS.muted, borderRadius: RADIUS.md,
+                    paddingHorizontal: 14, paddingVertical: 12, marginBottom: 12,
+                }}>
+                    <Feather name="search" size={18} color={COLORS.mutedForeground} style={{ marginRight: 8 }} />
                     <TextInput
                         value={search}
                         onChangeText={setSearch}
                         placeholder="Найти кружок..."
-                        placeholderTextColor="#9CA3AF"
-                        style={{ flex: 1, fontSize: 15 }}
+                        placeholderTextColor={COLORS.mutedForeground}
+                        style={{ flex: 1, fontSize: 15, color: COLORS.foreground }}
                     />
                 </View>
 
@@ -66,12 +71,15 @@ export default function ParentClubs() {
                             key={cat}
                             onPress={() => setActiveCategory(cat)}
                             style={{
-                                paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginRight: 8,
-                                backgroundColor: activeCategory === cat ? "#6C5CE7" : "white",
-                                shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 4
+                                paddingHorizontal: 16, paddingVertical: 8,
+                                borderRadius: RADIUS.full, marginRight: 8,
+                                backgroundColor: activeCategory === cat ? COLORS.primary : COLORS.muted,
                             }}
                         >
-                            <Text style={{ fontWeight: "600", fontSize: 14, color: activeCategory === cat ? "white" : "#6B7280" }}>{cat}</Text>
+                            <Text style={{
+                                fontWeight: "600", fontSize: 14,
+                                color: activeCategory === cat ? "white" : COLORS.mutedForeground,
+                            }}>{cat}</Text>
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
@@ -79,52 +87,79 @@ export default function ParentClubs() {
                 {/* Enrolled */}
                 {enrolled.length > 0 && (
                     <View style={{ marginBottom: 20 }}>
-                        <Text style={{ fontSize: 16, fontWeight: "700", color: "#1F1F2E", marginBottom: 12 }}>📚 Мои кружки</Text>
+                        <Text style={{ fontSize: 16, fontWeight: "700", color: COLORS.foreground, marginBottom: 12 }}>
+                            Мои кружки
+                        </Text>
                         {enrolled.map(club => (
                             <TouchableOpacity
                                 key={club.id}
                                 onPress={() => router.push(`/(tabs)/parent/clubs/${club.id}` as any)}
-                                style={{ backgroundColor: "white", borderRadius: 16, padding: 16, marginBottom: 10, borderLeftWidth: 4, borderLeftColor: "#6C5CE7", flexDirection: "row", alignItems: "center", shadowColor: "#6C5CE7", shadowOpacity: 0.08, shadowRadius: 8 }}
+                                style={{
+                                    backgroundColor: COLORS.card, borderRadius: RADIUS.sm, padding: 16, marginBottom: 10,
+                                    borderLeftWidth: 4, borderLeftColor: COLORS.primary,
+                                    flexDirection: "row", alignItems: "center",
+                                    borderWidth: 1, borderColor: COLORS.border,
+                                    ...SHADOWS.sm,
+                                }}
                             >
-                                <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: "#EDE9FE", alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-                                    <Feather name="check-circle" size={24} color="#6C5CE7" />
+                                <View style={{
+                                    width: 48, height: 48, borderRadius: 14,
+                                    backgroundColor: `${COLORS.primary}10`,
+                                    alignItems: "center", justifyContent: "center", marginRight: 14,
+                                }}>
+                                    <Feather name="check-circle" size={24} color={COLORS.primary} />
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={{ fontWeight: "700", color: "#1F1F2E", fontSize: 15 }}>{club.title}</Text>
-                                    <Text style={{ color: "#6B7280", fontSize: 13, marginTop: 2 }}>👥 {club.age} лет · {club.price}₸/мес</Text>
+                                    <Text style={{ fontWeight: "700", color: COLORS.foreground, fontSize: 15 }}>{club.title}</Text>
+                                    <Text style={{ color: COLORS.mutedForeground, fontSize: 13, marginTop: 2 }}>
+                                        {club.age} лет · {club.price}₸/мес
+                                    </Text>
                                 </View>
-                                <Text style={{ color: "#6C5CE7", fontWeight: "600" }}>→</Text>
+                                <Feather name="chevron-right" size={18} color={COLORS.mutedForeground} />
                             </TouchableOpacity>
                         ))}
                     </View>
                 )}
 
                 {/* Available */}
-                <Text style={{ fontSize: 16, fontWeight: "700", color: "#1F1F2E", marginBottom: 12 }}>🔍 Доступные кружки</Text>
-                {available.map(club => {
-                    const color = CATEGORY_COLORS[club.category] || "#6C5CE7";
-                    return (
-                        <TouchableOpacity
-                            key={club.id}
-                            onPress={() => router.push(`/(tabs)/parent/clubs/${club.id}` as any)}
-                            style={{ backgroundColor: "white", borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, flexDirection: "row", alignItems: "center" }}
-                        >
-                            <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: color + "20", alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-                                <Feather name="book-open" size={22} color={color} />
+                <Text style={{ fontSize: 16, fontWeight: "700", color: COLORS.foreground, marginBottom: 12 }}>
+                    Доступные кружки
+                </Text>
+                {available.map(club => (
+                    <TouchableOpacity
+                        key={club.id}
+                        onPress={() => router.push(`/(tabs)/parent/clubs/${club.id}` as any)}
+                        style={{
+                            backgroundColor: COLORS.card, borderRadius: RADIUS.sm, padding: 16, marginBottom: 10,
+                            flexDirection: "row", alignItems: "center",
+                            borderWidth: 1, borderColor: COLORS.border,
+                            ...SHADOWS.sm,
+                        }}
+                    >
+                        <View style={{
+                            width: 48, height: 48, borderRadius: 14,
+                            backgroundColor: `${COLORS.primary}10`,
+                            alignItems: "center", justifyContent: "center", marginRight: 14,
+                        }}>
+                            <Feather name="book-open" size={22} color={COLORS.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={{ fontWeight: "700", color: COLORS.foreground, fontSize: 15 }}>{club.title}</Text>
+                            <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
+                                <Feather name="star" size={12} color={COLORS.accent} />
+                                <Text style={{ color: COLORS.mutedForeground, fontSize: 12, marginLeft: 4 }}>
+                                    {club.rating} · {club.age} лет · {club.price}₸/мес
+                                </Text>
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={{ fontWeight: "700", color: "#1F1F2E", fontSize: 15 }}>{club.title}</Text>
-                                <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
-                                    <Feather name="star" size={12} color="#EAB308" />
-                                    <Text style={{ color: "#6B7280", fontSize: 12, marginLeft: 4 }}>{club.rating} · {club.age} лет · {club.price}₸/мес</Text>
-                                </View>
-                            </View>
-                            <View style={{ backgroundColor: color + "20", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 }}>
-                                <Text style={{ color, fontWeight: "600", fontSize: 12 }}>{club.category}</Text>
-                            </View>
-                        </TouchableOpacity>
-                    );
-                })}
+                        </View>
+                        <View style={{
+                            backgroundColor: `${COLORS.primary}10`,
+                            paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+                        }}>
+                            <Text style={{ color: COLORS.primary, fontWeight: "600", fontSize: 12 }}>{club.category}</Text>
+                        </View>
+                    </TouchableOpacity>
+                ))}
             </ScrollView>
         </View>
     );

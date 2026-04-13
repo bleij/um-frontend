@@ -32,8 +32,8 @@ export default function OrgAttendance() {
     const getRate = (arr: boolean[]) => Math.round((arr.filter(Boolean).length / arr.length) * 100);
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#FFF7F0" }}>
-            <LinearGradient colors={["#EA580C", "#F97316"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <View style={{ flex: 1, backgroundColor: "#F8F7FF" }}>
+            <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
                 <SafeAreaView edges={["top"]}>
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
                         <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
@@ -56,7 +56,7 @@ export default function OrgAttendance() {
                                 paddingVertical: 10, 
                                 borderRadius: 14, 
                                 marginRight: 8,
-                                backgroundColor: selectedClub === club.id ? "#F97316" : "white",
+                                backgroundColor: selectedClub === club.id ? "#8B7FE8" : "white",
                                 shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 5
                             }}
                         >
@@ -99,7 +99,7 @@ export default function OrgAttendance() {
                                 </View>
                             ))}
                             <View style={{ width: 45, alignItems: "center", justifyContent: "center", borderLeftWidth: 1, borderLeftColor: "#F3F4F6" }}>
-                                <Text style={{ fontSize: 12, fontWeight: "700", color: getRate(student.attendance) > 70 ? "#22C55E" : "#F97316" }}>
+                                <Text style={{ fontSize: 12, fontWeight: "700", color: getRate(student.attendance) > 70 ? "#22C55E" : "#8B7FE8" }}>
                                     {getRate(student.attendance)}%
                                 </Text>
                             </View>
@@ -114,7 +114,7 @@ export default function OrgAttendance() {
                         <Text style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>Средняя посещ.</Text>
                     </View>
                     <View style={{ flex: 1, backgroundColor: "white", padding: 16, borderRadius: 18, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 5 }}>
-                        <Text style={{ fontSize: 24, fontWeight: "800", color: "#F97316" }}>4</Text>
+                        <Text style={{ fontSize: 24, fontWeight: "800", color: "#8B7FE8" }}>4</Text>
                         <Text style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>Занятий</Text>
                     </View>
                 </View>

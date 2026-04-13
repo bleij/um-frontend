@@ -6,151 +6,212 @@ import {
     TouchableOpacity,
     Platform,
     KeyboardAvoidingView,
-    Keyboard,
     ScrollView,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
+import { MotiView } from "moti";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS } from "../../constants/theme";
 
 export default function LoginScreen() {
     const router = useRouter();
-    const isWeb = Platform.OS === "web";
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = () => {
-        // mock logic: navigate to home
         router.push("/(tabs)/home");
     };
 
-    return (
-        <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"} 
-            style={{ flex: 1 }}
-        >
-            <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-                <View style={{ flex: 1, backgroundColor: "#FFFFFF" }}>
-                    <StatusBar style="light" />
-                    <LinearGradient
-                        colors={["#6C5CE7", "#8B7FE8"]}
-                        style={{ flex: 1 }}
-                    >
-                        {/* Header Spacer for Status Bar */}
-                        <View className="w-full flex-row justify-between items-center px-6 pt-12 pb-4" />
+    const canSubmit = email.length > 0 && password.length > 0;
 
+    return (
+        <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1, backgroundColor: COLORS.background }}
+        >
+            <StatusBar style="dark" />
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+                    <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8 }}>
                         {/* Back Button */}
                         <TouchableOpacity
                             onPress={() => router.back()}
-                            className="px-6 py-2 flex-row items-center"
+                            style={{ flexDirection: "row", alignItems: "center", marginBottom: 32 }}
                         >
-                            <Feather name="arrow-left" size={20} color="white" />
-                            <Text className="text-white ml-2 font-medium">Назад</Text>
+                            <Feather name="arrow-left" size={18} color={COLORS.mutedForeground} />
+                            <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 14 }}>Назад</Text>
                         </TouchableOpacity>
 
-                        {/* Title Section */}
-                        <View className="px-6 py-8 items-center">
-                            <Text className="text-6xl font-black text-white mb-4">UM</Text>
-                            <Text className="text-2xl font-bold text-white mb-2">Войти в аккаунт</Text>
-                            <Text className="text-white/80 text-sm text-center">
-                                Добро пожаловать!{"\n"}Продолжим твой путь к успеху
+                        {/* Header */}
+                        <MotiView
+                            from={{ opacity: 0, translateY: 20 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ duration: 500 }}
+                            style={{ marginBottom: 32 }}
+                        >
+                            <Text style={{ fontSize: 28, fontWeight: "700", color: COLORS.foreground, marginBottom: 8 }}>
+                                Войти в аккаунт
                             </Text>
-                        </View>
+                            <Text style={{ color: COLORS.mutedForeground, fontSize: 15, lineHeight: 22 }}>
+                                Добро пожаловать! Продолжим твой путь к успеху
+                            </Text>
+                        </MotiView>
 
-                        {/* Form Section */}
-                        <View className="flex-1 bg-gray-50 rounded-t-[40px] px-6 py-8">
-                            
-                            {/* Email Input */}
-                            <View className="relative justify-center mb-4">
-                                <View className="absolute left-4 z-10">
-                                    <Feather name="mail" size={20} color="#6C5CE7" />
+                        {/* Email Input */}
+                        <MotiView
+                            from={{ opacity: 0, translateY: 20 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ duration: 500, delay: 100 }}
+                            style={{ marginBottom: 16 }}
+                        >
+                            <Text style={{ fontSize: 14, fontWeight: "500", color: COLORS.foreground, marginBottom: 8 }}>
+                                Email
+                            </Text>
+                            <View style={{ position: "relative", justifyContent: "center" }}>
+                                <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
+                                    <Feather name="mail" size={18} color={COLORS.mutedForeground} />
                                 </View>
                                 <TextInput
                                     placeholder="Введите email"
-                                    placeholderTextColor="#A5A5A5"
+                                    placeholderTextColor={COLORS.mutedForeground}
                                     value={email}
                                     onChangeText={setEmail}
                                     keyboardType="email-address"
                                     autoCapitalize="none"
-                                    className="w-full pl-12 pr-4 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base"
+                                    style={{
+                                        width: "100%",
+                                        paddingLeft: 48,
+                                        paddingRight: 16,
+                                        paddingVertical: 16,
+                                        backgroundColor: COLORS.muted,
+                                        borderRadius: RADIUS.md,
+                                        borderWidth: 2,
+                                        borderColor: COLORS.border,
+                                        fontSize: 15,
+                                        color: COLORS.foreground,
+                                    }}
                                 />
                             </View>
+                        </MotiView>
 
-                            {/* Password Input */}
-                            <View className="relative justify-center mb-4">
-                                <View className="absolute left-4 z-10">
-                                    <Feather name="lock" size={20} color="#6C5CE7" />
+                        {/* Password Input */}
+                        <MotiView
+                            from={{ opacity: 0, translateY: 20 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ duration: 500, delay: 150 }}
+                            style={{ marginBottom: 12 }}
+                        >
+                            <Text style={{ fontSize: 14, fontWeight: "500", color: COLORS.foreground, marginBottom: 8 }}>
+                                Пароль
+                            </Text>
+                            <View style={{ position: "relative", justifyContent: "center" }}>
+                                <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
+                                    <Feather name="lock" size={18} color={COLORS.mutedForeground} />
                                 </View>
                                 <TextInput
                                     placeholder="Введите пароль"
-                                    placeholderTextColor="#A5A5A5"
+                                    placeholderTextColor={COLORS.mutedForeground}
                                     value={password}
                                     onChangeText={setPassword}
                                     secureTextEntry={!showPassword}
-                                    className="w-full pl-12 pr-12 py-4 bg-white border-2 border-[#6C5CE7] rounded-2xl text-base"
+                                    style={{
+                                        width: "100%",
+                                        paddingLeft: 48,
+                                        paddingRight: 48,
+                                        paddingVertical: 16,
+                                        backgroundColor: COLORS.muted,
+                                        borderRadius: RADIUS.md,
+                                        borderWidth: 2,
+                                        borderColor: COLORS.border,
+                                        fontSize: 15,
+                                        color: COLORS.foreground,
+                                    }}
                                 />
-                                <TouchableOpacity 
+                                <TouchableOpacity
                                     onPress={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 z-10"
+                                    style={{ position: "absolute", right: 16, zIndex: 1 }}
                                 >
-                                    <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="#6C5CE7" />
+                                    <Feather name={showPassword ? "eye-off" : "eye"} size={18} color={COLORS.mutedForeground} />
                                 </TouchableOpacity>
                             </View>
+                        </MotiView>
 
-                            {/* Forgot Password */}
-                            <TouchableOpacity className="items-end mb-6">
-                                <Text className="text-[#6C5CE7] text-sm font-medium">
-                                    Забыли пароль?
-                                </Text>
-                            </TouchableOpacity>
+                        {/* Forgot Password */}
+                        <TouchableOpacity style={{ alignItems: "flex-end", marginBottom: 24 }}>
+                            <Text style={{ color: COLORS.primary, fontSize: 13, fontWeight: "500" }}>
+                                Забыли пароль?
+                            </Text>
+                        </TouchableOpacity>
 
-                            {/* Submit Button */}
+                        {/* Submit Button */}
+                        <MotiView
+                            from={{ opacity: 0, translateY: 20 }}
+                            animate={{ opacity: 1, translateY: 0 }}
+                            transition={{ duration: 500, delay: 200 }}
+                            style={{ marginBottom: 24 }}
+                        >
                             <TouchableOpacity
                                 onPress={handleLogin}
-                                className={`w-full py-4 rounded-2xl items-center justify-center shadow-lg mb-6 ${
-                                    email && password ? 'bg-[#6C5CE7]' : 'bg-gray-300'
-                                }`}
-                                disabled={!email || !password}
+                                disabled={!canSubmit}
+                                style={{
+                                    width: "100%",
+                                    paddingVertical: 16,
+                                    borderRadius: RADIUS.md,
+                                    alignItems: "center",
+                                    backgroundColor: canSubmit ? COLORS.primary : COLORS.muted,
+                                }}
                             >
-                                <Text className={`text-lg font-semibold ${email && password ? 'text-white' : 'text-gray-500'}`}>
+                                <Text style={{
+                                    fontSize: 16,
+                                    fontWeight: "600",
+                                    color: canSubmit ? "white" : COLORS.mutedForeground,
+                                }}>
                                     Войти
                                 </Text>
                             </TouchableOpacity>
+                        </MotiView>
 
-                            {/* Divider */}
-                            <View className="flex-row items-center justify-center mb-4">
-                                <View className="flex-1 h-px bg-gray-300" />
-                                <Text className="mx-3 text-gray-400 text-sm">или войти через</Text>
-                                <View className="flex-1 h-px bg-gray-300" />
-                            </View>
-
-                            {/* Social Icons (mock) */}
-                            <View className="flex-row justify-center space-x-6 items-center">
-                                <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md">
-                                    <Feather name="github" size={24} color="#000" />
-                                </TouchableOpacity>
-                                <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md ml-4 mr-4">
-                                    <Text className="text-2xl font-bold text-[#ea4335]">G</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity className="w-14 h-14 bg-white rounded-full items-center justify-center shadow-md">
-                                    <Feather name="twitter" size={24} color="#1DA1F2" />
-                                </TouchableOpacity>
-                            </View>
-
-                            {/* Go to Register */}
-                            <View className="flex-row justify-center mt-6">
-                                <Text className="text-gray-600 text-sm">нет аккаунта? </Text>
-                                <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
-                                    <Text className="text-[#6C5CE7] font-semibold text-sm">Зарегистрироваться</Text>
-                                </TouchableOpacity>
-                            </View>
-
+                        {/* Divider */}
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                            <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
+                            <Text style={{ marginHorizontal: 12, color: COLORS.mutedForeground, fontSize: 13 }}>или войти через</Text>
+                            <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
                         </View>
-                    </LinearGradient>
-                </View>
-            </ScrollView>
+
+                        {/* Social Buttons */}
+                        <View style={{ flexDirection: "row", justifyContent: "center", gap: 12, marginBottom: 32 }}>
+                            <TouchableOpacity style={{
+                                width: 56, height: 56, borderRadius: RADIUS.md,
+                                backgroundColor: COLORS.card, borderWidth: 2, borderColor: COLORS.border,
+                                alignItems: "center", justifyContent: "center",
+                            }}>
+                                <Text style={{ fontSize: 20, fontWeight: "700", color: "#ea4335" }}>G</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={{
+                                width: 56, height: 56, borderRadius: RADIUS.md,
+                                backgroundColor: COLORS.card, borderWidth: 2, borderColor: COLORS.border,
+                                alignItems: "center", justifyContent: "center",
+                            }}>
+                                <Feather name="github" size={22} color={COLORS.foreground} />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Spacer */}
+                        <View style={{ flex: 1 }} />
+
+                        {/* Go to Register */}
+                        <View style={{ flexDirection: "row", justifyContent: "center", paddingBottom: 24 }}>
+                            <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>нет аккаунта? </Text>
+                            <TouchableOpacity onPress={() => router.push("/(auth)/register")}>
+                                <Text style={{ color: COLORS.primary, fontWeight: "600", fontSize: 14 }}>Зарегистрироваться</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
         </KeyboardAvoidingView>
     );
 }

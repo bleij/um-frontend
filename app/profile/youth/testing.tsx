@@ -172,7 +172,7 @@ export default function YouthTesting() {
                                     key={i}
                                     onPress={() => selectAnswer(i)}
                                     style={{
-                                        backgroundColor: active ? "#3F3C9F" : "#EFEFFE",
+                                        backgroundColor: active ? "#6C5CE7" : "#EFEFFE",
                                         borderRadius: 30,
                                         paddingVertical: 14,
                                         paddingHorizontal: 20,
@@ -200,7 +200,7 @@ export default function YouthTesting() {
                         onPress={next}
                         style={{
                             backgroundColor:
-                                answers[step] === undefined ? "#999" : "#2E2C79",
+                                answers[step] === undefined ? "#999" : "#6C5CE7",
                             paddingVertical: 16,
                             borderRadius: 30,
                         }}

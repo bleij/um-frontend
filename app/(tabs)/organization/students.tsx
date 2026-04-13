@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const STUDENTS = [
     { id: "1",  name: "Анна Петрова",      age: 8,  club: "Художественная студия", progress: 85, attendance: 95 },
@@ -31,8 +32,8 @@ export default function OrgStudents() {
     const avgAttendance  = Math.round(filtered.reduce((s, st) => s + st.attendance, 0)  / (filtered.length || 1));
 
     return (
-        <View style={{ flex: 1, backgroundColor: "#FFF7F0" }}>
-            <LinearGradient colors={["#EA580C", "#F97316"]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
                 <SafeAreaView edges={["top"]}>
                     <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
                         <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
@@ -46,7 +47,7 @@ export default function OrgStudents() {
             <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }} stickyHeaderIndices={[0]}>
 
                 {/* Sticky Search + Filter section */}
-                <View style={{ backgroundColor: "#FFF7F0", paddingBottom: 8 }}>
+                <View style={{ backgroundColor: COLORS.background, paddingBottom: 8 }}>
                     <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "white", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6 }}>
                         <Feather name="search" size={18} color="#9CA3AF" style={{ marginRight: 8 }} />
                         <TextInput
@@ -63,7 +64,7 @@ export default function OrgStudents() {
                             <TouchableOpacity
                                 key={club}
                                 onPress={() => setActiveClub(club)}
-                                style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8, backgroundColor: activeClub === club ? "#F97316" : "white", shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 4 }}
+                                style={{ paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, marginRight: 8, backgroundColor: activeClub === club ? COLORS.primary : COLORS.muted, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 4 }}
                             >
                                 <Text style={{ fontWeight: "600", fontSize: 13, color: activeClub === club ? "white" : "#6B7280" }}>{club}</Text>
                             </TouchableOpacity>
@@ -74,8 +75,8 @@ export default function OrgStudents() {
                 {/* Summary */}
                 <View style={{ flexDirection: "row", gap: 10, marginBottom: 20, marginTop: 8 }}>
                     {[
-                        { label: "Учеников", value: filtered.length, ico: "users", color: "#F97316" },
-                        { label: "Ср. прогресс", value: `${avgProgress}%`, ico: "trending-up", color: "#6C5CE7" },
+                        { label: "Учеников", value: filtered.length, ico: "users", color: COLORS.primary },
+                        { label: "Ср. прогресс", value: `${avgProgress}%`, ico: "trending-up", color: COLORS.primary },
                         { label: "Посещаемость", value: `${avgAttendance}%`, ico: "check-circle", color: "#22C55E" },
                     ].map(s => (
                         <View key={s.label} style={{ flex: 1, backgroundColor: "white", borderRadius: 16, padding: 12, alignItems: "center", shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 6 }}>
@@ -90,15 +91,15 @@ export default function OrgStudents() {
                 {filtered.map(student => (
                     <View key={student.id} style={{ backgroundColor: "white", borderRadius: 18, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8 }}>
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: "#FFF7ED", alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-                                <Text style={{ fontSize: 20, fontWeight: "700", color: "#F97316" }}>{student.name.charAt(0)}</Text>
+                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: `${COLORS.primary}10`, alignItems: "center", justifyContent: "center", marginRight: 14 }}>
+                                <Text style={{ fontSize: 20, fontWeight: "700", color: COLORS.primary }}>{student.name.charAt(0)}</Text>
                             </View>
                             <View style={{ flex: 1 }}>
                                 <Text style={{ fontWeight: "700", fontSize: 15, color: "#1F1F2E" }}>{student.name}</Text>
                                 <Text style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>{student.age} лет · {student.club}</Text>
                             </View>
-                            <TouchableOpacity style={{ backgroundColor: "#FFF7ED", padding: 8, borderRadius: 10 }}>
-                                <Feather name="chevron-right" size={18} color="#F97316" />
+                            <TouchableOpacity style={{ backgroundColor: `${COLORS.primary}10`, padding: 8, borderRadius: 10 }}>
+                                <Feather name="chevron-right" size={18} color={COLORS.primary} />
                             </TouchableOpacity>
                         </View>
 
@@ -106,10 +107,10 @@ export default function OrgStudents() {
                             <View style={{ flex: 1 }}>
                                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
                                     <Text style={{ fontSize: 12, color: "#9CA3AF" }}>Прогресс</Text>
-                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#6C5CE7" }}>{student.progress}%</Text>
+                                    <Text style={{ fontSize: 12, fontWeight: "700", color: COLORS.primary }}>{student.progress}%</Text>
                                 </View>
                                 <View style={{ height: 5, backgroundColor: "#F3F4F6", borderRadius: 999 }}>
-                                    <View style={{ height: 5, width: `${student.progress}%`, backgroundColor: "#6C5CE7", borderRadius: 999 }} />
+                                    <View style={{ height: 5, width: `${student.progress}%`, backgroundColor: COLORS.primary, borderRadius: 999 }} />
                                 </View>
                             </View>
                             <View style={{ flex: 1 }}>

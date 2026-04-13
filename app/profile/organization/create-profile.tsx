@@ -33,10 +33,10 @@ export default function CreateProfileOrganization() {
 
     return (
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
-            <LinearGradient colors={["#FFF7ED", "#FEFCE8"]} style={{ flex: 1 }}>
+            <LinearGradient colors={["#F8F7FF", "#EDE9FE"]} style={{ flex: 1 }}>
                 
                 {/* Header */}
-                <LinearGradient colors={["#F97316", "#EA580C"]} className="pt-12 pb-4 px-4 shadow-sm z-10 rounded-b-3xl">
+                <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} className="pt-12 pb-4 px-4 shadow-sm z-10 rounded-b-3xl">
                     <SafeAreaView edges={["top"]} style={{ flexDirection: "row", alignItems: "center" }}>
                         <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
                             <Feather name="arrow-left" size={24} color="white" />
@@ -48,9 +48,9 @@ export default function CreateProfileOrganization() {
                 <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
                     
                     {/* Organization Info */}
-                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-orange-50">
+                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-purple-50">
                         <View className="flex-row items-center mb-4">
-                            <MaterialCommunityIcons name="office-building" size={20} color="#EA580C" />
+                            <MaterialCommunityIcons name="office-building" size={20} color="#6C5CE7" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Информация об организации</Text>
                         </View>
 
@@ -87,9 +87,9 @@ export default function CreateProfileOrganization() {
                     </View>
 
                     {/* Contact Person */}
-                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-orange-50">
+                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-purple-50">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="user" size={20} color="#EA580C" />
+                            <Feather name="user" size={20} color="#6C5CE7" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Контактное лицо</Text>
                         </View>
                         <View>
@@ -104,9 +104,9 @@ export default function CreateProfileOrganization() {
                     </View>
 
                     {/* Address */}
-                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-orange-50">
+                    <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-purple-50">
                         <View className="flex-row items-center mb-4">
-                            <Feather name="map-pin" size={20} color="#EA580C" />
+                            <Feather name="map-pin" size={20} color="#6C5CE7" />
                             <Text className="text-lg font-semibold text-gray-900 ml-2">Локация</Text>
                         </View>
                         <View className="space-y-4">
@@ -135,7 +135,7 @@ export default function CreateProfileOrganization() {
                         onPress={handleMockSubmit}
                         className="w-full rounded-xl overflow-hidden shadow-md mt-2"
                     >
-                        <LinearGradient colors={["#F97316", "#EA580C"]} className="w-full py-4 items-center justify-center">
+                        <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} className="w-full py-4 items-center justify-center">
                             <Text className="text-white font-bold text-lg">Создать профиль</Text>
                         </LinearGradient>
                     </TouchableOpacity>

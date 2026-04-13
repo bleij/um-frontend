@@ -9,6 +9,7 @@ import {
 import {useRouter} from "expo-router";
 import {MotiView} from "moti";
 import {LinearGradient} from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 
 const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
@@ -18,7 +19,7 @@ export default function YouthResults() {
 
     return (
         <LinearGradient
-            colors={["#3F3C9F", "#EDEBFF"]}
+            colors={["#6C5CE7", "#EDE9FE"]}
             style={{flex: 1}}
         >
             <ScrollView
@@ -62,7 +63,9 @@ export default function YouthResults() {
                             marginBottom: 30,
                         }}
                     >
-                        <Text style={{fontSize: 64}}>🔥</Text>
+                        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                            <Feather name="zap" size={40} color="white" />
+                        </View>
                     </MotiView>
 
                     {/* TYPE CARD */}
@@ -86,7 +89,7 @@ export default function YouthResults() {
                                 fontWeight: "700",
                                 textAlign: "center",
                                 marginBottom: 10,
-                                color: "#2E2C79",
+                                color: "#6C5CE7",
                             }}
                         >
                             Тип: Техно-энтузиаст
@@ -131,7 +134,7 @@ export default function YouthResults() {
                                     style={{
                                         width: 18,
                                         height: h,
-                                        backgroundColor: "#3F3C9F",
+                                        backgroundColor: "#6C5CE7",
                                         borderRadius: 8,
                                     }}
                                 />
@@ -165,13 +168,13 @@ export default function YouthResults() {
                         }}
                     >
                         <Text style={{fontSize: 16, marginBottom: 10}}>
-                            ⚡ Техника — <Text style={{fontWeight: "700"}}>88%</Text>
+                            Техника — <Text style={{fontWeight: "700"}}>88%</Text>
                         </Text>
                         <Text style={{fontSize: 16, marginBottom: 10}}>
-                            🎨 Креатив — <Text style={{fontWeight: "700"}}>70%</Text>
+                            Креатив — <Text style={{fontWeight: "700"}}>70%</Text>
                         </Text>
                         <Text style={{fontSize: 16}}>
-                            💬 Общение — <Text style={{fontWeight: "700"}}>62%</Text>
+                            Общение — <Text style={{fontWeight: "700"}}>62%</Text>
                         </Text>
                     </MotiView>
 
@@ -194,7 +197,7 @@ export default function YouthResults() {
                     <TouchableOpacity
                         onPress={() => router.push("/profile/common/subscribe")}
                         style={{
-                            backgroundColor: "#2E2C79",
+                            backgroundColor: "#6C5CE7",
                             paddingVertical: 16,
                             borderRadius: 30,
                         }}

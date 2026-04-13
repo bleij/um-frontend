@@ -9,6 +9,7 @@ import {
 import {useRouter} from "expo-router";
 import {MotiView} from "moti";
 import {LinearGradient} from "expo-linear-gradient";
+import { Feather } from "@expo/vector-icons";
 
 const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
@@ -18,7 +19,7 @@ export default function ParentResults() {
 
     return (
         <LinearGradient
-            colors={["#3F3C9F", "#EDEBFF"]}
+            colors={["#6C5CE7", "#EDE9FE"]}
             style={{flex: 1}}
         >
             <ScrollView
@@ -62,7 +63,9 @@ export default function ParentResults() {
                             marginBottom: 30,
                         }}
                     >
-                        <Text style={{fontSize: 64}}>⭐</Text>
+                        <View style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                            <Feather name="award" size={40} color="white" />
+                        </View>
                     </MotiView>
 
                     {/* TYPE CARD */}
@@ -87,7 +90,7 @@ export default function ParentResults() {
                                 fontWeight: "700",
                                 textAlign: "center",
                                 marginBottom: 10,
-                                color: "#2E2C79",
+                                color: "#6C5CE7",
                             }}
                         >
                             Тип личности: Исследователь
@@ -132,7 +135,7 @@ export default function ParentResults() {
                                     style={{
                                         width: 18,
                                         height: h,
-                                        backgroundColor: "#3F3C9F",
+                                        backgroundColor: "#6C5CE7",
                                         borderRadius: 8,
                                     }}
                                 />
@@ -166,13 +169,13 @@ export default function ParentResults() {
                         }}
                     >
                         <Text style={{fontSize: 16, marginBottom: 10}}>
-                            📌 Креативность — <Text style={{fontWeight: "700"}}>90%</Text>
+                            Креативность — <Text style={{fontWeight: "700"}}>90%</Text>
                         </Text>
                         <Text style={{fontSize: 16, marginBottom: 10}}>
-                            📌 Аналитика — <Text style={{fontWeight: "700"}}>65%</Text>
+                            Аналитика — <Text style={{fontWeight: "700"}}>65%</Text>
                         </Text>
                         <Text style={{fontSize: 16}}>
-                            📌 Общение — <Text style={{fontWeight: "700"}}>72%</Text>
+                            Общение — <Text style={{fontWeight: "700"}}>72%</Text>
                         </Text>
                     </MotiView>
 
@@ -195,7 +198,7 @@ export default function ParentResults() {
                     <TouchableOpacity
                         onPress={() => router.push("/profile/parent/testing")}
                         style={{
-                            backgroundColor: "#433fd2",
+                            backgroundColor: "#6C5CE7",
                             paddingVertical: 16,
                             borderRadius: 30,
                             marginBottom: 12,
@@ -216,7 +219,7 @@ export default function ParentResults() {
                     <TouchableOpacity
                         onPress={() => router.push("/profile/common/subscribe")}
                         style={{
-                            backgroundColor: "#2E2C79",
+                            backgroundColor: "#6C5CE7",
                             paddingVertical: 16,
                             borderRadius: 30,
                         }}

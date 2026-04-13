@@ -17,7 +17,7 @@ export default function ParentCreateChildProfile() {
         <ScrollView
             style={{
                 flex: 1,
-                backgroundColor: isWeb ? "#3F3C9F" : "#3F3C9F",
+                backgroundColor: isWeb ? "#6C5CE7" : "#6C5CE7",
             }}
             contentContainerStyle={{
                 paddingBottom: 60,
@@ -119,7 +119,7 @@ export default function ParentCreateChildProfile() {
                     >
                         <Text
                             style={{
-                                color: "#3F3C9F",
+                                color: "#6C5CE7",
                                 fontSize: 16,
                                 fontWeight: "600",
                             }}
