@@ -1,73 +1,24 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Platform,
+  Pressable,
   ScrollView,
   Text,
   TextInput,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
-import ScreenHeader from "../../../components/ui/ScreenHeader";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 
 const MOCK_CLUBS = [
-  {
-    id: "1",
-    title: "Лего-конструирование",
-    category: "Технологии",
-    age: "6-11",
-    rating: 4.9,
-    price: 8000,
-    enrolled: true,
-  },
-  {
-    id: "2",
-    title: "Рисование акварелью",
-    category: "Искусство",
-    age: "6-17",
-    rating: 4.7,
-    price: 6000,
-    enrolled: false,
-  },
-  {
-    id: "3",
-    title: "Программирование Python",
-    category: "Технологии",
-    age: "12-17",
-    rating: 4.8,
-    price: 10000,
-    enrolled: false,
-  },
-  {
-    id: "4",
-    title: "Футбол",
-    category: "Спорт",
-    age: "6-17",
-    rating: 4.6,
-    price: 5000,
-    enrolled: false,
-  },
-  {
-    id: "5",
-    title: "Музыка и ритм",
-    category: "Искусство",
-    age: "6-12",
-    rating: 4.7,
-    price: 7000,
-    enrolled: false,
-  },
-  {
-    id: "6",
-    title: "Шахматы",
-    category: "Мышление",
-    age: "8-17",
-    rating: 4.9,
-    price: 4500,
-    enrolled: false,
-  },
+  { id: "1", title: "Лего-конструирование", category: "Технологии", age: "6-11", rating: 4.9, price: "8,000", enrolled: true, color: "#3B82F6" },
+  { id: "2", title: "Рисование акварелью", category: "Искусство", age: "6-17", rating: 4.7, price: "6,000", enrolled: false, color: "#A78BFA" },
+  { id: "3", title: "Программирование Python", category: "Технологии", age: "12-17", rating: 4.8, price: "10,000", enrolled: false, color: "#6C5CE7" },
+  { id: "4", title: "Футбол", category: "Спорт", age: "6-17", rating: 4.6, price: "5,000", enrolled: false, color: "#10B981" },
 ];
 
 const CATEGORIES = ["Все", "Технологии", "Искусство", "Спорт", "Мышление"];
@@ -75,280 +26,117 @@ const CATEGORIES = ["Все", "Технологии", "Искусство", "С�
 export default function ParentClubs() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : LAYOUT.dashboardHorizontalPaddingMobile;
   const [activeCategory, setActiveCategory] = useState("Все");
   const [search, setSearch] = useState("");
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
   const filtered = MOCK_CLUBS.filter((club) => {
-    const matchCat =
-      activeCategory === "Все" || club.category === activeCategory;
+    const matchCat = activeCategory === "Все" || club.category === activeCategory;
     const matchSearch = club.title.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
 
-  const enrolled = filtered.filter((c) => c.enrolled);
-  const available = filtered.filter((c) => !c.enrolled);
-
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {!isDesktop && (
-        <ScreenHeader
-          title="Каталог кружков"
-          onBack={() => router.back()}
-          horizontalPadding={horizontalPadding}
-          variant="surface"
-        />
-      )}
+      <LinearGradient
+        colors={['#6C5CE7', '#8B7FE8']}
+        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+              <Pressable
+                onPress={() => router.back()}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Feather name="arrow-left" size={20} color="white" />
+              </Pressable>
+              <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Каталог кружков</Text>
+            </View>
+
+            <View className="flex-row items-center bg-white/10 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20">
+               <Feather name="search" size={18} color="white" style={{ opacity: 0.6, marginRight: 10 }} />
+               <TextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Найти кружок..."
+                  placeholderTextColor="rgba(255,255,255,0.6)"
+                  style={{ flex: 1, color: 'white', fontWeight: '500' }}
+               />
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={{
-          paddingTop: 16,
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 24,
           paddingBottom: 40,
-          alignItems: "center",
         }}
+        showsVerticalScrollIndicator={false}
       >
-        <View
-          style={{
-            width: "100%",
-            maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-            paddingHorizontal: horizontalPadding,
-          }}
-        >
-          {/* Search */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: COLORS.muted,
-              borderRadius: RADIUS.md,
-              paddingHorizontal: 14,
-              paddingVertical: 12,
-              marginBottom: 12,
-            }}
-          >
-            <Feather
-              name="search"
-              size={18}
-              color={COLORS.mutedForeground}
-              style={{ marginRight: 8 }}
-            />
-            <TextInput
-              value={search}
-              onChangeText={setSearch}
-              placeholder="Найти кружок..."
-              placeholderTextColor={COLORS.mutedForeground}
-              style={{ flex: 1, fontSize: 15, color: COLORS.foreground }}
-            />
-          </View>
+        {/* Categories */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6 -mx-1 px-1 overflow-visible">
+           {CATEGORIES.map(cat => (
+              <Pressable 
+                 key={cat}
+                 onPress={() => setActiveCategory(cat)}
+                 className={`mr-3 px-6 py-2.5 rounded-full border ${activeCategory === cat ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-100'}`}
+              >
+                 <Text className={`font-bold text-sm ${activeCategory === cat ? 'text-white' : 'text-gray-500'}`}>{cat}</Text>
+              </Pressable>
+           ))}
+        </ScrollView>
 
-          {/* Category Filters */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ marginBottom: 16 }}
-          >
-            {CATEGORIES.map((cat) => (
-              <TouchableOpacity
-                key={cat}
-                onPress={() => setActiveCategory(cat)}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 8,
-                  borderRadius: RADIUS.full,
-                  marginRight: 8,
-                  backgroundColor:
-                    activeCategory === cat ? COLORS.primary : COLORS.muted,
-                }}
-              >
-                <Text
-                  style={{
-                    fontWeight: "600",
-                    fontSize: 14,
-                    color:
-                      activeCategory === cat ? "white" : COLORS.mutedForeground,
-                  }}
-                >
-                  {cat}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        <Text className="text-xl font-black text-gray-900 mb-4 px-1">Доступные кружки</Text>
 
-          {/* Enrolled */}
-          {enrolled.length > 0 && (
-            <View style={{ marginBottom: 20 }}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: "700",
-                  color: COLORS.foreground,
-                  marginBottom: 12,
-                }}
+        <View className="gap-4">
+           {filtered.map(club => (
+              <Pressable
+                 key={club.id}
+                 onPress={() => router.push(`/parent/club/${club.id}` as any)}
+                 style={SHADOWS.sm}
+                 className="flex-row items-center p-4 bg-white rounded-[32px] border border-gray-50"
               >
-                Мои кружки
-              </Text>
-              {enrolled.map((club) => (
-                <TouchableOpacity
-                  key={club.id}
-                  onPress={() =>
-                    router.push(`/(tabs)/parent/club/${club.id}` as any)
-                  }
-                  style={{
-                    backgroundColor: COLORS.card,
-                    borderRadius: RADIUS.sm,
-                    padding: 16,
-                    marginBottom: 10,
-                    borderLeftWidth: 4,
-                    borderLeftColor: COLORS.primary,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    borderWidth: 1,
-                    borderColor: COLORS.border,
-                    ...SHADOWS.sm,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 14,
-                      backgroundColor: `${COLORS.primary}10`,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: 14,
-                    }}
-                  >
-                    <Feather
-                      name="check-circle"
-                      size={24}
-                      color={COLORS.primary}
-                    />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text
-                      style={{
-                        fontWeight: "700",
-                        color: COLORS.foreground,
-                        fontSize: 15,
-                      }}
-                    >
-                      {club.title}
-                    </Text>
-                    <Text
-                      style={{
-                        color: COLORS.mutedForeground,
-                        fontSize: 13,
-                        marginTop: 2,
-                      }}
-                    >
-                      {club.age} лет · {club.price}₸/мес
-                    </Text>
-                  </View>
-                  <Feather
-                    name="chevron-right"
-                    size={18}
-                    color={COLORS.mutedForeground}
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+                 <View style={{ backgroundColor: club.color + '15' }} className="w-16 h-16 rounded-2xl items-center justify-center mr-4">
+                    <Feather name="book-open" size={24} color={club.color} />
+                 </View>
 
-          {/* Available */}
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: COLORS.foreground,
-              marginBottom: 12,
-            }}
-          >
-            Доступные кружки
-          </Text>
-          {available.map((club) => (
-            <TouchableOpacity
-              key={club.id}
-              onPress={() =>
-                router.push(`/(tabs)/parent/club/${club.id}` as any)
-              }
-              style={{
-                backgroundColor: COLORS.card,
-                borderRadius: RADIUS.sm,
-                padding: 16,
-                marginBottom: 10,
-                flexDirection: "row",
-                alignItems: "center",
-                borderWidth: 1,
-                borderColor: COLORS.border,
-                ...SHADOWS.sm,
-              }}
-            >
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 14,
-                  backgroundColor: `${COLORS.primary}10`,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 14,
-                }}
-              >
-                <Feather name="book-open" size={22} color={COLORS.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontWeight: "700",
-                    color: COLORS.foreground,
-                    fontSize: 15,
-                  }}
-                >
-                  {club.title}
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    marginTop: 4,
-                  }}
-                >
-                  <Feather name="star" size={12} color={COLORS.accent} />
-                  <Text
-                    style={{
-                      color: COLORS.mutedForeground,
-                      fontSize: 12,
-                      marginLeft: 4,
-                    }}
-                  >
-                    {club.rating} · {club.age} лет · {club.price}₸/мес
-                  </Text>
-                </View>
-              </View>
-              <View
-                style={{
-                  backgroundColor: `${COLORS.primary}10`,
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 20,
-                }}
-              >
-                <Text
-                  style={{
-                    color: COLORS.primary,
-                    fontWeight: "600",
-                    fontSize: 12,
-                  }}
-                >
-                  {club.category}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          ))}
+                 <View className="flex-1">
+                    <Text className="font-bold text-base text-gray-900" numberOfLines={1}>{club.title}</Text>
+                    <View className="flex-row items-center gap-2 mt-1">
+                       <View className="flex-row items-center gap-1">
+                          <Feather name="star" size={10} color="#FBBF24" />
+                          <Text className="text-[10px] font-black text-gray-700">{club.rating}</Text>
+                       </View>
+                       <Text className="text-[10px] text-gray-400 font-bold uppercase">{club.age} ЛЕТ</Text>
+                    </View>
+                 </View>
+
+                 <View className="items-end">
+                    <Text className="text-purple-600 font-black text-sm">{club.price}₸</Text>
+                    <Text className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">В МЕСЯЦ</Text>
+                 </View>
+              </Pressable>
+           ))}
         </View>
+
+        {filtered.length === 0 && (
+           <View className="items-center justify-center py-20">
+              <Feather name="search" size={48} color="#E5E7EB" />
+              <Text className="mt-4 text-gray-400 font-bold text-center">Ничего не найдено</Text>
+           </View>
+        )}
       </ScrollView>
     </View>
   );

@@ -91,43 +91,48 @@ export default function OrgStudents() {
 
                 {/* Students */}
                 {filtered.map(student => (
-                    <View key={student.id} style={{ backgroundColor: "white", borderRadius: 18, padding: 16, marginBottom: 12, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8 }}>
-                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 10 }}>
-                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: `${COLORS.primary}10`, alignItems: "center", justifyContent: "center", marginRight: 14 }}>
-                                <Text style={{ fontSize: 20, fontWeight: "700", color: COLORS.primary }}>{student.name.charAt(0)}</Text>
+                    <Pressable 
+                        key={student.id} 
+                        onPress={() => router.push(`/organization/student/${student.id}` as any)}
+                        style={SHADOWS.sm}
+                        className="bg-white rounded-3xl p-4 mb-4 border border-gray-100"
+                    >
+                        <View className="flex-row items-center mb-4">
+                            <View className="w-12 h-12 rounded-2xl bg-purple-50 items-center justify-center mr-4">
+                                <Text className="text-xl font-bold text-primary">{student.name.charAt(0)}</Text>
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={{ fontWeight: "700", fontSize: 15, color: "#1F1F2E" }}>{student.name}</Text>
-                                <Text style={{ fontSize: 13, color: "#9CA3AF", marginTop: 2 }}>{student.age} лет · {student.club}</Text>
+                            <View className="flex-1">
+                                <Text className="font-bold text-gray-900 text-base">{student.name}</Text>
+                                <Text className="text-xs text-gray-500 mt-0.5">{student.age} лет • {student.club}</Text>
                             </View>
-                            <TouchableOpacity style={{ backgroundColor: `${COLORS.primary}10`, padding: 8, borderRadius: 10 }}>
-                                <Feather name="chevron-right" size={18} color={COLORS.primary} />
-                            </TouchableOpacity>
+                            <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
                         </View>
 
-                        <View style={{ flexDirection: "row", gap: 10 }}>
-                            <View style={{ flex: 1 }}>
-                                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-                                    <Text style={{ fontSize: 12, color: "#9CA3AF" }}>Прогресс</Text>
-                                    <Text style={{ fontSize: 12, fontWeight: "700", color: COLORS.primary }}>{student.progress}%</Text>
+                        <View className="flex-row gap-4">
+                            <View className="flex-1">
+                                <View className="flex-row justify-between mb-1.5">
+                                    <Text className="text-[10px] uppercase font-bold text-gray-400">Прогресс</Text>
+                                    <Text className="text-[10px] font-black text-primary">{student.progress}%</Text>
                                 </View>
-                                <View style={{ height: 5, backgroundColor: "#F3F4F6", borderRadius: 999 }}>
-                                    <View style={{ height: 5, width: `${student.progress}%`, backgroundColor: COLORS.primary, borderRadius: 999 }} />
+                                <View className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <View style={{ width: `${student.progress}%` }} className="h-full bg-primary" />
                                 </View>
                             </View>
-                            <View style={{ flex: 1 }}>
-                                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-                                    <Text style={{ fontSize: 12, color: "#9CA3AF" }}>Посещ.</Text>
-                                    <Text style={{ fontSize: 12, fontWeight: "700", color: "#22C55E" }}>{student.attendance}%</Text>
+                            <View className="flex-1">
+                                <View className="flex-row justify-between mb-1.5">
+                                    <Text className="text-[10px] uppercase font-bold text-gray-400">Посещаемость</Text>
+                                    <Text className="text-[10px] font-black text-green-600">{student.attendance}%</Text>
                                 </View>
-                                <View style={{ height: 5, backgroundColor: "#F3F4F6", borderRadius: 999 }}>
-                                    <View style={{ height: 5, width: `${student.attendance}%`, backgroundColor: "#22C55E", borderRadius: 999 }} />
+                                <View className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <View style={{ width: `${student.attendance}%` }} className="h-full bg-green-500" />
                                 </View>
                             </View>
                         </View>
-                    </View>
+                    </Pressable>
                 ))}
             </ScrollView>
         </View>
     );
 }
+
+import { Pressable } from "react-native";

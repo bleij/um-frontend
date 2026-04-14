@@ -1,343 +1,145 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Platform,
+  Pressable,
   ScrollView,
   Text,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
-import ScreenHeader from "../../../components/ui/ScreenHeader";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 
 const SKILLS = [
-  { label: "Коммуникация", current: 85, prev: 75 },
-  { label: "Лидерство", current: 65, prev: 55 },
-  { label: "Креативность", current: 90, prev: 85 },
-  { label: "Логика", current: 75, prev: 70 },
-  { label: "Дисциплина", current: 70, prev: 65 },
+  { label: "Коммуникация", current: 85, prev: 75, color: '#6C5CE7' },
+  { label: "Лидерство", current: 65, prev: 55, color: '#3B82F6' },
+  { label: "Креативность", current: 90, prev: 85, color: '#A78BFA' },
+  { label: "Логика", current: 75, prev: 70, color: '#10B981' },
 ];
 
 const ATTENDANCE = [
-  { m: "Сен", v: 90 },
-  { m: "Окт", v: 85 },
-  { m: "Ноя", v: 95 },
-  { m: "Дек", v: 88 },
-  { m: "Янв", v: 92 },
-  { m: "Фев", v: 87 },
+  { m: "Сен", v: 90 }, { m: "Окт", v: 85 }, { m: "Ноя", v: 95 },
+  { m: "Дек", v: 88 }, { m: "Янв", v: 92 }, { m: "Фев", v: 87 },
 ];
 
 export default function ParentReports() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : LAYOUT.dashboardHorizontalPaddingMobile;
   const [selectedChild, setSelectedChild] = useState("Анна");
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  
   const children = ["Анна", "Дмитрий"];
-
   const maxAttendance = Math.max(...ATTENDANCE.map((a) => a.v));
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {!isDesktop && (
-        <ScreenHeader
-          title="Отчеты и аналитика"
-          onBack={() => router.back()}
-          horizontalPadding={horizontalPadding}
-          variant="surface"
-        />
-      )}
+      <LinearGradient
+        colors={['#6C5CE7', '#8B7FE8']}
+        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+              <Pressable
+                onPress={() => router.back()}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Feather name="arrow-left" size={20} color="white" />
+              </Pressable>
+              <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Отчеты</Text>
+            </View>
+
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 px-1 overflow-visible">
+               {children.map(child => (
+                  <Pressable 
+                     key={child}
+                     onPress={() => setSelectedChild(child)}
+                     className={`mr-3 px-6 py-2.5 rounded-full border ${selectedChild === child ? 'bg-white/20 border-white/40' : 'bg-transparent border-white/20'}`}
+                  >
+                     <Text className="font-bold text-sm text-white">{child}</Text>
+                  </Pressable>
+               ))}
+            </ScrollView>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={{
-          paddingTop: 16,
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 24,
           paddingBottom: 40,
-          alignItems: "center",
         }}
+        showsVerticalScrollIndicator={false}
       >
-        <View
-          style={{
-            width: "100%",
-            maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-            paddingHorizontal: horizontalPadding,
-          }}
-        >
-          {/* Child Selector */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ marginBottom: 16 }}
-          >
-            {children.map((child) => (
-              <TouchableOpacity
-                key={child}
-                onPress={() => setSelectedChild(child)}
-                style={{
-                  paddingHorizontal: 18,
-                  paddingVertical: 9,
-                  borderRadius: RADIUS.full,
-                  marginRight: 8,
-                  backgroundColor:
-                    selectedChild === child ? COLORS.primary : COLORS.muted,
-                }}
-              >
-                <Text
-                  style={{
-                    fontWeight: "600",
-                    color:
-                      selectedChild === child
-                        ? "white"
-                        : COLORS.mutedForeground,
-                  }}
-                >
-                  {child}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-
-          {/* Summary Stats */}
-          <View style={{ flexDirection: "row", gap: 10, marginBottom: 16 }}>
-            {[
-              { label: "Занятий", value: "24", icon: "calendar" as const },
-              { label: "Посещ.", value: "89%", icon: "check-circle" as const },
-              { label: "Навыки", value: "+12%", icon: "trending-up" as const },
-            ].map((stat) => (
-              <View
-                key={stat.label}
-                style={{
-                  flex: 1,
-                  backgroundColor: COLORS.card,
-                  borderRadius: RADIUS.sm,
-                  padding: 14,
-                  alignItems: "center",
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  ...SHADOWS.sm,
-                }}
-              >
-                <Feather name={stat.icon} size={20} color={COLORS.primary} />
-                <Text
-                  style={{
-                    fontSize: 20,
-                    fontWeight: "800",
-                    color: COLORS.foreground,
-                    marginTop: 6,
-                  }}
-                >
-                  {stat.value}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: COLORS.mutedForeground,
-                    marginTop: 2,
-                  }}
-                >
-                  {stat.label}
-                </Text>
+        {/* Stats Row */}
+        <View className="flex-row gap-4 mb-8">
+           {[
+              { label: 'Занятий', value: '24', icon: 'calendar', color: '#6C5CE7' },
+              { label: 'Посещаемость', value: '89%', icon: 'check-circle', color: '#10B981' },
+           ].map(stat => (
+              <View key={stat.label} style={SHADOWS.sm} className="flex-1 bg-white p-5 rounded-[32px] border border-gray-50 items-center">
+                 <View style={{ backgroundColor: stat.color + '10' }} className="w-10 h-10 rounded-xl items-center justify-center mb-3">
+                    <Feather name={stat.icon as any} size={20} color={stat.color} />
+                 </View>
+                 <Text className="text-2xl font-black text-gray-900">{stat.value}</Text>
+                 <Text className="text-[10px] text-gray-400 font-bold uppercase mt-1 text-center">{stat.label}</Text>
               </View>
-            ))}
-          </View>
+           ))}
+        </View>
 
-          {/* Attendance Chart */}
-          <View
-            style={{
-              backgroundColor: COLORS.card,
-              borderRadius: RADIUS.lg,
-              padding: 16,
-              marginBottom: 16,
-              borderWidth: 1,
-              borderColor: COLORS.border,
-              ...SHADOWS.sm,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 15,
-                fontWeight: "700",
-                color: COLORS.foreground,
-                marginBottom: 14,
-              }}
-            >
-              Посещаемость (%)
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "flex-end",
-                height: 100,
-                gap: 6,
-              }}
-            >
-              {ATTENDANCE.map((item) => (
-                <View key={item.m} style={{ flex: 1, alignItems: "center" }}>
-                  <View
-                    style={{
-                      width: "100%",
-                      borderRadius: 6,
-                      height: (item.v / maxAttendance) * 80,
-                      backgroundColor: COLORS.primary,
-                      opacity: 0.7 + (item.v / maxAttendance) * 0.3,
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 10,
-                      color: COLORS.mutedForeground,
-                      marginTop: 4,
-                    }}
-                  >
-                    {item.m}
-                  </Text>
-                </View>
+        {/* Dynamic Skills */}
+        <View style={SHADOWS.md} className="bg-white rounded-[40px] p-6 mb-8 border border-gray-50">
+           <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-lg font-black text-gray-900">Навыки</Text>
+              <View className="bg-green-50 px-3 py-1.5 rounded-full border border-green-100 flex-row items-center gap-1.5">
+                 <Feather name="trending-up" size={12} color="#10B981" />
+                 <Text className="text-[10px] font-black text-green-600">+12% ЗА МЕСЯЦ</Text>
+              </View>
+           </View>
+
+           <View className="gap-6">
+              {SKILLS.map(skill => (
+                 <View key={skill.label}>
+                    <View className="flex-row justify-between items-end mb-2">
+                       <Text className="text-sm font-bold text-gray-800">{skill.label}</Text>
+                       <Text className="text-sm font-black text-gray-900">{skill.current}%</Text>
+                    </View>
+                    <View className="h-2 bg-gray-50 rounded-full overflow-hidden">
+                       <View style={{ width: `${skill.current}%`, backgroundColor: skill.color }} className="h-full rounded-full" />
+                    </View>
+                 </View>
               ))}
-            </View>
-          </View>
+           </View>
+        </View>
 
-          {/* Skills */}
-          <View
-            style={{
-              backgroundColor: COLORS.card,
-              borderRadius: RADIUS.lg,
-              padding: 16,
-              marginBottom: 16,
-              borderWidth: 1,
-              borderColor: COLORS.border,
-              ...SHADOWS.sm,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 14,
-              }}
-            >
-              <Feather name="trending-up" size={18} color={COLORS.primary} />
-              <Text
-                style={{
-                  fontSize: 15,
-                  fontWeight: "700",
-                  color: COLORS.foreground,
-                  marginLeft: 8,
-                }}
-              >
-                Динамика навыков
-              </Text>
-            </View>
-            {SKILLS.map((skill) => (
-              <View key={skill.label} style={{ marginBottom: 12 }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 5,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: COLORS.foreground,
-                    }}
-                  >
-                    {skill.label}
-                  </Text>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <Text
-                      style={{ fontSize: 12, color: COLORS.mutedForeground }}
-                    >
-                      {skill.prev}%
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 13,
-                        fontWeight: "700",
-                        color: COLORS.primary,
-                      }}
-                    >
-                      {skill.current}%
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 11,
-                        color: COLORS.success,
-                        fontWeight: "600",
-                      }}
-                    >
-                      +{skill.current - skill.prev}%
-                    </Text>
-                  </View>
-                </View>
-                <View
-                  style={{
-                    height: 6,
-                    backgroundColor: COLORS.muted,
-                    borderRadius: 999,
-                  }}
-                >
-                  <View
-                    style={{
-                      height: 6,
-                      width: `${skill.current}%`,
-                      backgroundColor: COLORS.primary,
-                      borderRadius: 999,
-                    }}
-                  />
-                </View>
+        {/* AI Insight */}
+        <View className="bg-purple-600 rounded-[40px] p-8 overflow-hidden">
+           <LinearGradient
+              colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)']}
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+           />
+           <View className="flex-row items-center gap-3 mb-4">
+              <View className="w-10 h-10 bg-white/20 rounded-2xl items-center justify-center">
+                 <Feather name="cpu" size={20} color="white" />
               </View>
-            ))}
-          </View>
-
-          {/* AI Recommendation */}
-          <View
-            style={{
-              backgroundColor: `${COLORS.primary}08`,
-              borderRadius: RADIUS.lg,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: `${COLORS.primary}20`,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 8,
-              }}
-            >
-              <Feather name="cpu" size={16} color={COLORS.primary} />
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "700",
-                  color: COLORS.primary,
-                  marginLeft: 6,
-                }}
-              >
-                Рекомендации AI
-              </Text>
-            </View>
-            <Text
-              style={{ fontSize: 13, color: COLORS.foreground, lineHeight: 20 }}
-            >
-              На основе анализа данных, рекомендуем добавить занятия по развитию
-              лидерских качеств. {selectedChild} показывает высокую креативность
-              — предлагаем театральную студию для комплексного развития.
-            </Text>
-          </View>
+              <Text className="text-white text-lg font-black">AI Аналитика</Text>
+           </View>
+           <Text className="text-white/80 text-sm leading-6 font-medium">
+              {selectedChild} показывает исключительные результаты в креативности. Рекомендуем попробовать театральную студию для развития лидерских качеств и публичных выступлений.
+           </Text>
         </View>
       </ScrollView>
     </View>

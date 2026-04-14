@@ -1,165 +1,128 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import React, { useState } from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
-import { useIsDesktop } from "../../../lib/useIsDesktop";
-
-const TASK_ICONS: Record<string, string> = {
-    "Художественная студия": "edit-3",
-    "Программирование": "code",
-    "Английский язык": "book",
-    "Футбол": "activity",
-};
+import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 
 const MOCK_TASKS = [
-    { id: 1, title: "Нарисовать пейзаж", club: "Художественная студия", xp: 50, completed: true },
-    { id: 2, title: "Сделать домашнее задание", club: "Программирование", xp: 40, completed: false },
-    { id: 3, title: "Выучить 10 новых слов", club: "Английский язык", xp: 30, completed: false },
-    { id: 4, title: "Пробежать 1 км", club: "Футбол", xp: 45, completed: false },
-    { id: 5, title: "Слепить фигурку", club: "Художественная студия", xp: 35, completed: false },
-    { id: 6, title: "Решить 5 задач по логике", club: "Программирование", xp: 50, completed: false },
+    { id: 1, title: "Нарисовать пейзаж", club: "Художественная студия", xp: 50, completed: true, color: "#A78BFA" },
+    { id: 2, title: "Домашнее задание", club: "Программирование", xp: 40, completed: false, color: "#6C5CE7" },
+    { id: 3, title: "Выучить 10 слов", club: "Английский язык", xp: 30, completed: false, color: "#3B82F6" },
+    { id: 4, title: "Пробежать 1 км", club: "Футбол", xp: 45, completed: false, color: "#10B981" },
 ];
 
 export default function YouthTasks() {
-    const router = useRouter();
-    const isDesktop = useIsDesktop();
-    const [tasks, setTasks] = useState(MOCK_TASKS);
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-    const toggleTask = (id: number) => {
-        setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-    };
+  const toggleTask = (id: number) => {
+    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
+  };
 
-    const doneCount = tasks.filter(t => t.completed).length;
-    const totalXP = tasks.filter(t => t.completed).reduce((sum, t) => sum + t.xp, 0);
+  const doneCount = tasks.filter(t => t.completed).length;
+  const totalXP = tasks.filter(t => t.completed).reduce((sum, t) => sum + t.xp, 0);
 
-    return (
-        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <SafeAreaView edges={["top"]}>
-                <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, marginBottom: 12 }}>
-                    <TouchableOpacity
-                        onPress={() => router.back()}
-                        style={{ padding: 8, marginRight: 8 }}
-                    >
-                        <Feather name="arrow-left" size={24} color={COLORS.foreground} />
-                    </TouchableOpacity>
-                    <View>
-                        <Text style={{ fontSize: 24, fontWeight: "800", color: COLORS.foreground }}>Задания</Text>
-                        <Text style={{ fontSize: 13, color: COLORS.mutedForeground }}>
-                            Выполнено: {doneCount} из {tasks.length}
-                        </Text>
-                    </View>
-                </View>
-            </SafeAreaView>
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <LinearGradient
+        colors={['#3B82F6', '#6C5CE7']}
+        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+              <Pressable
+                onPress={() => router.back()}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Feather name="arrow-left" size={20} color="white" />
+              </Pressable>
+              <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Задания</Text>
+            </View>
+            
+            <View className="flex-row gap-4">
+               <View className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                  <Text className="text-white/70 text-[10px] font-black uppercase mb-1">XP ЗА СЕГОДНЯ</Text>
+                  <Text className="text-white text-2xl font-black">{totalXP}</Text>
+               </View>
+               <View className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
+                  <Text className="text-white/70 text-[10px] font-black uppercase mb-1">ВЫПОЛНЕНО</Text>
+                  <Text className="text-white text-2xl font-black">{doneCount} / {tasks.length}</Text>
+               </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
-                {/* Score Card */}
-                <LinearGradient
-                    colors={[COLORS.primary, COLORS.secondary]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={{ borderRadius: RADIUS.lg, padding: 20, marginBottom: 24, ...SHADOWS.lg }}
-                >
-                    <View style={{ flexDirection: "row", justifyContent: "space-around", alignItems: "center" }}>
-                        <View style={{ alignItems: "center" }}>
-                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-                                <Feather name="star" size={20} color={COLORS.accent} />
-                                <Text style={{ fontSize: 28, fontWeight: "900", color: "white", marginLeft: 6 }}>{totalXP}</Text>
-                            </View>
-                            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>Заработано XP</Text>
-                        </View>
-                        <View style={{ width: 1, height: 40, backgroundColor: "rgba(255,255,255,0.3)" }} />
-                        <View style={{ alignItems: "center" }}>
-                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
-                                <Feather name="check-circle" size={20} color="white" />
-                                <Text style={{ fontSize: 28, fontWeight: "900", color: "white", marginLeft: 6 }}>{doneCount}</Text>
-                            </View>
-                            <Text style={{ fontSize: 12, color: "rgba(255,255,255,0.8)" }}>Выполнено</Text>
-                        </View>
-                    </View>
-                </LinearGradient>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 24,
+          paddingBottom: 40,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text className="text-lg font-black text-gray-900 mb-4 px-1">Твой список дел</Text>
+        
+        <View className="gap-3">
+           {tasks.map(task => (
+              <Pressable 
+                 key={task.id}
+                 onPress={() => toggleTask(task.id)}
+                 style={SHADOWS.sm}
+                 className={`flex-row items-center p-4 rounded-3xl border ${task.completed ? 'bg-green-50/30 border-green-100' : 'bg-white border-gray-50'}`}
+              >
+                 <View style={{ backgroundColor: task.color + '15' }} className="w-12 h-12 rounded-2xl items-center justify-center mr-4">
+                    <Feather 
+                       name={task.completed ? 'check' : 'square'} 
+                       size={20} 
+                       color={task.completed ? '#10B981' : task.color} 
+                    />
+                 </View>
 
-                <Text style={{ fontSize: 18, fontWeight: "800", color: COLORS.foreground, marginBottom: 16, marginLeft: 4 }}>
-                    Твои дела
-                </Text>
+                 <View className="flex-1">
+                    <Text className={`font-bold text-base ${task.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>{task.title}</Text>
+                    <Text className="text-xs text-gray-400 font-medium">{task.club}</Text>
+                 </View>
 
-                {tasks.map(task => {
-                    const iconName = TASK_ICONS[task.club] || "file-text";
-                    return (
-                        <TouchableOpacity
-                            key={task.id}
-                            onPress={() => toggleTask(task.id)}
-                            style={{
-                                backgroundColor: task.completed ? `${COLORS.success}08` : COLORS.card,
-                                borderRadius: RADIUS.lg, padding: 16, marginBottom: 12,
-                                flexDirection: "row", alignItems: "center",
-                                borderWidth: 2, borderColor: task.completed ? `${COLORS.success}30` : COLORS.border,
-                                ...SHADOWS.sm,
-                            }}
-                        >
-                            <View style={{
-                                width: 44, height: 44, borderRadius: 14,
-                                backgroundColor: `${COLORS.primary}10`,
-                                alignItems: "center", justifyContent: "center",
-                                marginRight: 14,
-                            }}>
-                                <Feather name={iconName as any} size={20} color={COLORS.primary} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={{
-                                    fontSize: 15, fontWeight: "700",
-                                    color: task.completed ? COLORS.mutedForeground : COLORS.foreground,
-                                    textDecorationLine: task.completed ? "line-through" : "none",
-                                }}>
-                                    {task.title}
-                                </Text>
-                                <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>{task.club}</Text>
-                            </View>
-                            <View style={{ alignItems: "center", justifyContent: "center" }}>
-                                {task.completed ? (
-                                    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.success, alignItems: "center", justifyContent: "center" }}>
-                                        <Feather name="check" size={16} color="white" />
-                                    </View>
-                                ) : (
-                                    <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: COLORS.border }} />
-                                )}
-                                <Text style={{ fontSize: 11, fontWeight: "700", color: task.completed ? COLORS.success : COLORS.primary, marginTop: 4 }}>
-                                    +{task.xp} XP
-                                </Text>
-                            </View>
-                        </TouchableOpacity>
-                    );
-                })}
-
-                {/* Motivation */}
-                {doneCount === tasks.length ? (
-                    <LinearGradient
-                        colors={[COLORS.primary, COLORS.secondary]}
-                        style={{ borderRadius: RADIUS.lg, padding: 24, alignItems: "center", marginTop: 12 }}
-                    >
-                        <Feather name="award" size={36} color={COLORS.accent} style={{ marginBottom: 8 }} />
-                        <Text style={{ fontSize: 20, fontWeight: "900", color: "white" }}>Все задания выполнены!</Text>
-                        <Text style={{ fontSize: 14, color: "rgba(255,255,255,0.9)", marginTop: 4, textAlign: "center" }}>
-                            Ты молодец! Лови бонус +100 XP к уровню!
-                        </Text>
-                    </LinearGradient>
-                ) : (
-                    <View style={{
-                        backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 24,
-                        alignItems: "center", marginTop: 12,
-                        borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm,
-                    }}>
-                        <Feather name="target" size={28} color={COLORS.primary} style={{ marginBottom: 8 }} />
-                        <Text style={{ fontSize: 16, fontWeight: "800", color: COLORS.primary }}>
-                            Еще {tasks.length - doneCount} заданий до успеха!
-                        </Text>
-                        <Text style={{ fontSize: 13, color: COLORS.mutedForeground, marginTop: 4, textAlign: "center" }}>
-                            Выполни всё до конца недели и получи специальный значок.
-                        </Text>
-                    </View>
-                )}
-            </ScrollView>
+                 <View className="flex-row items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-full">
+                    <Feather name="star" size={12} color="#FBBF24" />
+                    <Text className="text-[10px] font-black text-gray-700">{task.xp} XP</Text>
+                 </View>
+              </Pressable>
+           ))}
         </View>
-    );
+
+        {doneCount === tasks.length && (
+           <View style={SHADOWS.md} className="mt-8 bg-green-500 rounded-[32px] p-6 items-center">
+              <View className="w-16 h-16 bg-white/20 rounded-full items-center justify-center mb-4">
+                 <Feather name="award" size={32} color="white" />
+              </View>
+              <Text className="text-white text-xl font-black text-center mb-2">Отличный результат!</Text>
+              <Text className="text-white/80 text-sm text-center font-medium">Ты выполнил все задачи на сегодня. Заслуженный отдых!</Text>
+           </View>
+        )}
+      </ScrollView>
+    </View>
+  );
 }

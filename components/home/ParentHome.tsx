@@ -9,10 +9,11 @@ import {
   Text,
   useWindowDimensions,
   View,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NotificationsModal } from "../../app/(tabs)/layout-container";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS } from "../../constants/theme";
 import { useParentData } from "../../contexts/ParentDataContext";
 import { courses } from "../../data/courses";
 
@@ -21,14 +22,13 @@ export default function ParentHome() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const [notificationsVisible, setNotificationsVisible] = useState(false);
-  const horizontalPadding = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : LAYOUT.dashboardHorizontalPaddingMobile;
   const {
     childrenProfile: children,
     activeChildId,
     setActiveChildId,
   } = useParentData();
+
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
   const activeChild =
     children.find((child) => child.id === activeChildId) || children[0] || null;
@@ -45,397 +45,149 @@ export default function ParentHome() {
     }));
   }, [activeChild]);
 
-  const upcomingClasses: any[] = [];
-  const headingColor = "rgba(255,255,255,0.96)";
-  const subHeadingColor = "rgba(255,255,255,0.72)";
-  const cardOnGradient = "rgba(255,255,255,0.94)";
-  const borderOnGradient = "rgba(255,255,255,0.22)";
-
   return (
-    <LinearGradient
-      colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-      style={{ flex: 1 }}
-    >
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-        {!isDesktop && (
-          <View
-            style={{
-              width: "100%",
-              paddingHorizontal: horizontalPadding,
-              paddingTop: 6,
-              paddingBottom: 2,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Text
-              style={{
-                color: "white",
-                fontSize: 48,
-                lineHeight: 50,
-                fontWeight: "700",
-                letterSpacing: -1,
-              }}
-            >
-              UM
-            </Text>
-
-            <Pressable
-              onPress={() => setNotificationsVisible(true)}
-              style={{
-                width: 46,
-                height: 46,
-                borderRadius: 23,
-                backgroundColor: "rgba(255,255,255,0.17)",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Feather name="bell" size={22} color="white" />
-              <View
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <LinearGradient
+        colors={['#6C5CE7', '#8B7FE8']}
+        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <Text style={{ fontSize: 32, fontWeight: "900", color: "white", letterSpacing: -1 }}>UM</Text>
+              <Pressable
+                onPress={() => setNotificationsVisible(true)}
                 style={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  width: 8,
-                  height: 8,
-                  borderRadius: 4,
-                  backgroundColor: "white",
-                  opacity: 0.9,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
-              />
+              >
+                <Feather name="bell" size={20} color="white" />
+                <View className="absolute top-3 right-3 w-2 h-2 rounded-full bg-white" />
+              </Pressable>
+            </View>
+            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "500" }}>
+              Привет! Узнайте, как развиваются ваши дети сегодня.
+            </Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: isDesktop ? 32 : 100,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Children Section */}
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 24 }}>
+          <View className="flex-row justify-between items-center mb-4">
+            <Text className="text-xl font-black text-gray-900">Мои дети</Text>
+            <Pressable onPress={() => router.push('/parent/children' as any)}>
+               <Text className="text-purple-600 font-bold text-sm">Все</Text>
             </Pressable>
           </View>
-        )}
-
-        <ScrollView
-          contentContainerStyle={{
-            paddingTop: 14,
-            paddingBottom: isDesktop ? 32 : 100,
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-              paddingHorizontal: horizontalPadding,
-            }}
-          >
-            {/* Children Cards */}
-            <View style={{ marginBottom: 28 }}>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+            {children.map((child) => (
               <Pressable
-                onPress={() => router.push("/parent/children" as any)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 16,
+                key={child.id}
+                onPress={() => {
+                  setActiveChildId(child.id);
+                  router.push(`/parent/child/${child.id}` as any);
                 }}
+                style={SHADOWS.md}
+                className={`mr-4 w-36 p-5 bg-white rounded-[32px] items-center border ${activeChildId === child.id ? 'border-purple-200' : 'border-gray-50'}`}
               >
-                <Text
-                  style={{
-                    flex: 1,
-                    fontWeight: "700",
-                    fontSize: 18,
-                    color: headingColor,
-                  }}
-                >
-                  Мои дети
-                </Text>
-                <Feather name="chevron-right" size={18} color={headingColor} />
-              </Pressable>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {children.map((child) => (
-                  <Pressable
-                    key={child.id}
-                    onPress={() => {
-                      setActiveChildId(child.id);
-                      router.push(`/parent/child/${child.id}` as any);
-                    }}
-                    style={{
-                      marginRight: 12,
-                      width: 130,
-                      padding: 16,
-                      backgroundColor: cardOnGradient,
-                      borderRadius: RADIUS.lg,
-                      alignItems: "center",
-                      borderWidth: 2,
-                      borderColor:
-                        activeChildId === child.id
-                          ? COLORS.primary
-                          : borderOnGradient,
-                      ...SHADOWS.md,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: 26,
-                        backgroundColor: `${COLORS.primary}10`,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginBottom: 10,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: COLORS.primary,
-                          fontWeight: "700",
-                          fontSize: 20,
-                        }}
-                      >
-                        {child.name.charAt(0).toUpperCase()}
-                      </Text>
-                    </View>
-                    <Text
-                      style={{
-                        fontWeight: "600",
-                        color: COLORS.foreground,
-                        textAlign: "center",
-                        marginBottom: 4,
-                      }}
-                    >
-                      {child.name}
-                    </Text>
-                    <Text
-                      style={{
-                        fontSize: 12,
-                        color: COLORS.mutedForeground,
-                        marginBottom: 8,
-                      }}
-                    >
-                      {child.age} лет
-                    </Text>
-                    <View
-                      style={{
-                        paddingHorizontal: 8,
-                        paddingVertical: 3,
-                        borderRadius: 12,
-                        backgroundColor: child.talentProfile
-                          ? `${COLORS.success}15`
-                          : `${COLORS.destructive}15`,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          fontWeight: "600",
-                          color: child.talentProfile
-                            ? COLORS.success
-                            : COLORS.destructive,
-                        }}
-                      >
-                        {child.talentProfile ? "Тест пройден" : "Нужен тест"}
-                      </Text>
-                    </View>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* AI Recommendations */}
-            <View style={{ marginBottom: 28 }}>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: 16,
-                }}
-              >
-                <View>
-                  <Text
-                    style={{
-                      fontWeight: "700",
-                      fontSize: 18,
-                      color: headingColor,
-                    }}
-                  >
-                    Рекомендации AI
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 13,
-                      color: subHeadingColor,
-                      marginTop: 2,
-                    }}
-                  >
-                    Основаны на диагностике
-                  </Text>
+                <View className="w-16 h-16 rounded-full bg-purple-100 items-center justify-center mb-3">
+                   <Text className="text-purple-600 font-black text-xl">{child.name.charAt(0).toUpperCase()}</Text>
                 </View>
-              </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {recommendations.map((rec) => (
-                  <Pressable
-                    key={rec.id}
-                    onPress={() =>
-                      router.push(`/(tabs)/parent/club/${rec.id}` as any)
-                    }
-                    style={{
-                      marginRight: 12,
-                      width: 240,
-                      backgroundColor: cardOnGradient,
-                      borderRadius: RADIUS.lg,
-                      overflow: "hidden",
-                      borderWidth: 1,
-                      borderColor: borderOnGradient,
-                      ...SHADOWS.md,
-                    }}
-                  >
-                    <View
-                      style={{
-                        height: 120,
-                        backgroundColor: COLORS.muted,
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Feather
-                        name="book-open"
-                        size={32}
-                        color={COLORS.mutedForeground}
-                      />
-                      <View
-                        style={{
-                          position: "absolute",
-                          top: 8,
-                          right: 8,
-                          backgroundColor: "rgba(255,255,255,0.95)",
-                          paddingHorizontal: 8,
-                          paddingVertical: 3,
-                          borderRadius: 12,
-                          flexDirection: "row",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Feather name="star" size={11} color={COLORS.accent} />
-                        <Text
-                          style={{
-                            fontSize: 11,
-                            fontWeight: "600",
-                            marginLeft: 3,
-                            color: COLORS.foreground,
-                          }}
-                        >
-                          {rec.rating}
-                        </Text>
-                      </View>
-                    </View>
-                    <View style={{ padding: 14 }}>
-                      <Text
-                        style={{
-                          fontWeight: "600",
-                          color: COLORS.foreground,
-                          marginBottom: 4,
-                          lineHeight: 20,
-                        }}
-                      >
-                        {rec.title}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 12,
-                          color: COLORS.mutedForeground,
-                          marginBottom: 8,
-                        }}
-                      >
-                        {rec.age}
-                      </Text>
-                      <View
-                        style={{
-                          backgroundColor: `${COLORS.primary}10`,
-                          alignSelf: "flex-start",
-                          paddingHorizontal: 8,
-                          paddingVertical: 3,
-                          borderRadius: 12,
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 11,
-                            color: COLORS.primary,
-                            fontWeight: "500",
-                          }}
-                        >
-                          Для: {rec.for}
-                        </Text>
-                      </View>
-                    </View>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </View>
-
-            {/* Upcoming Classes */}
-            <View style={{ marginBottom: 28 }}>
-              <Pressable
-                onPress={() => router.push("/(tabs)/parent/calendar" as any)}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 16,
-                }}
-              >
-                <Text
-                  style={{
-                    flex: 1,
-                    fontWeight: "700",
-                    fontSize: 18,
-                    color: headingColor,
-                  }}
-                >
-                  Ближайшие занятия
-                </Text>
-                <Feather name="chevron-right" size={18} color={headingColor} />
+                <Text className="font-bold text-sm text-gray-800 text-center" numberOfLines={1}>{child.name}</Text>
+                <Text className="text-[10px] text-gray-400 font-bold uppercase mt-1">{child.age} ЛЕТ</Text>
               </Pressable>
-              {upcomingClasses.length > 0 ? (
-                <View />
-              ) : (
-                <View
-                  style={{
-                    backgroundColor: cardOnGradient,
-                    padding: 32,
-                    borderRadius: RADIUS.lg,
-                    alignItems: "center",
-                    borderWidth: 1,
-                    borderColor: borderOnGradient,
-                    ...SHADOWS.sm,
-                  }}
-                >
-                  <Feather
-                    name="calendar"
-                    size={32}
-                    color={COLORS.mutedForeground}
-                    style={{ marginBottom: 12 }}
-                  />
-                  <Text
-                    style={{
-                      color: COLORS.mutedForeground,
-                      textAlign: "center",
-                      fontWeight: "500",
-                      marginBottom: 12,
-                    }}
-                  >
-                    Нет запланированных занятий
-                  </Text>
-                  <Pressable onPress={() => router.push("/catalog")}>
-                    <Text style={{ color: COLORS.primary, fontWeight: "600" }}>
-                      Выбрать кружок
-                    </Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
+            ))}
+            
+            <Pressable
+               onPress={() => router.push('/parent/add-child' as any)}
+               className="w-36 p-5 bg-gray-50 rounded-[32px] items-center justify-center border-2 border-dashed border-gray-100"
+            >
+               <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mb-2">
+                  <Feather name="plus" size={20} color="#9CA3AF" />
+               </View>
+               <Text className="text-xs font-bold text-gray-400 text-center">Добавить</Text>
+            </Pressable>
+          </ScrollView>
+        </View>
+
+        {/* AI Recommendations Section */}
+        <View style={{ marginTop: 32 }}>
+          <View style={{ paddingHorizontal: horizontalPadding }}>
+            <Text className="text-xl font-black text-gray-900 mb-1">Рекомендации AI</Text>
+            <Text className="text-xs text-gray-400 font-medium mb-4">На основе интересов {activeChild?.name}</Text>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingLeft: horizontalPadding }}>
+            {recommendations.map((rec) => (
+              <Pressable
+                key={rec.id}
+                onPress={() => router.push(`/parent/club/${rec.id}` as any)}
+                style={SHADOWS.sm}
+                className="mr-4 w-64 bg-white rounded-[32px] overflow-hidden border border-gray-50"
+              >
+                <View className="h-32 bg-gray-100">
+                   <View className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full flex-row items-center gap-1">
+                      <Feather name="star" size={10} color="#FBBF24" />
+                      <Text className="text-[10px] font-black text-gray-700">{rec.rating}</Text>
+                   </View>
+                   {/* Image placeholder */}
+                   <View className="w-full h-full items-center justify-center">
+                      <Feather name="image" size={24} color="#D1D5DB" />
+                   </View>
+                </View>
+                <View className="p-4">
+                   <Text className="font-bold text-gray-900 mb-1" numberOfLines={1}>{rec.title}</Text>
+                   <Text className="text-[10px] text-gray-400 font-bold uppercase mb-3">{rec.age}</Text>
+                   <View className="bg-purple-50 self-start px-2 py-1 rounded-lg">
+                      <Text className="text-[9px] font-black text-purple-600 uppercase">ДЛЯ: {rec.for}</Text>
+                   </View>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+
+        {/* Upcoming Classes Section */}
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32 }}>
+          <View className="flex-row justify-between items-center mb-4">
+             <Text className="text-xl font-black text-gray-900">Ближайшие занятия</Text>
+             <Pressable onPress={() => router.push('/parent/calendar' as any)}>
+                <Text className="text-purple-600 font-bold text-sm">Календарь</Text>
+             </Pressable>
+          </View>
+          
+          <View className="bg-gray-50 rounded-[32px] p-8 items-center border border-gray-100">
+             <View className="w-14 h-14 bg-white rounded-2xl items-center justify-center mb-4 border border-gray-100">
+                <Feather name="calendar" size={28} color="#D1D5DB" />
+             </View>
+             <Text className="text-gray-400 font-bold text-sm mb-4 text-center">Пока нет запланированных занятий</Text>
+             <Pressable 
+                onPress={() => router.push('/parent/clubs' as any)}
+                className="bg-purple-600 px-6 py-3 rounded-2xl"
+             >
+                <Text className="text-white font-black text-sm uppercase">Найти кружок</Text>
+             </Pressable>
+          </View>
+        </View>
+      </ScrollView>
 
       <NotificationsModal
         visible={notificationsVisible}
         onClose={() => setNotificationsVisible(false)}
       />
-    </LinearGradient>
+    </View>
   );
 }

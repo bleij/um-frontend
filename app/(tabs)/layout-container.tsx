@@ -77,19 +77,19 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
   mentor: [
     COMMON_HOME,
     {
+      key: "mentor/groups",
+      label: "Группы",
+      route: "mentor/groups",
+      icon: ({ color, size }) => (
+        <Feather name="users" size={size} color={color} />
+      ),
+    },
+    {
       key: "chats",
       label: "Чат",
       route: "chats",
       icon: ({ color, size }) => (
         <Feather name="message-circle" size={size} color={color} />
-      ),
-    },
-    {
-      key: "mentor/learning-path",
-      label: "Треки",
-      route: "mentor/learning-path",
-      icon: ({ color, size }) => (
-        <Feather name="map" size={size} color={color} />
       ),
     },
     {
@@ -105,11 +105,19 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
   org: [
     COMMON_HOME,
     {
-      key: "organization/clubs",
-      label: "Кружки",
-      route: "organization/clubs",
+      key: "organization/courses",
+      label: "Курсы",
+      route: "organization/courses",
       icon: ({ color, size }) => (
         <Feather name="book-open" size={size} color={color} />
+      ),
+    },
+    {
+      key: "organization/staff",
+      label: "Учителя",
+      route: "organization/staff",
+      icon: ({ color, size }) => (
+        <Feather name="award" size={size} color={color} />
       ),
     },
     {
@@ -264,7 +272,7 @@ function useTabNav(role: Role | string | null) {
   const segments = useSegments();
   const currentSegment = segments[segments.length - 1];
   const currentPath = segments.slice(1).join("/");
-  const tabs = (role && TABS_BY_ROLE[role]) ?? DEFAULT_TABS;
+  const tabs = role ? TABS_BY_ROLE[role] || DEFAULT_TABS : DEFAULT_TABS;
 
   const go = (route: string) => {
     if (route.includes("/")) {

@@ -12,18 +12,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ScreenHeader from "../../../components/ui/ScreenHeader";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 
 export default function OrgProfile() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : LAYOUT.dashboardHorizontalPaddingMobile;
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
   const handleLogout = async () => {
     if (Platform.OS === "web") {
@@ -44,253 +41,139 @@ export default function OrgProfile() {
     }
   };
 
-  const menuItems = [
-    {
-      icon: "briefcase" as const,
-      label: "Организация",
-      action: () => Alert.alert("В разработке"),
-    },
-    {
-      icon: "credit-card" as const,
-      label: "Платежные реквизиты",
-      action: () => Alert.alert("В разработке"),
-    },
-    {
-      icon: "settings" as const,
-      label: "Настройки",
-      action: () => Alert.alert("В разработке"),
-    },
-  ];
+  const orgName = "Центр развития «Звёздочка»";
+  const orgType = "Частная школа развития";
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-        {!isDesktop && (
-          <ScreenHeader
-            title="Личный кабинет"
-            horizontalPadding={horizontalPadding}
-            withSafeArea={false}
-          />
-        )}
-
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: horizontalPadding,
-            paddingTop: 16,
-            paddingBottom: 100,
-            alignItems: "center",
-          }}
-        >
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-            }}
-          >
-            {/* Profile Info */}
-            <View
-              style={{
-                backgroundColor: COLORS.card,
-                padding: 28,
-                borderRadius: RADIUS.lg,
-                alignItems: "center",
-                marginBottom: 24,
-                borderWidth: 1,
-                borderColor: COLORS.border,
-                ...SHADOWS.md,
-              }}
-            >
-              <View
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 24,
-                  backgroundColor: `${COLORS.primary}10`,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: 16,
-                }}
-              >
-                <Feather name="briefcase" size={32} color={COLORS.primary} />
-              </View>
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "700",
-                  color: COLORS.foreground,
-                  marginBottom: 4,
-                  textAlign: "center",
-                }}
-              >
-                Звёздочка
-              </Text>
-              <Text
-                style={{
-                  color: COLORS.primary,
-                  fontWeight: "600",
-                  marginBottom: 20,
-                }}
-              >
-                Центр развития
-              </Text>
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  gap: 16,
-                }}
-              >
-                <View style={{ alignItems: "center" }}>
-                  <LinearGradient
-                    colors={[COLORS.primary, COLORS.secondary]}
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 18,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        fontWeight: "800",
-                        color: "white",
-                      }}
-                    >
-                      8
-                    </Text>
-                  </LinearGradient>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: COLORS.mutedForeground,
-                      fontWeight: "500",
-                    }}
-                  >
-                    Кружков
-                  </Text>
-                </View>
-                <View style={{ alignItems: "center" }}>
-                  <LinearGradient
-                    colors={[COLORS.primary, COLORS.secondary]}
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 18,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 18,
-                        fontWeight: "800",
-                        color: "white",
-                      }}
-                    >
-                      124
-                    </Text>
-                  </LinearGradient>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: COLORS.mutedForeground,
-                      fontWeight: "500",
-                    }}
-                  >
-                    Студентов
-                  </Text>
-                </View>
-              </View>
+      <LinearGradient
+        colors={["#F89B29", "#FF0F7B"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ paddingBottom: 40, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+               <View>
+                  <Text className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Профиль организации</Text>
+                  <Text className="text-white text-2xl font-black">{orgName}</Text>
+               </View>
+               <Pressable 
+                  className="w-12 h-12 bg-white/20 rounded-2xl items-center justify-center border border-white/20"
+                  onPress={() => Alert.alert("Уведомления", "Нет новых уведомлений")}
+               >
+                  <Feather name="bell" size={22} color="white" />
+               </Pressable>
             </View>
 
-            {/* Menu Items */}
-            <View style={{ marginBottom: 24 }}>
-              {menuItems.map((item, index) => (
-                <Pressable
-                  key={index}
-                  onPress={item.action}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: 16,
-                    backgroundColor: COLORS.card,
-                    borderRadius: RADIUS.sm,
-                    marginBottom: 10,
-                    borderWidth: 1,
-                    borderColor: COLORS.border,
-                    ...SHADOWS.sm,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      backgroundColor: `${COLORS.primary}10`,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: 14,
-                    }}
-                  >
-                    <Feather
-                      name={item.icon}
-                      size={20}
-                      color={COLORS.primary}
-                    />
+            <View className="flex-row items-center gap-5">
+               <View className="w-20 h-20 bg-white/30 rounded-[28px] items-center justify-center border border-white/30">
+                  <Text className="text-white text-3xl font-black">{orgName.charAt(0)}</Text>
+               </View>
+               <View>
+                  <Text className="text-white font-bold text-lg mb-1">{orgType}</Text>
+                  <View className="flex-row items-center gap-1.5 bg-white/20 self-start px-3 py-1 rounded-full border border-white/20">
+                     <View className="w-2 h-2 rounded-full bg-green-400" />
+                     <Text className="text-white text-[10px] font-black uppercase tracking-wider">Верифицирован</Text>
                   </View>
-                  <Text
-                    style={{
-                      flex: 1,
-                      fontWeight: "600",
-                      color: COLORS.foreground,
-                      fontSize: 16,
-                    }}
-                  >
-                    {item.label}
-                  </Text>
-                  <Feather
-                    name="chevron-right"
-                    size={20}
-                    color={COLORS.mutedForeground}
-                  />
-                </Pressable>
-              ))}
+               </View>
             </View>
-
-            {/* Logout */}
-            <Pressable
-              onPress={handleLogout}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: 16,
-                backgroundColor: COLORS.card,
-                borderRadius: RADIUS.sm,
-                borderWidth: 1,
-                borderColor: `${COLORS.destructive}20`,
-              }}
-            >
-              <Feather name="log-out" size={18} color={COLORS.destructive} />
-              <Text
-                style={{
-                  color: COLORS.destructive,
-                  fontWeight: "600",
-                  fontSize: 16,
-                  marginLeft: 8,
-                }}
-              >
-                Выйти из аккаунта
-              </Text>
-            </Pressable>
           </View>
-        </ScrollView>
-      </SafeAreaView>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 24,
+          paddingBottom: 120,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+         {/* Stats Row */}
+         <View className="flex-row gap-3 mb-8">
+            <View style={SHADOWS.md} className="flex-1 bg-white p-5 rounded-[32px] border border-gray-100 items-center">
+               <View className="w-12 h-12 bg-orange-50 rounded-2xl items-center justify-center mb-2">
+                  <Feather name="book-open" size={20} color="#F59E0B" />
+               </View>
+               <Text className="text-xl font-black text-gray-900">12</Text>
+               <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Курсов</Text>
+            </View>
+            <View style={SHADOWS.md} className="flex-1 bg-white p-5 rounded-[32px] border border-gray-100 items-center">
+               <View className="w-12 h-12 bg-purple-50 rounded-2xl items-center justify-center mb-2">
+                  <Feather name="users" size={20} color="#8B5CF6" />
+               </View>
+               <Text className="text-xl font-black text-gray-900">124</Text>
+               <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Учеников</Text>
+            </View>
+            <View style={SHADOWS.md} className="flex-1 bg-white p-5 rounded-[32px] border border-gray-100 items-center">
+               <View className="w-12 h-12 bg-green-50 rounded-2xl items-center justify-center mb-2">
+                  <Feather name="star" size={20} color="#10B981" />
+               </View>
+               <Text className="text-xl font-black text-gray-900">4.9</Text>
+               <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Рейтинг</Text>
+            </View>
+         </View>
+
+         {/* General Info Section */}
+         <View className="mb-6">
+            <Text className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Настройки</Text>
+            <View className="gap-3">
+               {[
+                  { label: "Редактировать профиль", icon: "edit-3", color: "#6C5CE7", route: "/organization/profile/edit" },
+                  { label: "Платежные реквизиты", icon: "credit-card", color: "#F59E0B", route: "/organization/finance" },
+                  { label: "Документы и лицензии", icon: "file-text", color: "#10B981", route: "/organization/documents" },
+                  { label: "Настройки уведомлений", icon: "sliders", color: "#3B82F6", route: "/organization/settings/notifications" },
+               ].map((item, idx) => (
+                  <Pressable
+                     key={idx}
+                     onPress={() => Alert.alert("В разработке", "Этот раздел скоро появится.")}
+                     style={SHADOWS.sm}
+                     className="bg-white p-5 rounded-[24px] flex-row items-center border border-gray-50"
+                  >
+                     <View style={{ backgroundColor: `${item.color}15` }} className="w-11 h-11 rounded-2xl items-center justify-center mr-4">
+                        <Feather name={item.icon as any} size={20} color={item.color} />
+                     </View>
+                     <Text className="flex-1 font-bold text-gray-700">{item.label}</Text>
+                     <Feather name="chevron-right" size={20} color="#D1D5DB" />
+                  </Pressable>
+               ))}
+            </View>
+         </View>
+
+         {/* Support Section */}
+         <View className="mb-8">
+            <Text className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">Поддержка</Text>
+            <View className="gap-3">
+               <Pressable 
+                  onPress={() => Alert.alert("Поддержка", "Свяжитесь с нами в Телеграм: @um_support")}
+                  style={SHADOWS.sm} 
+                  className="bg-white p-5 rounded-[24px] flex-row items-center border border-gray-50"
+               >
+                  <View className="w-11 h-11 bg-blue-50 rounded-2xl items-center justify-center mr-4">
+                     <Feather name="help-circle" size={20} color="#3B82F6" />
+                  </View>
+                  <Text className="flex-1 font-bold text-gray-700">Помощь и база знаний</Text>
+                  <Feather name="external-link" size={16} color="#D1D5DB" />
+               </Pressable>
+            </View>
+         </View>
+
+         {/* Logout Button */}
+         <Pressable 
+            onPress={handleLogout}
+            className="bg-red-50 p-6 rounded-[32px] flex-row items-center justify-center gap-3 border border-red-100"
+         >
+            <Feather name="log-out" size={20} color="#EF4444" />
+            <Text className="text-[#EF4444] font-black text-lg">Выйти из аккаунта</Text>
+         </Pressable>
+
+         <View className="mt-8 items-center">
+            <Text className="text-gray-400 text-[10px] font-bold uppercase tracking-[4px]">UM PLATFORM v2.4.0</Text>
+         </View>
+      </ScrollView>
     </View>
   );
 }
+

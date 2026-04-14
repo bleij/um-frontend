@@ -1,150 +1,156 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import React from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
-import { useIsDesktop } from "../../../lib/useIsDesktop";
+import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 
 const GOALS = [
     {
         id: "1",
-        title: "Стать разработчиком игр",
+        title: "Разработчик игр",
         progress: 65,
+        color: "#6C5CE7",
         steps: [
             { text: "Изучить Python", done: true },
             { text: "Создать первую игру", done: true },
             { text: "Изучить Unity", done: false },
-            { text: "Опубликовать игру", done: false },
         ],
     },
     {
         id: "2",
-        title: "Улучшить физическую форму",
+        title: "Физическая форма",
         progress: 80,
+        color: "#3B82F6",
         steps: [
             { text: "Посещать футбол 3 раза в неделю", done: true },
-            { text: "Пробежать 5 км без остановки", done: true },
-            { text: "Набрать мышечную массу", done: false },
-        ],
-    },
-    {
-        id: "3",
-        title: "Развить лидерские качества",
-        progress: 40,
-        steps: [
-            { text: "Пройти курс по лидерству", done: true },
-            { text: "Стать капитаном команды", done: false },
-            { text: "Организовать мероприятие", done: false },
+            { text: "Пробежать 5 км", done: true },
         ],
     },
 ];
 
 export default function YouthGoals() {
-    const router = useRouter();
-    const isDesktop = useIsDesktop();
-    const totalDone = GOALS.reduce((sum, g) => sum + g.steps.filter(s => s.done).length, 0);
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-    return (
-        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <LinearGradient
-                colors={[COLORS.primary, COLORS.secondary]}
-                style={{ paddingBottom: 24, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}
-            >
-                <SafeAreaView edges={["top"]}>
-                    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, marginBottom: 8 }}>
-                        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
-                            <Feather name="arrow-left" size={24} color="white" />
-                        </TouchableOpacity>
-                        <Feather name="target" size={22} color="white" style={{ marginRight: 8 }} />
-                        <Text style={{ fontSize: 20, fontWeight: "700", color: "white" }}>Мои цели</Text>
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <LinearGradient
+        colors={['#3B82F6', '#6C5CE7']}
+        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+              <Pressable
+                onPress={() => router.back()}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Feather name="arrow-left" size={20} color="white" />
+              </Pressable>
+              <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Мои цели</Text>
+            </View>
+            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "500", paddingLeft: 4 }}>
+              Ставь амбициозные цели и достигай их
+            </Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 24,
+          paddingBottom: 40,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Add Goal Button */}
+        <Pressable className="h-16 rounded-3xl border-2 border-dashed border-gray-200 items-center justify-center flex-row gap-3 mb-8">
+           <Feather name="plus-circle" size={20} color={COLORS.mutedForeground} />
+           <Text className="font-bold text-gray-500">Добавить новую цель</Text>
+        </Pressable>
+
+        {/* Goals List */}
+        <View className="gap-6">
+           {GOALS.map(goal => (
+              <View 
+                 key={goal.id}
+                 style={SHADOWS.md}
+                 className="bg-white rounded-[32px] p-6 border border-gray-50 overflow-hidden"
+              >
+                 <View className="flex-row justify-between items-start mb-4">
+                    <View className="flex-1">
+                       <Text className="text-xl font-black text-gray-900 mb-1">{goal.title}</Text>
+                       <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                          {(goal.steps.filter(s => s.done).length)} из {goal.steps.length} ШАГОВ
+                       </Text>
                     </View>
-                    <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, paddingHorizontal: 28, marginBottom: 4 }}>
-                        Ставь цели и достигай их шаг за шагом
-                    </Text>
-                </SafeAreaView>
-            </LinearGradient>
+                    <View className="items-end">
+                       <Text style={{ color: goal.color }} className="text-2xl font-black">{goal.progress}%</Text>
+                       <Text className="text-[10px] text-gray-400 font-bold uppercase">ПРОГРЕСС</Text>
+                    </View>
+                 </View>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
-                {/* Add Goal */}
-                <TouchableOpacity style={{
-                    backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 16, marginBottom: 16,
-                    flexDirection: "row", alignItems: "center", justifyContent: "center",
-                    borderWidth: 2, borderColor: `${COLORS.primary}20`, borderStyle: "dashed",
-                }}>
-                    <Feather name="plus" size={20} color={COLORS.primary} />
-                    <Text style={{ color: COLORS.primary, fontWeight: "700", marginLeft: 8, fontSize: 15 }}>
-                        Добавить новую цель
-                    </Text>
-                </TouchableOpacity>
+                 <View className="h-2.5 bg-gray-50 rounded-full overflow-hidden mb-6">
+                    <View style={{ width: `${goal.progress}%`, backgroundColor: goal.color }} className="h-full rounded-full" />
+                 </View>
 
-                {/* Goals */}
-                {GOALS.map(goal => {
-                    const done = goal.steps.filter(s => s.done).length;
-                    return (
-                        <View key={goal.id} style={{
-                            backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 18, marginBottom: 14,
-                            borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.md,
-                        }}>
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
-                                <View style={{ flex: 1 }}>
-                                    <Text style={{ fontWeight: "700", fontSize: 16, color: COLORS.foreground }}>{goal.title}</Text>
-                                    <Text style={{ color: COLORS.mutedForeground, fontSize: 13, marginTop: 2 }}>
-                                        {done} из {goal.steps.length} шагов выполнено
-                                    </Text>
-                                </View>
-                                <Text style={{ fontWeight: "800", fontSize: 24, color: COLORS.primary }}>{goal.progress}%</Text>
-                            </View>
+                 <View className="gap-3 mb-4">
+                    {goal.steps.map((step, idx) => (
+                      <View key={idx} className={`flex-row items-center gap-3 p-3.5 rounded-2xl ${step.done ? 'bg-green-50/50' : 'bg-gray-50'}`}>
+                         <View className={`w-5 h-5 rounded-md items-center justify-center ${step.done ? 'bg-green-500' : 'border border-gray-300'}`}>
+                            {step.done && <Feather name="check" size={12} color="white" />}
+                         </View>
+                         <Text className={`text-sm ${step.done ? 'text-gray-400 line-through' : 'text-gray-700 font-bold'}`}>
+                            {step.text}
+                         </Text>
+                      </View>
+                    ))}
+                 </View>
 
-                            <View style={{ height: 6, backgroundColor: COLORS.muted, borderRadius: 999, marginBottom: 12, overflow: "hidden" }}>
-                                <View style={{ height: 6, width: `${goal.progress}%`, backgroundColor: COLORS.primary, borderRadius: 999 }} />
-                            </View>
-
-                            {goal.steps.map((step, i) => (
-                                <View key={i} style={{
-                                    flexDirection: "row", alignItems: "center", padding: 10, borderRadius: 12,
-                                    backgroundColor: step.done ? `${COLORS.success}08` : COLORS.muted, marginBottom: 6,
-                                }}>
-                                    <View style={{
-                                        width: 22, height: 22, borderRadius: 11, marginRight: 10,
-                                        backgroundColor: step.done ? COLORS.success : "transparent",
-                                        borderWidth: step.done ? 0 : 2, borderColor: COLORS.border,
-                                        alignItems: "center", justifyContent: "center",
-                                    }}>
-                                        {step.done && <Feather name="check" size={12} color="white" />}
-                                    </View>
-                                    <Text style={{
-                                        fontSize: 13, flex: 1, fontWeight: step.done ? "400" : "500",
-                                        color: step.done ? COLORS.mutedForeground : COLORS.foreground,
-                                        textDecorationLine: step.done ? "line-through" : "none",
-                                    }}>{step.text}</Text>
-                                </View>
-                            ))}
-
-                            <TouchableOpacity style={{
-                                backgroundColor: `${COLORS.primary}10`, borderRadius: 12,
-                                padding: 10, alignItems: "center", marginTop: 8,
-                            }}>
-                                <Text style={{ color: COLORS.primary, fontWeight: "600", fontSize: 13 }}>Редактировать цель</Text>
-                            </TouchableOpacity>
-                        </View>
-                    );
-                })}
-
-                {/* Motivation */}
-                <LinearGradient
-                    colors={[COLORS.primary, COLORS.secondary]}
-                    style={{ borderRadius: RADIUS.lg, padding: 18 }}
-                >
-                    <Text style={{ fontWeight: "800", color: "white", fontSize: 16, marginBottom: 6 }}>
-                        Продолжай двигаться вперёд!
-                    </Text>
-                    <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 13, lineHeight: 20 }}>
-                        Ты уже выполнил {totalDone} шагов. Каждый шаг приближает тебя к успеху!
-                    </Text>
-                </LinearGradient>
-            </ScrollView>
+                 <Pressable className="h-12 bg-gray-50 rounded-xl items-center justify-center">
+                    <Text className="text-gray-500 font-bold text-sm">Редактировать шаги</Text>
+                 </Pressable>
+              </View>
+           ))}
         </View>
-    );
+
+        {/* Motivation Card */}
+        <LinearGradient
+           colors={['#3B82F6', '#6C5CE7']}
+           style={SHADOWS.md}
+           className="p-6 rounded-[32px] mt-8"
+        >
+           <View className="flex-row items-center gap-4">
+              <View className="w-12 h-12 bg-white/20 rounded-2xl items-center justify-center">
+                 <Feather name="star" size={24} color="white" />
+              </View>
+              <View className="flex-1">
+                 <Text className="text-lg font-bold text-white mb-1">Держи фокус!</Text>
+                 <Text className="text-white/80 text-sm leading-5">Дисциплина — это мост между целями и достижениями.</Text>
+              </View>
+           </View>
+        </LinearGradient>
+      </ScrollView>
+    </View>
+  );
 }

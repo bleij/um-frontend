@@ -51,15 +51,18 @@ export default function TabsLayout() {
       <Tabs.Screen name="youth/achievements" options={{ href: null }} />
 
       {/* MENTOR SCREENS */}
+      <Tabs.Screen name="mentor/groups" options={{ href: null }} />
       <Tabs.Screen name="mentor/learning-path" options={{ href: null }} />
       <Tabs.Screen name="mentor/student/[id]" options={{ href: null }} />
 
       {/* ORGANIZATION SCREENS */}
-      <Tabs.Screen name="organization/clubs" options={{ href: null }} />
+      <Tabs.Screen name="organization/courses" options={{ href: null }} />
       <Tabs.Screen name="organization/students" options={{ href: null }} />
       <Tabs.Screen name="organization/applications" options={{ href: null }} />
       <Tabs.Screen name="organization/attendance" options={{ href: null }} />
       <Tabs.Screen name="organization/tasks" options={{ href: null }} />
+      <Tabs.Screen name="organization/staff" options={{ href: null }} />
+      <Tabs.Screen name="organization/groups" options={{ href: null }} />
     </Tabs>
   );
 

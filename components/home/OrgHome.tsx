@@ -3,133 +3,63 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS } from "../../constants/theme";
 
 const STATS = [
-  { label: "Кружков", value: "8", icon: "book-open" as const },
-  { label: "Учеников", value: "124", icon: "users" as const },
-  { label: "Заявок", value: "15", icon: "clipboard" as const },
-  { label: "Посещ.", value: "92%", icon: "bar-chart-2" as const },
-];
-
-const CLUBS = [
-  { id: "1", name: "Художественная студия", students: 18 },
-  { id: "2", name: "Футбольная школа", students: 24 },
-  { id: "3", name: "Программирование", students: 15 },
-  { id: "4", name: "Музыкальная школа", students: 20 },
+  { label: "Кружков", value: "8", icon: "book-open" as const, color: '#3B82F6' },
+  { label: "Учеников", value: "124", icon: "users" as const, color: '#10B981' },
+  { label: "Заявок", value: "15", icon: "clipboard" as const, color: '#F59E0B' },
+  { label: "Посещ.", value: "92%", icon: "bar-chart-2" as const, color: '#6366F1' },
 ];
 
 const QUICK_ACTIONS = [
-  {
-    label: "Заявки",
-    icon: "clipboard" as const,
-    badge: 15,
-    route: "/(tabs)/organization/applications",
-  },
-  {
-    label: "Расписание",
-    icon: "calendar" as const,
-    badge: 0,
-    route: "/(tabs)/organization/schedule",
-  },
-  {
-    label: "Посещаемость",
-    icon: "check-square" as const,
-    badge: 0,
-    route: "/(tabs)/organization/attendance",
-  },
-  {
-    label: "Задания",
-    icon: "file-text" as const,
-    badge: 0,
-    route: "/(tabs)/organization/tasks",
-  },
-  {
-    label: "Отчёты",
-    icon: "bar-chart-2" as const,
-    badge: 0,
-    route: "/(tabs)/analytics",
-  },
-  {
-    label: "Ученики",
-    icon: "users" as const,
-    badge: 0,
-    route: "/(tabs)/organization/students",
-  },
+  { label: "Заявки", icon: "clipboard", badge: 15, route: "/organization/applications" },
+  { label: "Группы", icon: "layers", badge: 0, route: "/organization/groups" },
+  { label: "Учителя", icon: "award", badge: 0, route: "/organization/staff" },
+  { label: "Задания", icon: "file-text", badge: 0, route: "/organization/tasks" },
 ];
 
 export default function OrgHome() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : LAYOUT.dashboardHorizontalPaddingMobile;
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.secondary]}
-        style={{
-          paddingBottom: 28,
-          borderBottomLeftRadius: 28,
-          borderBottomRightRadius: 28,
-        }}
+        colors={['#1E3A8A', '#3B82F6']}
+        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
       >
         <SafeAreaView edges={["top"]}>
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-              alignSelf: "center",
-              paddingHorizontal: horizontalPadding,
-            }}
-          >
-            <View
-              style={{
-                paddingTop: 12,
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{ fontSize: 22, fontWeight: "800", color: "white" }}
-                >
-                  Панель управления
-                </Text>
-                <Text
-                  style={{
-                    color: "rgba(255,255,255,0.75)",
-                    fontSize: 13,
-                    marginTop: 2,
-                  }}
-                >
-                  Центр детского развития «Звёздочка»
-                </Text>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <View>
+                <Text style={{ fontSize: 24, fontWeight: "900", color: "white", letterSpacing: -0.5 }}>Управление</Text>
+                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: "500" }}>ДЦ «Звёздочка»</Text>
               </View>
-              <View
+              <Pressable
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 24,
+                  width: 44,
+                  height: 44,
+                  borderRadius: 22,
                   backgroundColor: "rgba(255,255,255,0.15)",
                   alignItems: "center",
                   justifyContent: "center",
                   borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.2)",
+                  borderColor: "rgba(255,255,255,0.1)",
                 }}
               >
-                <Feather name="briefcase" size={22} color="white" />
-              </View>
+                <Feather name="settings" size={20} color="white" />
+              </Pressable>
             </View>
           </View>
         </SafeAreaView>
@@ -137,254 +67,74 @@ export default function OrgHome() {
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 16,
           paddingBottom: isDesktop ? 32 : 100,
-          alignItems: "center",
         }}
+        showsVerticalScrollIndicator={false}
       >
-        <View
-          style={{
-            width: "100%",
-            maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-          }}
-        >
-          {/* Stats Grid */}
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              gap: 10,
-              marginBottom: 20,
-            }}
-          >
+        {/* Stats Grid */}
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 24 }}>
+          <View className="flex-row flex-wrap justify-between gap-4">
             {STATS.map((stat) => (
-              <View
-                key={stat.label}
-                style={{
-                  width: "47%",
-                  backgroundColor: COLORS.card,
-                  borderRadius: RADIUS.lg,
-                  padding: 16,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  ...SHADOWS.sm,
-                }}
+              <View 
+                 key={stat.label} 
+                 style={SHADOWS.sm} 
+                 className="w-[47%] bg-white p-5 rounded-[32px] border border-gray-50 overflow-hidden"
               >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 14,
-                    backgroundColor: `${COLORS.primary}10`,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: 10,
-                  }}
-                >
-                  <Feather name={stat.icon} size={20} color={COLORS.primary} />
-                </View>
-                <Text
-                  style={{
-                    fontSize: 26,
-                    fontWeight: "800",
-                    color: COLORS.foreground,
-                  }}
-                >
-                  {stat.value}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    color: COLORS.mutedForeground,
-                    marginTop: 2,
-                  }}
-                >
-                  {stat.label}
-                </Text>
+                 <View style={{ backgroundColor: stat.color + '10' }} className="w-10 h-10 rounded-xl items-center justify-center mb-3">
+                    <Feather name={stat.icon} size={20} color={stat.color} />
+                 </View>
+                 <Text className="text-2xl font-black text-gray-900">{stat.value}</Text>
+                 <Text className="text-[10px] text-gray-400 font-bold uppercase mt-1">{stat.label}</Text>
               </View>
             ))}
           </View>
+        </View>
 
-          {/* Quick Actions */}
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: "700",
-              color: COLORS.foreground,
-              marginBottom: 12,
-            }}
-          >
-            Быстрые действия
-          </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              flexWrap: "wrap",
-              gap: 10,
-              marginBottom: 20,
-            }}
-          >
+        {/* Quick Actions */}
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32 }}>
+          <Text className="text-xl font-black text-gray-900 mb-4">Быстрые действия</Text>
+          <View className="flex-row flex-wrap justify-between gap-4">
             {QUICK_ACTIONS.map((item) => (
-              <TouchableOpacity
+              <Pressable
                 key={item.label}
                 onPress={() => router.push(item.route as any)}
-                style={{
-                  width: "47%",
-                  backgroundColor: COLORS.card,
-                  borderRadius: RADIUS.lg,
-                  padding: 16,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  position: "relative",
-                  ...SHADOWS.sm,
-                }}
+                style={SHADOWS.sm}
+                className="w-[47%] bg-white p-5 rounded-[32px] border border-gray-50 relative"
               >
-                <Feather
-                  name={item.icon}
-                  size={24}
-                  color={COLORS.primary}
-                  style={{ marginBottom: 8 }}
-                />
-                <Text
-                  style={{
-                    fontWeight: "600",
-                    fontSize: 14,
-                    color: COLORS.foreground,
-                  }}
-                >
-                  {item.label}
-                </Text>
+                <View className="w-10 h-10 bg-gray-50 rounded-xl items-center justify-center mb-3">
+                   <Feather name={item.icon as any} size={20} color="#6B7280" />
+                </View>
+                <Text className="font-bold text-sm text-gray-800">{item.label}</Text>
+                
                 {item.badge > 0 && (
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 10,
-                      right: 12,
-                      backgroundColor: COLORS.destructive,
-                      borderRadius: 10,
-                      minWidth: 20,
-                      height: 20,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      paddingHorizontal: 4,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontSize: 10,
-                        fontWeight: "700",
-                      }}
-                    >
-                      {item.badge}
-                    </Text>
-                  </View>
+                   <View className="absolute top-5 right-5 bg-red-500 rounded-full px-2 py-0.5">
+                      <Text className="text-[10px] font-black text-white">{item.badge}</Text>
+                   </View>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             ))}
           </View>
+        </View>
 
-          {/* My Clubs */}
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 12,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "700",
-                color: COLORS.foreground,
-              }}
-            >
-              Мои кружки
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/(tabs)/organization/clubs" as any)}
-            >
-              <Text
-                style={{
-                  color: COLORS.primary,
-                  fontWeight: "600",
-                  fontSize: 14,
-                }}
-              >
-                + Добавить
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {CLUBS.map((club) => (
-            <View
-              key={club.id}
-              style={{
-                backgroundColor: COLORS.card,
-                borderRadius: RADIUS.sm,
-                padding: 16,
-                marginBottom: 10,
-                flexDirection: "row",
-                alignItems: "center",
-                borderWidth: 1,
-                borderColor: COLORS.border,
-                ...SHADOWS.sm,
-              }}
-            >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 14,
-                  backgroundColor: `${COLORS.primary}10`,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 14,
-                }}
-              >
-                <Feather name="book-open" size={20} color={COLORS.primary} />
+        {/* Schedule Preview */}
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32 }}>
+           <View className="flex-row justify-between items-center mb-4">
+              <Text className="text-xl font-black text-gray-900">Ближайшие занятия</Text>
+              <Pressable onPress={() => router.push('/organization/schedule')}>
+                 <Text className="text-blue-600 font-bold text-sm">Все</Text>
+              </Pressable>
+           </View>
+           
+           <View className="bg-gray-50 rounded-[32px] p-6 border border-gray-100 flex-row items-center">
+              <View className="w-14 h-14 bg-white rounded-2xl items-center justify-center mr-4 shadow-sm">
+                 <Feather name="calendar" size={24} color="#6B7280" />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontWeight: "700",
-                    fontSize: 14,
-                    color: COLORS.foreground,
-                  }}
-                >
-                  {club.name}
-                </Text>
-                <Text
-                  style={{
-                    color: COLORS.mutedForeground,
-                    fontSize: 12,
-                    marginTop: 2,
-                  }}
-                >
-                  {club.students} учеников
-                </Text>
+              <View className="flex-1">
+                 <Text className="font-bold text-gray-900">Робототехника</Text>
+                 <Text className="text-xs text-gray-400 font-medium mt-0.5">Группа A1 · 14:00</Text>
               </View>
-              <View
-                style={{
-                  backgroundColor: `${COLORS.success}10`,
-                  paddingHorizontal: 10,
-                  paddingVertical: 4,
-                  borderRadius: 20,
-                }}
-              >
-                <Text
-                  style={{
-                    color: COLORS.success,
-                    fontWeight: "600",
-                    fontSize: 12,
-                  }}
-                >
-                  Активен
-                </Text>
-              </View>
-            </View>
-          ))}
+              <Feather name="chevron-right" size={20} color="#D1D5DB" />
+           </View>
         </View>
       </ScrollView>
     </View>

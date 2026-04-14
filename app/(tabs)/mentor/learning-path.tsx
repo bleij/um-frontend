@@ -1,11 +1,17 @@
-import React from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import React from "react";
+import {
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
-import { useIsDesktop } from "../../../lib/useIsDesktop";
+import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 
 const PATH_STEPS = [
     {
@@ -13,7 +19,6 @@ const PATH_STEPS = [
         items: [
             { text: "Креативность: высокий уровень", done: true },
             { text: "Коммуникация: средний уровень", done: true },
-            { text: "Лидерство: требует развития", done: true },
         ],
     },
     {
@@ -21,7 +26,6 @@ const PATH_STEPS = [
         items: [
             { text: "Развить навыки публичных выступлений", done: true },
             { text: "Улучшить командную работу", done: false },
-            { text: "Повысить уверенность в себе", done: false },
         ],
     },
     {
@@ -29,153 +33,119 @@ const PATH_STEPS = [
         items: [
             { text: "Театральная студия", done: false },
             { text: "Ораторское искусство", done: false },
-            { text: "Командные виды спорта", done: false },
-        ],
-    },
-    {
-        id: 4, phase: "Задания и активности", status: "pending",
-        items: [
-            { text: "Участие в школьном спектакле", done: false },
-            { text: "Выступление перед классом", done: false },
-            { text: "Организация группового проекта", done: false },
-        ],
-    },
-    {
-        id: 5, phase: "Контрольные точки", status: "pending",
-        items: [
-            { text: "Оценка прогресса через 1 месяц", done: false, date: "28 мар" },
-            { text: "Промежуточная оценка через 3 месяца", done: false, date: "28 май" },
-            { text: "Финальная оценка через 6 месяцев", done: false, date: "28 авг" },
         ],
     },
 ];
 
-const STATUS_COLOR: Record<string, string> = {
-    completed: "#22C55E",
-    active: "#6C5CE7",
-    pending: "#D1D5DB",
-};
-
-const STATUS_LABEL: Record<string, string> = {
-    completed: "Завершено",
-    active: "В процессе",
-    pending: "Ожидает",
-};
-
-const STATUS_TEXT_COLOR: Record<string, string> = {
-    completed: "#15803D",
-    active: "#6C5CE7",
-    pending: "#6B7280",
-};
-
 export default function MentorLearningPath() {
-    const router = useRouter();
-    const isDesktop = useIsDesktop();
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-    return (
-        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
-                <SafeAreaView edges={["top"]}>
-                    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8, marginBottom: 4 }}>
-                        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
-                            <Feather name="arrow-left" size={24} color="white" />
-                        </TouchableOpacity>
-                        <Feather name="book-open" size={20} color="white" style={{ marginRight: 8 }} />
-                        <View>
-                            <Text style={{ fontSize: 20, fontWeight: "700", color: "white" }}>План развития</Text>
-                            <Text style={{ color: "rgba(255,255,255,0.75)", fontSize: 12 }}>Анна Петрова</Text>
-                        </View>
-                    </View>
-                </SafeAreaView>
-            </LinearGradient>
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <LinearGradient
+        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
+        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+      >
+        <SafeAreaView edges={["top"]}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+              <Pressable
+                onPress={() => router.back()}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Feather name="arrow-left" size={20} color="white" />
+              </Pressable>
+              <View>
+                <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>План развития</Text>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>Анна Петрова</Text>
+              </View>
+            </View>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
-                {/* Overview */}
-                <View style={{ backgroundColor: "white", borderRadius: 18, padding: 16, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8 }}>
-                    <Text style={{ fontWeight: "700", fontSize: 15, color: "#1F1F2E", marginBottom: 10 }}>Общий прогресс</Text>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-                        <View style={{ flex: 1, height: 10, backgroundColor: "#F3F4F6", borderRadius: 999, overflow: "hidden" }}>
-                            <View style={{ height: 10, width: "40%", backgroundColor: "#6C5CE7", borderRadius: 999 }} />
-                        </View>
-                        <Text style={{ fontWeight: "800", fontSize: 20, color: "#6C5CE7" }}>40%</Text>
-                    </View>
-                    <Text style={{ color: "#9CA3AF", fontSize: 13, marginTop: 6 }}>2 из 5 этапов завершено</Text>
-                </View>
-
-                {/* Steps Timeline */}
-                <View style={{ position: "relative" }}>
-                    {/* Vertical line */}
-                    <View style={{ position: "absolute", left: 19, top: 0, bottom: 0, width: 2, backgroundColor: "#E5E7EB" }} />
-
-                    {PATH_STEPS.map((step, index) => {
-                        const doneCount = step.items.filter(i => i.done).length;
-                        const progress = Math.round((doneCount / step.items.length) * 100);
-                        return (
-                            <View key={step.id} style={{ flexDirection: "row", marginBottom: 20 }}>
-                                {/* Dot */}
-                                <View style={{ width: 40, alignItems: "center", zIndex: 1 }}>
-                                    <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: STATUS_COLOR[step.status], alignItems: "center", justifyContent: "center", shadowColor: STATUS_COLOR[step.status], shadowOpacity: 0.3, shadowRadius: 4 }}>
-                                        {step.status === "completed" && <Feather name="check" size={14} color="white" />}
-                                        {step.status === "active" && <Feather name="target" size={14} color="white" />}
-                                        {step.status === "pending" && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: "white" }} />}
-                                    </View>
-                                </View>
-
-                                {/* Card */}
-                                <View style={{ flex: 1, backgroundColor: "white", borderRadius: 18, padding: 16, shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8 }}>
-                                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                                        <Text style={{ fontWeight: "700", fontSize: 15, color: "#1F1F2E" }}>{step.phase}</Text>
-                                        <View style={{ backgroundColor: STATUS_COLOR[step.status] + "20", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20 }}>
-                                            <Text style={{ fontSize: 11, fontWeight: "600", color: STATUS_TEXT_COLOR[step.status] }}>{STATUS_LABEL[step.status]}</Text>
-                                        </View>
-                                    </View>
-
-                                    {step.status !== "pending" && (
-                                        <View style={{ marginBottom: 10 }}>
-                                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-                                                <Text style={{ fontSize: 12, color: "#9CA3AF" }}>Прогресс</Text>
-                                                <Text style={{ fontSize: 12, fontWeight: "600", color: "#6C5CE7" }}>{progress}%</Text>
-                                            </View>
-                                            <View style={{ height: 5, backgroundColor: "#F3F4F6", borderRadius: 999, overflow: "hidden" }}>
-                                                <View style={{ height: 5, width: `${progress}%`, backgroundColor: step.status === "completed" ? "#22C55E" : "#6C5CE7", borderRadius: 999 }} />
-                                            </View>
-                                        </View>
-                                    )}
-
-                                    {step.items.map((item, i) => (
-                                        <View key={i} style={{ flexDirection: "row", alignItems: "center", padding: 9, borderRadius: 10, backgroundColor: item.done ? "#F0FDF4" : "#F9FAFB", marginBottom: 5 }}>
-                                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.done ? "#22C55E" : "transparent", borderWidth: item.done ? 0 : 1.5, borderColor: "#D1D5DB", alignItems: "center", justifyContent: "center", marginRight: 10 }}>
-                                                {item.done && <Feather name="check" size={10} color="white" />}
-                                            </View>
-                                            <Text style={{ fontSize: 13, flex: 1, color: item.done ? "#9CA3AF" : "#374151", textDecorationLine: item.done ? "line-through" : "none" }}>{item.text}</Text>
-                                            {"date" in item && <Text style={{ fontSize: 11, color: "#9CA3AF" }}>{(item as any).date}</Text>}
-                                        </View>
-                                    ))}
-
-                                    {step.status === "active" && (
-                                        <TouchableOpacity style={{ backgroundColor: "#EDE9FE", borderRadius: 10, padding: 9, flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 8 }}>
-                                            <Feather name="plus" size={14} color="#6C5CE7" />
-                                            <Text style={{ color: "#6C5CE7", fontWeight: "600", fontSize: 12, marginLeft: 4 }}>Добавить элемент</Text>
-                                        </TouchableOpacity>
-                                    )}
-                                </View>
-                            </View>
-                        );
-                    })}
-                </View>
-
-                {/* Action Buttons */}
-                <View style={{ flexDirection: "row", gap: 10 }}>
-                    <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ flex: 1, borderRadius: 16 }}>
-                        <TouchableOpacity style={{ padding: 14, alignItems: "center" }}>
-                            <Text style={{ color: "white", fontWeight: "700", fontSize: 15 }}>Сохранить изменения</Text>
-                        </TouchableOpacity>
-                    </LinearGradient>
-                    <TouchableOpacity style={{ paddingHorizontal: 20, borderRadius: 16, backgroundColor: "white", borderWidth: 2, borderColor: "#E5E7EB", alignItems: "center", justifyContent: "center" }}>
-                        <Text style={{ fontWeight: "600", fontSize: 15, color: "#6B7280" }}>Отмена</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollView>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: horizontalPadding,
+          paddingTop: 24,
+          paddingBottom: 40,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Progress Summary Card */}
+        <View style={SHADOWS.md} className="bg-white rounded-[32px] p-6 mb-8 border border-gray-100">
+           <Text className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Общий прогресс</Text>
+           <View className="flex-row items-center gap-4 mb-2">
+              <View className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
+                 <View style={{ width: '40%' }} className="h-full bg-primary rounded-full" />
+              </View>
+              <Text className="text-2xl font-black text-primary">40%</Text>
+           </View>
+           <Text className="text-sm text-gray-500">2 из 5 этапов завершено</Text>
         </View>
-    );
+
+        {/* Timeline */}
+        <View className="relative">
+           {/* Vertical Line */}
+           <View className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-gray-100" />
+
+           {PATH_STEPS.map((step, index) => (
+             <View key={step.id} className="flex-row gap-5 mb-8">
+                {/* Dot */}
+                <View className="z-10">
+                   <View className={`w-10 h-10 rounded-full items-center justify-center ${step.status === 'completed' ? 'bg-green-500' : step.status === 'active' ? 'bg-primary' : 'bg-gray-200'}`}>
+                      <Feather name={step.status === 'completed' ? 'check' : 'target'} size={18} color="white" />
+                   </View>
+                </View>
+
+                {/* Card */}
+                <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-5 border border-gray-50">
+                   <View className="flex-row justify-between items-center mb-4">
+                      <Text className="text-base font-bold text-gray-900">{step.phase}</Text>
+                      <View className={`px-2 py-1 rounded-lg ${step.status === 'completed' ? 'bg-green-50' : 'bg-purple-50'}`}>
+                         <Text className={`text-[9px] font-black uppercase ${step.status === 'completed' ? 'text-green-600' : 'text-primary'}`}>
+                            {step.status === 'completed' ? 'ГОТОВО' : 'В ПРОЦЕССЕ'}
+                         </Text>
+                      </View>
+                   </View>
+                   
+                   <View className="gap-2">
+                      {step.items.map((item, i) => (
+                        <View key={i} className={`flex-row items-center gap-3 p-3 rounded-xl ${item.done ? 'bg-green-50/50' : 'bg-gray-50'}`}>
+                           <View className={`w-5 h-5 rounded-md items-center justify-center ${item.done ? 'bg-green-500' : 'border border-gray-300'}`}>
+                              {item.done && <Feather name="check" size={12} color="white" />}
+                           </View>
+                           <Text className={`text-sm ${item.done ? 'text-gray-400 line-through' : 'text-gray-700 font-medium'}`}>{item.text}</Text>
+                        </View>
+                      ))}
+                   </View>
+
+                   {step.status === 'active' && (
+                     <Pressable className="mt-4 h-10 border border-dashed border-gray-200 rounded-xl items-center justify-center flex-row gap-2">
+                        <Feather name="plus-circle" size={14} color={COLORS.mutedForeground} />
+                        <Text className="text-xs font-bold text-gray-500">Добавить цель</Text>
+                     </Pressable>
+                   )}
+                </View>
+             </View>
+           ))}
+        </View>
+
+        <Pressable className="h-16 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/20 mt-4">
+           <Text className="text-white font-bold text-lg">Сохранить изменения</Text>
+        </Pressable>
+      </ScrollView>
+    </View>
+  );
 }
