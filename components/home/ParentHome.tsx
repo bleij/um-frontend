@@ -1,63 +1,118 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
-    Platform,
-    Pressable,
-    ScrollView,
-    Text,
-    useWindowDimensions,
-    View,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { NotificationsModal } from "../../app/(tabs)/layout-container";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { useParentData } from "../../contexts/ParentDataContext";
+import { courses } from "../../data/courses";
 
 export default function ParentHome() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : LAYOUT.dashboardHorizontalPaddingMobile;
   const {
-    parentProfile,
     childrenProfile: children,
     activeChildId,
     setActiveChildId,
   } = useParentData();
 
-  const getRecommendations = () => {
-    if (children.length === 0) return [];
-    return [
-      {
-        id: "1",
-        title: "Лего-конструирование",
-        age: "6-11",
-        for: children[0]?.name || "Ваш ребенок",
-        rating: "4.8",
-      },
-      {
-        id: "2",
-        title: "Программирование Python",
-        age: "12-17",
-        for: children[0]?.name || "Ваш ребенок",
-        rating: "4.9",
-      },
-    ];
-  };
+  const activeChild =
+    children.find((child) => child.id === activeChildId) || children[0] || null;
 
-  const recommendations = getRecommendations();
+  const recommendations = useMemo(() => {
+    if (!activeChild) return [];
+
+    return courses.slice(0, 3).map((course, index) => ({
+      id: String(course.id),
+      title: course.title,
+      age: course.age,
+      for: activeChild.name,
+      rating: (4.6 + index * 0.1).toFixed(1),
+    }));
+  }, [activeChild]);
+
   const upcomingClasses: any[] = [];
+  const headingColor = "rgba(255,255,255,0.96)";
+  const subHeadingColor = "rgba(255,255,255,0.72)";
+  const cardOnGradient = "rgba(255,255,255,0.94)";
+  const borderOnGradient = "rgba(255,255,255,0.22)";
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <LinearGradient
+      colors={[COLORS.gradientFrom, COLORS.gradientTo]}
+      style={{ flex: 1 }}
+    >
       <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+        {!isDesktop && (
+          <View
+            style={{
+              width: "100%",
+              paddingHorizontal: horizontalPadding,
+              paddingTop: 6,
+              paddingBottom: 2,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text
+              style={{
+                color: "white",
+                fontSize: 48,
+                lineHeight: 50,
+                fontWeight: "700",
+                letterSpacing: -1,
+              }}
+            >
+              UM
+            </Text>
+
+            <Pressable
+              onPress={() => setNotificationsVisible(true)}
+              style={{
+                width: 46,
+                height: 46,
+                borderRadius: 23,
+                backgroundColor: "rgba(255,255,255,0.17)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Feather name="bell" size={22} color="white" />
+              <View
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  width: 8,
+                  height: 8,
+                  borderRadius: 4,
+                  backgroundColor: "white",
+                  opacity: 0.9,
+                }}
+              />
+            </Pressable>
+          </View>
+        )}
+
         <ScrollView
           contentContainerStyle={{
-            paddingHorizontal: horizontalPadding,
-            paddingTop: 24,
-            paddingBottom: 100,
+            paddingTop: 14,
+            paddingBottom: isDesktop ? 32 : 100,
             alignItems: "center",
           }}
         >
@@ -65,114 +120,51 @@ export default function ParentHome() {
             style={{
               width: "100%",
               maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
+              paddingHorizontal: horizontalPadding,
             }}
           >
-            {/* Header */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 28,
-              }}
-            >
-              <Pressable
-                onPress={() => router.push("/profile")}
-                style={{ flexDirection: "row", alignItems: "center" }}
-              >
-                <View
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 22,
-                    backgroundColor: `${COLORS.primary}15`,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Feather name="user" size={20} color={COLORS.primary} />
-                </View>
-                <View style={{ marginLeft: 12 }}>
-                  <Text style={{ color: COLORS.mutedForeground, fontSize: 13 }}>
-                    Добро пожаловать
-                  </Text>
-                  <Text
-                    style={{
-                      color: COLORS.foreground,
-                      fontWeight: "700",
-                      fontSize: 18,
-                    }}
-                  >
-                    {parentProfile?.firstName || "Родитель"}
-                  </Text>
-                </View>
-              </Pressable>
-              <Pressable
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: COLORS.muted,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="bell" size={20} color={COLORS.foreground} />
-              </Pressable>
-            </View>
-
             {/* Children Cards */}
             <View style={{ marginBottom: 28 }}>
-              <View
+              <Pressable
+                onPress={() => router.push("/parent/children" as any)}
                 style={{
                   flexDirection: "row",
-                  justifyContent: "space-between",
                   alignItems: "center",
                   marginBottom: 16,
                 }}
               >
                 <Text
                   style={{
+                    flex: 1,
                     fontWeight: "700",
                     fontSize: 18,
-                    color: COLORS.foreground,
+                    color: headingColor,
                   }}
                 >
                   Мои дети
                 </Text>
-                <Pressable
-                  onPress={() => router.push("/parent/children" as any)}
-                >
-                  <Text
-                    style={{
-                      color: COLORS.primary,
-                      fontSize: 13,
-                      fontWeight: "500",
-                    }}
-                  >
-                    Все
-                  </Text>
-                </Pressable>
-              </View>
+                <Feather name="chevron-right" size={18} color={headingColor} />
+              </Pressable>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 {children.map((child) => (
                   <Pressable
                     key={child.id}
-                    onPress={() =>
-                      router.push(`/parent/child/${child.id}` as any)
-                    }
+                    onPress={() => {
+                      setActiveChildId(child.id);
+                      router.push(`/parent/child/${child.id}` as any);
+                    }}
                     style={{
                       marginRight: 12,
                       width: 130,
                       padding: 16,
-                      backgroundColor: COLORS.card,
+                      backgroundColor: cardOnGradient,
                       borderRadius: RADIUS.lg,
                       alignItems: "center",
                       borderWidth: 2,
                       borderColor:
                         activeChildId === child.id
                           ? COLORS.primary
-                          : COLORS.border,
+                          : borderOnGradient,
                       ...SHADOWS.md,
                     }}
                   >
@@ -258,7 +250,7 @@ export default function ParentHome() {
                     style={{
                       fontWeight: "700",
                       fontSize: 18,
-                      color: COLORS.foreground,
+                      color: headingColor,
                     }}
                   >
                     Рекомендации AI
@@ -266,7 +258,7 @@ export default function ParentHome() {
                   <Text
                     style={{
                       fontSize: 13,
-                      color: COLORS.mutedForeground,
+                      color: subHeadingColor,
                       marginTop: 2,
                     }}
                   >
@@ -284,11 +276,11 @@ export default function ParentHome() {
                     style={{
                       marginRight: 12,
                       width: 240,
-                      backgroundColor: COLORS.card,
+                      backgroundColor: cardOnGradient,
                       borderRadius: RADIUS.lg,
                       overflow: "hidden",
                       borderWidth: 1,
-                      borderColor: COLORS.border,
+                      borderColor: borderOnGradient,
                       ...SHADOWS.md,
                     }}
                   >
@@ -310,7 +302,7 @@ export default function ParentHome() {
                           position: "absolute",
                           top: 8,
                           right: 8,
-                          backgroundColor: COLORS.card,
+                          backgroundColor: "rgba(255,255,255,0.95)",
                           paddingHorizontal: 8,
                           paddingVertical: 3,
                           borderRadius: 12,
@@ -378,48 +370,37 @@ export default function ParentHome() {
 
             {/* Upcoming Classes */}
             <View style={{ marginBottom: 28 }}>
-              <View
+              <Pressable
+                onPress={() => router.push("/(tabs)/parent/calendar" as any)}
                 style={{
                   flexDirection: "row",
-                  justifyContent: "space-between",
                   alignItems: "center",
                   marginBottom: 16,
                 }}
               >
                 <Text
                   style={{
+                    flex: 1,
                     fontWeight: "700",
                     fontSize: 18,
-                    color: COLORS.foreground,
+                    color: headingColor,
                   }}
                 >
                   Ближайшие занятия
                 </Text>
-                <Pressable
-                  onPress={() => router.push("/(tabs)/parent/calendar" as any)}
-                >
-                  <Text
-                    style={{
-                      color: COLORS.primary,
-                      fontSize: 13,
-                      fontWeight: "500",
-                    }}
-                  >
-                    Календарь
-                  </Text>
-                </Pressable>
-              </View>
+                <Feather name="chevron-right" size={18} color={headingColor} />
+              </Pressable>
               {upcomingClasses.length > 0 ? (
                 <View />
               ) : (
                 <View
                   style={{
-                    backgroundColor: COLORS.card,
+                    backgroundColor: cardOnGradient,
                     padding: 32,
                     borderRadius: RADIUS.lg,
                     alignItems: "center",
                     borderWidth: 1,
-                    borderColor: COLORS.border,
+                    borderColor: borderOnGradient,
                     ...SHADOWS.sm,
                   }}
                 >
@@ -450,6 +431,11 @@ export default function ParentHome() {
           </View>
         </ScrollView>
       </SafeAreaView>
-    </View>
+
+      <NotificationsModal
+        visible={notificationsVisible}
+        onClose={() => setNotificationsVisible(false)}
+      />
+    </LinearGradient>
   );
 }

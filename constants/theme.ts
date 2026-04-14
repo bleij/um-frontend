@@ -3,10 +3,12 @@
  * Импортируй COLORS / RADIUS / SHADOWS во все компоненты.
  */
 
+import { Platform } from "react-native";
+
 export const COLORS = {
   // Core palette
-  primary: "#6200EE",
-  secondary: "#b794f6",
+  primary: "#6C5CE7",
+  secondary: "#8B7FE8",
   accent: "#FFD700",
 
   // Backgrounds
@@ -26,8 +28,8 @@ export const COLORS = {
   success: "#22c55e",
 
   // Gradients
-  gradientFrom: "#6200EE",
-  gradientTo: "#b794f6",
+  gradientFrom: "#6C5CE7",
+  gradientTo: "#8B7FE8",
 };
 
 export const RADIUS = {
@@ -38,7 +40,19 @@ export const RADIUS = {
   full: 9999,
 };
 
-export const SHADOWS = {
+const WEB_SHADOWS = {
+  sm: {
+    boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.04)",
+  },
+  md: {
+    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.06)",
+  },
+  lg: {
+    boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.08)",
+  },
+};
+
+const NATIVE_SHADOWS = {
   sm: {
     shadowColor: "#000",
     shadowOpacity: 0.04,
@@ -62,6 +76,8 @@ export const SHADOWS = {
   },
 };
 
+export const SHADOWS = Platform.OS === "web" ? WEB_SHADOWS : NATIVE_SHADOWS;
+
 export const LAYOUT = {
   desktopBreakpoint: 1024,
   authMaxWidth: 520,
@@ -73,4 +89,5 @@ export const LAYOUT = {
   dashboardMaxWidth: 1200,
   dashboardHorizontalPaddingMobile: 16,
   dashboardHorizontalPaddingDesktop: 32,
+  sideNavWidth: 240,
 };

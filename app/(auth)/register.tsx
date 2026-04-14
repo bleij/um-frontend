@@ -4,21 +4,24 @@ import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    useWindowDimensions,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function RegisterScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { startRegistration, verificationCodePlaceholder } = useAuth();
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [smsCode, setSmsCode] = useState("");
@@ -26,8 +29,11 @@ export default function RegisterScreen() {
   const [codeVerified, setCodeVerified] = useState(false);
 
   const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -37,25 +43,66 @@ export default function RegisterScreen() {
     : LAYOUT.authHorizontalPaddingMobile;
 
   const formatPhone = (text: string) => {
-    const cleaned = text.replace(/\D/g, "");
+    const cleaned = text.replace(/[^\d+]/g, "");
     setPhoneNumber(cleaned);
   };
 
-  const handleAction = () => {
+  const handleAction = async () => {
+    setError("");
+
     if (!codeSent) {
+      if (phoneNumber.replace(/\D/g, "").length < 10) {
+        setError("Введите корректный номер телефона");
+        return;
+      }
+
       setCodeSent(true);
     } else if (!codeVerified) {
+      if (smsCode !== verificationCodePlaceholder) {
+        setError("Неверный код подтверждения");
+        return;
+      }
+
       setCodeVerified(true);
     } else {
+      if (password.length < 6) {
+        setError("Пароль должен содержать минимум 6 символов");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setError("Пароли не совпадают");
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      const result = await startRegistration({
+        phone: phoneNumber.replace(/\D/g, ""),
+        password,
+        firstName,
+        lastName,
+      });
+
+      setIsSubmitting(false);
+
+      if (!result.success) {
+        setError(result.error || "Не удалось продолжить регистрацию");
+        return;
+      }
+
       router.push("/role");
     }
   };
 
   const isButtonEnabled = () => {
-    if (!codeSent) return phoneNumber.length >= 10;
+    if (!codeSent) return phoneNumber.replace(/\D/g, "").length >= 10;
     if (!codeVerified) return smsCode.length >= 4;
     return (
-      firstName && password && confirmPassword && password === confirmPassword
+      firstName.trim().length > 0 &&
+      password.length >= 6 &&
+      confirmPassword.length >= 6 &&
+      password === confirmPassword
     );
   };
 
@@ -236,6 +283,7 @@ export default function RegisterScreen() {
                 <TouchableOpacity
                   onPress={() => {
                     setCodeSent(false);
+                    setCodeVerified(false);
                     setSmsCode("");
                   }}
                   style={{ marginTop: 12, alignItems: "center" }}
@@ -250,6 +298,25 @@ export default function RegisterScreen() {
                     Отправить код повторно
                   </Text>
                 </TouchableOpacity>
+
+                <View
+                  style={{
+                    marginTop: 12,
+                    padding: 12,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: `${COLORS.primary}10`,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: COLORS.primary,
+                      fontWeight: "600",
+                      fontSize: 13,
+                    }}
+                  >
+                    Демо-код подтверждения: {verificationCodePlaceholder}
+                  </Text>
+                </View>
               </MotiView>
             )}
 
@@ -286,6 +353,37 @@ export default function RegisterScreen() {
                       placeholderTextColor={COLORS.mutedForeground}
                       value={firstName}
                       onChangeText={setFirstName}
+                      style={inputStyle()}
+                    />
+                  </View>
+                </View>
+
+                <View style={{ marginBottom: 16 }}>
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "500",
+                      color: COLORS.foreground,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Фамилия (опционально)
+                  </Text>
+                  <View
+                    style={{ position: "relative", justifyContent: "center" }}
+                  >
+                    <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
+                      <Feather
+                        name="user"
+                        size={18}
+                        color={COLORS.mutedForeground}
+                      />
+                    </View>
+                    <TextInput
+                      placeholder="Введите фамилию"
+                      placeholderTextColor={COLORS.mutedForeground}
+                      value={lastName}
+                      onChangeText={setLastName}
                       style={inputStyle()}
                     />
                   </View>
@@ -381,10 +479,27 @@ export default function RegisterScreen() {
               </MotiView>
             )}
 
+            {!!error && (
+              <View
+                style={{
+                  marginBottom: 16,
+                  padding: 12,
+                  borderRadius: RADIUS.md,
+                  backgroundColor: "#FEE2E2",
+                }}
+              >
+                <Text
+                  style={{ color: "#B91C1C", fontWeight: "500", fontSize: 13 }}
+                >
+                  {error}
+                </Text>
+              </View>
+            )}
+
             {/* Action Button */}
             <TouchableOpacity
               onPress={handleAction}
-              disabled={!isButtonEnabled()}
+              disabled={!isButtonEnabled() || isSubmitting}
               style={{
                 width: "100%",
                 paddingVertical: 16,
@@ -397,15 +512,19 @@ export default function RegisterScreen() {
                 marginBottom: 24,
               }}
             >
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: "600",
-                  color: isButtonEnabled() ? "white" : COLORS.mutedForeground,
-                }}
-              >
-                {getButtonLabel()}
-              </Text>
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    color: isButtonEnabled() ? "white" : COLORS.mutedForeground,
+                  }}
+                >
+                  {getButtonLabel()}
+                </Text>
+              )}
             </TouchableOpacity>
 
             {/* Divider */}

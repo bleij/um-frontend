@@ -1,282 +1,705 @@
-import React from "react";
-import { View, TouchableOpacity, Text, Platform, Dimensions } from "react-native";
+import { Feather } from "@expo/vector-icons";
 import { useRouter, useSegments } from "expo-router";
-import { Ionicons, Feather, FontAwesome5 } from "@expo/vector-icons";
-import { COLORS } from "../../constants/theme";
+import React, { useState } from "react";
+import {
+    Modal,
+    Platform,
+    Pressable,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View
+} from "react-native";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
 
-const { width } = Dimensions.get("window");
-const IS_DESKTOP = Platform.OS === "web" && width >= 900;
-
-export type Role = "parent" | "youth" | "child" | "young-adult" | "mentor" | "org";
+export type Role =
+  | "parent"
+  | "youth"
+  | "child"
+  | "young-adult"
+  | "mentor"
+  | "org";
 
 type TabItem = {
-    key: string;
-    label: string;
-    route: string;
-    icon: (props: { color: string; size: number }) => React.ReactNode;
+  key: string;
+  label: string;
+  route: string;
+  icon: (props: { color: string; size: number }) => React.ReactNode;
 };
 
 type Props = { role: Role | string | null };
 
 const COMMON_HOME: TabItem = {
-    key: "home",
-    label: "Главная",
-    route: "home",
-    icon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
+  key: "home",
+  label: "Главная",
+  route: "home",
+  icon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
 };
 
 const TABS_BY_ROLE: Record<string, TabItem[]> = {
-    parent: [
-        COMMON_HOME,
-        {
-            key: "parent/calendar",
-            label: "Календарь",
-            route: "parent/calendar",
-            icon: ({ color, size }) => <Feather name="calendar" size={size} color={color} />,
-        },
-        {
-            key: "parent/clubs",
-            label: "Кружки",
-            route: "parent/clubs",
-            icon: ({ color, size }) => <Feather name="book-open" size={size} color={color} />,
-        },
-        {
-            key: "parent/reports",
-            label: "Отчёты",
-            route: "parent/reports",
-            icon: ({ color, size }) => <Feather name="bar-chart-2" size={size} color={color} />,
-        },
-        {
-            key: "profile",
-            label: "Профиль",
-            route: "profile",
-            icon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        },
-    ],
+  parent: [
+    COMMON_HOME,
+    {
+      key: "parent/calendar",
+      label: "Календарь",
+      route: "parent/calendar",
+      icon: ({ color, size }) => (
+        <Feather name="calendar" size={size} color={color} />
+      ),
+    },
+    {
+      key: "parent/clubs",
+      label: "Кружки",
+      route: "parent/clubs",
+      icon: ({ color, size }) => (
+        <Feather name="book-open" size={size} color={color} />
+      ),
+    },
+    {
+      key: "parent/reports",
+      label: "Отчёты",
+      route: "parent/reports",
+      icon: ({ color, size }) => (
+        <Feather name="bar-chart-2" size={size} color={color} />
+      ),
+    },
+    {
+      key: "profile",
+      label: "Профиль",
+      route: "profile",
+      icon: ({ color, size }) => (
+        <Feather name="user" size={size} color={color} />
+      ),
+    },
+  ],
 
-    mentor: [
-        COMMON_HOME,
-        {
-            key: "chats",
-            label: "Чат",
-            route: "chats",
-            icon: ({ color, size }) => <Feather name="message-circle" size={size} color={color} />,
-        },
-        {
-            key: "mentor/learning-path",
-            label: "Треки",
-            route: "mentor/learning-path",
-            icon: ({ color, size }) => <Feather name="map" size={size} color={color} />,
-        },
-        {
-            key: "profile",
-            label: "Профиль",
-            route: "profile",
-            icon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        },
-    ],
+  mentor: [
+    COMMON_HOME,
+    {
+      key: "chats",
+      label: "Чат",
+      route: "chats",
+      icon: ({ color, size }) => (
+        <Feather name="message-circle" size={size} color={color} />
+      ),
+    },
+    {
+      key: "mentor/learning-path",
+      label: "Треки",
+      route: "mentor/learning-path",
+      icon: ({ color, size }) => (
+        <Feather name="map" size={size} color={color} />
+      ),
+    },
+    {
+      key: "profile",
+      label: "Профиль",
+      route: "profile",
+      icon: ({ color, size }) => (
+        <Feather name="user" size={size} color={color} />
+      ),
+    },
+  ],
 
-    org: [
-        COMMON_HOME,
-        {
-            key: "organization/clubs",
-            label: "Кружки",
-            route: "organization/clubs",
-            icon: ({ color, size }) => <Feather name="book-open" size={size} color={color} />,
-        },
-        {
-            key: "organization/students",
-            label: "Ученики",
-            route: "organization/students",
-            icon: ({ color, size }) => <Feather name="users" size={size} color={color} />,
-        },
-        {
-            key: "profile",
-            label: "Профиль",
-            route: "profile",
-            icon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        },
-    ],
+  org: [
+    COMMON_HOME,
+    {
+      key: "organization/clubs",
+      label: "Кружки",
+      route: "organization/clubs",
+      icon: ({ color, size }) => (
+        <Feather name="book-open" size={size} color={color} />
+      ),
+    },
+    {
+      key: "organization/students",
+      label: "Ученики",
+      route: "organization/students",
+      icon: ({ color, size }) => (
+        <Feather name="users" size={size} color={color} />
+      ),
+    },
+    {
+      key: "profile",
+      label: "Профиль",
+      route: "profile",
+      icon: ({ color, size }) => (
+        <Feather name="user" size={size} color={color} />
+      ),
+    },
+  ],
 
-    youth: [
-        COMMON_HOME,
-        {
-            key: "chats",
-            label: "Чат",
-            route: "chats",
-            icon: ({ color, size }) => <Feather name="message-circle" size={size} color={color} />,
-        },
-        {
-            key: "youth/goals",
-            label: "Цели",
-            route: "youth/goals",
-            icon: ({ color, size }) => <Feather name="target" size={size} color={color} />,
-        },
-        {
-            key: "analytics",
-            label: "Прогресс",
-            route: "analytics",
-            icon: ({ color, size }) => <Feather name="trending-up" size={size} color={color} />,
-        },
-        {
-            key: "profile",
-            label: "Профиль",
-            route: "profile",
-            icon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        },
-    ],
+  youth: [
+    COMMON_HOME,
+    {
+      key: "chats",
+      label: "Чат",
+      route: "chats",
+      icon: ({ color, size }) => (
+        <Feather name="message-circle" size={size} color={color} />
+      ),
+    },
+    {
+      key: "youth/goals",
+      label: "Цели",
+      route: "youth/goals",
+      icon: ({ color, size }) => (
+        <Feather name="target" size={size} color={color} />
+      ),
+    },
+    {
+      key: "analytics",
+      label: "Прогресс",
+      route: "analytics",
+      icon: ({ color, size }) => (
+        <Feather name="trending-up" size={size} color={color} />
+      ),
+    },
+    {
+      key: "profile",
+      label: "Профиль",
+      route: "profile",
+      icon: ({ color, size }) => (
+        <Feather name="user" size={size} color={color} />
+      ),
+    },
+  ],
 
-    child: [
-        COMMON_HOME,
-        {
-            key: "chats",
-            label: "Чат",
-            route: "chats",
-            icon: ({ color, size }) => <Feather name="message-circle" size={size} color={color} />,
-        },
-        {
-            key: "analytics",
-            label: "Успехи",
-            route: "analytics",
-            icon: ({ color, size }) => <Feather name="star" size={size} color={color} />,
-        },
-        {
-            key: "profile",
-            label: "Профиль",
-            route: "profile",
-            icon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        },
-    ],
+  child: [
+    COMMON_HOME,
+    {
+      key: "chats",
+      label: "Чат",
+      route: "chats",
+      icon: ({ color, size }) => (
+        <Feather name="message-circle" size={size} color={color} />
+      ),
+    },
+    {
+      key: "analytics",
+      label: "Успехи",
+      route: "analytics",
+      icon: ({ color, size }) => (
+        <Feather name="star" size={size} color={color} />
+      ),
+    },
+    {
+      key: "profile",
+      label: "Профиль",
+      route: "profile",
+      icon: ({ color, size }) => (
+        <Feather name="user" size={size} color={color} />
+      ),
+    },
+  ],
 
-    "young-adult": [
-        COMMON_HOME,
-        {
-            key: "youth/goals",
-            label: "Цели",
-            route: "youth/goals",
-            icon: ({ color, size }) => <Feather name="target" size={size} color={color} />,
-        },
-        {
-            key: "chats",
-            label: "Ментор",
-            route: "chats",
-            icon: ({ color, size }) => <Feather name="message-circle" size={size} color={color} />,
-        },
-        {
-            key: "analytics",
-            label: "Прогресс",
-            route: "analytics",
-            icon: ({ color, size }) => <Feather name="bar-chart-2" size={size} color={color} />,
-        },
-        {
-            key: "profile",
-            label: "Профиль",
-            route: "profile",
-            icon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        },
-    ],
+  "young-adult": [
+    COMMON_HOME,
+    {
+      key: "youth/goals",
+      label: "Цели",
+      route: "youth/goals",
+      icon: ({ color, size }) => (
+        <Feather name="target" size={size} color={color} />
+      ),
+    },
+    {
+      key: "chats",
+      label: "Ментор",
+      route: "chats",
+      icon: ({ color, size }) => (
+        <Feather name="message-circle" size={size} color={color} />
+      ),
+    },
+    {
+      key: "analytics",
+      label: "Прогресс",
+      route: "analytics",
+      icon: ({ color, size }) => (
+        <Feather name="bar-chart-2" size={size} color={color} />
+      ),
+    },
+    {
+      key: "profile",
+      label: "Профиль",
+      route: "profile",
+      icon: ({ color, size }) => (
+        <Feather name="user" size={size} color={color} />
+      ),
+    },
+  ],
 };
 
 const DEFAULT_TABS: TabItem[] = [
-    COMMON_HOME,
-    {
-        key: "chats",
-        label: "Чат",
-        route: "chats",
-        icon: ({ color, size }) => <Feather name="message-circle" size={size} color={color} />,
-    },
-    {
-        key: "analytics",
-        label: "Аналитика",
-        route: "analytics",
-        icon: ({ color, size }) => <Feather name="bar-chart-2" size={size} color={color} />,
-    },
-    {
-        key: "profile",
-        label: "Профиль",
-        route: "profile",
-        icon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-    },
+  COMMON_HOME,
+  {
+    key: "chats",
+    label: "Чат",
+    route: "chats",
+    icon: ({ color, size }) => (
+      <Feather name="message-circle" size={size} color={color} />
+    ),
+  },
+  {
+    key: "analytics",
+    label: "Аналитика",
+    route: "analytics",
+    icon: ({ color, size }) => (
+      <Feather name="bar-chart-2" size={size} color={color} />
+    ),
+  },
+  {
+    key: "profile",
+    label: "Профиль",
+    route: "profile",
+    icon: ({ color, size }) => (
+      <Feather name="user" size={size} color={color} />
+    ),
+  },
 ];
 
-export default function CustomTabBar({ role }: Props) {
-    const router = useRouter();
-    const segments = useSegments();
-    const currentSegment = segments[segments.length - 1];
-    const currentPath = segments.slice(1).join("/");
+function useTabNav(role: Role | string | null) {
+  const router = useRouter();
+  const segments = useSegments();
+  const currentSegment = segments[segments.length - 1];
+  const currentPath = segments.slice(1).join("/");
+  const tabs = (role && TABS_BY_ROLE[role]) ?? DEFAULT_TABS;
 
-    const tabs = (role && TABS_BY_ROLE[role]) ?? DEFAULT_TABS;
+  const go = (route: string) => {
+    if (route.includes("/")) {
+      router.push(`/(tabs)/${route}` as any);
+    } else {
+      router.replace(`/(tabs)/${route}` as any);
+    }
+  };
 
-    const go = (route: string) => {
-        if (route.includes("/")) {
-            router.push(`/(tabs)/${route}` as any);
-        } else {
-            router.replace(`/(tabs)/${route}` as any);
-        }
-    };
+  const isActive = (route: string) => {
+    if (route.includes("/")) {
+      return currentPath.endsWith(route) || currentPath === route;
+    }
+    return currentSegment === route;
+  };
 
-    const isActive = (route: string) => {
-        if (route.includes("/")) {
-            return currentPath.endsWith(route) || currentPath === route;
-        }
-        return currentSegment === route;
-    };
+  return { tabs, go, isActive };
+}
 
-    return (
-        <View
-            style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                alignItems: "center",
-            }}
+// ─── Shared notifications modal ───────────────────────────────────────────────
+
+export function NotificationsModal({
+  visible,
+  onClose,
+}: {
+  visible: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+    >
+      <Pressable
+        style={{
+          flex: 1,
+          backgroundColor: "rgba(0,0,0,0.4)",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+        onPress={onClose}
+      >
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={{
+            width: 340,
+            backgroundColor: COLORS.card,
+            borderRadius: RADIUS.lg,
+            padding: 24,
+            ...SHADOWS.lg,
+          }}
         >
-            <View
-                style={{
-                    width: IS_DESKTOP ? 428 : "100%",
-                    backgroundColor: "rgba(255,255,255,0.95)",
-                    borderTopWidth: 1,
-                    borderTopColor: COLORS.border,
-                    flexDirection: "row",
-                    justifyContent: "space-around",
-                    alignItems: "center",
-                    paddingTop: 8,
-                    paddingBottom: Platform.OS === "ios" ? 28 : 12,
-                    paddingHorizontal: 8,
-                }}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
+          >
+            <Text
+              style={{
+                flex: 1,
+                fontSize: 18,
+                fontWeight: "700",
+                color: COLORS.foreground,
+              }}
             >
-                {tabs.map((item) => {
-                    const active = isActive(item.route);
-                    return (
-                        <TouchableOpacity
-                            key={item.key}
-                            onPress={() => go(item.route)}
-                            style={{
-                                flex: 1,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                paddingVertical: 4,
-                            }}
-                        >
-                            {item.icon({
-                                color: active ? COLORS.primary : COLORS.mutedForeground,
-                                size: 22,
-                            })}
-                            <Text
-                                style={{
-                                    fontSize: 10,
-                                    color: active ? COLORS.primary : COLORS.mutedForeground,
-                                    marginTop: 4,
-                                    fontWeight: active ? "600" : "400",
-                                }}
-                            >
-                                {item.label}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
+              Уведомления
+            </Text>
+            <Pressable onPress={onClose}>
+              <Feather name="x" size={22} color={COLORS.mutedForeground} />
+            </Pressable>
+          </View>
+          <View style={{ alignItems: "center", paddingVertical: 32 }}>
+            <Feather
+              name="bell-off"
+              size={36}
+              color={COLORS.mutedForeground}
+              style={{ marginBottom: 12 }}
+            />
+            <Text
+              style={{ color: COLORS.mutedForeground, textAlign: "center" }}
+            >
+              Нет новых уведомлений
+            </Text>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+}
+
+// ─── Desktop side nav ────────────────────────────────────────────────────────
+
+export function SideNav({ role }: Props) {
+  const { tabs, go, isActive } = useTabNav(role);
+  const { user, logout } = useAuth();
+  const router = useRouter();
+
+  const [notificationsVisible, setNotificationsVisible] = useState(false);
+  const [dropdownVisible, setDropdownVisible] = useState(false);
+
+  // Profile tab is replaced by the user footer
+  const navTabs = tabs.filter((t) => t.key !== "profile");
+
+  const handleLogout = async () => {
+    setDropdownVisible(false);
+    await logout();
+    router.replace("/intro" as any);
+  };
+
+  const userInitial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?";
+  const userName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+    "Пользователь";
+
+  return (
+    <View
+      style={{
+        width: LAYOUT.sideNavWidth,
+        backgroundColor: COLORS.card,
+        borderRightWidth: 1,
+        borderRightColor: COLORS.border,
+        flexDirection: "column",
+      }}
+    >
+      {/* Brand header */}
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: 20,
+          paddingTop: 24,
+          paddingBottom: 20,
+          borderBottomWidth: 1,
+          borderBottomColor: COLORS.border,
+        }}
+      >
+        <Text
+          style={{
+            color: COLORS.primary,
+            fontSize: 28,
+            fontWeight: "800",
+            letterSpacing: -0.5,
+          }}
+        >
+          UM
+        </Text>
+        <Pressable
+          onPress={() => setNotificationsVisible(true)}
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: COLORS.muted,
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Feather name="bell" size={18} color={COLORS.mutedForeground} />
+          <View
+            style={{
+              position: "absolute",
+              top: 7,
+              right: 7,
+              width: 7,
+              height: 7,
+              borderRadius: 4,
+              backgroundColor: COLORS.primary,
+            }}
+          />
+        </Pressable>
+      </View>
+
+      {/* Nav items */}
+      <View style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 12 }}>
+        {navTabs.map((item) => {
+          const active = isActive(item.route);
+          return (
+            <TouchableOpacity
+              key={item.key}
+              onPress={() => go(item.route)}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingHorizontal: 14,
+                paddingVertical: 11,
+                marginBottom: 2,
+                borderRadius: RADIUS.sm,
+                backgroundColor: active ? `${COLORS.primary}12` : "transparent",
+              }}
+            >
+              {item.icon({
+                color: active ? COLORS.primary : COLORS.mutedForeground,
+                size: 19,
+              })}
+              <Text
+                style={{
+                  marginLeft: 12,
+                  fontSize: 14,
+                  fontWeight: active ? "600" : "400",
+                  color: active ? COLORS.primary : COLORS.mutedForeground,
+                }}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* User footer */}
+      <View
+        style={{
+          borderTopWidth: 1,
+          borderTopColor: COLORS.border,
+          padding: 12,
+        }}
+      >
+        <Pressable
+          onPress={() => setDropdownVisible((v) => !v)}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            padding: 10,
+            borderRadius: RADIUS.sm,
+            backgroundColor: dropdownVisible ? COLORS.muted : "transparent",
+          }}
+        >
+          <View
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: `${COLORS.primary}15`,
+              alignItems: "center",
+              justifyContent: "center",
+              marginRight: 10,
+            }}
+          >
+            <Text
+              style={{ color: COLORS.primary, fontWeight: "700", fontSize: 15 }}
+            >
+              {userInitial}
+            </Text>
+          </View>
+          <Text
+            style={{
+              flex: 1,
+              fontSize: 14,
+              fontWeight: "500",
+              color: COLORS.foreground,
+            }}
+            numberOfLines={1}
+          >
+            {userName}
+          </Text>
+          <Feather
+            name={dropdownVisible ? "chevron-down" : "chevron-up"}
+            size={16}
+            color={COLORS.mutedForeground}
+          />
+        </Pressable>
+      </View>
+
+      {/* Dropdown menu (rendered as modal for backdrop dismiss) */}
+      {dropdownVisible && (
+        <Modal
+          transparent
+          animationType="none"
+          onRequestClose={() => setDropdownVisible(false)}
+        >
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => setDropdownVisible(false)}
+          >
+            <View
+              style={{
+                position: "absolute",
+                bottom: 80,
+                left: 12,
+                width: LAYOUT.sideNavWidth - 24,
+                backgroundColor: COLORS.card,
+                borderRadius: RADIUS.md,
+                borderWidth: 1,
+                borderColor: COLORS.border,
+                overflow: "hidden",
+                ...SHADOWS.md,
+              }}
+            >
+              {[
+                {
+                  label: "Редактировать профиль",
+                  icon: "user" as const,
+                  onPress: () => {
+                    setDropdownVisible(false);
+                    go("profile");
+                  },
+                  destructive: false,
+                },
+                {
+                  label: "Способы оплаты",
+                  icon: "credit-card" as const,
+                  onPress: () => setDropdownVisible(false),
+                  destructive: false,
+                },
+                {
+                  label: "Настройки",
+                  icon: "settings" as const,
+                  onPress: () => setDropdownVisible(false),
+                  destructive: false,
+                },
+                {
+                  label: "Выйти",
+                  icon: "log-out" as const,
+                  onPress: handleLogout,
+                  destructive: true,
+                },
+              ].map((item, index, arr) => (
+                <Pressable
+                  key={item.label}
+                  onPress={item.onPress}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: 16,
+                    paddingVertical: 13,
+                    borderBottomWidth: index < arr.length - 1 ? 1 : 0,
+                    borderBottomColor: COLORS.border,
+                  }}
+                >
+                  <Feather
+                    name={item.icon}
+                    size={16}
+                    color={
+                      item.destructive
+                        ? COLORS.destructive
+                        : COLORS.mutedForeground
+                    }
+                    style={{ marginRight: 12 }}
+                  />
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      color: item.destructive
+                        ? COLORS.destructive
+                        : COLORS.foreground,
+                      fontWeight: item.destructive ? "500" : "400",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-        </View>
-    );
+          </Pressable>
+        </Modal>
+      )}
+
+      {/* Notifications modal */}
+      <NotificationsModal
+        visible={notificationsVisible}
+        onClose={() => setNotificationsVisible(false)}
+      />
+    </View>
+  );
+}
+
+// ─── Mobile bottom tab bar ───────────────────────────────────────────────────
+
+export default function CustomTabBar({ role }: Props) {
+  const { tabs, go, isActive } = useTabNav(role);
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+
+  return (
+    <View
+      style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        alignItems: "center",
+      }}
+    >
+      <View
+        style={{
+          width: isDesktop ? Math.min(width, LAYOUT.dashboardMaxWidth) : "100%",
+          backgroundColor: "rgba(255,255,255,0.95)",
+          borderTopWidth: 1,
+          borderTopColor: COLORS.border,
+          flexDirection: "row",
+          justifyContent: "space-around",
+          alignItems: "center",
+          paddingTop: 8,
+          paddingBottom: Platform.OS === "ios" ? 28 : 12,
+          paddingHorizontal: 8,
+          borderTopLeftRadius: isDesktop ? 18 : 0,
+          borderTopRightRadius: isDesktop ? 18 : 0,
+        }}
+      >
+        {tabs.map((item) => {
+          const active = isActive(item.route);
+          return (
+            <TouchableOpacity
+              key={item.key}
+              onPress={() => go(item.route)}
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "center",
+                paddingVertical: 4,
+              }}
+            >
+              {item.icon({
+                color: active ? COLORS.primary : COLORS.mutedForeground,
+                size: 22,
+              })}
+              <Text
+                style={{
+                  fontSize: 10,
+                  color: active ? COLORS.primary : COLORS.mutedForeground,
+                  marginTop: 4,
+                  fontWeight: active ? "600" : "400",
+                }}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
 }

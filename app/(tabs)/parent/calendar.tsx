@@ -1,16 +1,15 @@
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const MONTHS = [
@@ -68,44 +67,21 @@ export default function ParentCalendar() {
     });
   };
 
+  const selectedDateLabel = `${selectedDay} ${MONTHS[currentDate.month].toLowerCase()}`;
+
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.secondary]}
-        style={{
-          paddingBottom: 20,
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-        }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-              alignSelf: "center",
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: horizontalPadding,
-              paddingTop: 8,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{ padding: 8, marginRight: 8 }}
-            >
-              <Feather name="arrow-left" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontWeight: "700", color: "white" }}>
-              Календарь
-            </Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      {!isDesktop && (
+        <ScreenHeader
+          title="Календарь"
+          onBack={() => router.back()}
+          horizontalPadding={horizontalPadding}
+          variant="surface"
+        />
+      )}
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
           paddingTop: 16,
           paddingBottom: 40,
           alignItems: "center",
@@ -114,151 +90,175 @@ export default function ParentCalendar() {
         <View
           style={{
             width: "100%",
-            maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
+            maxWidth: isDesktop ? 1120 : undefined,
+            paddingHorizontal: horizontalPadding,
           }}
         >
           <View
             style={{
-              backgroundColor: COLORS.card,
-              borderRadius: RADIUS.lg,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: COLORS.border,
-              marginBottom: 16,
-              ...SHADOWS.md,
+              flexDirection: isDesktop ? "row" : "column",
+              alignItems: "flex-start",
+              gap: 16,
             }}
           >
             <View
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 16,
+                width: "100%",
+                flex: isDesktop ? 1 : undefined,
+                maxWidth: isDesktop ? 760 : undefined,
+                backgroundColor: COLORS.card,
+                borderRadius: RADIUS.lg,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: COLORS.border,
+                ...SHADOWS.md,
               }}
             >
-              <TouchableOpacity
-                onPress={prevMonth}
+              <View
                 style={{
-                  padding: 8,
-                  backgroundColor: `${COLORS.primary}10`,
-                  borderRadius: 10,
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: 16,
                 }}
               >
-                <Feather name="chevron-left" size={20} color={COLORS.primary} />
-              </TouchableOpacity>
-              <Text
-                style={{
-                  fontSize: 17,
-                  fontWeight: "700",
-                  color: COLORS.foreground,
-                }}
-              >
-                {MONTHS[currentDate.month]} {currentDate.year}
-              </Text>
-              <TouchableOpacity
-                onPress={nextMonth}
-                style={{
-                  padding: 8,
-                  backgroundColor: `${COLORS.primary}10`,
-                  borderRadius: 10,
-                }}
-              >
-                <Feather
-                  name="chevron-right"
-                  size={20}
-                  color={COLORS.primary}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <View style={{ flexDirection: "row", marginBottom: 8 }}>
-              {WEEKDAYS.map((d) => (
-                <View key={d} style={{ flex: 1, alignItems: "center" }}>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      fontWeight: "600",
-                      color: COLORS.mutedForeground,
-                    }}
-                  >
-                    {d}
-                  </Text>
-                </View>
-              ))}
-            </View>
-
-            <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-              {days.map((day, index) => (
-                <View
-                  key={index}
-                  style={{ width: "14.28%", aspectRatio: 1, padding: 2 }}
+                <TouchableOpacity
+                  onPress={prevMonth}
+                  style={{
+                    padding: 8,
+                    backgroundColor: `${COLORS.primary}10`,
+                    borderRadius: 10,
+                  }}
                 >
-                  {day ? (
-                    <TouchableOpacity
-                      onPress={() => setSelectedDay(day)}
+                  <Feather
+                    name="chevron-left"
+                    size={20}
+                    color={COLORS.primary}
+                  />
+                </TouchableOpacity>
+                <Text
+                  style={{
+                    fontSize: isDesktop ? 18 : 17,
+                    fontWeight: "700",
+                    color: COLORS.foreground,
+                  }}
+                >
+                  {MONTHS[currentDate.month]} {currentDate.year}
+                </Text>
+                <TouchableOpacity
+                  onPress={nextMonth}
+                  style={{
+                    padding: 8,
+                    backgroundColor: `${COLORS.primary}10`,
+                    borderRadius: 10,
+                  }}
+                >
+                  <Feather
+                    name="chevron-right"
+                    size={20}
+                    color={COLORS.primary}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ flexDirection: "row", marginBottom: 8 }}>
+                {WEEKDAYS.map((d) => (
+                  <View key={d} style={{ flex: 1, alignItems: "center" }}>
+                    <Text
                       style={{
-                        flex: 1,
-                        borderRadius: 10,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor:
-                          day === selectedDay ? COLORS.primary : "transparent",
+                        fontSize: isDesktop ? 13 : 12,
+                        fontWeight: "600",
+                        color: COLORS.mutedForeground,
                       }}
                     >
-                      <Text
+                      {d}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
+                {days.map((day, index) => (
+                  <View
+                    key={index}
+                    style={{
+                      width: "14.28%",
+                      aspectRatio: isDesktop ? 1.08 : 1,
+                      padding: isDesktop ? 4 : 2,
+                    }}
+                  >
+                    {day ? (
+                      <TouchableOpacity
+                        onPress={() => setSelectedDay(day)}
                         style={{
-                          fontSize: 14,
-                          fontWeight: day === selectedDay ? "700" : "400",
-                          color:
-                            day === selectedDay ? "white" : COLORS.foreground,
+                          flex: 1,
+                          borderRadius: 10,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor:
+                            day === selectedDay
+                              ? COLORS.primary
+                              : "transparent",
                         }}
                       >
-                        {day}
-                      </Text>
-                    </TouchableOpacity>
-                  ) : (
-                    <View style={{ flex: 1 }} />
-                  )}
-                </View>
-              ))}
+                        <Text
+                          style={{
+                            fontSize: isDesktop ? 18 : 14,
+                            fontWeight: day === selectedDay ? "700" : "400",
+                            color:
+                              day === selectedDay ? "white" : COLORS.foreground,
+                          }}
+                        >
+                          {day}
+                        </Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={{ flex: 1 }} />
+                    )}
+                  </View>
+                ))}
+              </View>
             </View>
-          </View>
 
-          <View
-            style={{
-              backgroundColor: COLORS.card,
-              borderRadius: RADIUS.lg,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: COLORS.border,
-              ...SHADOWS.sm,
-            }}
-          >
-            <Text
+            <View
               style={{
-                fontSize: 16,
-                fontWeight: "700",
-                color: COLORS.foreground,
-                marginBottom: 12,
+                width: "100%",
+                maxWidth: isDesktop ? 340 : undefined,
+                minHeight: isDesktop ? 320 : undefined,
+                backgroundColor: COLORS.card,
+                borderRadius: RADIUS.lg,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: COLORS.border,
+                ...SHADOWS.sm,
               }}
             >
-              Занятия на {selectedDay} {MONTHS[currentDate.month].toLowerCase()}
-            </Text>
-            <View style={{ alignItems: "center", paddingVertical: 32 }}>
-              <Feather
-                name="calendar"
-                size={40}
-                color={COLORS.mutedForeground}
-              />
               <Text
                 style={{
-                  color: COLORS.mutedForeground,
-                  marginTop: 12,
-                  textAlign: "center",
+                  fontSize: 16,
+                  fontWeight: "700",
+                  color: COLORS.foreground,
+                  marginBottom: 12,
                 }}
               >
-                На этот день нет запланированных занятий
+                Занятия на {selectedDateLabel}
               </Text>
+              <View style={{ alignItems: "center", paddingVertical: 32 }}>
+                <Feather
+                  name="calendar"
+                  size={40}
+                  color={COLORS.mutedForeground}
+                />
+                <Text
+                  style={{
+                    color: COLORS.mutedForeground,
+                    marginTop: 12,
+                    textAlign: "center",
+                  }}
+                >
+                  На этот день нет запланированных занятий
+                </Text>
+              </View>
             </View>
           </View>
         </View>

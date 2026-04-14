@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const MOCK_APPLICATIONS = [
     {
@@ -41,6 +42,7 @@ const MOCK_APPLICATIONS = [
 
 export default function OrgApplications() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const [apps, setApps] = useState(MOCK_APPLICATIONS);
 
     const handleAction = (id: string, action: 'approve' | 'reject') => {
@@ -69,7 +71,7 @@ export default function OrgApplications() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 {newApps.length === 0 ? (
                     <View style={{ alignItems: "center", marginTop: 40 }}>
                         <Feather name="check-circle" size={48} color="#D1D5DB" />

@@ -1,19 +1,21 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LAYOUT } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useParentData } from "../../../contexts/ParentDataContext";
 
 type AgeGroup = "6-11" | "12-17" | "18-20";
 
@@ -35,6 +37,8 @@ function makeId() {
 
 export default function CreateProfileParent() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { saveParentProfile } = useParentData();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
@@ -46,6 +50,17 @@ export default function CreateProfileParent() {
     lastName: "",
     phone: "",
   });
+
+  useEffect(() => {
+    if (!user) return;
+
+    setParentData((prev) => ({
+      ...prev,
+      firstName: prev.firstName || user.firstName,
+      lastName: prev.lastName || user.lastName,
+      phone: prev.phone || user.phone,
+    }));
+  }, [user]);
 
   const [children, setChildren] = useState<Child[]>([
     { id: makeId(), name: "", ageGroup: null },
@@ -81,7 +96,8 @@ export default function CreateProfileParent() {
     );
   }
 
-  const handleMockSubmit = () => {
+  const handleMockSubmit = async () => {
+    await saveParentProfile(parentData, children);
     router.push("/profile/parent/create-child-profile");
   };
 

@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const MOCK_TASKS = [
     {
@@ -51,6 +52,7 @@ const CLUBS = [
 
 export default function OrgTasks() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const [selectedClub, setSelectedClub] = useState("all");
 
     const filtered = selectedClub === "all" ? MOCK_TASKS : MOCK_TASKS.filter(t => t.clubId === selectedClub);
@@ -71,7 +73,7 @@ export default function OrgTasks() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 {/* Filter */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
                     {CLUBS.map(club => (

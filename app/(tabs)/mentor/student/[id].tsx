@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../../constants/theme";
+import { useIsDesktop } from "../../../../lib/useIsDesktop";
 
 const MOCK_STUDENTS: Record<string, any> = {
     "1": { name: "Анна Петрова",    age: 8,  level: 5, xp: 1250, progress: 85 },
@@ -42,6 +43,7 @@ const RECS = [
 
 export default function MentorStudentProfile() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const { id } = useLocalSearchParams<{ id: string }>();
     const student = MOCK_STUDENTS[id ?? "1"] ?? MOCK_STUDENTS["1"];
 
@@ -60,7 +62,7 @@ export default function MentorStudentProfile() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
 
                 {/* Student Card */}
                 <View style={{ backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 20, alignItems: "center", marginBottom: 16, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.md }}>

@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const { width } = Dimensions.get("window");
 
@@ -32,6 +33,7 @@ const ACHIEVEMENTS = [
 
 export default function YouthAchievements() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const unlockedCount = ACHIEVEMENTS.filter(a => a.unlocked).length;
     const progress = (unlockedCount / ACHIEVEMENTS.length) * 100;
 
@@ -51,7 +53,7 @@ export default function YouthAchievements() {
                 </View>
             </SafeAreaView>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 {/* Progress Card */}
                 <View style={{
                     backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 20, marginBottom: 24,

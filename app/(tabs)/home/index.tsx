@@ -1,48 +1,54 @@
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ActivityIndicator, View } from "react-native";
 import { COLORS } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
 
-import ParentHome from "../../../components/home/ParentHome";
-import YouthHome from "../../../components/home/YouthHome";
 import MentorHome from "../../../components/home/MentorHome";
 import OrgHome from "../../../components/home/OrgHome";
+import ParentHome from "../../../components/home/ParentHome";
+import YouthHome from "../../../components/home/YouthHome";
 
 type Role = "parent" | "youth" | "child" | "young-adult" | "mentor" | "org";
 
 export default function HomeScreenRouter() {
-    const [role, setRole] = useState<Role | null>(null);
+  const { user, isLoading } = useAuth();
+  const [role, setRole] = useState<Role | null>(null);
 
-    useEffect(() => {
-        // Загружаем сохраненную роль из памяти асинхронно
-        AsyncStorage.getItem("user_role").then((v) => {
-            const currentRole = (v as Role) || "parent";
-            setRole(currentRole);
-        });
-    }, []);
-
-    // Показываем индикатор загрузки, пока мы достаем роль
-    if (!role) {
-        return (
-            <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: "center", alignItems: "center" }}>
-                <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
-        );
+  useEffect(() => {
+    if (user?.role) {
+      setRole(user.role as Role);
     }
+  }, [user]);
 
-    // Возвращаем изолированный экран на основе текущей роли
-    switch (role) {
-        case "parent":
-            return <ParentHome />;
-        case "youth":
-        case "child":
-        case "young-adult":
-            return <YouthHome />;
-        case "mentor":
-            return <MentorHome />;
-        case "org":
-            return <OrgHome />;
-        default:
-            return <ParentHome />;
-    }
+  // Показываем индикатор загрузки, пока мы достаем роль
+  if (isLoading || !role) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: COLORS.background,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  // Возвращаем изолированный экран на основе текущей роли
+  switch (role) {
+    case "parent":
+      return <ParentHome />;
+    case "youth":
+    case "child":
+    case "young-adult":
+      return <YouthHome />;
+    case "mentor":
+      return <MentorHome />;
+    case "org":
+      return <OrgHome />;
+    default:
+      return <ParentHome />;
+  }
 }

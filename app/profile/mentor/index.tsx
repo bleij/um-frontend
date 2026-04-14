@@ -3,34 +3,45 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Alert,
-    Platform,
-    Pressable,
-    ScrollView,
-    Text,
-    useWindowDimensions,
-    View,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function MentorProfile() {
   const router = useRouter();
+  const { logout } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : LAYOUT.dashboardHorizontalPaddingMobile;
 
-  const handleLogout = () => {
-    Alert.alert("Выход", "Вы действительно хотите выйти?", [
-      { text: "Отмена", style: "cancel" },
-      {
-        text: "Выйти",
-        style: "destructive",
-        onPress: () => router.replace("/(auth)"),
-      },
-    ]);
+  const handleLogout = async () => {
+    if (Platform.OS === "web") {
+      await logout();
+      router.replace("/intro" as any);
+    } else {
+      Alert.alert("Выход", "Вы действительно хотите выйти?", [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Выйти",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            router.replace("/intro" as any);
+          },
+        },
+      ]);
+    }
   };
 
   const menuItems = [
@@ -54,32 +65,18 @@ export default function MentorProfile() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-        <View
-          style={{
-            width: "100%",
-            maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-            alignSelf: "center",
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: horizontalPadding,
-            paddingVertical: 12,
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 20,
-              fontWeight: "700",
-              color: COLORS.foreground,
-            }}
-          >
-            Личный кабинет
-          </Text>
-        </View>
+        {!isDesktop && (
+          <ScreenHeader
+            title="Личный кабинет"
+            horizontalPadding={horizontalPadding}
+            withSafeArea={false}
+          />
+        )}
 
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: horizontalPadding,
-            paddingTop: 24,
+            paddingTop: 16,
             paddingBottom: 100,
             alignItems: "center",
           }}

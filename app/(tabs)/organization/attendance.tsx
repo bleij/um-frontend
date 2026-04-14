@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const CLUBS = [
     { id: "art", name: "Художественная студия" },
@@ -27,6 +28,7 @@ const MOCK_STUDENTS = [
 
 export default function OrgAttendance() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const [selectedClub, setSelectedClub] = useState("art");
 
     const getRate = (arr: boolean[]) => Math.round((arr.filter(Boolean).length / arr.length) * 100);
@@ -44,7 +46,7 @@ export default function OrgAttendance() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 {/* Selector */}
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
                     {CLUBS.map(club => (

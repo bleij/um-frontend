@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const PATH_STEPS = [
     {
@@ -69,6 +70,7 @@ const STATUS_TEXT_COLOR: Record<string, string> = {
 
 export default function MentorLearningPath() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
 
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -87,7 +89,7 @@ export default function MentorLearningPath() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 {/* Overview */}
                 <View style={{ backgroundColor: "white", borderRadius: 18, padding: 16, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8 }}>
                     <Text style={{ fontWeight: "700", fontSize: 15, color: "#1F1F2E", marginBottom: 10 }}>Общий прогресс</Text>

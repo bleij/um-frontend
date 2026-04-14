@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -15,12 +16,19 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const [email, setEmail] = useState("");
+  const { loginWithPhone, verificationCodePlaceholder } = useAuth();
+
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
+  const [smsCode, setSmsCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -28,11 +36,50 @@ export default function LoginScreen() {
     ? LAYOUT.authHorizontalPaddingDesktop
     : LAYOUT.authHorizontalPaddingMobile;
 
-  const handleLogin = () => {
-    router.push("/(tabs)/home");
+  const formatPhone = (text: string) => {
+    const cleaned = text.replace(/[^\d+]/g, "");
+    setPhoneNumber(cleaned);
   };
 
-  const canSubmit = email.length > 0 && password.length > 0;
+  const canRequestCode = phoneNumber.length >= 10 && password.length >= 6;
+  const canSubmit = canRequestCode && smsCode.length >= 4;
+
+  const handleAction = async () => {
+    setError("");
+
+    if (!codeSent) {
+      if (!canRequestCode) {
+        setError("Введите номер телефона и пароль (не менее 6 символов)");
+      } else {
+        setCodeSent(true);
+      }
+      return;
+    }
+
+    if (!canSubmit) {
+      setError("Введите код подтверждения");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const result = await loginWithPhone({
+      phone: phoneNumber,
+      password,
+      verificationCode: smsCode,
+    });
+
+    setIsSubmitting(false);
+
+    if (!result.success) {
+      setError(result.error || "Не удалось войти");
+      return;
+    }
+
+    router.replace("/(tabs)/home");
+  };
+
+  const buttonLabel = !codeSent ? "Получить код" : "Войти";
 
   return (
     <KeyboardAvoidingView
@@ -111,7 +158,7 @@ export default function LoginScreen() {
               </Text>
             </MotiView>
 
-            {/* Email Input */}
+            {/* Phone Input */}
             <MotiView
               from={{ opacity: 0, translateY: 20 }}
               animate={{ opacity: 1, translateY: 0 }}
@@ -126,23 +173,22 @@ export default function LoginScreen() {
                   marginBottom: 8,
                 }}
               >
-                Email
+                Номер телефона
               </Text>
               <View style={{ position: "relative", justifyContent: "center" }}>
                 <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
                   <Feather
-                    name="mail"
+                    name="phone"
                     size={18}
                     color={COLORS.mutedForeground}
                   />
                 </View>
                 <TextInput
-                  placeholder="Введите email"
+                  placeholder="+7 (999) 123-45-67"
                   placeholderTextColor={COLORS.mutedForeground}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
+                  value={phoneNumber}
+                  onChangeText={formatPhone}
+                  keyboardType="phone-pad"
                   style={{
                     width: "100%",
                     paddingLeft: 48,
@@ -216,20 +262,85 @@ export default function LoginScreen() {
               </View>
             </MotiView>
 
-            {/* Forgot Password */}
-            <TouchableOpacity
-              style={{ alignItems: "flex-end", marginBottom: 24 }}
-            >
-              <Text
+            {codeSent && (
+              <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ duration: 450, delay: 180 }}
+                style={{ marginBottom: 12 }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    fontWeight: "500",
+                    color: COLORS.foreground,
+                    marginBottom: 8,
+                  }}
+                >
+                  Код из СМС
+                </Text>
+                <TextInput
+                  placeholder="Введите код"
+                  placeholderTextColor={COLORS.mutedForeground}
+                  value={smsCode}
+                  onChangeText={setSmsCode}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  style={{
+                    width: "100%",
+                    paddingHorizontal: 16,
+                    paddingVertical: 16,
+                    backgroundColor: COLORS.muted,
+                    borderRadius: RADIUS.md,
+                    borderWidth: 2,
+                    borderColor: COLORS.border,
+                    fontSize: 18,
+                    color: COLORS.foreground,
+                    textAlign: "center",
+                    letterSpacing: 6,
+                    fontWeight: "700",
+                  }}
+                />
+              </MotiView>
+            )}
+
+            {codeSent && (
+              <View
                 style={{
-                  color: COLORS.primary,
-                  fontSize: 13,
-                  fontWeight: "500",
+                  marginBottom: 20,
+                  padding: 12,
+                  borderRadius: RADIUS.md,
+                  backgroundColor: `${COLORS.primary}10`,
                 }}
               >
-                Забыли пароль?
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={{
+                    color: COLORS.primary,
+                    fontWeight: "600",
+                    fontSize: 13,
+                  }}
+                >
+                  Демо-код подтверждения: {verificationCodePlaceholder}
+                </Text>
+              </View>
+            )}
+
+            {!!error && (
+              <View
+                style={{
+                  marginBottom: 16,
+                  padding: 12,
+                  borderRadius: RADIUS.md,
+                  backgroundColor: "#FEE2E2",
+                }}
+              >
+                <Text
+                  style={{ color: "#B91C1C", fontWeight: "500", fontSize: 13 }}
+                >
+                  {error}
+                </Text>
+              </View>
+            )}
 
             {/* Submit Button */}
             <MotiView
@@ -239,25 +350,45 @@ export default function LoginScreen() {
               style={{ marginBottom: 24 }}
             >
               <TouchableOpacity
-                onPress={handleLogin}
-                disabled={!canSubmit}
+                onPress={handleAction}
+                disabled={
+                  isSubmitting ||
+                  (!codeSent && !canRequestCode) ||
+                  (codeSent && !canSubmit)
+                }
                 style={{
                   width: "100%",
                   paddingVertical: 16,
                   borderRadius: RADIUS.md,
                   alignItems: "center",
-                  backgroundColor: canSubmit ? COLORS.primary : COLORS.muted,
+                  backgroundColor:
+                    isSubmitting ||
+                    (!codeSent && !canRequestCode) ||
+                    (codeSent && !canSubmit)
+                      ? COLORS.muted
+                      : COLORS.primary,
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    color: canSubmit ? "white" : COLORS.mutedForeground,
-                  }}
-                >
-                  Войти
-                </Text>
+                {isSubmitting ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={COLORS.mutedForeground}
+                  />
+                ) : (
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: "600",
+                      color:
+                        (!codeSent && !canRequestCode) ||
+                        (codeSent && !canSubmit)
+                          ? COLORS.mutedForeground
+                          : "white",
+                    }}
+                  >
+                    {buttonLabel}
+                  </Text>
+                )}
               </TouchableOpacity>
             </MotiView>
 
@@ -279,7 +410,7 @@ export default function LoginScreen() {
                   fontSize: 13,
                 }}
               >
-                или войти через
+                быстрый вход
               </Text>
               <View
                 style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}

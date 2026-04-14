@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const GOALS = [
     {
@@ -42,6 +43,7 @@ const GOALS = [
 
 export default function YouthGoals() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const totalDone = GOALS.reduce((sum, g) => sum + g.steps.filter(s => s.done).length, 0);
 
     return (
@@ -64,7 +66,7 @@ export default function YouthGoals() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 {/* Add Goal */}
                 <TouchableOpacity style={{
                     backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 16, marginBottom: 16,

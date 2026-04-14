@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const TASK_ICONS: Record<string, string> = {
     "Художественная студия": "edit-3",
@@ -24,6 +25,7 @@ const MOCK_TASKS = [
 
 export default function YouthTasks() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const [tasks, setTasks] = useState(MOCK_TASKS);
 
     const toggleTask = (id: number) => {
@@ -52,7 +54,7 @@ export default function YouthTasks() {
                 </View>
             </SafeAreaView>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 {/* Score Card */}
                 <LinearGradient
                     colors={[COLORS.primary, COLORS.secondary]}

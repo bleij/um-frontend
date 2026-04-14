@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const STUDENTS = [
     { id: "1",  name: "Анна Петрова",      age: 8,  club: "Художественная студия", progress: 85, attendance: 95 },
@@ -19,6 +20,7 @@ const CLUBS_FILTER = ["Все", "Художественная студия", "П
 
 export default function OrgStudents() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const [search, setSearch] = useState("");
     const [activeClub, setActiveClub] = useState("Все");
 
@@ -44,7 +46,7 @@ export default function OrgStudents() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }} stickyHeaderIndices={[0]}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }} stickyHeaderIndices={[0]}>
 
                 {/* Sticky Search + Filter section */}
                 <View style={{ backgroundColor: COLORS.background, paddingBottom: 8 }}>

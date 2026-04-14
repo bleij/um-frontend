@@ -1,16 +1,15 @@
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 
 const SKILLS = [
@@ -44,42 +43,17 @@ export default function ParentReports() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.primary, COLORS.secondary]}
-        style={{
-          paddingBottom: 20,
-          borderBottomLeftRadius: 24,
-          borderBottomRightRadius: 24,
-        }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-              alignSelf: "center",
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: horizontalPadding,
-              paddingTop: 8,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={{ padding: 8, marginRight: 8 }}
-            >
-              <Feather name="arrow-left" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontWeight: "700", color: "white" }}>
-              Отчеты и аналитика
-            </Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      {!isDesktop && (
+        <ScreenHeader
+          title="Отчеты и аналитика"
+          onBack={() => router.back()}
+          horizontalPadding={horizontalPadding}
+          variant="surface"
+        />
+      )}
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
           paddingTop: 16,
           paddingBottom: 40,
           alignItems: "center",
@@ -89,6 +63,7 @@ export default function ParentReports() {
           style={{
             width: "100%",
             maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
+            paddingHorizontal: horizontalPadding,
           }}
         >
           {/* Child Selector */}

@@ -3,15 +3,16 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
-    Platform,
-    Pressable,
-    ScrollView,
-    Text,
-    useWindowDimensions,
-    View,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
 
 const NAV_ITEMS = [
   { label: "Мои цели", icon: "target" as const, route: "/(tabs)/youth/goals" },
@@ -37,21 +38,21 @@ const ACHIEVEMENTS = [
 
 export default function YouthHome() {
   const router = useRouter();
+  const { user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : LAYOUT.dashboardHorizontalPaddingMobile;
-  const firstName = "Ученик";
+  const firstName = user?.firstName || "Ученик";
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
         <ScrollView
           contentContainerStyle={{
-            paddingHorizontal: horizontalPadding,
             paddingTop: 20,
-            paddingBottom: 100,
+            paddingBottom: isDesktop ? 32 : 100,
             alignItems: "center",
           }}
         >
@@ -59,6 +60,7 @@ export default function YouthHome() {
             style={{
               width: "100%",
               maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
+              paddingHorizontal: horizontalPadding,
             }}
           >
             {/* Profile Card */}

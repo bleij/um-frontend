@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useIsDesktop } from "../../../lib/useIsDesktop";
 
 const CLUBS = [
     { id: "1", name: "Художественная студия", students: 18, age: "6-11",  price: 6000, status: "active" },
@@ -24,6 +25,7 @@ const CLUB_ICONS: Record<string, string> = {
 
 export default function OrgClubs() {
     const router = useRouter();
+    const isDesktop = useIsDesktop();
     const [search, setSearch] = useState("");
     const filtered = CLUBS.filter(c => c.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -43,7 +45,7 @@ export default function OrgClubs() {
                 </SafeAreaView>
             </LinearGradient>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: COLORS.muted, borderRadius: RADIUS.md, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16 }}>
                     <Feather name="search" size={18} color={COLORS.mutedForeground} style={{ marginRight: 8 }} />
                     <TextInput value={search} onChangeText={setSearch} placeholder="Найти кружок..." placeholderTextColor={COLORS.mutedForeground} style={{ flex: 1, fontSize: 15, color: COLORS.foreground }} />

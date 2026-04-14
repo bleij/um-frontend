@@ -134,7 +134,7 @@ export default function MentorHome() {
         contentContainerStyle={{
           paddingHorizontal: horizontalPadding,
           paddingTop: 16,
-          paddingBottom: 100,
+          paddingBottom: isDesktop ? 32 : 100,
           alignItems: "center",
         }}
       >

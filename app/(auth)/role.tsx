@@ -1,31 +1,61 @@
 import { Feather } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React from "react";
+import React, { useState } from "react";
 import {
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
+import { useAuth, type UserRole } from "../../contexts/AuthContext";
 
 export default function RoleSelect() {
   const router = useRouter();
+  const { user, pendingRegistration, completeRegistration, setUserRole } =
+    useAuth();
+  const [submittingRole, setSubmittingRole] = useState<UserRole | null>(null);
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.authHorizontalPaddingDesktop
     : LAYOUT.authHorizontalPaddingMobile;
 
-  const handleSelect = async (role: string, route: string) => {
-    await AsyncStorage.setItem("user_role", role);
-    router.push(route as any);
+  const handleSelect = async (role: UserRole, route: string) => {
+    setSubmittingRole(role);
+
+    if (pendingRegistration) {
+      const result = await completeRegistration(role);
+
+      if (!result.success) {
+        setSubmittingRole(null);
+        Alert.alert(
+          "Ошибка",
+          result.error || "Не удалось завершить регистрацию",
+        );
+        return;
+      }
+    } else if (user) {
+      await setUserRole(role);
+    } else {
+      setSubmittingRole(null);
+      Alert.alert(
+        "Регистрация",
+        "Сначала заполните форму регистрации, затем выберите роль.",
+      );
+      router.replace("/register");
+      return;
+    }
+
+    setSubmittingRole(null);
+    router.replace(route as any);
   };
 
   const roles = [
@@ -34,7 +64,7 @@ export default function RoleSelect() {
       description: "Управление профилями детей, бронирование занятий",
       icon: "users" as const,
       IconComponent: Feather,
-      role: "parent",
+      role: "parent" as UserRole,
       route: "/profile/parent/create-profile",
       features: [
         "Отслеживание прогресса",
@@ -47,7 +77,7 @@ export default function RoleSelect() {
       description: "Рисование, первые навыки и игры",
       icon: "smile" as const,
       IconComponent: Feather,
-      role: "child",
+      role: "child" as UserRole,
       route: "/profile/youth/create-profile-child",
       features: ["Игровое обучение", "Первые достижения"],
     },
@@ -56,7 +86,7 @@ export default function RoleSelect() {
       description: "Цели, навыки и общение с ментором",
       icon: "zap" as const,
       IconComponent: Feather,
-      role: "youth",
+      role: "youth" as UserRole,
       route: "/profile/youth/create-profile",
       features: ["Карта талантов", "Достижения и бейджи"],
     },
@@ -65,7 +95,7 @@ export default function RoleSelect() {
       description: "Профориентация и серьезный рост",
       icon: "book-open" as const,
       IconComponent: Feather,
-      role: "young-adult",
+      role: "young-adult" as UserRole,
       route: "/profile/youth/create-profile-young-adult",
       features: ["Профориентация", "Карьерные пути"],
     },
@@ -74,7 +104,7 @@ export default function RoleSelect() {
       description: "Управление клубами и учениками",
       icon: "briefcase" as const,
       IconComponent: Feather,
-      role: "org",
+      role: "org" as UserRole,
       route: "/profile/organization/create-profile",
       features: ["Панель управления", "Аналитика"],
     },
@@ -83,7 +113,7 @@ export default function RoleSelect() {
       description: "Создание планов развития и поддержка",
       icon: "user-check" as const,
       IconComponent: Feather,
-      role: "mentor",
+      role: "mentor" as UserRole,
       route: "/profile/mentor/create-profile",
       features: ["Планы развития", "Трекинг прогресса"],
     },
@@ -194,6 +224,7 @@ export default function RoleSelect() {
                     >
                       <TouchableOpacity
                         onPress={() => handleSelect(item.role, item.route)}
+                        disabled={submittingRole !== null}
                         activeOpacity={0.7}
                         style={{
                           padding: 20,
@@ -223,16 +254,30 @@ export default function RoleSelect() {
 
                         {/* Content */}
                         <View style={{ flex: 1 }}>
-                          <Text
+                          <View
                             style={{
-                              fontWeight: "600",
-                              fontSize: 16,
-                              color: COLORS.foreground,
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "space-between",
                               marginBottom: 4,
                             }}
                           >
-                            {item.title}
-                          </Text>
+                            <Text
+                              style={{
+                                fontWeight: "600",
+                                fontSize: 16,
+                                color: COLORS.foreground,
+                              }}
+                            >
+                              {item.title}
+                            </Text>
+                            {submittingRole === item.role && (
+                              <ActivityIndicator
+                                size="small"
+                                color={COLORS.primary}
+                              />
+                            )}
+                          </View>
                           <Text
                             style={{
                               fontSize: 13,
