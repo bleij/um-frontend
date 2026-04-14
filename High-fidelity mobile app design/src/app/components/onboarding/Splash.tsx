@@ -21,9 +21,9 @@ export function Splash() {
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
-          transition={{ 
+          transition={{
             duration: 1,
-            ease: [0.34, 1.56, 0.64, 1]
+            ease: [0.34, 1.56, 0.64, 1],
           }}
           className="text-center"
         >
@@ -35,19 +35,21 @@ export function Splash() {
             className="mb-8 relative"
           >
             <div className="w-32 h-32 mx-auto rounded-[32px] bg-white/10 backdrop-blur-xl border-2 border-white/20 shadow-2xl flex items-center justify-center">
-              <span className="text-6xl font-bold text-white tracking-tight">UM</span>
+              <span className="text-6xl font-bold text-white tracking-tight">
+                UM
+              </span>
             </div>
-            
+
             {/* Glow Effect */}
             <motion.div
-              animate={{ 
+              animate={{
                 scale: [1, 1.2, 1],
-                opacity: [0.3, 0.6, 0.3]
+                opacity: [0.3, 0.6, 0.3],
               }}
-              transition={{ 
+              transition={{
                 duration: 2,
                 repeat: Infinity,
-                ease: "easeInOut"
+                ease: "easeInOut",
               }}
               className="absolute inset-0 w-32 h-32 mx-auto rounded-[32px] bg-white/20 blur-2xl -z-10"
             />
@@ -59,8 +61,10 @@ export function Splash() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1, duration: 0.5 }}
           >
-            <h1 className="text-2xl font-bold text-white mb-2">Universal Mind</h1>
-            <p className="text-white/70 text-sm">Unlock Your Child's Potential</p>
+            <h1 className="text-2xl font-bold text-white mb-2">Ursa Major</h1>
+            <p className="text-white/70 text-sm">
+              Unlock Your Child's Potential
+            </p>
           </motion.div>
 
           {/* Loading Indicator */}
@@ -74,15 +78,15 @@ export function Splash() {
               {[0, 1, 2].map((i) => (
                 <motion.div
                   key={i}
-                  animate={{ 
+                  animate={{
                     scale: [1, 1.5, 1],
-                    opacity: [0.3, 1, 0.3]
+                    opacity: [0.3, 1, 0.3],
                   }}
-                  transition={{ 
+                  transition={{
                     duration: 1,
                     repeat: Infinity,
                     delay: i * 0.2,
-                    ease: "easeInOut"
+                    ease: "easeInOut",
                   }}
                   className="w-2 h-2 rounded-full bg-white"
                 />
