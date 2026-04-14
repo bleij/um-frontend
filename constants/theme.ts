@@ -61,3 +61,16 @@ export const SHADOWS = {
     elevation: 6,
   },
 };
+
+export const LAYOUT = {
+  desktopBreakpoint: 1024,
+  authMaxWidth: 520,
+  authHorizontalPaddingMobile: 24,
+  authHorizontalPaddingDesktop: 32,
+  profileFormMaxWidth: 960,
+  profileHorizontalPaddingMobile: 16,
+  profileHorizontalPaddingDesktop: 32,
+  dashboardMaxWidth: 1200,
+  dashboardHorizontalPaddingMobile: 16,
+  dashboardHorizontalPaddingDesktop: 32,
+};

@@ -4,22 +4,29 @@ import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS } from "../../constants/theme";
+import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const horizontalPadding = isDesktop
+    ? LAYOUT.authHorizontalPaddingDesktop
+    : LAYOUT.authHorizontalPaddingMobile;
 
   const handleLogin = () => {
     router.push("/(tabs)/home");
@@ -35,10 +42,22 @@ export default function LoginScreen() {
       <StatusBar style="dark" />
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            alignItems: "center",
+            paddingVertical: isDesktop ? 24 : 0,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8 }}>
+          <View
+            style={{
+              flex: 1,
+              width: "100%",
+              maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+              paddingHorizontal: horizontalPadding,
+              paddingTop: 8,
+            }}
+          >
             {/* Back Button */}
             <TouchableOpacity
               onPress={() => router.replace("/intro")}

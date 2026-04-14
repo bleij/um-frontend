@@ -11,12 +11,14 @@ import {
     TextInput,
     TouchableOpacity,
     View,
+    useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS } from "../../constants/theme";
+import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [smsCode, setSmsCode] = useState("");
@@ -28,6 +30,11 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const horizontalPadding = isDesktop
+    ? LAYOUT.authHorizontalPaddingDesktop
+    : LAYOUT.authHorizontalPaddingMobile;
 
   const formatPhone = (text: string) => {
     const cleaned = text.replace(/\D/g, "");
@@ -86,10 +93,22 @@ export default function RegisterScreen() {
       <StatusBar style="dark" />
       <SafeAreaView style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            alignItems: "center",
+            paddingVertical: isDesktop ? 24 : 0,
+          }}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={{ flex: 1, paddingHorizontal: 24, paddingTop: 8 }}>
+          <View
+            style={{
+              flex: 1,
+              width: "100%",
+              maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+              paddingHorizontal: horizontalPadding,
+              paddingTop: 8,
+            }}
+          >
             {/* Back Button */}
             <TouchableOpacity
               onPress={() => router.back()}
