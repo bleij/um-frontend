@@ -118,7 +118,7 @@ export default function IntroScreen() {
 
           <TouchableOpacity
             activeOpacity={0.8}
-            onPress={() => router.push("/register")}
+            onPress={() => router.push("/role")}
             style={{
               width: "100%",
               paddingVertical: 16,

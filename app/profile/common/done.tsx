@@ -34,7 +34,7 @@ export default function DoneScreen() {
         }
 
         if (role === "parent") {
-            router.push("/profile/parent/umo-intro");
+            router.push("/(tabs)/home");
             return;
         }
 
@@ -44,7 +44,7 @@ export default function DoneScreen() {
         }
 
         if (role === "org") {
-            router.push("/profile/organization/umo-intro");
+            router.push("/(tabs)/home");
             return;
         }
     };

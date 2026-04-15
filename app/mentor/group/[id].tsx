@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Platform,
@@ -9,9 +10,10 @@ import {
   Text,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 const MOCK_STUDENTS = [
   { id: "1", name: "Алихан Сериков", attendance: true, xpAdded: 50 },
@@ -26,7 +28,7 @@ export default function MentorGroupDetail() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const [students, setStudents] = useState(MOCK_STUDENTS);
 
@@ -38,93 +40,129 @@ export default function MentorGroupDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <View>
-                <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Старшая группа A</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>Сегодня, 15:00-16:30</Text>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <MotiView 
+              from={{ opacity: 0, translateY: -10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <View>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>Старшая группа A</Text>
+                  <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>Сегодня, 15:00-16:30</Text>
+                </View>
               </View>
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+            </MotiView>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
-          paddingBottom: 40,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
+          paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Attendance Marking Section */}
-        <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 mb-8 border border-gray-100">
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-lg font-bold text-gray-900">Посещаемость</Text>
-              <View className="bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-                 <Text className="text-[10px] font-black text-gray-500 uppercase">ФЕВРАЛЬ 24, 2026</Text>
+              <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Посещаемость</Text>
+              <View style={{ backgroundColor: COLORS.muted, px: SPACING.md, py: SPACING.xs, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border }}>
+                 <Text style={{ fontSize: 9, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textAlign: 'center' }}>ФЕВРАЛЬ 24, 2026</Text>
               </View>
            </View>
 
-           <View className="gap-3">
+           <View style={{ gap: SPACING.md }}>
               {students.map(s => (
-                <Pressable
+                <TouchableOpacity
                   key={s.id}
                   onPress={() => toggleAttendance(s.id)}
-                  className="flex-row items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100"
+                  style={{ 
+                    flexDirection: 'row', 
+                    alignItems: 'center', 
+                    justifyContent: 'space-between', 
+                    padding: SPACING.lg, 
+                    backgroundColor: COLORS.background, 
+                    borderRadius: RADIUS.lg, 
+                    borderWidth: 1, 
+                    borderColor: COLORS.border 
+                  }}
                 >
                   <View className="flex-row items-center gap-4">
-                     <View className="w-10 h-10 bg-white rounded-full items-center justify-center border border-gray-200">
-                        <Text className="font-bold text-primary">{s.name.charAt(0)}</Text>
+                     <View style={{ 
+                       width: 44, 
+                       height: 44, 
+                       backgroundColor: COLORS.white, 
+                       borderRadius: RADIUS.full, 
+                       alignItems: 'center', 
+                       justifyContent: 'center', 
+                       borderWidth: 1, 
+                       borderColor: COLORS.border,
+                       ...SHADOWS.sm
+                     }}>
+                        <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{s.name.charAt(0)}</Text>
                      </View>
-                     <Text className="font-bold text-gray-800">{s.name}</Text>
+                     <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{s.name}</Text>
                   </View>
-                  <View className={`w-10 h-10 rounded-xl items-center justify-center ${s.attendance ? 'bg-green-500 shadow-lg shadow-green-200' : 'bg-white border-2 border-gray-200'}`}>
+                  <View style={{ 
+                    width: 40, 
+                    height: 40, 
+                    borderRadius: RADIUS.md, 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    backgroundColor: s.attendance ? COLORS.success : COLORS.white,
+                    borderWidth: s.attendance ? 0 : 2,
+                    borderColor: COLORS.muted,
+                    ... (s.attendance ? SHADOWS.md : {})
+                  }}>
                      {s.attendance && <Feather name="check" size={20} color="white" />}
                   </View>
-                </Pressable>
+                </TouchableOpacity>
               ))}
            </View>
         </View>
 
         {/* Lesson Summary / XP */}
-        <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 mb-8 border border-gray-100">
-           <Text className="text-lg font-bold text-gray-900 mb-4">Награды за занятие</Text>
-           <View className="flex-row items-center gap-4 mb-6">
-              <View className="w-12 h-12 bg-yellow-50 rounded-2xl items-center justify-center">
-                 <Feather name="award" size={24} color="#F59E0B" />
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Награды за занятие</Text>
+           <View className="flex-row items-center gap-4 mb-8">
+              <View style={{ width: 56, height: 56, backgroundColor: 'rgba(245, 158, 11, 0.1)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}>
+                 <Feather name="award" size={28} color="#F59E0B" />
               </View>
               <View className="flex-1">
-                 <Text className="text-sm font-bold text-gray-900">Активность +50 XP</Text>
-                 <Text className="text-[10px] text-gray-400 font-bold uppercase">Будет начислено всем присутствующим</Text>
+                 <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Активность +50 XP</Text>
+                 <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>Будет начислено всем присутствующим</Text>
               </View>
            </View>
            
-           <Pressable 
-              className="h-14 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/20"
+           <TouchableOpacity 
+              style={{ ...SHADOWS.md, h: 64, backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}
               onPress={() => router.back()}
            >
-              <Text className="text-white font-bold">Завершить и начислить XP</Text>
-           </Pressable>
+              <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold, fontSize: TYPOGRAPHY.size.md }}>Завершить и начислить XP</Text>
+           </TouchableOpacity>
         </View>
       </ScrollView>
     </View>

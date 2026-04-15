@@ -36,7 +36,13 @@ export default function ParentChildDetails() {
           <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 32 }}>
               <Pressable
-                onPress={() => router.back()}
+                onPress={() => {
+                  if (router.canGoBack()) {
+                    router.back();
+                  } else {
+                    router.replace("/" as any);
+                  }
+                }}
                 style={{
                   width: 40,
                   height: 40,

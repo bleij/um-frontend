@@ -1,11 +1,12 @@
 // data/courses.ts
+import { Course } from "../models/types";
 
-export const courses = [
+export const courses: Course[] = [
     {
         id: 1,
         title: "Робототехника",
         tag: "it",
-        icon: "hardware-chip-outline",
+        icon: "cpu",
         gradient: ["#5374ff", "#87e2ff"],
         shortDescription: "Собираем и программируем умных роботов на основе датчиков и моторчиков.",
         description: `Курс для тех, кто любит конструировать и видеть результат своими глазами.
@@ -26,7 +27,7 @@ export const courses = [
         id: 2,
         title: "Логика",
         tag: "гум",
-        icon: "bulb-outline",
+        icon: "zap",
         gradient: ["#7f5cff", "#c1a0ff"],
         shortDescription: "Учимся думать глубже, задавать вопросы и не вестись на манипуляции.",
         description: `Курс про то, как фильтровать информацию и принимать взвешенные решения.
@@ -47,7 +48,7 @@ export const courses = [
         id: 3,
         title: "IT Basics",
         tag: "it",
-        icon: "code-slash-outline",
+        icon: "code",
         gradient: ["#00c6ff", "#0072ff"],
         shortDescription: "Первые шаги в коде: переменные, циклы, простые игры и мини-сервисы.",
         description: `Базовый курс по программированию для тех, кто только начинает.
@@ -68,7 +69,7 @@ export const courses = [
         id: 4,
         title: "Математика PRO",
         tag: "мат",
-        icon: "calculator-outline",
+        icon: "plus-square",
         gradient: ["#43e97b", "#38f9d7"],
         shortDescription: "Системная математика без страха: от базовых тем до олимпиадных задач.",
         description: `Курс помогает закрыть пробелы и двинуться вперёд уверенно.
@@ -89,7 +90,7 @@ export const courses = [
         id: 5,
         title: "Астрономия",
         tag: "естеств",
-        icon: "planet-outline",
+        icon: "globe",
         gradient: ["#fa709a", "#fee140"],
         shortDescription: "Планеты, звёзды, галактики и космические миссии в понятном формате.",
         description: `Курс для любителей космоса.
@@ -110,7 +111,7 @@ export const courses = [
         id: 6,
         title: "Футбол",
         tag: "спорт",
-        icon: "football-outline",
+        icon: "dribbble",
         gradient: ["#30cfd0", "#330867"],
         shortDescription: "Техника, выносливость, командная игра и уважение к сопернику.",
         description: `Футбольные тренировки для детей и подростков.
@@ -131,7 +132,7 @@ export const courses = [
         id: 7,
         title: "Дизайн",
         tag: "творчество",
-        icon: "color-palette-outline",
+        icon: "pen-tool",
         gradient: ["#f77062", "#fe5196"],
         shortDescription: "Учимся делать красивые посты, афиши и обложки как у взрослых дизайнеров.",
         description: `Курс по современному графическому дизайну.
@@ -152,7 +153,7 @@ export const courses = [
         id: 8,
         title: "Английский язык",
         tag: "гум",
-        icon: "language-outline",
+        icon: "message-circle",
         gradient: ["#fddb92", "#d1fdff"],
         shortDescription: "Живой английский через игры, диалоги и темы, которые реально интересны.",
         description: `Разговорный курс с упором на практику.
@@ -173,7 +174,7 @@ export const courses = [
         id: 9,
         title: "Химия",
         tag: "естеств",
-        icon: "flask-outline",
+        icon: "hexagon",
         gradient: ["#a18cd1", "#fbc2eb"],
         shortDescription: "Понимаем реакции и формулы через опыты и наглядные примеры.",
         description: `Курс по базовой и школьной химии.
@@ -194,7 +195,7 @@ export const courses = [
         id: 10,
         title: "Баскетбол",
         tag: "спорт",
-        icon: "basketball-outline",
+        icon: "dribbble",
         gradient: ["#fad0c4", "#ffd1ff"],
         shortDescription: "Развиваем скорость, координацию и чувство команды через игру.",
         description: `Тренировки по баскетболу для школьников.
@@ -215,7 +216,7 @@ export const courses = [
         id: 11,
         title: "Scratch",
         tag: "it",
-        icon: "game-controller-outline",
+        icon: "play-circle",
         gradient: ["#84fab0", "#8fd3f4"],
         shortDescription: "Делаем свои игры и мультфильмы в визуальном конструкторе Scratch.",
         description: `Идеальный старт в программировании для младших.
@@ -236,7 +237,7 @@ export const courses = [
         id: 12,
         title: "Физика",
         tag: "естеств",
-        icon: "flash-outline",
+        icon: "zap",
         gradient: ["#fccb90", "#d57eeb"],
         shortDescription: "Оживляем формулы через эксперименты, модели и задачи из жизни.",
         description: `Курс по базовой школьной физике.
@@ -257,7 +258,7 @@ export const courses = [
         id: 13,
         title: "Музыка",
         tag: "творчество",
-        icon: "musical-notes-outline",
+        icon: "music",
         gradient: ["#ffecd2", "#fcb69f"],
         shortDescription: "Ритм, слух, импровизация и первые собственные музыкальные треки.",
         description: `Креативный курс для тех, кто хочет “чувствовать” музыку.
@@ -278,7 +279,7 @@ export const courses = [
         id: 14,
         title: "Геометрия",
         tag: "мат",
-        icon: "shapes-outline",
+        icon: "hexagon",
         gradient: ["#a1c4fd", "#c2e9fb"],
         shortDescription: "Разбираем фигуры, доказательства и задачи так, чтобы стало понятно и логично.",
         description: `Отдельный курс по геометрии для школьников.
@@ -299,7 +300,7 @@ export const courses = [
         id: 15,
         title: "Йога",
         tag: "спорт",
-        icon: "body-outline",
+        icon: "user",
         gradient: ["#d4fc79", "#96e6a1"],
         shortDescription: "Мягкая физическая нагрузка, дыхание и умение расслабляться после учёбы.",
         description: `Курс по детской и подростковой йоге.
@@ -320,7 +321,7 @@ export const courses = [
         id: 16,
         title: "UI/UX",
         tag: "it",
-        icon: "layers-outline",
+        icon: "layers",
         gradient: ["#667eea", "#764ba2"],
         shortDescription: "Делаем прототипы приложений и сайтов, как настоящие продуктовые дизайнеры.",
         description: `Курс по дизайну интерфейсов для подростков.
@@ -342,7 +343,7 @@ export const courses = [
         id: 17,
         title: "История",
         tag: "гум",
-        icon: "book-outline",
+        icon: "book",
         gradient: ["#ff9a9e", "#fad0c4"],
         shortDescription: "История как единый сюжет, а не разрозненные даты и параграфы.",
         description: `Курс по истории в формате “storytelling”.
@@ -363,7 +364,7 @@ export const courses = [
         id: 18,
         title: "Биология",
         tag: "естеств",
-        icon: "leaf-outline",
+        icon: "feather",
         gradient: ["#89f7fe", "#66a6ff"],
         shortDescription: "От клетки до экосистемы: как устроена жизнь вокруг нас и внутри нас.",
         description: `Современный курс по биологии.
@@ -384,7 +385,7 @@ export const courses = [
         id: 19,
         title: "Гитара",
         tag: "творчество",
-        icon: "musical-note-outline",
+        icon: "music",
         gradient: ["#f6d365", "#fda085"],
         shortDescription: "Осваиваем аккорды, ритм и свои первые песни под гитару.",
         description: `Практический курс для тех, кто хочет играть любимые треки.
@@ -405,7 +406,7 @@ export const courses = [
         id: 20,
         title: "Алгебра",
         tag: "мат",
-        icon: "stats-chart-outline",
+        icon: "bar-chart-2",
         gradient: ["#96fbc4", "#f9f586"],
         shortDescription: "Уравнения, функции, графики и подготовка к экзаменам без паники.",
         description: `Отдельный курс по алгебре.

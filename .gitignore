@@ -32,6 +32,7 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
@@ -43,3 +44,5 @@ yarn-error.*
 um-app/
 um-context
 um-figma
+High-fidelity mobile app design/
+new design/

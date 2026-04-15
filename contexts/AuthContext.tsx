@@ -55,6 +55,9 @@ interface AuthContextValue {
   }) => Promise<AuthActionResult>;
   setUserRole: (role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
+  devLogin: (role: UserRole) => Promise<void>;
+  devMode: boolean;
+  setDevMode: (enabled: boolean) => Promise<void>;
 }
 
 interface LocalUserRecord {
@@ -69,6 +72,7 @@ interface LocalUserRecord {
 const AUTH_USER_KEY = "um_auth_user_v1";
 const USER_ROLE_KEY = "user_role";
 const LOCAL_USERS_KEY = "um_local_users_v1";
+const DEV_MODE_KEY = "um_dev_mode";
 const PLACEHOLDER_VERIFICATION_CODE = "1234";
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -206,11 +210,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [pendingRegistration, setPendingRegistration] =
     useState<PendingRegistration | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [devMode, setDevModeState] = useState(false);
 
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        const rawUser = await AsyncStorage.getItem(AUTH_USER_KEY);
+        const [rawUser, rawDevMode] = await Promise.all([
+          AsyncStorage.getItem(AUTH_USER_KEY),
+          AsyncStorage.getItem(DEV_MODE_KEY),
+        ]);
+
+        if (rawDevMode !== null) {
+          setDevModeState(rawDevMode === "true");
+        }
 
         if (rawUser) {
           try {
@@ -472,6 +484,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const devLogin = useCallback(async (role: UserRole) => {
+    const nextUser = toAuthUser({
+      id: "dev_user_" + Date.now(),
+      phone: "79991234567",
+      role: role,
+      firstName: "Dev",
+      lastName: "User",
+    });
+
+    setUser(nextUser);
+    await persistAuthUser(nextUser);
+  }, []);
+
+  const setDevMode = useCallback(async (enabled: boolean) => {
+    setDevModeState(enabled);
+    await AsyncStorage.setItem(DEV_MODE_KEY, enabled ? "true" : "false");
+  }, []);
+
   const logout = useCallback(async () => {
     if (supabase && isSupabaseConfigured) {
       await supabase.auth.signOut();
@@ -493,6 +523,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithPhone,
       setUserRole,
       logout,
+      devLogin,
+      devMode,
+      setDevMode,
     }),
     [
       user,
@@ -503,6 +536,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithPhone,
       setUserRole,
       logout,
+      devLogin,
+      devMode,
+      setDevMode,
     ],
   );
 

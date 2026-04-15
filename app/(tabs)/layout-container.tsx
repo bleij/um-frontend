@@ -395,10 +395,11 @@ export function SideNav({ role }: Props) {
     <View
       style={{
         width: LAYOUT.sideNavWidth,
-        backgroundColor: COLORS.card,
+        backgroundColor: COLORS.white, // Forcing explicit white
         borderRightWidth: 1,
         borderRightColor: COLORS.border,
         flexDirection: "column",
+        height: '100%'
       }}
     >
       {/* Brand header */}

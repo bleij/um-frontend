@@ -28,89 +28,53 @@ export default function RoleSelect() {
     ? LAYOUT.authHorizontalPaddingDesktop
     : LAYOUT.authHorizontalPaddingMobile;
 
-  const handleSelect = async (role: UserRole, route: string) => {
+  const handleSelect = (role: UserRole, route: string) => {
     setSubmittingRole(role);
 
-    if (pendingRegistration) {
-      const result = await completeRegistration(role);
-
-      if (!result.success) {
-        setSubmittingRole(null);
-        Alert.alert(
-          "Ошибка",
-          result.error || "Не удалось завершить регистрацию",
-        );
-        return;
-      }
-    } else if (user) {
-      await setUserRole(role);
-    } else {
-      setSubmittingRole(null);
-      Alert.alert(
-        "Регистрация",
-        "Сначала заполните форму регистрации, затем выберите роль.",
-      );
-      router.replace("/register");
-      return;
-    }
-
+    // If we're at the start of registration, just go to register with the role
+    router.push({
+      pathname: "/register",
+      params: { role, targetProfileRoute: route }
+    });
+    
     setSubmittingRole(null);
-    router.replace(route as any);
   };
 
   const roles = [
     {
       title: "Родитель",
-      description: "Управление профилями детей, бронирование занятий",
+      description: "Управление профилями детей, поиск кружков и секций",
       icon: "users" as const,
       IconComponent: Feather,
       role: "parent" as UserRole,
       route: "/profile/parent/create-profile",
       features: [
-        "Отслеживание прогресса",
-        "Связь с менторами",
+        "Отслеживание прогресса детей",
+        "Связь с организациями",
         "Персональные рекомендации",
       ],
     },
     {
-      title: "Ребенок (6-11 лет)",
-      description: "Рисование, первые навыки и игры",
-      icon: "smile" as const,
-      IconComponent: Feather,
-      role: "child" as UserRole,
-      route: "/profile/youth/create-profile-child",
-      features: ["Игровое обучение", "Первые достижения"],
-    },
-    {
       title: "Подросток (12-17 лет)",
-      description: "Цели, навыки и общение с ментором",
+      description: "Поиск интересов, карта талантов и общение с ментором",
       icon: "zap" as const,
       IconComponent: Feather,
       role: "youth" as UserRole,
       route: "/profile/youth/create-profile",
-      features: ["Карта талантов", "Достижения и бейджи"],
-    },
-    {
-      title: "Студент (18-20 лет)",
-      description: "Профориентация и серьезный рост",
-      icon: "book-open" as const,
-      IconComponent: Feather,
-      role: "young-adult" as UserRole,
-      route: "/profile/youth/create-profile-young-adult",
-      features: ["Профориентация", "Карьерные пути"],
+      features: ["Профориентация", "Достижения и навыки"],
     },
     {
       title: "Организация",
-      description: "Управление клубами и учениками",
+      description: "Управление клубами, занятиями и учениками",
       icon: "briefcase" as const,
       IconComponent: Feather,
       role: "org" as UserRole,
       route: "/profile/organization/create-profile",
-      features: ["Панель управления", "Аналитика"],
+      features: ["Система управления (CRM)", "Аналитика посещаемости"],
     },
     {
       title: "Ментор",
-      description: "Создание планов развития и поддержка",
+      description: "Создание планов развития и наставничество",
       icon: "user-check" as const,
       IconComponent: Feather,
       role: "mentor" as UserRole,

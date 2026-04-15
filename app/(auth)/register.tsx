@@ -1,8 +1,8 @@
 import { Feather } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -16,12 +16,22 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth, type UserRole } from "../../contexts/AuthContext";
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ role: string; targetProfileRoute: string }>();
+  const role = params.role as UserRole;
+  const targetRoute = params.targetProfileRoute;
+
   const { width } = useWindowDimensions();
-  const { startRegistration, verificationCodePlaceholder } = useAuth();
+  const { startRegistration, completeRegistration, verificationCodePlaceholder } = useAuth();
+
+  useEffect(() => {
+    if (!role) {
+      router.replace("/role");
+    }
+  }, [role]);
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [smsCode, setSmsCode] = useState("");
@@ -77,21 +87,30 @@ export default function RegisterScreen() {
 
       setIsSubmitting(true);
 
-      const result = await startRegistration({
+      const regResult = await startRegistration({
         phone: phoneNumber.replace(/\D/g, ""),
         password,
         firstName,
         lastName,
       });
 
-      setIsSubmitting(false);
-
-      if (!result.success) {
-        setError(result.error || "Не удалось продолжить регистрацию");
+      if (!regResult.success) {
+        setIsSubmitting(false);
+        setError(regResult.error || "Не удалось сохранить временные данные");
         return;
       }
 
-      router.push("/role");
+      // Automatically complete registration with the chosen role
+      const compResult = await completeRegistration(role);
+      
+      setIsSubmitting(false);
+
+      if (!compResult.success) {
+        setError(compResult.error || "Не удалось завершить регистрацию");
+        return;
+      }
+
+      router.replace(targetRoute as any);
     }
   };
 

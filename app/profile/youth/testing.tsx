@@ -1,51 +1,63 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-    Platform,
-    ScrollView,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Platform,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+  ActivityIndicator,
 } from "react-native";
 import { LAYOUT } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useParentData } from "../../../contexts/ParentDataContext";
+import { Diagnostic } from "../../../models/types";
 
 /* ------------------- */
-/* ВОПРОСЫ ДЛЯ МОЛОДЁЖИ */
+/* ВОПРОСЫ ПО ВОЗРАСТАМ */
 /* ------------------- */
+
+const CHILD_QUESTIONS = [
+  {
+    id: 1,
+    question: "Какая твоя любимая игра?",
+    answers: ["Собери конструктор", "Рисование", "Догонялки", "Головоломки"],
+  },
+  {
+    id: 2,
+    question: "Что тебе нравится делать в свободное время?",
+    answers: ["Смотреть мультики", "Гулять с друзьями", "Читать сказки", "Строить базы"],
+  },
+  {
+    id: 3,
+    question: "Представь, что у тебя есть суперсила. Какая она?",
+    answers: ["Летать", "Читать мысли", "Создавать предметы", "Становиться невидимым"],
+  },
+];
 
 const YOUTH_QUESTIONS = [
   {
     id: 1,
-    question: "Сколько тебе лет?",
-    answers: ["12–14", "15–17", "18–21", "22–25"],
+    question: "Что тебе сейчас интереснее всего изучать?",
+    answers: ["Программирование", "Дизайн", "Бизнес/Управление", "Наука/Исследования"],
   },
   {
     id: 2,
-    question: "Что тебе сейчас интереснее всего?",
-    answers: ["Программирование", "Дизайн", "Бизнес", "Игры"],
+    question: "Как ты предпочитаешь работать над проектами?",
+    answers: ["Полностью самостоятельно", "С наставником 1 на 1", "В небольшой команде", "В большой группе"],
   },
   {
     id: 3,
-    question: "Как ты хочешь учиться?",
-    answers: ["Самостоятельно", "С наставником", "В группе"],
+    question: "Кем ты видишь себя через 5 лет?",
+    answers: ["Специалистом (IT/Дизайн)", "Предпринимателем", "Лидером команды", "Свободным фрилансером"],
   },
   {
     id: 4,
-    question: "Какая цель у тебя сейчас?",
-    answers: [
-      "Найти профессию",
-      "Зарабатывать",
-      "Развиваться",
-      "Просто пробовать новое",
-    ],
-  },
-  {
-    id: 5,
-    question: "Сколько времени в неделю готов уделять обучению?",
-    answers: ["1–3 часа", "4–6 часов", "Каждый день"],
+    question: "Где ты черпаешь вдохновение или информацию?",
+    answers: ["YouTube/Курсы", "Книги/Статьи", "Общение с людьми", "Практика методом ошибок"],
   },
 ];
 
@@ -57,11 +69,21 @@ export default function YouthTesting() {
     ? LAYOUT.profileHorizontalPaddingDesktop
     : LAYOUT.profileHorizontalPaddingMobile;
 
+  const { user } = useAuth();
+  const { childrenProfile, activeChildId, updateChildDiagnostic } = useParentData();
+
+  // Determine which questions to show based on age
+  const activeChild = childrenProfile.find((c) => c.id === activeChildId);
+  const isChild = activeChild ? activeChild.age < 12 : false;
+  
+  const QUESTIONS = isChild ? CHILD_QUESTIONS : YOUTH_QUESTIONS;
+
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const current = YOUTH_QUESTIONS[step];
-  const progress = ((step + 1) / YOUTH_QUESTIONS.length) * 100;
+  const current = QUESTIONS[step];
+  const progress = ((step + 1) / QUESTIONS.length) * 100;
 
   const selectAnswer = (index: number) => {
     const updated = [...answers];
@@ -69,13 +91,114 @@ export default function YouthTesting() {
     setAnswers(updated);
   };
 
-  const next = () => {
-    if (step < YOUTH_QUESTIONS.length - 1) {
-      setStep(step + 1);
-    } else {
+  const processWithAI = async (selectedAnswers: number[], isSkip: boolean = false) => {
+    setIsProcessing(true);
+    try {
+      const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error("Gemini API Key is missing");
+      }
+
+      let prompt = `You are an expert child psychologist and talent scout. Analyze this profile. Category: ${isChild ? "Child (6-11)" : "Teenager (12-17)"}.\n`;
+      
+      if (!isSkip) {
+        prompt += `The user answered the following questions:\n`;
+        selectedAnswers.forEach((ansIndex, i) => {
+          if (ansIndex !== undefined) {
+            prompt += `Q: ${QUESTIONS[i].question}\nA: ${QUESTIONS[i].answers[ansIndex]}\n`;
+          }
+        });
+      } else {
+         prompt += `The user skipped the test. Assign generic but encouraging balanced scores and summary.\n`;
+      }
+
+      prompt += `
+Based on these answers, generate a JSON object matching this Diagnostic interface exactly. DO NOT include markdown blocks like \`\`\`json, just return raw JSON:
+{
+  "scores": {
+    "logical": number (0-100),
+    "creative": number (0-100),
+    "social": number (0-100),
+    "physical": number (0-100),
+    "linguistic": number (0-100)
+  },
+  "summary": "string (A short, encouraging paragraph in Russian about their potential)",
+  "recommendedConstellation": "string (A creative 1-2 word title for their talent type in Russian, e.g. 'Техно-энтузиаст' or 'Творческий лидер')"
+}`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+             temperature: 0.7,
+          }
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || "Failed to fetch from Gemini");
+
+      const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+      const cleanedJson = textOutput.replace(/```json/g, '').replace(/```/g, '').trim();
+      
+      const diagnosticData = JSON.parse(cleanedJson);
+      
+      const targetDiagnostic: Diagnostic = {
+        childId: activeChildId || user?.id || "unknown",
+        scores: diagnosticData.scores || { logical: 50, creative: 50, social: 50, physical: 50, linguistic: 50 },
+        summary: diagnosticData.summary || "Очень способный ученик!",
+        recommendedConstellation: diagnosticData.recommendedConstellation || "Универсал",
+        timestamp: new Date().toISOString(),
+      };
+
+      if (activeChildId) {
+        await updateChildDiagnostic(activeChildId, targetDiagnostic);
+      }
+
       router.push("/profile/youth/results");
+    } catch (e) {
+      console.error("AI processing error:", e);
+      alert("Произошла ошибка при анализе. Мы используем запасные результаты.");
+      // Fallback
+      if (activeChildId) {
+        await updateChildDiagnostic(activeChildId, {
+          childId: activeChildId,
+          scores: { logical: 70, creative: 80, social: 60, physical: 50, linguistic: 65 },
+          summary: "У тебя отличный потенциал! Мы видим сильную творческую жилку.",
+          recommendedConstellation: "Творческий новатор",
+          timestamp: new Date().toISOString()
+        });
+      }
+      router.push("/profile/youth/results");
+    } finally {
+      setIsProcessing(false);
     }
   };
+
+  const next = () => {
+    if (step < QUESTIONS.length - 1) {
+      setStep(step + 1);
+    } else {
+      processWithAI(answers);
+    }
+  };
+
+  const handleSkip = () => {
+    processWithAI([], true);
+  };
+
+  if (isProcessing) {
+    return (
+       <LinearGradient colors={["#6A63D8", "#C7C4F2"]} style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+          <ActivityIndicator size="large" color="white" />
+          <Text style={{ color: "white", marginTop: 20, fontSize: 18, fontWeight: "600" }}>
+            ИИ анализирует ответы...
+          </Text>
+       </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -98,23 +221,27 @@ export default function YouthTesting() {
             maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
           }}
         >
-          {/* TITLE */}
-          <MotiView
-            from={{ opacity: 0, translateY: -10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ duration: 400 }}
-          >
-            <Text
-              style={{
-                fontSize: 28,
-                fontWeight: "700",
-                color: "white",
-                marginBottom: 16,
-              }}
-            >
-              Тестирование
-            </Text>
-          </MotiView>
+          {/* HEADER ROW WITH SKIP */}
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+             <MotiView
+               from={{ opacity: 0, translateY: -10 }}
+               animate={{ opacity: 1, translateY: 0 }}
+               transition={{ duration: 400 }}
+             >
+               <Text
+                 style={{
+                   fontSize: 28,
+                   fontWeight: "700",
+                   color: "white",
+                 }}
+               >
+                 Тестирование
+               </Text>
+             </MotiView>
+             <TouchableOpacity onPress={handleSkip}>
+                 <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 16, fontWeight: "600" }}>Пропустить</Text>
+             </TouchableOpacity>
+          </View>
 
           {/* PROGRESS */}
           <View
@@ -159,7 +286,7 @@ export default function YouthTesting() {
                 marginBottom: 10,
               }}
             >
-              Вопрос {step + 1} из {YOUTH_QUESTIONS.length}
+              Вопрос {step + 1} из {QUESTIONS.length}
             </Text>
 
             <Text
@@ -220,8 +347,8 @@ export default function YouthTesting() {
                 fontWeight: "600",
               }}
             >
-              {step === YOUTH_QUESTIONS.length - 1
-                ? "Завершить"
+              {step === QUESTIONS.length - 1
+                ? "Завершить и анализировать"
                 : "Следующий вопрос"}
             </Text>
           </TouchableOpacity>
@@ -230,3 +357,4 @@ export default function YouthTesting() {
     </LinearGradient>
   );
 }
+

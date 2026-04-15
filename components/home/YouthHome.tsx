@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 
 const SKILLS = [
@@ -36,36 +36,39 @@ export default function YouthHome() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={['#3B82F6', '#6C5CE7']}
-        style={{ paddingBottom: 48, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View className="flex-row items-center justify-between mb-8">
-               <View>
-                  <Text style={{ fontSize: 24, fontWeight: "800", color: "white" }}>Привет, {firstName}! 👋</Text>
-                  <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "600" }}>Level 8 • 2450 XP</Text>
-               </View>
-               <Pressable className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30">
-                  <View className="w-full h-full bg-white/20 items-center justify-center">
-                     <Feather name="user" size={20} color="white" />
-                  </View>
-               </Pressable>
-            </View>
+      {/* Header - Restored Violet Aesthetic */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: 48 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+              <View className="flex-row items-center justify-between mb-8">
+                 <View>
+                    <Text style={{ fontSize: 24, fontWeight: "800", color: "white" }}>Привет, {firstName}! 👋</Text>
+                    <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "600" }}>Level 8 • 2450 XP</Text>
+                 </View>
+                 <Pressable className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30">
+                    <View className="w-full h-full bg-white/20 items-center justify-center">
+                       <Feather name="user" size={20} color="white" />
+                    </View>
+                 </Pressable>
+              </View>
 
-            <View className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
-               <View className="flex-row justify-between items-center mb-3">
-                  <Text className="text-white text-xs font-bold">До следующего уровня</Text>
-                  <Text className="text-white text-xs font-black">550 XP</Text>
-               </View>
-               <View className="h-2.5 bg-white/20 rounded-full overflow-hidden">
-                  <View style={{ width: '45%' }} className="h-full bg-white rounded-full" />
-               </View>
+              <View className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
+                 <View className="flex-row justify-between items-center mb-3">
+                    <Text className="text-white text-xs font-bold">До следующего уровня</Text>
+                    <Text className="text-white text-xs font-black">550 XP</Text>
+                 </View>
+                 <View className="h-2.5 bg-white/20 rounded-full overflow-hidden">
+                    <View style={{ width: '45%' }} className="h-full bg-white rounded-full" />
+                 </View>
+              </View>
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{

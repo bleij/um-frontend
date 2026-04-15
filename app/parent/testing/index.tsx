@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, ActivityIndicator, Alert, SafeAreaView, Platform } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { useParentData } from "../../contexts/ParentDataContext";
+import { useParentData } from "../../../contexts/ParentDataContext";
 import { LinearGradient } from "expo-linear-gradient";
 
 const QUESTIONS = [
@@ -43,15 +43,22 @@ const QUESTIONS = [
 export default function DiagnosticTest() {
   const router = useRouter();
   const { childId } = useLocalSearchParams();
-  const { childrenProfile, updateChildDiagnostic } = useParentData();
+  const { childrenProfile, updateChildDiagnostic, activeChildId } = useParentData();
   
-  const child = childrenProfile.find(c => c.id === childId);
+  const targetId = childId || activeChildId;
+  const child = childrenProfile.find(c => c.id === targetId) || childrenProfile[0];
   
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  if (!child) return null;
+  if (!child) {
+    return (
+      <View style={{ flex: 1, backgroundColor: "#6C5CE7", justifyContent: "center", alignItems: "center" }}>
+        <Text style={{ color: "white", fontSize: 18 }}>Ребенок не найден.</Text>
+      </View>
+    );
+  }
 
   const handleSelectOption = (value: string) => {
     const newAnswers = [...answers, value];

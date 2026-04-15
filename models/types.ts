@@ -40,3 +40,21 @@ export interface RoadmapItem {
   type: "skill" | "activity" | "milestone";
   order: number;
 }
+
+export interface Course {
+  id: string | number;
+  organizationId?: string;
+  title: string;
+  tag?: string;
+  icon?: string;
+  gradient?: string[];
+  shortDescription?: string;
+  description: string;
+  age?: string;
+  level: string;
+  format?: string;
+  duration?: string;
+  price: number | string;
+  skills?: string | Array<{ name: string; value: number }>;
+  status?: "active" | "draft" | "archived" | string;
+}

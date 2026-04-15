@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 
 const STATS = [
   { label: "Кружков", value: "8", icon: "book-open" as const, color: '#3B82F6' },
@@ -35,35 +35,38 @@ export default function OrgHome() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={['#1E3A8A', '#3B82F6']}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <View>
-                <Text style={{ fontSize: 24, fontWeight: "900", color: "white", letterSpacing: -0.5 }}>Управление</Text>
-                <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: "500" }}>ДЦ «Звёздочка»</Text>
+      {/* Header - Restored Violet Aesthetic */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: 24 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                <View>
+                  <Text style={{ fontSize: 24, fontWeight: "900", color: "white", letterSpacing: -0.5 }}>Управление</Text>
+                  <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: "500" }}>ДЦ «Звёздочка»</Text>
+                </View>
+                <Pressable
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
+                    backgroundColor: "rgba(255,255,255,0.15)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderWidth: 1,
+                    borderColor: "rgba(255,255,255,0.1)",
+                  }}
+                >
+                  <Feather name="settings" size={20} color="white" />
+                </Pressable>
               </View>
-              <Pressable
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: "rgba(255,255,255,0.15)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderWidth: 1,
-                  borderColor: "rgba(255,255,255,0.1)",
-                }}
-              >
-                <Feather name="settings" size={20} color="white" />
-              </Pressable>
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{

@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NotificationsModal } from "../../app/(tabs)/layout-container";
-import { COLORS, LAYOUT, SHADOWS } from "../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import { useParentData } from "../../contexts/ParentDataContext";
 import { courses } from "../../data/courses";
 
@@ -47,35 +47,50 @@ export default function ParentHome() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={['#6C5CE7', '#8B7FE8']}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <Text style={{ fontSize: 32, fontWeight: "900", color: "white", letterSpacing: -1 }}>UM</Text>
-              <Pressable
-                onPress={() => setNotificationsVisible(true)}
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="bell" size={20} color="white" />
-                <View className="absolute top-3 right-3 w-2 h-2 rounded-full bg-white" />
-              </Pressable>
+      {/* Header - Restored Violet Aesthetic */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: 24 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                <Text style={{ fontSize: 32, fontWeight: "900", color: "white", letterSpacing: -1 }}>UM</Text>
+                <Pressable
+                  onPress={() => setNotificationsVisible(true)}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Feather name="bell" size={20} color="white" />
+                  <View 
+                    style={{ 
+                      position: "absolute", 
+                      top: 10, 
+                      right: 10, 
+                      width: 10, 
+                      height: 10, 
+                      backgroundColor: COLORS.destructive, 
+                      borderRadius: 5,
+                      borderWidth: 1.5,
+                      borderColor: 'rgba(255,255,255,0.4)'
+                    }} 
+                  />
+                </Pressable>
+              </View>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "500" }}>
+                Привет! Узнайте, как развиваются ваши дети сегодня.
+              </Text>
             </View>
-            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "500" }}>
-              Привет! Узнайте, как развиваются ваши дети сегодня.
-            </Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
@@ -112,7 +127,7 @@ export default function ParentHome() {
             ))}
             
             <Pressable
-               onPress={() => router.push('/parent/add-child' as any)}
+               onPress={() => router.push('/profile/youth/create-profile-child' as any)}
                className="w-36 p-5 bg-gray-50 rounded-[32px] items-center justify-center border-2 border-dashed border-gray-100"
             >
                <View className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center mb-2">

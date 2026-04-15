@@ -108,7 +108,7 @@ export default function ParentCreateChildProfile() {
                 >
                     <TouchableOpacity
                         onPress={() =>
-                            router.push("/profile/parent/umo-intro") // следующий экран (робот)
+                            router.push("/profile/common/done")
                         }
                         style={{
                             backgroundColor: "white",

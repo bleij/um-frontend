@@ -14,14 +14,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 
-const MOCK_CLUBS = [
-  { id: "1", title: "Лего-конструирование", category: "Технологии", age: "6-11", rating: 4.9, price: "8,000", enrolled: true, color: "#3B82F6" },
-  { id: "2", title: "Рисование акварелью", category: "Искусство", age: "6-17", rating: 4.7, price: "6,000", enrolled: false, color: "#A78BFA" },
-  { id: "3", title: "Программирование Python", category: "Технологии", age: "12-17", rating: 4.8, price: "10,000", enrolled: false, color: "#6C5CE7" },
-  { id: "4", title: "Футбол", category: "Спорт", age: "6-17", rating: 4.6, price: "5,000", enrolled: false, color: "#10B981" },
-];
+import { courses } from "../../../data/courses";
 
 const CATEGORIES = ["Все", "Технологии", "Искусство", "Спорт", "Мышление"];
+const CATEGORY_TO_TAGS: Record<string, string[]> = {
+  "Технологии": ["it"],
+  "Искусство": ["творчество", "гум"],
+  "Спорт": ["спорт"],
+  "Мышление": ["мат", "естеств"]
+};
 
 export default function ParentClubs() {
   const router = useRouter();
@@ -31,8 +32,8 @@ export default function ParentClubs() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-  const filtered = MOCK_CLUBS.filter((club) => {
-    const matchCat = activeCategory === "Все" || club.category === activeCategory;
+  const filtered = courses.filter((club) => {
+    const matchCat = activeCategory === "Все" || CATEGORY_TO_TAGS[activeCategory]?.includes(club.tag as string);
     const matchSearch = club.title.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch;
   });
@@ -108,8 +109,8 @@ export default function ParentClubs() {
                  style={SHADOWS.sm}
                  className="flex-row items-center p-4 bg-white rounded-[32px] border border-gray-50"
               >
-                 <View style={{ backgroundColor: club.color + '15' }} className="w-16 h-16 rounded-2xl items-center justify-center mr-4">
-                    <Feather name="book-open" size={24} color={club.color} />
+                 <View style={{ backgroundColor: (club.gradient?.[0] || "#6C5CE7") + '15' }} className="w-16 h-16 rounded-2xl items-center justify-center mr-4">
+                    <Feather name={(club.icon as any) || "book-open"} size={24} color={club.gradient?.[0] || "#6C5CE7"} />
                  </View>
 
                  <View className="flex-1">
@@ -117,15 +118,14 @@ export default function ParentClubs() {
                     <View className="flex-row items-center gap-2 mt-1">
                        <View className="flex-row items-center gap-1">
                           <Feather name="star" size={10} color="#FBBF24" />
-                          <Text className="text-[10px] font-black text-gray-700">{club.rating}</Text>
+                          <Text className="text-[10px] font-black text-gray-700">4.8</Text>
                        </View>
-                       <Text className="text-[10px] text-gray-400 font-bold uppercase">{club.age} ЛЕТ</Text>
+                       <Text className="text-[10px] text-gray-400 font-bold uppercase">{club.age}</Text>
                     </View>
                  </View>
 
                  <View className="items-end">
-                    <Text className="text-purple-600 font-black text-sm">{club.price}₸</Text>
-                    <Text className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">В МЕСЯЦ</Text>
+                    <Text className="text-purple-600 font-black text-xs" numberOfLines={1}>{club.price}</Text>
                  </View>
               </Pressable>
            ))}

@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React from "react";
 import {
   Platform,
@@ -9,9 +10,10 @@ import {
   Text,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 const PATH_STEPS = [
     {
@@ -41,110 +43,172 @@ export default function MentorLearningPath() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <View>
-                <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>План развития</Text>
-                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>Анна Петрова</Text>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <MotiView 
+              from={{ opacity: 0, translateY: -10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <View>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>План развития</Text>
+                  <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>Анна Петрова</Text>
+                </View>
               </View>
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+            </MotiView>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
-          paddingBottom: 40,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
+          paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Progress Summary Card */}
-        <View style={SHADOWS.md} className="bg-white rounded-[32px] p-6 mb-8 border border-gray-100">
-           <Text className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-2">Общий прогресс</Text>
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+           <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: SPACING.sm }}>Общий прогресс</Text>
            <View className="flex-row items-center gap-4 mb-2">
-              <View className="flex-1 h-3 bg-gray-50 rounded-full overflow-hidden">
-                 <View style={{ width: '40%' }} className="h-full bg-primary rounded-full" />
+              <View style={{ flex: 1, height: 10, backgroundColor: COLORS.muted, borderRadius: RADIUS.full, overflow: 'hidden' }}>
+                 <View style={{ width: '40%', height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full }} />
               </View>
-              <Text className="text-2xl font-black text-primary">40%</Text>
+              <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>40%</Text>
            </View>
-           <Text className="text-sm text-gray-500">2 из 5 этапов завершено</Text>
+           <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>2 из 5 этапов завершено</Text>
         </View>
 
         {/* Timeline */}
         <View className="relative">
            {/* Vertical Line */}
-           <View className="absolute left-[19px] top-0 bottom-0 w-0.5 bg-gray-100" />
+           <View style={{ position: 'absolute', left: 21, top: 0, bottom: 0, width: 2, backgroundColor: COLORS.muted }} />
 
            {PATH_STEPS.map((step, index) => (
              <View key={step.id} className="flex-row gap-5 mb-8">
                 {/* Dot */}
                 <View className="z-10">
-                   <View className={`w-10 h-10 rounded-full items-center justify-center ${step.status === 'completed' ? 'bg-green-500' : step.status === 'active' ? 'bg-primary' : 'bg-gray-200'}`}>
+                   <View style={{ 
+                     width: 44, 
+                     height: 44, 
+                     borderRadius: RADIUS.full, 
+                     alignItems: 'center', 
+                     justifyContent: 'center', 
+                     backgroundColor: step.status === 'completed' ? COLORS.success : step.status === 'active' ? COLORS.primary : COLORS.muted,
+                     borderWidth: 4,
+                     borderColor: COLORS.white
+                   }}>
                       <Feather name={step.status === 'completed' ? 'check' : 'target'} size={18} color="white" />
                    </View>
                 </View>
 
                 {/* Card */}
-                <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-5 border border-gray-50">
+                <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
                    <View className="flex-row justify-between items-center mb-4">
-                      <Text className="text-base font-bold text-gray-900">{step.phase}</Text>
-                      <View className={`px-2 py-1 rounded-lg ${step.status === 'completed' ? 'bg-green-50' : 'bg-purple-50'}`}>
-                         <Text className={`text-[9px] font-black uppercase ${step.status === 'completed' ? 'text-green-600' : 'text-primary'}`}>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{step.phase}</Text>
+                      <View style={{ 
+                        paddingHorizontal: SPACING.md, 
+                        paddingVertical: SPACING.xs, 
+                        borderRadius: RADIUS.md, 
+                        backgroundColor: step.status === 'completed' ? 'rgba(52, 199, 89, 0.1)' : 'rgba(108, 92, 231, 0.1)'
+                      }}>
+                         <Text style={{ 
+                           fontSize: 9, 
+                           fontWeight: TYPOGRAPHY.weight.bold, 
+                           textTransform: 'uppercase', 
+                           color: step.status === 'completed' ? COLORS.success : COLORS.primary 
+                         }}>
                             {step.status === 'completed' ? 'ГОТОВО' : 'В ПРОЦЕССЕ'}
                          </Text>
                       </View>
                    </View>
                    
-                   <View className="gap-2">
+                   <View style={{ gap: SPACING.sm }}>
                       {step.items.map((item, i) => (
-                        <View key={i} className={`flex-row items-center gap-3 p-3 rounded-xl ${item.done ? 'bg-green-50/50' : 'bg-gray-50'}`}>
-                           <View className={`w-5 h-5 rounded-md items-center justify-center ${item.done ? 'bg-green-500' : 'border border-gray-300'}`}>
+                        <View key={i} style={{ 
+                          flexDirection: 'row', 
+                          items: 'center', 
+                          gap: SPACING.md, 
+                          padding: SPACING.md, 
+                          borderRadius: RADIUS.lg, 
+                          backgroundColor: item.done ? 'rgba(52, 199, 89, 0.05)' : COLORS.background,
+                          borderWidth: 1,
+                          borderColor: item.done ? 'rgba(52, 199, 89, 0.1)' : COLORS.border
+                        }}>
+                           <View style={{ 
+                             width: 20, 
+                             height: 20, 
+                             borderRadius: 6, 
+                             alignItems: 'center', 
+                             justifyContent: 'center', 
+                             backgroundColor: item.done ? COLORS.success : COLORS.white,
+                             borderWidth: item.done ? 0 : 1,
+                             borderColor: COLORS.mutedForeground
+                           }}>
                               {item.done && <Feather name="check" size={12} color="white" />}
                            </View>
-                           <Text className={`text-sm ${item.done ? 'text-gray-400 line-through' : 'text-gray-700 font-medium'}`}>{item.text}</Text>
+                           <Text style={{ 
+                             fontSize: TYPOGRAPHY.size.sm, 
+                             color: item.done ? COLORS.mutedForeground : COLORS.foreground, 
+                             fontWeight: item.done ? TYPOGRAPHY.weight.regular : TYPOGRAPHY.weight.medium,
+                             textDecorationLine: item.done ? 'line-through' : 'none'
+                           }}>{item.text}</Text>
                         </View>
                       ))}
                    </View>
 
                    {step.status === 'active' && (
-                     <Pressable className="mt-4 h-10 border border-dashed border-gray-200 rounded-xl items-center justify-center flex-row gap-2">
+                     <TouchableOpacity style={{ 
+                       marginTop: SPACING.lg, 
+                       height: 48, 
+                       borderRadius: RADIUS.md, 
+                       borderWidth: 1, 
+                       borderStyle: 'dashed', 
+                       borderColor: COLORS.border, 
+                       alignItems: 'center', 
+                       justifyContent: 'center', 
+                       flexDirection: 'row', 
+                       gap: SPACING.xs 
+                     }}>
                         <Feather name="plus-circle" size={14} color={COLORS.mutedForeground} />
-                        <Text className="text-xs font-bold text-gray-500">Добавить цель</Text>
-                     </Pressable>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase' }}>Добавить цель</Text>
+                     </TouchableOpacity>
                    )}
                 </View>
              </View>
            ))}
         </View>
 
-        <Pressable className="h-16 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/20 mt-4">
-           <Text className="text-white font-bold text-lg">Сохранить изменения</Text>
-        </Pressable>
+        <TouchableOpacity 
+          style={{ ...SHADOWS.md, height: 64, backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginTop: SPACING.xl }}
+        >
+           <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold, fontSize: TYPOGRAPHY.size.md }}>Сохранить изменения</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

@@ -1,93 +1,166 @@
 /**
- * UM Design System — единые токены из High-fidelity reference.
- * Импортируй COLORS / RADIUS / SHADOWS во все компоненты.
+ * UM Design System (UMDS)
+ * Единый источник истины для всех стилей приложения.
+ * Ориентирован на премиальный, мягкий iOS-стиль без острых углов.
  */
 
 import { Platform } from "react-native";
 
 export const COLORS = {
-  // Core palette
+  // Brand
   primary: "#6C5CE7",
-  secondary: "#8B7FE8",
-  accent: "#FFD700",
+  secondary: "#AF52DE",
+  accent: "#FF9F0A",
+  
+  // Base
+  background: "#FDFDFF",
+  surface: "#FFFFFF",
+  card: "#FFFFFF", // Restored
+  muted: "#F2F2F7",
+  
+  // Content
+  foreground: "#1C1C1E",
+  mutedForeground: "#8E8E93",
+  tertiary: "#C7C7CC",
+  
+  // Semantic
+  success: "#34C759",
+  warning: "#FF9500",
+  destructive: "#FF3B30",
+  info: "#007AFF",
+  
+  // Special
+  white: "#FFFFFF",
+  black: "#000000",
+  transparent: "transparent",
+  border: "rgba(0,0,0,0.06)",
+  overlay: "rgba(0,0,0,0.4)",
+  
+  // Gradient Swatches
+  gradients: {
+    primary: ["#5856D6", "#AF52DE"] as const,
+    success: ["#34C759", "#32D74B"] as const,
+    surface: ["#FFFFFF", "#F2F2F7"] as const,
+    header: ["#6C5CE7", "#AF52DE"] as const, // Premium violet header
+  }
+};
 
-  // Backgrounds
-  background: "#ffffff",
-  card: "#ffffff",
-  muted: "#f5f5f7",
+export const TYPOGRAPHY = {
+  size: {
+    xs: 12,
+    sm: 14,
+    md: 16,
+    lg: 18,
+    xl: 20,
+    xxl: 24,
+    xxxl: 32,
+    huge: 40,
+  },
+  weight: {
+    light: "300" as const,
+    regular: "400" as const,
+    medium: "500" as const,
+    semibold: "600" as const,
+    bold: "700" as const,
+  },
+  letterSpacing: {
+    tight: -1,
+    normal: 0,
+    wide: 0.5,
+  }
+};
 
-  // Text
-  foreground: "#1a1a2e",
-  mutedForeground: "#6b7280",
-
-  // Borders
-  border: "rgba(0,0,0,0.08)",
-
-  // Status
-  destructive: "#ef4444",
-  success: "#22c55e",
-
-  // Gradients
-  gradientFrom: "#6C5CE7",
-  gradientTo: "#8B7FE8",
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 24,
+  xxl: 32,
+  xxxl: 40,
 };
 
 export const RADIUS = {
-  sm: 16,
-  md: 20,
+  xs: 8,
+  sm: 12,
+  md: 18,
   lg: 24,
-  xl: 28,
+  xl: 32,
+  xxl: 40,
   full: 9999,
 };
 
 const WEB_SHADOWS = {
   sm: {
-    boxShadow: "0px 2px 6px rgba(0, 0, 0, 0.04)",
+    boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.05)",
   },
   md: {
-    boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.06)",
-  },
-  lg: {
     boxShadow: "0px 6px 16px rgba(0, 0, 0, 0.08)",
   },
+  lg: {
+    boxShadow: "0px 12px 32px rgba(0, 0, 0, 0.12)",
+  },
+  strict: {
+    boxShadow: "0px 0px 1px rgba(0,0,0,0.1), 0px 8px 20px rgba(0,0,0,0.06)",
+  }
 };
 
 const NATIVE_SHADOWS = {
   sm: {
     shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
   md: {
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
     elevation: 4,
   },
   lg: {
     shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
+  strict: {
+    shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6,
-  },
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  }
 };
 
 export const SHADOWS = Platform.OS === "web" ? WEB_SHADOWS : NATIVE_SHADOWS;
 
 export const LAYOUT = {
   desktopBreakpoint: 1024,
+  maxWidth: 1200,
+  formMaxWidth: 520,
+  
+  // Paddings
+  horizontalPaddingMobile: 24,
+  horizontalPaddingDesktop: 48,
+  
+  // Auth specific
   authMaxWidth: 520,
   authHorizontalPaddingMobile: 24,
   authHorizontalPaddingDesktop: 32,
+  
+  // Profile specific
   profileFormMaxWidth: 960,
-  profileHorizontalPaddingMobile: 16,
-  profileHorizontalPaddingDesktop: 32,
-  dashboardMaxWidth: 1200,
-  dashboardHorizontalPaddingMobile: 16,
-  dashboardHorizontalPaddingDesktop: 32,
-  sideNavWidth: 240,
+  profileHorizontalPaddingMobile: 24,
+  profileHorizontalPaddingDesktop: 48,
+  
+  // Dashboard
+  dashboardMaxWidth: 1280,
+  dashboardHorizontalPaddingMobile: 24,
+  dashboardHorizontalPaddingDesktop: 40,
+  
+  sideNavWidth: 260,
 };

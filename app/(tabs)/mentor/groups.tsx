@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Platform,
@@ -10,9 +11,10 @@ import {
   TextInput,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 const MOCK_GROUPS = [
   { id: "1", name: "Старшая группа A", course: "Робототехника", students: 12, time: "Пн, Ср 15:00", nextLesson: "Сегодня, 15:00", active: true },
@@ -24,7 +26,7 @@ export default function MentorGroups() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const [search, setSearch] = useState("");
 
@@ -35,67 +37,111 @@ export default function MentorGroups() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>Мои группы</Text>
-            </View>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <MotiView 
+              from={{ opacity: 0, translateY: -10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", flex: 1 }}>Мои группы</Text>
+              </View>
 
-            <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 16, paddingHorizontal: 16, height: 48 }}>
-               <Feather name="search" size={18} color="rgba(255,255,255,0.6)" style={{ marginRight: 10 }} />
-               <TextInput
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder="Поиск группы..."
-                  placeholderTextColor="rgba(255,255,255,0.5)"
-                  style={{ color: "white", flex: 1, fontSize: 15, fontWeight: "500" }}
-               />
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+              <View style={{ 
+                flexDirection: "row", 
+                alignItems: "center", 
+                backgroundColor: "rgba(255,255,255,0.15)", 
+                borderRadius: RADIUS.md, 
+                paddingHorizontal: SPACING.lg, 
+                height: 52,
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.1)'
+              }}>
+                 <Feather name="search" size={18} color="rgba(255,255,255,0.6)" style={{ marginRight: SPACING.sm }} />
+                 <TextInput
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder="Поиск по названию или курсу..."
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    style={{ color: "white", flex: 1, fontSize: 15, fontWeight: "500" }}
+                 />
+              </View>
+            </MotiView>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
-          paddingBottom: 100,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
+          paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="gap-6">
+        <View style={{ gap: SPACING.lg }}>
            {filtered.map((group) => (
               <Pressable
                  key={group.id}
                  onPress={() => router.push(`/mentor/group/${group.id}` as any)}
-                 style={SHADOWS.md}
-                 className="bg-white rounded-[32px] p-6 border border-gray-50 overflow-hidden"
+                 style={{
+                    ...SHADOWS.strict,
+                    backgroundColor: COLORS.white,
+                    borderRadius: RADIUS.xxl,
+                    padding: SPACING.xl,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                    overflow: 'hidden'
+                 }}
               >
                  <View className="flex-row items-center justify-between mb-4">
-                    <View>
-                       <Text className="text-sm font-bold text-primary mb-1 uppercase tracking-wider">{group.course}</Text>
-                       <Text className="text-xl font-black text-gray-900">{group.name}</Text>
+                    <View style={{ flex: 1 }}>
+                       <Text style={{ 
+                         fontSize: TYPOGRAPHY.size.xs, 
+                         fontWeight: TYPOGRAPHY.weight.bold, 
+                         color: COLORS.primary, 
+                         textTransform: 'uppercase', 
+                         letterSpacing: 1,
+                         marginBottom: 4 
+                       }}>{group.course}</Text>
+                       <Text style={{ 
+                         fontSize: TYPOGRAPHY.size.lg, 
+                         fontWeight: TYPOGRAPHY.weight.semibold, 
+                         color: COLORS.foreground 
+                       }}>{group.name}</Text>
                     </View>
-                    <View className={`px-3 py-1 rounded-full ${group.active ? 'bg-green-50' : 'bg-gray-100'}`}>
-                       <Text className={`text-[10px] font-black uppercase ${group.active ? 'text-green-600' : 'text-gray-400'}`}>
+                    <View style={{ 
+                      paddingHorizontal: SPACING.md, 
+                      paddingVertical: SPACING.xs, 
+                      borderRadius: RADIUS.full,
+                      backgroundColor: group.active ? 'rgba(52, 199, 89, 0.1)' : COLORS.muted
+                    }}>
+                       <Text style={{ 
+                         fontSize: 10, 
+                         fontWeight: TYPOGRAPHY.weight.bold, 
+                         textTransform: 'uppercase',
+                         color: group.active ? COLORS.success : COLORS.mutedForeground
+                       }}>
                           {group.active ? 'Активна' : 'Архив'}
                        </Text>
                     </View>
@@ -103,21 +149,41 @@ export default function MentorGroups() {
 
                  <View className="flex-row items-center gap-6 mb-6">
                     <View className="flex-row items-center gap-2">
-                       <Feather name="users" size={16} color="#9CA3AF" />
-                       <Text className="text-sm text-gray-600 font-bold">{group.students} уч.</Text>
+                       <Feather name="users" size={16} color={COLORS.mutedForeground} />
+                       <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.foreground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.students} уч.</Text>
                     </View>
                     <View className="flex-row items-center gap-2">
-                       <Feather name="calendar" size={16} color="#9CA3AF" />
-                       <Text className="text-sm text-gray-600 font-bold">{group.time}</Text>
+                       <Feather name="calendar" size={16} color={COLORS.mutedForeground} />
+                       <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.foreground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.time}</Text>
                     </View>
                  </View>
 
-                 <View className="pt-4 border-t border-gray-50 flex-row items-center justify-between">
+                 <View style={{ 
+                   paddingTop: SPACING.lg, 
+                   borderTopWidth: 1, 
+                   borderTopColor: COLORS.border, 
+                   flexDirection: "row", 
+                   alignItems: "center", 
+                   justifyContent: "space-between" 
+                 }}>
                     <View>
-                       <Text className="text-[10px] text-gray-400 font-bold uppercase mb-0.5">След. занятие</Text>
-                       <Text className="text-sm font-bold text-gray-900">{group.nextLesson}</Text>
+                       <Text style={{ 
+                         fontSize: 10, 
+                         color: COLORS.mutedForeground, 
+                         fontWeight: TYPOGRAPHY.weight.bold, 
+                         textTransform: 'uppercase', 
+                         marginBottom: 2 
+                       }}>Следующее занятие</Text>
+                       <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{group.nextLesson}</Text>
                     </View>
-                    <View className="w-10 h-10 bg-gray-50 rounded-xl items-center justify-center">
+                    <View style={{ 
+                      width: 44, 
+                      height: 44, 
+                      backgroundColor: COLORS.muted, 
+                      borderRadius: RADIUS.md, 
+                      alignItems: "center", 
+                      justifyContent: "center" 
+                    }}>
                        <Feather name="chevron-right" size={20} color={COLORS.primary} />
                     </View>
                  </View>

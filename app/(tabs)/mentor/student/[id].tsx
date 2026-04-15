@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React from "react";
 import {
   Platform,
@@ -9,9 +10,10 @@ import {
   Text,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
 
 const MOCK_STUDENTS: Record<string, any> = {
     "1": { name: "Анна Петрова",    age: 8,  level: 5, xp: 1250, progress: 85 },
@@ -35,101 +37,117 @@ export default function MentorStudentProfile() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const student = MOCK_STUDENTS[id as string] || MOCK_STUDENTS["1"];
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Профиль ученика</Text>
-            </View>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <MotiView 
+              from={{ opacity: 0, translateY: -10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>Профиль ученика</Text>
+              </View>
 
-            <View className="flex-row items-center gap-5">
-               <View className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full items-center justify-center border-2 border-white/30">
-                  <Text style={{ fontSize: 32, fontWeight: "800", color: "white" }}>{student.name.charAt(0)}</Text>
-               </View>
-               <View>
-                  <Text style={{ fontSize: 24, fontWeight: "800", color: "white", marginBottom: 4 }}>{student.name}</Text>
-                  <View className="flex-row items-center gap-2">
-                     <View className="bg-white/20 px-2 py-1 rounded-lg">
-                        <Text className="text-white text-[10px] font-bold">LVL {student.level}</Text>
-                     </View>
-                     <Text className="text-white/80 text-sm font-bold">{student.age} лет</Text>
-                  </View>
-               </View>
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+              <View className="flex-row items-center gap-5">
+                 <View style={{ 
+                    width: 72, 
+                    height: 72, 
+                    backgroundColor: 'rgba(255,255,255,0.2)', 
+                    borderRadius: RADIUS.lg, 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    borderWidth: 2, 
+                    borderColor: 'rgba(255,255,255,0.3)' 
+                 }}>
+                    <Text style={{ fontSize: 32, fontWeight: "700", color: "white" }}>{student.name.charAt(0)}</Text>
+                 </View>
+                 <View>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>{student.name}</Text>
+                    <View className="flex-row items-center gap-2">
+                       <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', px: SPACING.sm, py: SPACING.xs/2, borderRadius: RADIUS.sm }}>
+                          <Text style={{ color: 'white', fontSize: 10, fontWeight: '700' }}>LVL {student.level}</Text>
+                       </View>
+                       <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>{student.age} лет</Text>
+                    </View>
+                 </View>
+              </View>
+            </MotiView>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
           paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Core Stats Row */}
         <View className="flex-row gap-3 mb-8">
-           <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-5 border border-gray-100">
-              <Text className="text-2xl font-black text-primary">{student.xp}</Text>
-              <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Очков XP</Text>
+           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border }}>
+              <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{student.xp}</Text>
+              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>Очков XP</Text>
            </View>
-           <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-5 border border-gray-100">
-              <Text className="text-2xl font-black text-green-600">{student.progress}%</Text>
-              <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Прогресс</Text>
+           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border }}>
+              <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.success }}>{student.progress}%</Text>
+              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>Прогресс</Text>
            </View>
         </View>
 
         {/* Action Buttons */}
         <View className="flex-row gap-4 mb-8">
-           <Pressable 
+           <TouchableOpacity 
               onPress={() => router.push("/(tabs)/mentor/learning-path" as any)}
-              className="flex-1 h-14 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/20"
+              style={{ ...SHADOWS.md, flex: 1, height: 56, backgroundColor: COLORS.primary, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}
            >
-              <Text className="text-white font-bold">План развития</Text>
-           </Pressable>
-           <Pressable 
+              <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold }}>План развития</Text>
+           </TouchableOpacity>
+           <TouchableOpacity 
               onPress={() => router.push("/(tabs)/chats" as any)}
-              className="w-14 h-14 bg-gray-100 rounded-2xl items-center justify-center"
+              style={{ width: 56, height: 56, backgroundColor: COLORS.muted, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}
            >
-              <Feather name="message-circle" size={24} color={COLORS.mutedForeground} />
-           </Pressable>
+              <Feather name="message-circle" size={24} color={COLORS.primary} />
+           </TouchableOpacity>
         </View>
 
         {/* Skills Section */}
-        <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 mb-8 border border-gray-100">
-           <Text className="text-lg font-bold text-gray-900 mb-6">Профиль навыков</Text>
-           <View className="gap-6">
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Профиль навыков</Text>
+           <View style={{ gap: SPACING.lg }}>
               {SKILLS.map(skill => (
                 <View key={skill.label}>
                    <View className="flex-row justify-between mb-2">
-                      <Text className="text-sm font-bold text-gray-700">{skill.label}</Text>
-                      <Text className="text-sm font-black text-primary">{skill.value}%</Text>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{skill.label}</Text>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{skill.value}%</Text>
                    </View>
-                   <View className="h-2.5 bg-gray-50 rounded-full overflow-hidden">
+                   <View style={{ height: 8, backgroundColor: COLORS.muted, borderRadius: RADIUS.full, overflow: 'hidden' }}>
                       <View style={{ width: `${skill.value}%`, backgroundColor: skill.color }} className="h-full rounded-full" />
                    </View>
                 </View>
@@ -138,17 +156,17 @@ export default function MentorStudentProfile() {
         </View>
 
         {/* Results Section */}
-        <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 mb-8 border border-gray-100">
-           <Text className="text-lg font-bold text-gray-900 mb-4">Результаты тестов</Text>
-           <View className="gap-4">
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Результаты тестов</Text>
+           <View style={{ gap: SPACING.md }}>
               {TESTS.map((test, index) => (
-                <View key={index} className="flex-row items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                <View key={index} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: SPACING.lg, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border }}>
                    <View>
-                      <Text className="font-bold text-gray-900">{test.name}</Text>
-                      <Text className="text-[10px] text-gray-400 font-bold uppercase">{test.date}</Text>
+                      <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{test.name}</Text>
+                      <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>{test.date}</Text>
                    </View>
-                   <View className="w-12 h-12 rounded-xl bg-white items-center justify-center border border-gray-100">
-                      <Text className="font-black text-primary text-lg">{test.score}</Text>
+                   <View style={{ width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center', ...SHADOWS.sm }}>
+                      <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary, fontSize: TYPOGRAPHY.size.lg }}>{test.score}</Text>
                    </View>
                 </View>
               ))}
@@ -156,10 +174,10 @@ export default function MentorStudentProfile() {
         </View>
 
         {/* Add Recommendation Button */}
-        <Pressable className="h-16 rounded-3xl border-2 border-dashed border-gray-200 items-center justify-center flex-row gap-3">
+        <TouchableOpacity style={{ height: 64, borderRadius: RADIUS.lg, borderWeight: 2, borderStyle: 'dashed', borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm }}>
            <Feather name="plus-circle" size={20} color={COLORS.mutedForeground} />
-           <Text className="font-bold text-gray-500">Добавить рекомендацию</Text>
-        </Pressable>
+           <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.mutedForeground }}>Добавить рекомендацию</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

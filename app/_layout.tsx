@@ -10,9 +10,11 @@ import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { ParentDataProvider } from "../contexts/ParentDataContext";
 import "../global.css";
 
+import { DevRoleSwitcher } from "../components/DevRoleSwitcher";
+
 function RootNavigator() {
   const colorScheme = useColorScheme();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, devMode } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
@@ -27,10 +29,11 @@ function RootNavigator() {
       return;
     }
 
-    if (user && inAuthGroup && authScreen !== "role") {
+    // Skip auto-redirect to home if devMode is enabled
+    if (user && inAuthGroup && authScreen !== "role" && !devMode) {
       router.replace("/(tabs)/home");
     }
-  }, [isLoading, router, segments, user]);
+  }, [isLoading, router, segments, user, devMode]);
 
   if (isLoading) return null;
 
@@ -65,6 +68,7 @@ function RootNavigator() {
           options={{ presentation: "fullScreenModal" }}
         />
       </Stack>
+      <DevRoleSwitcher />
     </ThemeProvider>
   );
 }
