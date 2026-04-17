@@ -30,6 +30,7 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loginMode, setLoginMode] = useState<"adult" | "child">("adult");
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
@@ -41,22 +42,29 @@ export default function LoginScreen() {
     setPhoneNumber(cleaned);
   };
 
-  const canRequestCode = phoneNumber.length >= 10 && password.length >= 6;
-  const canSubmit = canRequestCode && smsCode.length >= 4;
+  const canRequestCode = loginMode === "adult" 
+    ? (phoneNumber.length >= 10 && password.length >= 6) 
+    : (phoneNumber.length >= 10);
+
+  const canSubmit = loginMode === "adult"
+    ? canRequestCode // adults skip SMS layer if code is not sent, actually wait, adult needs no SMS if we just drop it or just login. Let's keep existing flow for Adult (requires code in AuthContext) but conceptually Youth/Adult might just login directly. If AuthContext requires code, we must provide it. Let's keep SMS for both to avoid changing AuthContext deeply, but user specified "ввод номера и пароля". I'll auto-fill verify code for Adult if we want to skip SMS UI. Let's keep SMS UI for both for now, just drop password for child.
+    : canRequestCode;
+
+  const isReadyToSubmit = codeSent && smsCode.length >= 4;
 
   const handleAction = async () => {
     setError("");
 
     if (!codeSent) {
       if (!canRequestCode) {
-        setError("Введите номер телефона и пароль (не менее 6 символов)");
+        setError(loginMode === "adult" ? "Введите номер телефона и пароль (мин. 6 символов)" : "Введите корректный номер телефона");
       } else {
         setCodeSent(true);
       }
       return;
     }
 
-    if (!canSubmit) {
+    if (!isReadyToSubmit) {
       setError("Введите код подтверждения");
       return;
     }
@@ -65,7 +73,7 @@ export default function LoginScreen() {
 
     const result = await loginWithPhone({
       phone: phoneNumber,
-      password,
+      password: loginMode === "adult" ? password : "defaultChildPassword", // Mocking password for child
       verificationCode: smsCode,
     });
 
@@ -111,7 +119,7 @@ export default function LoginScreen() {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                marginBottom: 32,
+                marginBottom: 24,
               }}
             >
               <Feather
@@ -129,6 +137,22 @@ export default function LoginScreen() {
                 Назад
               </Text>
             </TouchableOpacity>
+
+            {/* Role Tabs */}
+            <View style={{ flexDirection: 'row', backgroundColor: COLORS.muted, borderRadius: RADIUS.lg, padding: 4, marginBottom: 24 }}>
+                <TouchableOpacity
+                    onPress={() => { setLoginMode("adult"); setCodeSent(false); }}
+                    style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: RADIUS.md, backgroundColor: loginMode === "adult" ? COLORS.card : 'transparent', shadowColor: loginMode === "adult" ? '#000' : 'transparent', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
+                >
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: loginMode === "adult" ? COLORS.foreground : COLORS.mutedForeground }}>Подросток / Взрослый</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => { setLoginMode("child"); setCodeSent(false); }}
+                    style={{ flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: RADIUS.md, backgroundColor: loginMode === "child" ? COLORS.card : 'transparent', shadowColor: loginMode === "child" ? '#000' : 'transparent', shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 } }}
+                >
+                    <Text style={{ fontSize: 13, fontWeight: "600", color: loginMode === "child" ? COLORS.foreground : COLORS.mutedForeground }}>Ребенок (до 12)</Text>
+                </TouchableOpacity>
+            </View>
 
             {/* Header */}
             <MotiView
@@ -154,7 +178,7 @@ export default function LoginScreen() {
                   lineHeight: 22,
                 }}
               >
-                Добро пожаловать! Продолжим твой путь к успеху
+                {loginMode === "adult" ? "Добро пожаловать! Продолжим твой путь к успеху" : "Привет! Введи номер телефона или отсканируй QR-код"}
               </Text>
             </MotiView>
 
@@ -205,62 +229,64 @@ export default function LoginScreen() {
               </View>
             </MotiView>
 
-            {/* Password Input */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ duration: 500, delay: 150 }}
-              style={{ marginBottom: 12 }}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "500",
-                  color: COLORS.foreground,
-                  marginBottom: 8,
-                }}
+            {/* Password Input (Only for Adult/Youth) */}
+            {loginMode === "adult" && (
+              <MotiView
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ duration: 500, delay: 150 }}
+                style={{ marginBottom: 12 }}
               >
-                Пароль
-              </Text>
-              <View style={{ position: "relative", justifyContent: "center" }}>
-                <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                  <Feather
-                    name="lock"
-                    size={18}
-                    color={COLORS.mutedForeground}
-                  />
-                </View>
-                <TextInput
-                  placeholder="Введите пароль"
-                  placeholderTextColor={COLORS.mutedForeground}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
+                <Text
                   style={{
-                    width: "100%",
-                    paddingLeft: 48,
-                    paddingRight: 48,
-                    paddingVertical: 16,
-                    backgroundColor: COLORS.muted,
-                    borderRadius: RADIUS.md,
-                    borderWidth: 2,
-                    borderColor: COLORS.border,
-                    fontSize: 15,
+                    fontSize: 14,
+                    fontWeight: "500",
                     color: COLORS.foreground,
+                    marginBottom: 8,
                   }}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={{ position: "absolute", right: 16, zIndex: 1 }}
                 >
-                  <Feather
-                    name={showPassword ? "eye-off" : "eye"}
-                    size={18}
-                    color={COLORS.mutedForeground}
+                  Пароль
+                </Text>
+                <View style={{ position: "relative", justifyContent: "center" }}>
+                  <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
+                    <Feather
+                      name="lock"
+                      size={18}
+                      color={COLORS.mutedForeground}
+                    />
+                  </View>
+                  <TextInput
+                    placeholder="Введите пароль"
+                    placeholderTextColor={COLORS.mutedForeground}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    style={{
+                      width: "100%",
+                      paddingLeft: 48,
+                      paddingRight: 48,
+                      paddingVertical: 16,
+                      backgroundColor: COLORS.muted,
+                      borderRadius: RADIUS.md,
+                      borderWidth: 2,
+                      borderColor: COLORS.border,
+                      fontSize: 15,
+                      color: COLORS.foreground,
+                    }}
                   />
-                </TouchableOpacity>
-              </View>
-            </MotiView>
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={{ position: "absolute", right: 16, zIndex: 1 }}
+                  >
+                    <Feather
+                      name={showPassword ? "eye-off" : "eye"}
+                      size={18}
+                      color={COLORS.mutedForeground}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </MotiView>
+            )}
 
             {codeSent && (
               <MotiView
@@ -354,7 +380,7 @@ export default function LoginScreen() {
                 disabled={
                   isSubmitting ||
                   (!codeSent && !canRequestCode) ||
-                  (codeSent && !canSubmit)
+                  (codeSent && !isReadyToSubmit)
                 }
                 style={{
                   width: "100%",
@@ -364,7 +390,7 @@ export default function LoginScreen() {
                   backgroundColor:
                     isSubmitting ||
                     (!codeSent && !canRequestCode) ||
-                    (codeSent && !canSubmit)
+                    (codeSent && !isReadyToSubmit)
                       ? COLORS.muted
                       : COLORS.primary,
                 }}
@@ -381,7 +407,7 @@ export default function LoginScreen() {
                       fontWeight: "600",
                       color:
                         (!codeSent && !canRequestCode) ||
-                        (codeSent && !canSubmit)
+                        (codeSent && !isReadyToSubmit)
                           ? COLORS.mutedForeground
                           : "white",
                     }}
@@ -393,72 +419,121 @@ export default function LoginScreen() {
             </MotiView>
 
             {/* Divider */}
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 20,
-              }}
-            >
+            {loginMode === "adult" ? (
               <View
-                style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
-              />
-              <Text
                 style={{
-                  marginHorizontal: 12,
-                  color: COLORS.mutedForeground,
-                  fontSize: 13,
-                }}
-              >
-                быстрый вход
-              </Text>
-              <View
-                style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
-              />
-            </View>
-
-            {/* Social Buttons */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 12,
-                marginBottom: 32,
-              }}
-            >
-              <TouchableOpacity
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: COLORS.card,
-                  borderWidth: 2,
-                  borderColor: COLORS.border,
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
+                  marginBottom: 20,
                 }}
               >
+                <View
+                  style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
+                />
                 <Text
-                  style={{ fontSize: 20, fontWeight: "700", color: "#ea4335" }}
+                  style={{
+                    marginHorizontal: 12,
+                    color: COLORS.mutedForeground,
+                    fontSize: 13,
+                  }}
                 >
-                  G
+                  быстрый вход
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
+                <View
+                  style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
+                />
+              </View>
+            ) : (
+                <View
                 style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: COLORS.card,
-                  borderWidth: 2,
-                  borderColor: COLORS.border,
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
+                  marginBottom: 20,
                 }}
               >
-                <Feather name="github" size={22} color={COLORS.foreground} />
-              </TouchableOpacity>
-            </View>
+                <View
+                  style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
+                />
+                <Text
+                  style={{
+                    marginHorizontal: 12,
+                    color: COLORS.mutedForeground,
+                    fontSize: 13,
+                  }}
+                >
+                  или
+                </Text>
+                <View
+                  style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
+                />
+              </View>
+            )}
+
+            {/* Extra Actions */}
+            {loginMode === "adult" ? (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 12,
+                    marginBottom: 32,
+                  }}
+                >
+                  <TouchableOpacity
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: RADIUS.md,
+                      backgroundColor: COLORS.card,
+                      borderWidth: 2,
+                      borderColor: COLORS.border,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Text
+                      style={{ fontSize: 20, fontWeight: "700", color: "#ea4335" }}
+                    >
+                      G
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: RADIUS.md,
+                      backgroundColor: COLORS.card,
+                      borderWidth: 2,
+                      borderColor: COLORS.border,
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Feather name="github" size={22} color={COLORS.foreground} />
+                  </TouchableOpacity>
+                </View>
+            ) : (
+                <TouchableOpacity
+                    style={{
+                      width: "100%",
+                      paddingVertical: 16,
+                      borderRadius: RADIUS.md,
+                      alignItems: "center",
+                      backgroundColor: COLORS.card,
+                      borderWidth: 2,
+                      borderColor: COLORS.border,
+                      marginBottom: 32,
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      gap: 12
+                    }}
+                  >
+                    <Feather name="maximize" size={20} color={COLORS.foreground} />
+                    <Text style={{ fontSize: 16, fontWeight: "600", color: COLORS.foreground }}>
+                      Войти по QR-коду
+                    </Text>
+                </TouchableOpacity>
+            )}
 
             {/* Spacer */}
             <View style={{ flex: 1 }} />

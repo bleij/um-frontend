@@ -19,17 +19,24 @@ import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 const { width } = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
-const categories = ["все", "гум", "мат", "естеств", "спорт", "it", "творчество"];
+const categories = ["⭐️ Рекомендовано AI", "все", "гум", "мат", "естеств", "спорт", "it", "творчество"];
 
 export default function CatalogScreen() {
-    const [activeCategory, setActiveCategory] = useState("все");
+    const [activeCategory, setActiveCategory] = useState("⭐️ Рекомендовано AI");
     const [search, setSearch] = useState("");
     const router = useRouter();
 
     const safeCourses = Array.isArray(courses) ? courses : [];
 
     const filteredItems = useMemo(() => {
-        return safeCourses.filter((item) => {
+        return safeCourses.filter((item, index) => {
+            if (activeCategory === "⭐️ Рекомендовано AI") {
+               // Simulate AI algorithm: pick a few predictable courses
+               const isAiRecommended = index % 3 === 0;
+               const bySearch = item.title.toLowerCase().includes(search.toLowerCase());
+               return isAiRecommended && bySearch;
+            }
+
             const byCategory = activeCategory === "все" || item.tag === activeCategory;
             const bySearch = item.title.toLowerCase().includes(search.toLowerCase());
             return byCategory && bySearch;

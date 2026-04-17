@@ -116,7 +116,7 @@ export default function ParentProfile() {
     <View style={{ flex: 1 }}>
       <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
         <LinearGradient
-          colors={[COLORS.gradientFrom, COLORS.gradientTo]}
+          colors={COLORS.gradients.primary as any}
           style={{ flex: 1 }}
         >
           {!isDesktop && (

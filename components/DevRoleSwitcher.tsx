@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView, Switch } from 'react-native';
 import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useParentData } from '../contexts/ParentDataContext';
 import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
 import { Feather } from '@expo/vector-icons';
 
@@ -10,8 +11,9 @@ export function DevRoleSwitcher() {
 
   const [visible, setVisible] = useState(false);
   const { user, setUserRole, devLogin, devMode, setDevMode } = useAuth();
+  const { parentProfile, setParentTariff } = useParentData();
 
-  const roles: UserRole[] = ['parent', 'youth', 'child', 'young-adult', 'mentor', 'org'];
+  const roles: UserRole[] = ['parent', 'youth', 'child', 'mentor', 'org', 'teacher', 'admin'];
 
   const handleSwitch = async (role: UserRole) => {
     if (!user) {
@@ -64,6 +66,20 @@ export function DevRoleSwitcher() {
                   trackColor={{ false: COLORS.muted, true: COLORS.primary }}
                 />
               </View>
+
+              {['parent', 'youth', 'child'].includes(user?.role || '') && (
+                 <View style={styles.devModeRow}>
+                   <View>
+                     <Text style={styles.devModeTitle}>Tariff Status: {parentProfile?.tariff?.toUpperCase() || 'BASIC'}</Text>
+                     <Text style={styles.devModeSubtitle}>Toggle PRO features for parent/child</Text>
+                   </View>
+                   <Switch
+                     value={parentProfile?.tariff === 'pro'}
+                     onValueChange={(val) => setParentTariff(val ? 'pro' : 'basic')}
+                     trackColor={{ false: COLORS.muted, true: '#A78BFA' }}
+                   />
+                 </View>
+              )}
 
               <Text style={styles.sectionTitle}>Current Role: {user?.role || 'None'}</Text>
               
@@ -194,7 +210,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   forceLoginText: {
-    color: COLORS.secondaryForeground,
+    color: 'white',
     fontWeight: '600',
   }
 });

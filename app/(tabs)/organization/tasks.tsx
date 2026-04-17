@@ -1,17 +1,18 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Platform,
-  Pressable,
   ScrollView,
   Text,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 const MOCK_TASKS = [
   {
@@ -60,9 +61,7 @@ export default function OrgTasks() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
   const [selectedClub, setSelectedClub] = useState("all");
 
   const filtered =
@@ -72,198 +71,139 @@ export default function OrgTasks() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{
-          paddingBottom: 24,
-          borderBottomLeftRadius: 32,
-          borderBottomRightRadius: 32,
-        }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View
-            style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 16,
-              }}
-            >
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text
-                style={{
-                  fontSize: 20,
-                  fontWeight: "800",
-                  color: "white",
-                  flex: 1,
-                }}
-              >
-                Задания
-              </Text>
-              <Pressable
-                onPress={() => router.push("/organization/task/create" as any)}
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  paddingHorizontal: 16,
-                  height: 40,
-                  borderRadius: 20,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text
-                  style={{ color: "white", fontWeight: "700", fontSize: 13 }}
-                >
-                  + Создать
-                </Text>
-              </Pressable>
-            </View>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {CLUBS.map((club) => (
-                <Pressable
-                  key={club.id}
-                  onPress={() => setSelectedClub(club.id)}
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
                   style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 10,
-                    borderRadius: 16,
-                    marginRight: 8,
-                    backgroundColor:
-                      selectedClub === club.id
-                        ? "white"
-                        : "rgba(255,255,255,0.15)",
-                    borderWidth: 1,
-                    borderColor:
-                      selectedClub === club.id
-                        ? "white"
-                        : "rgba(255,255,255,0.2)",
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
                   }}
                 >
-                  <Text
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", flex: 1 }}>Задания</Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/organization/task/create" as any)}
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    paddingHorizontal: SPACING.lg,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: 13 }}>+ СОЗДАТЬ</Text>
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 px-1">
+                {CLUBS.map((club) => (
+                  <TouchableOpacity
+                    key={club.id}
+                    onPress={() => setSelectedClub(club.id)}
                     style={{
-                      color:
-                        selectedClub === club.id ? COLORS.primary : "white",
-                      fontWeight: "700",
-                      fontSize: 13,
+                      paddingHorizontal: SPACING.lg,
+                      paddingVertical: 10,
+                      borderRadius: RADIUS.md,
+                      marginRight: SPACING.sm,
+                      backgroundColor: selectedClub === club.id ? "white" : "rgba(255,255,255,0.15)",
+                      borderWidth: 1,
+                      borderColor: selectedClub === club.id ? "white" : "rgba(255,255,255,0.2)",
                     }}
                   >
-                    {club.name}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+                    <Text style={{ color: selectedClub === club.id ? COLORS.primary : "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: 13 }}>{club.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
           paddingBottom: 100,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {filtered.map((task) => {
+        {filtered.map((task, idx) => {
           const percent = Math.round((task.completed / task.total) * 100);
           return (
-            <Pressable
-              key={task.id}
-              style={SHADOWS.md}
-              className="bg-white rounded-[32px] p-6 mb-6 border border-gray-100"
+            <MotiView
+               key={task.id}
+               from={{ opacity: 0, translateY: 20 }}
+               animate={{ opacity: 1, translateY: 0 }}
+               transition={{ delay: idx * 100 }}
             >
-              <View className="flex-row justify-between items-start mb-4">
-                <View className="flex-1">
-                  <Text className="text-lg font-bold text-gray-900 mb-1">
-                    {task.title}
-                  </Text>
-                  <View className="flex-row items-center gap-1">
-                    <Feather
-                      name="book-open"
-                      size={12}
-                      color={COLORS.mutedForeground}
-                    />
-                    <Text className="text-xs text-gray-400 font-semibold">
-                      {task.club}
-                    </Text>
+               <TouchableOpacity
+                  style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.lg, borderWidth: 1, borderColor: COLORS.border }}
+               >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.lg }}>
+                     <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 4 }}>{task.title}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                           <Feather name="book-open" size={12} color={COLORS.mutedForeground} />
+                           <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{task.club}</Text>
+                        </View>
+                     </View>
+                     <View style={{ backgroundColor: 'rgba(108, 92, 231, 0.05)', px: 12, py: 6, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'rgba(108, 92, 231, 0.1)' }}>
+                        <Text style={{ color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 11 }}>+{task.xp} XP</Text>
+                     </View>
                   </View>
-                </View>
-                <View className="bg-purple-50 px-3 py-1.5 rounded-xl">
-                  <Text className="text-primary font-black text-xs">
-                    +{task.xp} XP
-                  </Text>
-                </View>
-              </View>
 
-              <View className="bg-gray-50/50 rounded-2xl p-4 mb-6">
-                <View className="flex-row justify-between mb-3">
-                  <View className="flex-row items-center gap-2">
-                    <Feather name="users" size={12} color="#9CA3AF" />
-                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                      Кому
-                    </Text>
+                  <View style={{ backgroundColor: COLORS.background, borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.xl }}>
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.sm }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                           <Feather name="users" size={12} color={COLORS.mutedForeground} />
+                           <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Кому</Text>
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{task.assignedTo}</Text>
+                     </View>
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                           <Feather name="clock" size={12} color={COLORS.mutedForeground} />
+                           <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Срок</Text>
+                        </View>
+                        <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{task.dueDate}</Text>
+                     </View>
                   </View>
-                  <Text className="text-xs font-bold text-gray-700">
-                    {task.assignedTo}
-                  </Text>
-                </View>
-                <View className="flex-row justify-between">
-                  <View className="flex-row items-center gap-2">
-                    <Feather name="clock" size={12} color="#9CA3AF" />
-                    <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-                      Срок
-                    </Text>
+
+                  <View style={{ marginBottom: SPACING.xl }}>
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Прогресс выполнения</Text>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{task.completed}/{task.total}</Text>
+                     </View>
+                     <View style={{ h: 6, bg: COLORS.border, borderRadius: RADIUS.full, overflow: 'hidden' }}>
+                        <View style={{ width: `${percent}%`, h: 'full', bg: COLORS.primary }} />
+                     </View>
                   </View>
-                  <Text className="text-xs font-bold text-gray-700">
-                    {task.dueDate}
-                  </Text>
-                </View>
-              </View>
 
-              <View className="mb-6">
-                <View className="flex-row justify-between items-end mb-2.5">
-                  <Text className="text-xs font-bold text-gray-900">
-                    Прогресс выполнения
-                  </Text>
-                  <Text className="text-xs font-black text-primary">
-                    {task.completed}/{task.total}
-                  </Text>
-                </View>
-                <View className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <View
-                    style={{ width: `${percent}%` }}
-                    className="h-full bg-primary"
-                  />
-                </View>
-              </View>
-
-              <View className="flex-row gap-3">
-                <Pressable className="flex-1 h-12 bg-primary/10 rounded-2xl items-center justify-center">
-                  <Text className="text-primary font-bold text-sm">
-                    Подробнее
-                  </Text>
-                </Pressable>
-                <Pressable className="w-12 h-12 bg-red-50 rounded-2xl items-center justify-center">
-                  <Feather name="trash-2" size={18} color="#EF4444" />
-                </Pressable>
-              </View>
-            </Pressable>
+                  <View style={{ flexDirection: 'row', gap: SPACING.md }}>
+                     <TouchableOpacity style={{ flex: 1, height: 48, backgroundColor: 'rgba(108, 92, 231, 0.1)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 14 }}>ПОДРОБНЕЕ</Text>
+                     </TouchableOpacity>
+                     <TouchableOpacity style={{ width: 48, height: 48, backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.1)' }}>
+                        <Feather name="trash-2" size={18} color={COLORS.destructive} />
+                     </TouchableOpacity>
+                  </View>
+               </TouchableOpacity>
+            </MotiView>
           );
         })}
       </ScrollView>

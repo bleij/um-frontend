@@ -8,7 +8,7 @@ import OrgProfile from "../../profile/organization/index";
 import ParentProfile from "../../profile/parent/index";
 import YouthProfile from "../../profile/youth/index";
 
-type Role = "parent" | "youth" | "child" | "young-adult" | "mentor" | "org";
+type Role = "parent" | "youth" | "child" | "mentor" | "org";
 
 export default function ProfileScreenRouter() {
   const { user, isLoading } = useAuth();
@@ -40,7 +40,6 @@ export default function ProfileScreenRouter() {
       return <ParentProfile />;
     case "youth":
     case "child":
-    case "young-adult":
       return <YouthProfile />;
     case "mentor":
       return <MentorProfile />;

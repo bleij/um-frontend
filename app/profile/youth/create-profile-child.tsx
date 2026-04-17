@@ -28,6 +28,7 @@ export default function CreateProfileChild() {
     firstName: "",
     age: "",
     gender: "boy",
+    phone: "",
     otherInterest: "",
     goals: "",
   });
@@ -59,6 +60,7 @@ export default function CreateProfileChild() {
         id: `child_${Date.now()}`,
         name: formData.firstName.trim(),
         age: ageNum,
+        phone: formData.phone.trim() || undefined,
         interests: interests,
         ageCategory: ageNum < 12 ? "child" : "teen",
         parentId: "pending"
@@ -145,6 +147,18 @@ export default function CreateProfileChild() {
                   />
                 </View>
 
+                <View>
+                  <Text className="text-sm font-medium text-gray-700 mb-1">Телефон (необязательно)</Text>
+                  <TextInput
+                    value={formData.phone}
+                    onChangeText={(text) => setFormData({ ...formData, phone: text })}
+                    placeholder="+7 (___) ___ __ __"
+                    keyboardType="phone-pad"
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                  />
+                  <Text className="text-[10px] text-gray-400 mt-1 ml-1">Если нет номера, ребенок сможет зайти по QR коду</Text>
+                </View>
+
                 <View className="flex-row">
                   <View className="flex-1 mr-2">
                     <Text className="text-sm font-medium text-gray-700 mb-1">Возраст</Text>
@@ -198,15 +212,32 @@ export default function CreateProfileChild() {
               </View>
             </View>
 
-            <TouchableOpacity 
-                onPress={handleNext} 
-                disabled={isSubmitting} 
-                className={`w-full py-4 rounded-xl items-center justify-center bg-primary ${isSubmitting ? "opacity-50" : ""}`}
-            >
-                <Text className="text-white font-bold text-lg">{isSubmitting ? "Сохранение..." : "Продолжить"}</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
+
+        {/* Fixed Footer for Button */}
+        <View 
+          className="p-6 bg-white border-t border-gray-100 shadow-lg"
+          style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined, alignSelf: "center", borderTopLeftRadius: 32, borderTopRightRadius: 32 }}
+        >
+          <TouchableOpacity 
+              onPress={handleNext} 
+              disabled={isSubmitting} 
+              activeOpacity={0.8}
+              style={{ overflow: 'hidden', borderRadius: 20 }}
+          >
+            <LinearGradient
+              colors={["#6C5CE7", "#8B7FE8"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{ paddingVertical: 18, alignItems: "center", justifyContent: "center" }}
+            >
+              <Text className="text-white font-black text-lg uppercase tracking-wider">
+                {isSubmitting ? "Сохранение..." : "Добавить ребенка"}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </View>
       </LinearGradient>
     </KeyboardAvoidingView>
   );

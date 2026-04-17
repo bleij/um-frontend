@@ -11,6 +11,9 @@ import {
   useWindowDimensions,
   View,
   TouchableOpacity,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
@@ -44,6 +47,34 @@ export default function MentorLearningPath() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+
+  const [pathSteps, setPathSteps] = React.useState(PATH_STEPS);
+  const [showAddModal, setShowAddModal] = React.useState(false);
+  const [activeStepId, setActiveStepId] = React.useState<number | null>(null);
+  const [newTaskText, setNewTaskText] = React.useState("");
+
+  const toggleTask = (stepId: number, taskIndex: number) => {
+     setPathSteps(prev => prev.map(step => {
+        if (step.id === stepId) {
+            const newItems = [...step.items];
+            newItems[taskIndex] = { ...newItems[taskIndex], done: !newItems[taskIndex].done };
+            return { ...step, items: newItems };
+        }
+        return step;
+     }));
+  };
+
+  const handleAddTask = () => {
+     if (!newTaskText.trim() || activeStepId === null) return;
+     setPathSteps(prev => prev.map(step => {
+         if (step.id === activeStepId) {
+             return { ...step, items: [...step.items, { text: newTaskText.trim(), done: false }] };
+         }
+         return step;
+     }));
+     setNewTaskText("");
+     setShowAddModal(false);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -95,7 +126,7 @@ export default function MentorLearningPath() {
         {/* Progress Summary Card */}
         <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: SPACING.sm }}>Общий прогресс</Text>
-           <View className="flex-row items-center gap-4 mb-2">
+           <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.sm }}>
               <View style={{ flex: 1, height: 10, backgroundColor: COLORS.muted, borderRadius: RADIUS.full, overflow: 'hidden' }}>
                  <View style={{ width: '40%', height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full }} />
               </View>
@@ -105,14 +136,14 @@ export default function MentorLearningPath() {
         </View>
 
         {/* Timeline */}
-        <View className="relative">
+        <View style={{ position: 'relative' }}>
            {/* Vertical Line */}
            <View style={{ position: 'absolute', left: 21, top: 0, bottom: 0, width: 2, backgroundColor: COLORS.muted }} />
 
-           {PATH_STEPS.map((step, index) => (
-             <View key={step.id} className="flex-row gap-5 mb-8">
+           {pathSteps.map((step, index) => (
+             <View key={step.id} style={{ flexDirection: 'row', gap: 20, marginBottom: SPACING.xl }}>
                 {/* Dot */}
-                <View className="z-10">
+                <View style={{ zIndex: 10 }}>
                    <View style={{ 
                      width: 44, 
                      height: 44, 
@@ -129,7 +160,7 @@ export default function MentorLearningPath() {
 
                 {/* Card */}
                 <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
-                   <View className="flex-row justify-between items-center mb-4">
+                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xl }}>
                       <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{step.phase}</Text>
                       <View style={{ 
                         paddingHorizontal: SPACING.md, 
@@ -150,16 +181,20 @@ export default function MentorLearningPath() {
                    
                    <View style={{ gap: SPACING.sm }}>
                       {step.items.map((item, i) => (
-                        <View key={i} style={{ 
-                          flexDirection: 'row', 
-                          items: 'center', 
-                          gap: SPACING.md, 
-                          padding: SPACING.md, 
-                          borderRadius: RADIUS.lg, 
-                          backgroundColor: item.done ? 'rgba(52, 199, 89, 0.05)' : COLORS.background,
-                          borderWidth: 1,
-                          borderColor: item.done ? 'rgba(52, 199, 89, 0.1)' : COLORS.border
-                        }}>
+                        <TouchableOpacity 
+                           key={i} 
+                           onPress={() => toggleTask(step.id, i)}
+                           style={{ 
+                             flexDirection: 'row', 
+                             alignItems: 'center', 
+                             gap: SPACING.md, 
+                             padding: SPACING.md, 
+                             borderRadius: RADIUS.lg, 
+                             backgroundColor: item.done ? 'rgba(52, 199, 89, 0.05)' : COLORS.background,
+                             borderWidth: 1,
+                             borderColor: item.done ? 'rgba(52, 199, 89, 0.1)' : COLORS.border
+                           }}
+                        >
                            <View style={{ 
                              width: 20, 
                              height: 20, 
@@ -173,28 +208,32 @@ export default function MentorLearningPath() {
                               {item.done && <Feather name="check" size={12} color="white" />}
                            </View>
                            <Text style={{ 
+                             flex: 1,
                              fontSize: TYPOGRAPHY.size.sm, 
                              color: item.done ? COLORS.mutedForeground : COLORS.foreground, 
                              fontWeight: item.done ? TYPOGRAPHY.weight.regular : TYPOGRAPHY.weight.medium,
                              textDecorationLine: item.done ? 'line-through' : 'none'
                            }}>{item.text}</Text>
-                        </View>
+                        </TouchableOpacity>
                       ))}
                    </View>
 
                    {step.status === 'active' && (
-                     <TouchableOpacity style={{ 
-                       marginTop: SPACING.lg, 
-                       height: 48, 
-                       borderRadius: RADIUS.md, 
-                       borderWidth: 1, 
-                       borderStyle: 'dashed', 
-                       borderColor: COLORS.border, 
-                       alignItems: 'center', 
-                       justifyContent: 'center', 
-                       flexDirection: 'row', 
-                       gap: SPACING.xs 
-                     }}>
+                     <TouchableOpacity 
+                        onPress={() => { setActiveStepId(step.id); setShowAddModal(true); }}
+                        style={{ 
+                           marginTop: SPACING.lg, 
+                           height: 48, 
+                           borderRadius: RADIUS.md, 
+                           borderWidth: 1, 
+                           borderStyle: 'dashed', 
+                           borderColor: COLORS.border, 
+                           alignItems: 'center', 
+                           justifyContent: 'center', 
+                           flexDirection: 'row', 
+                           gap: SPACING.xs 
+                        }}
+                     >
                         <Feather name="plus-circle" size={14} color={COLORS.mutedForeground} />
                         <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase' }}>Добавить цель</Text>
                      </TouchableOpacity>
@@ -210,6 +249,49 @@ export default function MentorLearningPath() {
            <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold, fontSize: TYPOGRAPHY.size.md }}>Сохранить изменения</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* Add Task Modal */}
+      <Modal visible={showAddModal} transparent animationType="slide">
+         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: COLORS.surface, borderTopLeftRadius: RADIUS.xxl, borderTopRightRadius: RADIUS.xxl, padding: SPACING.xl, paddingBottom: 40 }}>
+               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg }}>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>Новая цель</Text>
+                  <TouchableOpacity onPress={() => setShowAddModal(false)} style={{ padding: SPACING.xs }}>
+                     <Feather name="x" size={24} color={COLORS.mutedForeground} />
+                  </TouchableOpacity>
+               </View>
+
+               <TextInput
+                  value={newTaskText}
+                  onChangeText={setNewTaskText}
+                  placeholder="Опишите новый навык или задачу..."
+                  autoFocus
+                  style={{ 
+                     backgroundColor: COLORS.background, 
+                     borderRadius: RADIUS.lg, 
+                     padding: SPACING.lg, 
+                     fontSize: TYPOGRAPHY.size.md, 
+                     borderWidth: 1, 
+                     borderColor: COLORS.border,
+                     marginBottom: SPACING.xl
+                  }}
+               />
+
+               <TouchableOpacity 
+                  onPress={handleAddTask}
+                  disabled={!newTaskText.trim()}
+                  style={{ 
+                     backgroundColor: newTaskText.trim() ? COLORS.primary : COLORS.muted, 
+                     paddingVertical: SPACING.lg, 
+                     borderRadius: RADIUS.lg, 
+                     alignItems: 'center' 
+                  }}
+               >
+                  <Text style={{ color: newTaskText.trim() ? 'white' : COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, fontSize: TYPOGRAPHY.size.md }}>Добавить</Text>
+               </TouchableOpacity>
+            </View>
+         </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }

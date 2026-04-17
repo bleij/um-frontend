@@ -1,121 +1,220 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView, Image, Alert } from "react-native";
-import { useRouter } from "expo-router";
-import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { MotiView } from "moti";
+import React, { useState } from "react";
+import {
+  Platform,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+  TouchableOpacity,
+  Image,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
-import { useIsDesktop } from "../../../lib/useIsDesktop";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
-const MOCK_APPLICATIONS = [
-    {
-        id: "1",
-        childName: "Мария Иванова",
-        age: 7,
-        parent: "Екатерина Иванова",
-        club: "Художественная студия",
-        date: "25 фев 2026",
-        status: "new",
-        avatar: "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
-    },
-    {
-        id: "2",
-        childName: "Дмитрий Петров",
-        age: 14,
-        parent: "Андрей Петров",
-        club: "Футбольная школа",
-        date: "26 фев 2026",
-        status: "new",
-        avatar: "https://images.unsplash.com/photo-1510340842445-b6b8a6c0762e?w=100&h=100&fit=crop",
-    },
-    {
-        id: "3",
-        childName: "София Смирнова",
-        age: 10,
-        parent: "Ольга Смирнова",
-        club: "Программирование",
-        date: "27 фев 2026",
-        status: "new",
-        avatar: "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
-    },
+interface Application {
+  id: string;
+  childName: string;
+  age: number;
+  parent: string;
+  club: string;
+  date: string;
+  status: "paid" | "awaiting_payment" | "activated" | "completed";
+  avatar: string;
+}
+
+const MOCK_APPLICATIONS: Application[] = [
+  {
+    id: "1",
+    childName: "Мария Иванова",
+    age: 7,
+    parent: "Екатерина Иванова",
+    club: "Художественная студия",
+    date: "25 фев 2026",
+    status: "paid",
+    avatar: "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
+  },
+  {
+    id: "2",
+    childName: "Дмитрий Петров",
+    age: 14,
+    parent: "Андрей Петров",
+    club: "Футбольная школа",
+    date: "26 фев 2026",
+    status: "awaiting_payment",
+    avatar: "https://images.unsplash.com/photo-1510340842445-b6b8a6c0762e?w=100&h=100&fit=crop",
+  },
+  {
+    id: "3",
+    childName: "София Смирнова",
+    age: 10,
+    parent: "Ольга Смирнова",
+    club: "Программирование",
+    date: "27 фев 2026",
+    status: "paid",
+    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop",
+  },
 ];
 
-export default function OrgApplications() {
-    const router = useRouter();
-    const isDesktop = useIsDesktop();
-    const [apps, setApps] = useState(MOCK_APPLICATIONS);
+export default function OrgApplicationsScreen() {
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-    const handleAction = (id: string, action: 'approve' | 'reject') => {
-        setApps(prev => prev.filter(a => a.id !== id));
-        Alert.alert(
-            action === 'approve' ? "Одобрено" : "Отклонено",
-            `Заявка ${action === 'approve' ? 'принята' : 'отклонена'}.`
+  const [apps, setApps] = useState<Application[]>(MOCK_APPLICATIONS);
+
+  const getStatusBadge = (status: Application["status"]) => {
+    switch (status) {
+      case "paid":
+        return (
+          <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.md, backgroundColor: 'rgba(52, 199, 89, 0.1)' }}>
+            <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.success }}>ОПЛАЧЕНО</Text>
+          </View>
         );
-    };
+      case "awaiting_payment":
+        return (
+          <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.md, backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
+            <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: "#F59E0B" }}>ОЖИДАЕТ</Text>
+          </View>
+        );
+      case "activated":
+        return (
+          <View style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.md, backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+            <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: "#3B82F6" }}>АКТИВЕН</Text>
+          </View>
+        );
+      default:
+        return null;
+    }
+  };
 
-    const newApps = apps.filter(a => a.status === 'new');
+  const handleAction = (id: string, action: 'approve' | 'reject') => {
+    setApps(prev => prev.filter(a => a.id !== id));
+  };
 
-    return (
-        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <LinearGradient colors={[COLORS.primary, COLORS.secondary]} style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
-                <SafeAreaView edges={["top"]}>
-                    <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
-                        <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
-                            <Feather name="arrow-left" size={24} color="white" />
-                        </TouchableOpacity>
-                        <View>
-                            <Text style={{ fontSize: 20, fontWeight: "700", color: "white" }}>Заявки на запись</Text>
-                            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{newApps.length} новых заявок</Text>
-                        </View>
-                    </View>
-                </SafeAreaView>
-            </LinearGradient>
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
+              <View>
+                <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white" }}>Заявки</Text>
+                <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium, marginTop: 2 }}>Новые поступления</Text>
+              </View>
+              <TouchableOpacity
+                style={{ width: 52, height: 52, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
+              >
+                <Feather name="filter" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
-            <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}>
-                {newApps.length === 0 ? (
-                    <View style={{ alignItems: "center", marginTop: 40 }}>
-                        <Feather name="check-circle" size={48} color="#D1D5DB" />
-                        <Text style={{ color: "#9CA3AF", marginTop: 12, fontSize: 16 }}>Новых заявок пока нет</Text>
-                    </View>
-                ) : (
-                    newApps.map(app => (
-                        <View key={app.id} style={{ backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: COLORS.primary, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.md }}>
-                            <View style={{ flexDirection: "row", marginBottom: 16 }}>
-                                <Image source={{ uri: app.avatar }} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: "#F3F4F6" }} />
-                                <View style={{ flex: 1, marginLeft: 12 }}>
-                                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                                        <Text style={{ fontWeight: "700", fontSize: 16, color: "#1F1F2E" }}>{app.childName}</Text>
-                                        <Text style={{ fontSize: 12, color: "#9CA3AF" }}>{app.date}</Text>
-                                    </View>
-                                    <Text style={{ fontSize: 13, color: "#6B7280", marginTop: 2 }}>{app.age} лет · Родитель: {app.parent}</Text>
-                                </View>
-                            </View>
-
-                            <View style={{ backgroundColor: `${COLORS.primary}08`, padding: 12, borderRadius: 14, marginBottom: 16 }}>
-                                <Text style={{ fontSize: 13, color: COLORS.foreground }}>
-                                    <Text style={{ fontWeight: "700" }}>Кружок: </Text>
-                                    {app.club}
-                                </Text>
-                            </View>
-
-                            <View style={{ flexDirection: "row", gap: 10 }}>
-                                <TouchableOpacity 
-                                    onPress={() => handleAction(app.id, 'reject')}
-                                    style={{ flex: 1, height: 48, borderRadius: 12, borderWidth: 1, borderColor: "#EF4444", alignItems: "center", justifyContent: "center" }}
-                                >
-                                    <Text style={{ color: "#EF4444", fontWeight: "700" }}>Отклонить</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity 
-                                    onPress={() => handleAction(app.id, 'approve')}
-                                    style={{ flex: 2, height: 48, borderRadius: 12, backgroundColor: "#22C55E", alignItems: "center", justifyContent: "center" }}
-                                >
-                                    <Text style={{ color: "white", fontWeight: "700" }}>Одобрить</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    ))
-                )}
-            </ScrollView>
+      <ScrollView
+        contentContainerStyle={{
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
+          paddingBottom: 100,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Stats Summary Card */}
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, flexDirection: 'row', justifyContent: 'space-between', marginBottom: SPACING.xxl, borderWidth: 1, borderColor: COLORS.border }}>
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{apps.length}</Text>
+            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Заявок</Text>
+          </View>
+          <View style={{ width: 1, height: '100%', backgroundColor: COLORS.border }} />
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.success }}>{apps.filter((a) => a.status === "paid").length}</Text>
+            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Оплачено</Text>
+          </View>
+          <View style={{ width: 1, height: '100%', backgroundColor: COLORS.border }} />
+          <View style={{ alignItems: 'center', flex: 1 }}>
+            <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "#F59E0B" }}>{apps.filter((a) => a.status === "awaiting_payment").length}</Text>
+            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Ожидают</Text>
+          </View>
         </View>
-    );
+
+        {/* Applications List */}
+        {apps.length === 0 ? (
+          <View style={{ backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: 40, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+            <View style={{ width: 80, height: 80, backgroundColor: COLORS.background, borderRadius: RADIUS.full, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.xl }}>
+              <Feather name="check-circle" size={32} color={COLORS.mutedForeground} />
+            </View>
+            <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>Заявок нет</Text>
+          </View>
+        ) : (
+          <View style={{ gap: SPACING.lg }}>
+            {apps.map((app, idx) => (
+              <MotiView
+                key={app.id}
+                from={{ opacity: 0, translateY: 20 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ delay: idx * 100 }}
+              >
+                <View
+                  style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: 40, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xl, marginBottom: SPACING.xl }}>
+                    <Image source={{ uri: app.avatar }} style={{ width: 64, height: 64, borderRadius: RADIUS.full }} />
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{app.childName}</Text>
+                        {getStatusBadge(app.status)}
+                      </View>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{app.age} лет · {app.parent}</Text>
+                    </View>
+                  </View>
+
+                  <View style={{ backgroundColor: 'rgba(108, 92, 231, 0.05)', padding: 16, borderRadius: RADIUS.lg, marginBottom: SPACING.xl }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                       <Feather name="book-open" size={14} color={COLORS.primary} />
+                       <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.foreground }}>{app.club}</Text>
+                    </View>
+                    <Text style={{ fontSize: 11, color: COLORS.mutedForeground, marginLeft: 24 }}>Дата заявки: {app.date}</Text>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: SPACING.md }}>
+                    <TouchableOpacity
+                      onPress={() => handleAction(app.id, 'reject')}
+                      style={{ flex: 1, height: 48, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Text style={{ color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 14 }}>ОТКЛОНИТЬ</Text>
+                    </TouchableOpacity>
+                    
+                    {app.status === "paid" ? (
+                        <TouchableOpacity 
+                          onPress={() => handleAction(app.id, 'approve')}
+                          style={{ flex: 1.5, height: 48, backgroundColor: COLORS.success, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', ...SHADOWS.md }}
+                        >
+                          <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: 14 }}>ЗАЧИСЛИТЬ</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity 
+                          style={{ flex: 1.5, height: 48, backgroundColor: COLORS.border, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}
+                          disabled={true}
+                        >
+                          <Text style={{ color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 14 }}>ЖДЕМ ОПЛАТУ</Text>
+                        </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              </MotiView>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
 }

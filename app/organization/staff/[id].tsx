@@ -1,17 +1,18 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Platform,
-  Pressable,
   ScrollView,
   Text,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 interface Group {
   id: string;
@@ -25,7 +26,7 @@ export default function StaffDetailScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const [staff] = useState({
     id: id,
@@ -48,121 +49,128 @@ export default function StaffDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text style={{ flex: 1, marginLeft: 16, fontSize: 20, fontWeight: "800", color: "white" }}>
-                Профиль преподавателя
-              </Text>
-            </View>
-
-            <View className="flex-row items-center gap-5">
-              <View className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full items-center justify-center border-2 border-white/30">
-                 <Text style={{ fontSize: 32, fontWeight: "800", color: "white" }}>{staff.full_name.charAt(0)}</Text>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <MotiView 
+              from={{ opacity: 0, translateY: -10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ flex: 1, fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>
+                  Профиль преподавателя
+                </Text>
               </View>
-              <View className="flex-1">
-                <Text style={{ fontSize: 22, fontWeight: "800", color: "white", marginBottom: 2 }}>
-                  {staff.full_name}
-                </Text>
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: "600", marginBottom: 8 }}>
-                  {staff.specialization}
-                </Text>
-                <View className="flex-row items-center gap-1 bg-white/20 self-start px-2 py-0.5 rounded-lg">
-                   <Feather name="star" size={10} color="#FFD700" fill="#FFD700" />
-                   <Text style={{ color: "white", fontSize: 11, fontWeight: "800" }}>{staff.rating}</Text>
+
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
+                <View style={{ width: 80, height: 80, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: RADIUS.full, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.3)" }}>
+                   <Text style={{ fontSize: TYPOGRAPHY.size.huge, fontWeight: TYPOGRAPHY.weight.bold, color: "white" }}>{staff.full_name.charAt(0)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>
+                    {staff.full_name}
+                  </Text>
+                  <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium, marginBottom: 8 }}>
+                    {staff.specialization}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.md }}>
+                     <Feather name="star" size={10} color="#FFD700" fill="#FFD700" />
+                     <Text style={{ color: "white", fontSize: 11, fontWeight: TYPOGRAPHY.weight.bold }}>{staff.rating}</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+            </MotiView>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
           paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Stats Grid */}
-        <View className="flex-row gap-3 mb-6">
-           <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-5 border border-gray-100 items-center">
-              <View className="w-12 h-12 bg-orange-50 rounded-2xl items-center justify-center mb-2">
+        <View style={{ flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xl }}>
+           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+              <View style={{ width: 52, height: 52, backgroundColor: 'rgba(108, 92, 231, 0.05)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm }}>
                  <Feather name="layers" size={24} color={COLORS.primary} />
               </View>
-              <Text className="text-2xl font-black text-gray-900">{staff.groups_count}</Text>
-              <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Групп</Text>
+              <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{staff.groups_count}</Text>
+              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Групп</Text>
            </View>
-           <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-5 border border-gray-100 items-center">
-              <View className="w-12 h-12 bg-blue-50 rounded-2xl items-center justify-center mb-2">
+           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+              <View style={{ width: 52, height: 52, backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm }}>
                  <Feather name="users" size={24} color="#3B82F6" />
               </View>
-              <Text className="text-2xl font-black text-gray-900">{staff.total_students}</Text>
-              <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Учеников</Text>
+              <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{staff.total_students}</Text>
+              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Учеников</Text>
            </View>
         </View>
 
         {/* Contact Info */}
-        <View style={SHADOWS.sm} className="bg-white rounded-3xl p-6 mb-6 border border-gray-100">
-           <Text className="text-lg font-bold text-gray-900 mb-4">Контактная информация</Text>
-           <View className="gap-4">
-              <View className="flex-row items-center gap-4">
-                 <View className="w-10 h-10 bg-gray-50 rounded-xl items-center justify-center">
-                    <Feather name="phone" size={18} color={COLORS.mutedForeground} />
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Контактная информация</Text>
+           <View style={{ gap: SPACING.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
+                 <View style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="phone" size={18} color={COLORS.primary} />
                  </View>
-                 <Text className="text-base font-medium text-gray-700">{staff.phone}</Text>
+                 <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{staff.phone}</Text>
               </View>
-              <View className="flex-row items-center gap-4">
-                 <View className="w-10 h-10 bg-gray-50 rounded-xl items-center justify-center">
-                    <Feather name="mail" size={18} color={COLORS.mutedForeground} />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
+                 <View style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="mail" size={18} color={COLORS.primary} />
                  </View>
-                 <Text className="text-base font-medium text-gray-700">{staff.email}</Text>
+                 <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{staff.email}</Text>
               </View>
            </View>
         </View>
 
         {/* Groups List */}
-        <View className="mb-4">
-           <Text className="text-lg font-bold text-gray-900">Группы преподавателя</Text>
+        <View style={{ marginBottom: SPACING.md }}>
+           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Группы преподавателя</Text>
         </View>
 
-        <View className="gap-3">
+        <View style={{ gap: SPACING.sm }}>
            {groups.map((group) => (
-             <Pressable
+             <TouchableOpacity
                 key={group.id}
                 onPress={() => router.push(`/organization/group/${group.id}` as any)}
-                style={SHADOWS.sm}
-                className="bg-white rounded-3xl p-5 border border-gray-100"
+                style={{ ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}
              >
-                <View className="flex-row justify-between items-center">
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                    <View>
-                      <Text className="font-bold text-gray-900 mb-1">{group.group_name}</Text>
-                      <Text className="text-xs text-gray-500">{group.course_title}</Text>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 2 }}>{group.group_name}</Text>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.course_title}</Text>
                    </View>
-                   <View className="bg-gray-50 px-3 py-2 rounded-2xl flex-row items-center gap-1">
-                      <Feather name="users" size={12} color={COLORS.mutedForeground} />
-                      <Text className="text-xs font-bold text-gray-600">{group.current_students}</Text>
+                   <View style={{ backgroundColor: COLORS.background, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.lg, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Feather name="users" size={12} color={COLORS.primary} />
+                      <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{group.current_students}</Text>
                    </View>
                 </View>
-             </Pressable>
+             </TouchableOpacity>
            ))}
         </View>
       </ScrollView>

@@ -1,17 +1,18 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Platform,
-  Pressable,
   ScrollView,
   Text,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 interface Student {
   id: string;
@@ -24,7 +25,7 @@ export default function GroupDetailScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const [group] = useState({
     id: id,
@@ -46,134 +47,145 @@ export default function GroupDetailScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text style={{ flex: 1, marginLeft: 16, fontSize: 20, fontWeight: "800", color: "white" }}>
-                Детали группы
-              </Text>
-              <Pressable
-                onPress={() => router.push(`/organization/group/${id}/edit` as any)}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="settings" size={18} color="white" />
-              </Pressable>
-            </View>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                 <TouchableOpacity
+                    onPress={() => router.back()}
+                    style={{
+                       width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)",
+                       alignItems: "center", justifyContent: "center"
+                    }}
+                 >
+                    <Feather name="arrow-left" size={20} color="white" />
+                 </TouchableOpacity>
+                 <Text style={{ flex: 1, marginLeft: SPACING.md, fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>
+                    Детали группы
+                 </Text>
+                 <TouchableOpacity
+                    onPress={() => router.push(`/organization/group/${id}/edit` as any)}
+                    style={{
+                       width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)",
+                       alignItems: "center", justifyContent: "center"
+                    }}
+                 >
+                    <Feather name="settings" size={18} color="white" />
+                 </TouchableOpacity>
+              </View>
 
-            <View>
-              <Text style={{ fontSize: 24, fontWeight: "800", color: "white", marginBottom: 4 }}>
-                {group.group_name}
-              </Text>
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 14, fontWeight: "600" }}>
-                {group.course_title}
-              </Text>
+              <MotiView
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+              >
+                <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", marginBottom: 4 }}>
+                  {group.group_name}
+                </Text>
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>
+                  {group.course_title}
+                </Text>
+              </MotiView>
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
-          paddingBottom: 40,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
+          paddingBottom: 100,
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Info Cards Row */}
-        <View className="flex-row gap-3 mb-6">
-           <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-4 border border-gray-100">
-              <View className="flex-row items-center gap-2 mb-1">
+        <View style={{ flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xl }}>
+           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.xs }}>
                  <Feather name="users" size={14} color={COLORS.primary} />
-                 <Text className="text-xs text-gray-500 font-bold uppercase tracking-wider">Учеников</Text>
+                 <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Учеников</Text>
               </View>
-              <Text className="text-xl font-black text-gray-900">{group.current_students} / {group.max_students}</Text>
+              <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{group.current_students} / {group.max_students}</Text>
            </View>
-           <View style={SHADOWS.sm} className="flex-1 bg-white rounded-3xl p-4 border border-gray-100">
-              <View className="flex-row items-center gap-2 mb-1">
+           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.xs }}>
                  <Feather name="calendar" size={14} color={COLORS.primary} />
-                 <Text className="text-xs text-gray-500 font-bold uppercase tracking-wider">Занятий</Text>
+                 <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Занятий</Text>
               </View>
-              <Text className="text-xl font-black text-gray-900">3 / нед</Text>
+              <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>3 / нед</Text>
            </View>
         </View>
 
         {/* Details List */}
-        <View style={SHADOWS.sm} className="bg-white rounded-3xl p-6 mb-6 border border-gray-100">
-           <View className="gap-5">
-              <View className="flex-row items-start gap-4">
-                 <View className="w-10 h-10 bg-purple-50 rounded-xl items-center justify-center">
+        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xxl, borderWidth: 1, borderColor: COLORS.border }}>
+           <View style={{ gap: SPACING.xl }}>
+              <View style={{ flexDirection: 'row', alignItems: 'start', gap: SPACING.lg }}>
+                 <View style={{ width: 44, height: 44, backgroundColor: 'rgba(108, 92, 231, 0.05)', borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
                     <Feather name="award" size={20} color={COLORS.primary} />
                  </View>
                  <View>
-                    <Text className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Преподаватель</Text>
-                    <Text className="text-base font-bold text-gray-900">{group.teacher_name}</Text>
+                    <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Преподаватель</Text>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{group.teacher_name}</Text>
                  </View>
               </View>
 
-              <View className="flex-row items-start gap-4">
-                 <View className="w-10 h-10 bg-purple-50 rounded-xl items-center justify-center">
+              <View style={{ flexDirection: 'row', alignItems: 'start', gap: SPACING.lg }}>
+                 <View style={{ width: 44, height: 44, backgroundColor: 'rgba(108, 92, 231, 0.05)', borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
                     <Feather name="clock" size={20} color={COLORS.primary} />
                  </View>
                  <View>
-                    <Text className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Расписание</Text>
-                    <Text className="text-base font-bold text-gray-900">{group.schedule}</Text>
+                    <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>Расписание</Text>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{group.schedule}</Text>
                  </View>
               </View>
            </View>
         </View>
 
         {/* Student List */}
-        <View className="mb-4 flex-row justify-between items-center">
-           <Text className="text-lg font-bold text-gray-900">Список учеников</Text>
-           <Pressable onPress={() => router.push("/organization/students" as any)}>
-              <Text className="text-primary font-bold">+ Добавить</Text>
-           </Pressable>
+        <View style={{ marginBottom: SPACING.lg, flexDirection: 'row', justifyBetween: 'space-between', alignItems: 'center' }}>
+           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, flex: 1 }}>Список учеников</Text>
+           <TouchableOpacity 
+             onPress={() => router.push(`/organization/group/${id}/attendance` as any)} 
+             style={{ backgroundColor: 'rgba(108, 92, 231, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full }}
+           >
+              <Text style={{ color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 11 }}>ПОСЕЩАЕМОСТЬ</Text>
+           </TouchableOpacity>
         </View>
 
-        <View className="gap-3">
-           {students.map((student) => (
-             <Pressable
-                key={student.id}
-                onPress={() => router.push(`/organization/student/${student.id}` as any)}
-                style={SHADOWS.sm}
-                className="bg-white rounded-3xl p-4 border border-gray-100 flex-row items-center justify-between"
+        <View style={{ gap: SPACING.sm }}>
+           {students.map((student, idx) => (
+             <MotiView
+               key={student.id}
+               from={{ opacity: 0, translateY: 10 }}
+               animate={{ opacity: 1, translateY: 0 }}
+               transition={{ delay: idx * 50 }}
              >
-                <View className="flex-row items-center gap-4">
-                   <View className="w-12 h-12 bg-gray-50 rounded-2xl items-center justify-center border border-gray-100">
-                      <Feather name="user" size={24} color={COLORS.mutedForeground} />
-                   </View>
-                   <View>
-                      <Text className="font-bold text-gray-900">{student.full_name}</Text>
-                      <Text className="text-xs text-gray-500">{student.age} лет</Text>
-                   </View>
-                </View>
-                <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
-             </Pressable>
+                <TouchableOpacity
+                    onPress={() => router.push(`/organization/student/${student.id}` as any)}
+                    style={{ ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.lg }}>
+                      <View style={{ width: 48, height: 48, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+                          <Feather name="user" size={20} color={COLORS.mutedForeground} />
+                      </View>
+                      <View>
+                          <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, fontSize: 15 }}>{student.full_name}</Text>
+                          <Text style={{ fontSize: 12, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{student.age} лет</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity 
+                        onPress={() => router.push(`/organization/student/${student.id}/feedback` as any)}
+                        style={{ backgroundColor: COLORS.background, paddingHorizontal: 16, height: 36, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}
+                    >
+                        <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 0.5 }}>Отзыв</Text>
+                    </TouchableOpacity>
+                </TouchableOpacity>
+             </MotiView>
            ))}
         </View>
       </ScrollView>

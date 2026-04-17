@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 import { useParentData } from "../../../contexts/ParentDataContext";
@@ -10,7 +10,7 @@ import { useParentData } from "../../../contexts/ParentDataContext";
 export default function ParentChildDetails() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { childrenProfile } = useParentData();
+  const { childrenProfile, parentProfile } = useParentData();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
@@ -19,12 +19,26 @@ export default function ParentChildDetails() {
 
   if (!child) return null;
 
-  const SKILLS = [
-    { label: "Коммуникация", value: 75, color: "#6C5CE7" },
-    { label: "Лидерство", value: 65, color: "#3B82F6" },
-    { label: "Креативность", value: 80, color: "#A78BFA" },
-    { label: "Логика", value: 70, color: "#10B981" },
-  ];
+  const getDynamicSkills = () => {
+    if (child.talentProfile?.scores) {
+      const s = child.talentProfile.scores;
+      return [
+        { label: "Креативность", value: s.creative, color: "#A78BFA" },
+        { label: "Логика", value: s.logical, color: "#10B981" },
+        { label: "Социум", value: s.social, color: "#3B82F6" },
+        { label: "Физическая", value: s.physical, color: "#F59E0B" },
+        { label: "Лингвистика", value: s.linguistic, color: "#EC4899" },
+      ].sort((a, b) => b.value - a.value);
+    }
+    return [
+      { label: "Коммуникация", value: 10, color: "#6C5CE7" },
+      { label: "Лидерство", value: 10, color: "#3B82F6" },
+      { label: "Креативность", value: 10, color: "#A78BFA" },
+      { label: "Логика", value: 10, color: "#10B981" },
+    ];
+  };
+
+  const currentSkills = getDynamicSkills();
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -108,6 +122,42 @@ export default function ParentChildDetails() {
            </Text>
         </View>
 
+        {/* PRO TOOLS: SESSION & BIG TEST */}
+        {parentProfile?.tariff === 'pro' && (
+           <View className="mb-8 gap-4">
+              <View className="flex-row items-center gap-2 mb-2 px-1">
+                 <Feather name="zap" size={20} color="#F59E0B" />
+                 <Text className="text-lg font-black text-gray-900">PRO Инструменты</Text>
+              </View>
+              
+              <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 border border-gray-100 flex-row items-center justify-between">
+                 <View className="flex-1 pr-4">
+                    <Text className="font-bold text-gray-900 text-lg mb-1">Сессия с ментором</Text>
+                    <Text className="text-sm font-medium text-gray-500 mb-4 leading-5">Выберите 3 варианта времени для созвона-синхронизации с ментором.</Text>
+                    <TouchableOpacity className="bg-primary/10 py-3 px-5 rounded-2xl self-start">
+                        <Text className="text-primary font-black text-xs uppercase tracking-wide">Назначить сессию</Text>
+                    </TouchableOpacity>
+                 </View>
+                 <View className="w-16 h-16 bg-purple-50 rounded-[20px] items-center justify-center border border-purple-100">
+                     <Feather name="video" size={24} color={COLORS.primary} />
+                 </View>
+              </View>
+
+              <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 border border-gray-100 flex-row items-center justify-between">
+                 <View className="flex-1 pr-4">
+                    <Text className="font-bold text-gray-900 text-lg mb-1">Большое тестирование</Text>
+                    <Text className="text-sm font-medium text-gray-500 mb-4 leading-5">Прохождение 1 раз в месяц для детальной корректировки профиля (навыки, архетип).</Text>
+                    <TouchableOpacity className="bg-blue-50 py-3 px-5 rounded-2xl self-start">
+                        <Text className="text-blue-600 font-black text-xs uppercase tracking-wide">Начать тест</Text>
+                    </TouchableOpacity>
+                 </View>
+                 <View className="w-16 h-16 bg-blue-50 rounded-[20px] items-center justify-center border border-blue-100">
+                     <Feather name="file-text" size={24} color="#3B82F6" />
+                 </View>
+              </View>
+           </View>
+        )}
+
         {/* Skills Section */}
         <View style={SHADOWS.sm} className="bg-white rounded-[40px] p-8 mb-8 border border-gray-50">
            <View className="flex-row items-center gap-3 mb-8">
@@ -117,43 +167,106 @@ export default function ParentChildDetails() {
               <Text className="text-xl font-black text-gray-900">Развитие навыков</Text>
            </View>
 
-           <View className="gap-6">
-              {SKILLS.map((skill, idx) => (
+            <View className="gap-6">
+              {currentSkills.map((skill, idx) => (
                  <View key={idx}>
                     <View className="flex-row justify-between mb-2">
                        <Text className="text-sm font-bold text-gray-700">{skill.label}</Text>
                        <Text className="text-sm font-black text-gray-900">{skill.value}%</Text>
                     </View>
-                    <View className="h-2 bg-gray-50 rounded-full overflow-hidden">
+                    <View className="h-2 bg-gray-50 rounded-full overflow-hidden flex-row">
                        <View style={{ width: `${skill.value}%`, backgroundColor: skill.color }} className="h-full rounded-full" />
                     </View>
                  </View>
               ))}
-           </View>
-        </View>
+            </View>
+         </View>
 
-        {/* Test CTA */}
-        <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 overflow-hidden">
-           <LinearGradient
-              colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)']}
-              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-           />
-           <View className="flex-row items-center gap-3 mb-4">
-              <View className="w-10 h-10 bg-white/10 rounded-2xl items-center justify-center">
-                 <Feather name="award" size={20} color="white" />
-              </View>
-              <Text className="text-white text-lg font-black">AI Диагностика</Text>
-           </View>
-           <Text className="text-white/60 text-sm leading-5 mb-6">
-              Пройдите глубокий тест способностей ребенка для открытия новых талантов.
-           </Text>
-           <Pressable 
-              onPress={() => router.push("/parent/testing" as any)}
-              className="bg-white h-14 rounded-2xl items-center justify-center active:bg-gray-100"
-           >
-              <Text className="text-gray-900 font-black text-sm uppercase">Начать тест</Text>
-           </Pressable>
-        </View>
+         {/* Talent Map Info (if available) */}
+         {child.talentProfile && (
+            <View style={SHADOWS.md} className="bg-purple-50 p-6 rounded-[32px] mb-8 border border-purple-100">
+               <View className="flex-row items-center gap-3 mb-4">
+                  <View className="w-10 h-10 bg-purple-100 rounded-2xl items-center justify-center">
+                     <Feather name="star" size={20} color="#6C5CE7" />
+                  </View>
+                  <Text className="text-lg font-black text-purple-900 flex-1">
+                     {child.talentProfile.recommendedConstellation}
+                  </Text>
+               </View>
+               <Text className="text-purple-800 text-sm leading-5 font-medium">
+                  {child.talentProfile.summary}
+               </Text>
+            </View>
+         )}
+
+         {/* Paywall / Test CTA */}
+         {!child.talentProfile ? (
+            <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 overflow-hidden">
+               <LinearGradient
+                  colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)']}
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+               />
+               <View className="flex-row items-center gap-3 mb-4">
+                  <View className="w-10 h-10 bg-white/10 rounded-2xl items-center justify-center">
+                     <Feather name="award" size={20} color="white" />
+                  </View>
+                  <Text className="text-white text-lg font-black">AI Диагностика</Text>
+               </View>
+               <Text className="text-white/60 text-sm leading-5 mb-6">
+                  Пройдите глубокий тест способностей ребенка для открытия новых талантов.
+               </Text>
+               <Pressable 
+                  onPress={() => router.push({ pathname: "/parent/testing", params: { childId: child.id } } as any)}
+                  className="bg-white h-14 rounded-2xl items-center justify-center active:bg-gray-100"
+               >
+                  <Text className="text-gray-900 font-black text-sm uppercase">Начать тест</Text>
+               </Pressable>
+            </View>
+         ) : (
+            <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 overflow-hidden">
+               <LinearGradient
+                  colors={['#A78BFA', '#6C5CE7']}
+                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.2 }}
+               />
+               <View className="flex-row items-center gap-3 mb-4">
+                  <View className="w-10 h-10 bg-purple-500/20 rounded-2xl items-center justify-center border border-purple-500/30">
+                     <Feather name="unlock" size={20} color="#A78BFA" />
+                  </View>
+                  <Text className="text-white text-lg font-black">PRO Подписка</Text>
+               </View>
+               <Text className="text-white/80 text-sm leading-5 mb-6">
+                  Откройте 100% потенциала: персональные рекомендации секций, трекинг с ментором и детальная аналитика.
+               </Text>
+               <Pressable 
+                  onPress={() => router.push("/parent/subscription" as any)}
+                  className="bg-purple-500 h-14 rounded-2xl items-center justify-center active:bg-purple-600"
+               >
+                  <Text className="text-white font-black text-sm uppercase tracking-wide">🔥 Открыть за 30,000 ₸</Text>
+               </Pressable>
+            </View>
+         )}
+
+         {/* QR Code Login Stub */}
+         {!child.phone && (
+            <View style={SHADOWS.sm} className="bg-white rounded-[40px] p-8 mt-8 border border-gray-50 items-center">
+               <View className="flex-row items-center gap-2 mb-6">
+                 <Feather name="smartphone" size={20} color="#6C5CE7" />
+                 <Text className="text-xl font-black text-gray-900">Вход для ребенка</Text>
+               </View>
+               <Text className="text-gray-500 text-center text-sm mb-6 leading-5">
+                  Так как у {child.name} нет привязанного номера телефона, используйте этот QR-код для входа с планшета или телефона ребенка.
+               </Text>
+               <View className="w-48 h-48 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200 items-center justify-center p-4">
+                  <View className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-purple-500 rounded-tl-xl" />
+                  <View className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-purple-500 rounded-tr-xl" />
+                  <View className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-purple-500 rounded-bl-xl" />
+                  <View className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-purple-500 rounded-br-xl" />
+                  
+                  <Feather name="grid" size={64} color="#6C5CE7" style={{ opacity: 0.8 }} />
+                  <Text className="text-purple-600 font-black mt-4 text-[10px] tracking-widest uppercase text-center">сканировать</Text>
+               </View>
+            </View>
+         )}
       </ScrollView>
     </View>
   );

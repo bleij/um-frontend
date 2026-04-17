@@ -10,15 +10,41 @@ import {
     useWindowDimensions,
     View,
 } from "react-native";
-import { LAYOUT } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { useParentData } from "../../../contexts/ParentDataContext";
 
 export default function YouthResults() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { childrenProfile, activeChildId } = useParentData();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.profileHorizontalPaddingDesktop
     : LAYOUT.profileHorizontalPaddingMobile;
+
+  const child = childrenProfile.find(c => c.id === activeChildId) || childrenProfile[0];
+  const diagnostic = child?.talentProfile;
+
+  if (!child || !diagnostic) {
+      return (
+          <View style={{flex: 1, backgroundColor: COLORS.primary, justifyContent: "center", alignItems: "center", padding: 40}}>
+              <Text style={{color: "white", fontSize: 20, textAlign: "center", fontWeight: "bold"}}>
+                  Анализ почти завершен! Пожалуйста, подождите...
+              </Text>
+              <TouchableOpacity onPress={() => router.replace("/(tabs)/home" as any)} style={{marginTop: 20, backgroundColor: "white", padding: 15, borderRadius: 20}}>
+                  <Text style={{color: COLORS.primary, fontWeight: "bold"}}>Вернуться на главную</Text>
+              </TouchableOpacity>
+          </View>
+      )
+  }
+
+  const scores = [
+    { label: "Логика", value: diagnostic.scores.logical, color: "#10B981" },
+    { label: "Креатив", value: diagnostic.scores.creative, color: "#8B5CF6" },
+    { label: "Социум", value: diagnostic.scores.social, color: "#3B82F6" },
+    { label: "Физика", value: diagnostic.scores.physical, color: "#F59E0B" },
+    { label: "Лингвист.", value: diagnostic.scores.linguistic, color: "#EC4899" },
+  ];
 
   return (
     <LinearGradient colors={["#6C5CE7", "#EDE9FE"]} style={{ flex: 1 }}>
@@ -87,108 +113,102 @@ export default function YouthResults() {
             transition={{ duration: 400 }}
             style={{
               backgroundColor: "white",
-              borderRadius: 24,
+              borderRadius: 32,
               padding: 24,
               marginBottom: 26,
-              shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 10,
+              ...SHADOWS.md
             }}
           >
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: "700",
-                textAlign: "center",
-                marginBottom: 10,
-                color: "#6C5CE7",
-              }}
-            >
-              Тип: Техно-энтузиаст
-            </Text>
+            <View style={{flexDirection: "row", alignItems: "center", marginBottom: 12}}>
+               <View style={{width: 40, height: 40, borderRadius: 14, backgroundColor: COLORS.primary + "20", alignItems: "center", justifyContent: "center", marginRight: 12}}>
+                  <Feather name="award" size={20} color={COLORS.primary} />
+               </View>
+               <Text
+                 style={{
+                   fontSize: 22,
+                   fontWeight: "900",
+                   color: COLORS.foreground,
+                 }}
+               >
+                 {diagnostic.recommendedConstellation}
+               </Text>
+            </View>
 
             <Text
               style={{
-                textAlign: "center",
                 fontSize: 15,
-                color: "#444",
-                lineHeight: 20,
+                color: COLORS.mutedForeground,
+                lineHeight: 22,
+                fontWeight: "500"
               }}
             >
-              Тебе нравится разбираться в технологиях, ты любишь пробовать
-              новое, экспериментировать и работать с техникой и логикой.
+              {diagnostic.summary}
             </Text>
           </MotiView>
 
-          {/* GRAPH */}
+          {/* TALENT MAP (Visual bars instead of simple graph) */}
           <MotiView
-            from={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 500 }}
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 500, delay: 200 }}
             style={{
               backgroundColor: "white",
-              borderRadius: 22,
-              paddingVertical: 24,
-              marginBottom: 26,
-            }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-evenly",
-                alignItems: "flex-end",
-                height: 140,
-              }}
-            >
-              {[85, 70, 55, 90].map((h, i) => (
-                <View
-                  key={i}
-                  style={{
-                    width: 18,
-                    height: h,
-                    backgroundColor: "#6C5CE7",
-                    borderRadius: 8,
-                  }}
-                />
-              ))}
-            </View>
-
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-evenly",
-                marginTop: 12,
-              }}
-            >
-              <Text style={{ fontSize: 13 }}>Логика</Text>
-              <Text style={{ fontSize: 13 }}>Креатив</Text>
-              <Text style={{ fontSize: 13 }}>Коммуник.</Text>
-              <Text style={{ fontSize: 13 }}>Упорство</Text>
-            </View>
-          </MotiView>
-
-          {/* STATS */}
-          <MotiView
-            from={{ opacity: 0, translateY: 20 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ duration: 450 }}
-            style={{
-              backgroundColor: "white",
-              borderRadius: 22,
+              borderRadius: 32,
               padding: 24,
-              marginBottom: 36,
+              marginBottom: 26,
+              ...SHADOWS.sm
             }}
           >
-            <Text style={{ fontSize: 16, marginBottom: 10 }}>
-              Техника — <Text style={{ fontWeight: "700" }}>88%</Text>
-            </Text>
-            <Text style={{ fontSize: 16, marginBottom: 10 }}>
-              Креатив — <Text style={{ fontWeight: "700" }}>70%</Text>
-            </Text>
-            <Text style={{ fontSize: 16 }}>
-              Общение — <Text style={{ fontWeight: "700" }}>62%</Text>
-            </Text>
+            <Text style={{fontSize: 18, fontWeight: "800", marginBottom: 20, color: COLORS.foreground}}>Карта талантов</Text>
+            
+            <View style={{gap: 16}}>
+               {scores.map((score, idx) => (
+                  <View key={idx}>
+                     <View style={{flexDirection: "row", justifyContent: "space-between", marginBottom: 8}}>
+                        <Text style={{fontSize: 14, fontWeight: "700", color: COLORS.mutedForeground}}>{score.label}</Text>
+                        <Text style={{fontSize: 14, fontWeight: "900", color: COLORS.primary}}>{score.value}%</Text>
+                     </View>
+                     <View style={{height: 8, backgroundColor: "#F3F4F6", borderRadius: 4, overflow: "hidden"}}>
+                        <MotiView 
+                           from={{width: 0}}
+                           animate={{width: `${score.value}%`}}
+                           transition={{duration: 1000, delay: 500 + (idx * 100)}}
+                           style={{height: "100%", backgroundColor: score.color, borderRadius: 4}} 
+                        />
+                     </View>
+                  </View>
+               ))}
+            </View>
           </MotiView>
+
+          {/* PRO PROMPT */}
+          <View style={{
+              backgroundColor: COLORS.foreground,
+              borderRadius: 32,
+              padding: 24,
+              marginBottom: 30,
+              overflow: "hidden"
+          }}>
+             <LinearGradient 
+                colors={[COLORS.primary, "transparent"]}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={{position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.3}}
+             />
+             <View style={{flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12}}>
+                <Feather name="zap" size={24} color="#A78BFA" />
+                <Text style={{color: "white", fontSize: 18, fontWeight: "900"}}>PRO Аналитика</Text>
+             </View>
+             <Text style={{color: "rgba(255,255,255,0.7)", fontSize: 14, lineHeight: 20, marginBottom: 20}}>
+                Подпишитесь на PRO, чтобы ИИ составил список подходящих секций в вашем городе и открыл прямой чат с ментором.
+             </Text>
+             <TouchableOpacity 
+                onPress={() => router.push("/parent/subscription" as any)}
+                style={{backgroundColor: "white", paddingVertical: 14, borderRadius: 16, alignItems: "center"}}
+             >
+                <Text style={{color: COLORS.foreground, fontWeight: "900", fontSize: 15}}>ОТКРЫТЬ ВСЕ ВОЗМОЖНОСТИ</Text>
+             </TouchableOpacity>
+          </View>
 
           {/* RECOMMENDATION */}
           <View
@@ -205,24 +225,26 @@ export default function YouthResults() {
             </Text>
           </View>
 
-          {/* BUTTON */}
           <TouchableOpacity
-            onPress={() => router.push("/profile/common/subscribe")}
+            onPress={() => router.replace("/(tabs)/home" as any)}
             style={{
-              backgroundColor: "#6C5CE7",
-              paddingVertical: 16,
-              borderRadius: 30,
+              borderWidth: 2,
+              borderColor: "white",
+              paddingVertical: 18,
+              borderRadius: 24,
             }}
           >
             <Text
               style={{
                 textAlign: "center",
                 color: "white",
-                fontSize: 18,
-                fontWeight: "700",
+                fontSize: 16,
+                fontWeight: "900",
+                textTransform: "uppercase",
+                letterSpacing: 1
               }}
             >
-              Перейти к курсам
+              На главную
             </Text>
           </TouchableOpacity>
         </View>

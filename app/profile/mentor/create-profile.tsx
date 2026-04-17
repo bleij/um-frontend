@@ -32,10 +32,11 @@ export default function MentorCreateProfile() {
     experience: "",
     expertise: "",
     description: "",
+    workload: "",
   });
 
   const handleMockSubmit = () => {
-    router.push("/profile/common/done");
+    router.push("/(tabs)/home" as any);
   };
 
   return (
@@ -217,6 +218,21 @@ export default function MentorCreateProfile() {
                     placeholder="Коротко о себе и опыте"
                     multiline
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 h-24"
+                    textAlignVertical="top"
+                  />
+                </View>
+                <View>
+                  <Text className="text-sm font-medium text-gray-700 mb-1">
+                    Рабочая нагрузка
+                  </Text>
+                  <TextInput
+                    value={formData.workload}
+                    onChangeText={(text) =>
+                      setFormData({ ...formData, workload: text })
+                    }
+                    placeholder="Например: Готов брать до 5 детей в месяц, свободен по будням вечером"
+                    multiline
+                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 h-20"
                     textAlignVertical="top"
                   />
                 </View>

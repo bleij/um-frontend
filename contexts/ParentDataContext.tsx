@@ -16,6 +16,7 @@ interface ParentProfileData {
   firstName: string;
   lastName?: string;
   phone?: string;
+  tariff?: "basic" | "pro";
 }
 
 interface ChildDraft {
@@ -39,6 +40,7 @@ interface ParentDataContextType {
     childId: string,
     diagnostic: Diagnostic,
   ) => Promise<void>;
+  setParentTariff: (tariff: "basic" | "pro") => Promise<void>;
 }
 
 const ParentDataContext = createContext<ParentDataContextType | undefined>(
@@ -339,6 +341,21 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setParentTariff = async (tariff: "basic" | "pro") => {
+    if (!parentProfile || !user) return;
+    
+    const updatedProfile = { ...parentProfile, tariff };
+    setParentProfile(updatedProfile);
+    await persistProfile(updatedProfile);
+    
+    // Attempt DB sync if supabase exists
+    if (supabase && isSupabaseConfigured) {
+       await supabase.from("parent_profiles").update({
+          tariff: tariff
+       }).eq("user_id", user.id);
+    }
+  };
+
   return (
     <ParentDataContext.Provider
       value={{
@@ -350,6 +367,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
         addChild,
         saveParentProfile,
         updateChildDiagnostic,
+        setParentTariff,
       }}
     >
       {children}

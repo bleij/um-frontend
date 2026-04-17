@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useParentData } from "../../../contexts/ParentDataContext";
 
 export default function YouthProfile() {
   const router = useRouter();
@@ -24,6 +25,8 @@ export default function YouthProfile() {
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : LAYOUT.dashboardHorizontalPaddingMobile;
+  const { parentProfile } = useParentData();
+  const isPro = parentProfile?.tariff === "pro";
 
   const handleLogout = async () => {
     if (Platform.OS === "web") {
@@ -123,9 +126,26 @@ export default function YouthProfile() {
               >
                 Максим
               </Text>
-              <Text style={{ color: COLORS.mutedForeground, marginBottom: 20 }}>
+              <Text style={{ color: COLORS.mutedForeground, marginBottom: 12 }}>
                 Student • Level 8
               </Text>
+              
+              <View style={{ 
+                backgroundColor: isPro ? '#A78BFA' : COLORS.muted, 
+                paddingHorizontal: 12, 
+                paddingVertical: 4, 
+                borderRadius: RADIUS.full,
+                marginBottom: 20
+              }}>
+                <Text style={{ 
+                  color: isPro ? 'white' : COLORS.mutedForeground, 
+                  fontSize: 10, 
+                  fontWeight: '800',
+                  textTransform: 'uppercase'
+                }}>
+                  {isPro ? 'PRO STATUS' : 'BASIC TARIFF'}
+                </Text>
+              </View>
 
               <View
                 style={{

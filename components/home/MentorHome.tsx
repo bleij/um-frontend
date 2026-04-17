@@ -35,6 +35,11 @@ const MOCK_STUDENTS = [
   },
 ];
 
+const RECENT_FEEDBACKS = [
+  { id: "1", date: "Сегодня, 14:30", teacher: "Смирнов (Шахматы)", student: "Максим Иванов", tag: "Быстро усвоил", text: "Отлично решил задачу, хотя отвлекался в начале." },
+  { id: "2", date: "Вчера, 18:00", teacher: "Соколов (Роботы)", student: "Анна Петрова", tag: "Проявила лидерство", text: "Собрала команду и руководила процессом сборки." }
+];
+
 const SKILL_LABELS = ["Ком.", "Лид.", "Кре.", "Лог.", "Дис."];
 
 export default function MentorHome() {
@@ -42,6 +47,9 @@ export default function MentorHome() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+
+  // Mock approval status
+  const [isApproved, setIsApproved] = React.useState(false); // Change to true to see approved state
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -71,13 +79,20 @@ export default function MentorHome() {
                         color: COLORS.white, 
                         letterSpacing: TYPOGRAPHY.letterSpacing.tight 
                       }}>Привет,</Text>
-                      <Text style={{ 
-                        fontSize: TYPOGRAPHY.size.xxxl, 
-                        fontWeight: TYPOGRAPHY.weight.semibold, 
-                        color: COLORS.white, 
-                        letterSpacing: TYPOGRAPHY.letterSpacing.tight,
-                        marginTop: -SPACING.xs 
-                      }}>Анна Сергеевна! 👋</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: -SPACING.xs }}>
+                          <Text style={{ 
+                            fontSize: TYPOGRAPHY.size.xxxl, 
+                            fontWeight: TYPOGRAPHY.weight.semibold, 
+                            color: COLORS.white, 
+                            letterSpacing: TYPOGRAPHY.letterSpacing.tight,
+                          }}>Анна Сергеевна!</Text>
+                          {isApproved && (
+                             <View style={{ backgroundColor: COLORS.info, borderRadius: 12, padding: 2, marginLeft: 8 }}>
+                                <Feather name="check" size={12} color="white" />
+                             </View>
+                          )}
+                          <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, marginLeft: 4 }}>👋</Text>
+                       </View>
                    </View>
                    <TouchableOpacity 
                      style={{ 
@@ -97,22 +112,30 @@ export default function MentorHome() {
                           position: "absolute", 
                           top: 14, 
                           right: 14, 
-                          width: 10, 
-                          height: 10, 
+                          width: 12, 
+                          height: 12, 
                           backgroundColor: COLORS.destructive, 
-                          borderRadius: 5,
-                          borderWidth: 1.5,
-                          borderColor: 'rgba(255,255,255,0.4)'
+                          borderRadius: 6,
+                          borderWidth: 2,
+                          borderColor: COLORS.white
                         }} 
                       />
                    </TouchableOpacity>
                 </View>
-                <Text style={{ 
-                  color: 'rgba(255,255,255,0.8)', 
-                  fontSize: TYPOGRAPHY.size.sm, 
-                  fontWeight: TYPOGRAPHY.weight.medium,
-                  marginTop: SPACING.xs 
-                }}>Ожидается 4 занятия • Среда, 16 апр</Text>
+                
+                <View className="flex-row items-center justify-between mt-2">
+                   <Text style={{ 
+                     color: 'rgba(255,255,255,0.8)', 
+                     fontSize: TYPOGRAPHY.size.sm, 
+                     fontWeight: TYPOGRAPHY.weight.medium,
+                   }}>Ожидается 4 занятия • Среда, 16 апр</Text>
+                   
+                   {/* Wallet Block */}
+                   <TouchableOpacity className="bg-white/10 px-3 py-1.5 rounded-full border border-white/20 flex-row items-center gap-2">
+                      <Feather name="credit-card" size={14} color="white" />
+                      <Text className="text-white font-bold">45,000 ₸</Text>
+                   </TouchableOpacity>
+                </View>
               </MotiView>
             </SafeAreaView>
           </LinearGradient>
@@ -121,7 +144,38 @@ export default function MentorHome() {
         <View style={{ height: SPACING.xl }} />
 
         {/* Next Lesson Card - Squircle Aesthetic */}
-        <View style={{ paddingHorizontal: paddingX }} className="mb-8">
+        {!isApproved && (
+           <MotiView 
+             from={{ opacity: 0, translateY: -10 }}
+             animate={{ opacity: 1, translateY: 0 }}
+             style={{ paddingHorizontal: paddingX, marginBottom: 24 }}
+           >
+              <TouchableOpacity 
+                onPress={() => setIsApproved(true)} // DEV TOGGLE
+                activeOpacity={0.9}
+                style={{ 
+                  backgroundColor: COLORS.warning + '15', 
+                  borderRadius: RADIUS.lg, 
+                  padding: 16, 
+                  borderWidth: 1, 
+                  borderColor: COLORS.warning + '30',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12
+                }}
+              >
+                 <View style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.warning + '20', alignItems: 'center', justifyContent: 'center' }}>
+                    <Feather name="clock" size={20} color={COLORS.warning} />
+                 </View>
+                 <View className="flex-1">
+                    <Text className="text-sm font-bold text-gray-900">Ваша заявка на рассмотрении</Text>
+                    <Text className="text-xs text-gray-500">Дождитесь одобрения администратором для полного доступа ко всем функциям.</Text>
+                 </View>
+              </TouchableOpacity>
+           </MotiView>
+        )}
+
+        <View style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }} className="mb-8">
            <View className="flex-row justify-between items-end mb-4 px-1">
               <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Ближайшее занятие</Text>
               <TouchableOpacity onPress={() => router.push("/(tabs)/mentor/schedule" as any)}>
@@ -186,8 +240,114 @@ export default function MentorHome() {
            </MotiView>
         </View>
 
-        {/* My Students - High Fidelity Cards */}
+        {/* SESSION REQUESTS (System Call Widget) */}
         <View style={{ paddingHorizontal: paddingX }} className="mb-8">
+           <View className="flex-row justify-between items-center mb-4 px-1">
+              <View className="flex-row items-center gap-2">
+                 <Feather name="video" size={20} color={COLORS.primary} />
+                 <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Ежемесячные сессии</Text>
+              </View>
+              <View className="bg-orange-100 px-2 py-0.5 rounded-full">
+                 <Text className="text-orange-600 text-xs font-bold">1 новое</Text>
+              </View>
+           </View>
+
+           <MotiView
+              from={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={{ ...SHADOWS.strict, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.primary + '30', borderLeftWidth: 4, borderLeftColor: COLORS.primary }}
+           >
+              <View className="flex-row justify-between items-start mb-3">
+                 <View>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>Родитель: Елена (Иван)</Text>
+                    <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>Запрос на согласование времени</Text>
+                 </View>
+                 <View style={{ backgroundColor: COLORS.warning + '15', paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.sm }}>
+                    <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.warning, textTransform: 'uppercase' }}>Ожидает</Text>
+                 </View>
+              </View>
+              
+              <Text style={{ fontSize: 13, color: COLORS.foreground, marginBottom: 12 }}>Предложенные слоты:</Text>
+              <View className="flex-row gap-2 mb-4">
+                 {["Пн 18:00", "Вт 10:00", "Сб 12:00"].map((slot, i) => (
+                    <TouchableOpacity key={i} className="bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1 items-center">
+                       <Text className="text-gray-700 font-semibold text-xs">{slot}</Text>
+                    </TouchableOpacity>
+                 ))}
+              </View>
+              
+              <TouchableOpacity className="bg-primary py-3 rounded-xl items-center">
+                 <Text className="text-white font-bold">Выбрать время</Text>
+              </TouchableOpacity>
+           </MotiView>
+        </View>
+
+        {/* MENTORSHIP REQUESTS */}
+        <View style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }} className="mb-8">
+           <View className="flex-row justify-between items-center mb-4 px-1">
+              <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Заявки на сопровождение</Text>
+           </View>
+           
+           <View style={{ ...SHADOWS.sm, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View className="flex-row items-center gap-3">
+                 <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center">
+                    <Feather name="user-plus" size={18} color="#3B82F6" />
+                 </View>
+                 <View>
+                    <Text className="font-bold text-gray-900">Данияр (14 лет)</Text>
+                    <Text className="text-xs text-gray-500">Хочет развивать логику</Text>
+                 </View>
+              </View>
+              <View className="flex-row gap-2">
+                 <TouchableOpacity className="w-8 h-8 rounded-full bg-red-50 items-center justify-center border border-red-100">
+                    <Feather name="x" size={16} color="#EF4444" />
+                 </TouchableOpacity>
+                 <TouchableOpacity className="w-8 h-8 rounded-full bg-green-50 items-center justify-center border border-green-100">
+                    <Feather name="check" size={16} color="#10B981" />
+                 </TouchableOpacity>
+              </View>
+           </View>
+        </View>
+        {/* FEEDBACK FEED (Phase 4.1) */}
+        <View style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }} className="mb-8">
+            <View className="flex-row justify-between items-center mb-5 px-1">
+                <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Лента обновлений</Text>
+                <TouchableOpacity>
+                   <Text style={{ color: COLORS.info, fontWeight: TYPOGRAPHY.weight.semibold, fontSize: TYPOGRAPHY.size.sm }}>Все отзывы</Text>
+                </TouchableOpacity>
+            </View>
+
+            <View className="gap-4">
+                {RECENT_FEEDBACKS.map((fb, idx) => (
+                    <MotiView 
+                        key={fb.id}
+                        from={{ opacity: 0, translateX: -20 }}
+                        animate={{ opacity: 1, translateX: 0 }}
+                        transition={{ duration: 400, delay: 200 + idx * 100 }}
+                        style={{ ...SHADOWS.strict, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}
+                    >
+                        <View className="flex-row justify-between items-start mb-3">
+                            <View className="flex-row items-center gap-3">
+                                <View style={{ width: 36, height: 36, borderRadius: RADIUS.md, backgroundColor: COLORS.primary + '15', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Feather name="message-circle" size={18} color={COLORS.primary} />
+                                </View>
+                                <View>
+                                   <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{fb.student}</Text>
+                                   <Text style={{ fontSize: 10, color: COLORS.mutedForeground, marginTop: 2 }}>{fb.teacher} • {fb.date}</Text>
+                                </View>
+                            </View>
+                        </View>
+                        <View style={{ alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 4, backgroundColor: COLORS.success + '15', borderRadius: RADIUS.md, marginBottom: 8 }}>
+                           <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.success, textTransform: 'uppercase' }}>{fb.tag}</Text>
+                        </View>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, lineHeight: 20 }}>"{fb.text}"</Text>
+                    </MotiView>
+                ))}
+            </View>
+        </View>
+
+        {/* My Students - High Fidelity Cards */}
+        <View style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }} className="mb-8">
             <View className="flex-row justify-between items-center mb-5 px-1">
                 <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Мои ученики</Text>
                 <TouchableOpacity className="w-11 h-11 items-center justify-center bg-muted rounded-full">
@@ -246,35 +406,28 @@ export default function MentorHome() {
                                 ))}
                             </View>
 
-                            <View className="flex-row gap-4">
+                            <View className="flex-row gap-3">
                                 <TouchableOpacity 
                                     onPress={() => router.push("/(tabs)/mentor/learning-path" as any)}
-                                    style={{ 
-                                        flex: 1, 
-                                        height: 52, 
-                                        backgroundColor: COLORS.muted, 
-                                        borderRadius: RADIUS.full, 
-                                        flexDirection: 'row', 
-                                        alignItems: 'center', 
-                                        justifyContent: 'center',
-                                        gap: 8
-                                    }}
+                                    className="bg-purple-50 flex-row flex-1 py-3 px-2 items-center justify-center rounded-xl"
                                 >
-                                    <Feather name="zap" size={16} color={COLORS.primary} />
-                                    <Text style={{ color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.semibold, fontSize: TYPOGRAPHY.size.sm }}>Анализ роста</Text>
+                                    <Feather name="trending-up" size={14} color={COLORS.primary} />
+                                    <Text className="text-xs font-bold text-primary ml-1.5" numberOfLines={1}>Анализ</Text>
                                 </TouchableOpacity>
+
+                                <TouchableOpacity 
+                                    onPress={() => router.push("/(tabs)/mentor/attendance" as any)}
+                                    className="bg-blue-50 flex-row flex-1 py-3 px-2 items-center justify-center rounded-xl"
+                                >
+                                    <Feather name="check-square" size={14} color="#3B82F6" />
+                                    <Text className="text-xs font-bold text-blue-500 ml-1.5" numberOfLines={1}>Визиты</Text>
+                                </TouchableOpacity>
+
                                 <TouchableOpacity 
                                     onPress={() => router.push("/(tabs)/chats" as any)}
-                                    style={{ 
-                                        width: 52, 
-                                        height: 52, 
-                                        backgroundColor: COLORS.muted, 
-                                        borderRadius: RADIUS.full, 
-                                        alignItems: 'center', 
-                                        justifyContent: 'center' 
-                                    }}
+                                    className="bg-green-50 w-12 items-center justify-center rounded-xl"
                                 >
-                                    <Feather name="message-square" size={20} color={COLORS.primary} />
+                                    <Feather name="message-square" size={16} color="#10B981" />
                                 </TouchableOpacity>
                             </View>
                         </TouchableOpacity>
@@ -284,7 +437,7 @@ export default function MentorHome() {
         </View>
 
         {/* Quick Tools */}
-        <View style={{ paddingHorizontal: paddingX }}>
+        <View style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }}>
            <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.xl }}>Инструменты</Text>
            <View className="flex-row flex-wrap gap-4">
               {[

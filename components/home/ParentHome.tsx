@@ -23,6 +23,7 @@ export default function ParentHome() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const {
+    parentProfile,
     childrenProfile: children,
     activeChildId,
     setActiveChildId,
@@ -136,6 +137,43 @@ export default function ParentHome() {
                <Text className="text-xs font-bold text-gray-400 text-center">Добавить</Text>
             </Pressable>
           </ScrollView>
+        </View>
+
+        {/* Dashboard Insight Widget (Tariff Based) */}
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32 }}>
+           {parentProfile?.tariff === 'pro' ? (
+              <View style={SHADOWS.md} className="bg-purple-50 rounded-[32px] p-6 border border-purple-100 flex-row items-center">
+                 <View className="w-12 h-12 bg-white rounded-full items-center justify-center mr-4 border-2 border-purple-200">
+                    <Feather name="message-circle" size={20} color="#6C5CE7" />
+                 </View>
+                 <View className="flex-1 pr-2">
+                    <Text className="text-purple-900 font-bold text-sm mb-1">Сообщение от Ментора</Text>
+                    <Text className="text-purple-700 text-xs leading-4">«{activeChild?.name} показывает отличные результаты в логике. Я подобрал новые секции!»</Text>
+                    <View className="flex-row gap-2 mt-3">
+                       <Pressable onPress={() => router.push('/chats' as any)} className="bg-purple-600 px-3 py-1.5 rounded-full flex-row items-center gap-1">
+                          <Text className="text-white font-black text-[10px] uppercase tracking-widest">Чат 🔥</Text>
+                       </Pressable>
+                       <Pressable onPress={() => router.push('/parent/mentors' as any)} className="bg-white px-3 py-1.5 rounded-full border border-purple-200 flex-row items-center gap-1">
+                          <Feather name="users" size={10} color="#6C5CE7" />
+                          <Text className="text-purple-600 font-black text-[10px] uppercase tracking-widest">Менторы</Text>
+                       </Pressable>
+                    </View>
+                 </View>
+              </View>
+           ) : (
+              <View style={SHADOWS.sm} className="bg-blue-50 rounded-[32px] p-6 border border-blue-100 flex-row items-center">
+                 <View className="w-12 h-12 bg-white rounded-full items-center justify-center mr-4 shadow-sm border border-blue-50">
+                    <Feather name="cpu" size={20} color="#3B82F6" />
+                 </View>
+                 <View className="flex-1 pr-2">
+                    <Text className="text-blue-900 font-bold text-sm mb-1">AI Ассистент</Text>
+                    <Text className="text-blue-700 text-xs leading-4">Я проанализировал первичный тест. У {activeChild?.name} склонность к творчеству!</Text>
+                    <Pressable onPress={() => router.push('/parent/subscription' as any)} className="mt-3 bg-white self-start px-3 py-1.5 rounded-full border border-blue-200">
+                       <Text className="text-blue-600 font-black text-[10px] uppercase tracking-widest">PRO Подробности</Text>
+                    </Pressable>
+                 </View>
+              </View>
+           )}
         </View>
 
         {/* AI Recommendations Section */}

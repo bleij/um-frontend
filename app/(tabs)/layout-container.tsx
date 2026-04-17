@@ -19,7 +19,8 @@ export type Role =
   | "child"
   | "young-adult"
   | "mentor"
-  | "org";
+  | "org"
+  | "teacher";
 
 type TabItem = {
   key: string;
@@ -226,6 +227,34 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
       route: "analytics",
       icon: ({ color, size }) => (
         <Feather name="bar-chart-2" size={size} color={color} />
+      ),
+    },
+    {
+      key: "profile",
+      label: "Профиль",
+      route: "profile",
+      icon: ({ color, size }) => (
+        <Feather name="user" size={size} color={color} />
+      ),
+    },
+  ],
+
+  teacher: [
+    COMMON_HOME,
+    {
+      key: "teacher/groups",
+      label: "Группы",
+      route: "teacher/groups",
+      icon: ({ color, size }) => (
+        <Feather name="users" size={size} color={color} />
+      ),
+    },
+    {
+      key: "chats",
+      label: "Чат",
+      route: "chats",
+      icon: ({ color, size }) => (
+        <Feather name="message-circle" size={size} color={color} />
       ),
     },
     {

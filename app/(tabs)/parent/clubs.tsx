@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
-
+import { useParentData } from "../../../contexts/ParentDataContext";
 import { courses } from "../../../data/courses";
 
 const CATEGORIES = ["Все", "Технологии", "Искусство", "Спорт", "Мышление"];
@@ -27,10 +27,38 @@ const CATEGORY_TO_TAGS: Record<string, string[]> = {
 export default function ParentClubs() {
   const router = useRouter();
   const { width } = useWindowDimensions();
+  const { childrenProfile, activeChildId } = useParentData();
   const [activeCategory, setActiveCategory] = useState("Все");
   const [search, setSearch] = useState("");
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+
+  const activeChild = childrenProfile.find(c => c.id === activeChildId) || childrenProfile[0];
+
+  const SCORE_TO_TAGS: Record<string, string[]> = {
+    creative: ["творчество", "гум"],
+    logical: ["it", "мат"],
+    social: ["гум", "творчество"],
+    physical: ["спорт"],
+    linguistic: ["гум"]
+  };
+
+  const getRecommendations = () => {
+    if (!activeChild?.talentProfile) return [];
+    const scores = activeChild.talentProfile.scores as Record<string, number>;
+    
+    // Find top 2 traits
+    const sortedTraits = Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 2);
+    
+    let recommendedTags: string[] = [];
+    sortedTraits.forEach(([trait]) => {
+       recommendedTags = [...recommendedTags, ...(SCORE_TO_TAGS[trait] || [])];
+    });
+
+    return courses.filter(club => recommendedTags.includes(club.tag as string)).slice(0, 5);
+  };
+
+  const recommendedCourses = getRecommendations();
 
   const filtered = courses.filter((club) => {
     const matchCat = activeCategory === "Все" || CATEGORY_TO_TAGS[activeCategory]?.includes(club.tag as string);
@@ -99,7 +127,53 @@ export default function ParentClubs() {
            ))}
         </ScrollView>
 
-        <Text className="text-xl font-black text-gray-900 mb-4 px-1">Доступные кружки</Text>
+        {/* AI Recommendations */}
+        {activeChild?.talentProfile && recommendedCourses.length > 0 && search === "" && (
+            <View className="mb-8">
+               <View className="flex-row items-center gap-2 mb-4 px-1">
+                  <View className="w-8 h-8 bg-purple-100 rounded-full items-center justify-center">
+                     <Feather name="zap" size={16} color="#6C5CE7" />
+                  </View>
+                  <View>
+                     <Text className="text-xl font-black text-gray-900">Идеально для {activeChild.name}</Text>
+                     <Text className="text-[11px] font-bold text-purple-600 uppercase">Подобрано ИИ (Карта Талантов)</Text>
+                  </View>
+               </View>
+
+               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 px-1 overflow-visible pb-2 pt-1">
+                  {recommendedCourses.map(club => (
+                     <Pressable
+                        key={club.id}
+                        onPress={() => router.push(`/parent/club/${club.id}` as any)}
+                        style={SHADOWS.md}
+                        className="mr-4 w-60 bg-white rounded-[28px] p-1 border border-purple-50"
+                     >
+                        <LinearGradient 
+                           colors={(club.gradient as any) || ["#6C5CE7", "#8B7FE8"]}
+                           style={{ height: 120, borderRadius: 24, padding: 12, justifyContent: "space-between" }}
+                        >
+                           <View className="bg-white/30 self-start px-2 py-1 rounded-lg backdrop-blur-md">
+                              <Text className="text-white text-[10px] font-black uppercase">Мастхэв</Text>
+                           </View>
+                           <Feather name={(club.icon as any) || "star"} size={32} color="rgba(255,255,255,0.8)" style={{ alignSelf: "flex-end" }} />
+                        </LinearGradient>
+                        <View className="p-4">
+                           <Text className="font-bold text-base text-gray-900 mb-1" numberOfLines={1}>{club.title}</Text>
+                           <Text className="text-xs text-gray-400 font-medium mb-3" numberOfLines={1}>{club.shortDescription}</Text>
+                           <View className="flex-row justify-between items-center">
+                               <Text className="text-purple-600 font-black text-sm">{club.price?.toString().split(" ")[1] + " ₸"}</Text>
+                               <View className="bg-gray-50 p-2 rounded-full">
+                                  <Feather name="arrow-right" size={14} color="#6B7280" />
+                               </View>
+                           </View>
+                        </View>
+                     </Pressable>
+                  ))}
+               </ScrollView>
+            </View>
+        )}
+
+        <Text className="text-xl font-black text-gray-900 mb-4 px-1">{search ? "Результаты поиска" : "Все кружки"}</Text>
 
         <View className="gap-4">
            {filtered.map(club => (

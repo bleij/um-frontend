@@ -9,9 +9,10 @@ import {
   Text,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 const DAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 const SCHEDULE_DATA = [
@@ -31,48 +32,61 @@ export default function OrgScheduleScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={['#1E3A8A', '#3B82F6']}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>Расписание</Text>
-              <Pressable className="w-10 h-10 rounded-full bg-white/20 items-center justify-center">
-                <Feather name="plus" size={20} color="white" />
-              </Pressable>
-            </View>
-
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 px-1 overflow-visible">
-              {DAYS.map((day, index) => (
-                <Pressable
-                  key={day}
-                  onPress={() => setSelectedDay(index)}
-                  className={`mr-3 w-12 h-16 rounded-2xl items-center justify-center border ${selectedDay === index ? 'bg-white border-white' : 'bg-white/10 border-white/20'}`}
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: 24 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
                 >
-                  <Text className={`font-black text-xs ${selectedDay === index ? 'text-blue-600' : 'text-white/60'}`}>{day}</Text>
-                  <View className={`mt-1.5 w-1 h-1 rounded-full ${selectedDay === index ? 'bg-blue-600' : 'bg-transparent'}`} />
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>Расписание</Text>
+                <TouchableOpacity style={{ width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
+                  <Feather name="plus" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 px-1 overflow-visible">
+                {DAYS.map((day, index) => (
+                  <Pressable
+                    key={day}
+                    onPress={() => setSelectedDay(index)}
+                    style={{
+                        marginRight: 12,
+                        width: 48,
+                        height: 64,
+                        borderRadius: RADIUS.md,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderWidth: 1,
+                        backgroundColor: selectedDay === index ? 'white' : 'rgba(255,255,255,0.1)',
+                        borderColor: selectedDay === index ? 'white' : 'rgba(255,255,255,0.2)'
+                    }}
+                  >
+                    <Text style={{ fontWeight: "900", fontSize: 12, color: selectedDay === index ? COLORS.primary : 'rgba(255,255,255,0.6)' }}>{day}</Text>
+                    <View style={{ marginTop: 6, width: 4, height: 4, borderRadius: 2, backgroundColor: selectedDay === index ? COLORS.primary : 'transparent' }} />
+                  </Pressable>
+                ))}
+              </ScrollView>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{

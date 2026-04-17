@@ -24,6 +24,7 @@ export interface Child {
   id: string;
   parentId: string;
   name: string;
+  phone?: string;
   age: number;
   ageCategory?: "child" | "teen" | "young-adult";
   interests: string[];

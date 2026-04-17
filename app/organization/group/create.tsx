@@ -1,25 +1,26 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 export default function GroupCreateScreen() {
   const router = useRouter();
   const { courseId } = useLocalSearchParams();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -40,92 +41,104 @@ export default function GroupCreateScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Создать группу</Text>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>Создать группу</Text>
+              </View>
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
           paddingBottom: 40,
         }}
+        showsVerticalScrollIndicator={false}
       >
-        <View style={SHADOWS.md} className="bg-white rounded-[32px] p-6 border border-gray-100">
-           <View className="gap-6">
-              <View>
-                 <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Название группы *</Text>
-                 <TextInput
-                    className="h-14 bg-gray-50 rounded-2xl px-4 font-medium text-gray-900 border border-gray-100"
-                    placeholder="Напр: Утренняя группа"
-                    value={formData.name}
-                    onChangeText={(val) => setFormData({...formData, name: val})}
-                 />
-              </View>
-
-              <View>
-                 <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Выбрать учителя</Text>
-                 <Pressable className="h-14 bg-gray-50 rounded-2xl px-4 flex-row items-center justify-between border border-gray-100">
-                    <Text className="font-medium text-gray-700">{formData.teacherId ? "Игорь Соколов" : "Не выбран"}</Text>
-                    <Feather name="chevron-down" size={18} color="#9CA3AF" />
-                 </Pressable>
-              </View>
-
-              <View>
-                 <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Расписание</Text>
-                 <TextInput
-                    className="h-14 bg-gray-50 rounded-2xl px-4 font-medium text-gray-900 border border-gray-100"
-                    placeholder="Напр: Вт, Чт 16:00"
-                    value={formData.schedule}
-                    onChangeText={(val) => setFormData({...formData, schedule: val})}
-                 />
-              </View>
-
-              <View>
-                 <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 ml-1">Макс. учеников</Text>
-                 <TextInput
-                    className="h-14 bg-gray-50 rounded-2xl px-4 font-medium text-gray-900 border border-gray-100"
-                    placeholder="12"
-                    keyboardType="numeric"
-                    value={formData.maxStudents}
-                    onChangeText={(val) => setFormData({...formData, maxStudents: val})}
-                 />
-              </View>
-           </View>
-        </View>
-
-        <Pressable
-          onPress={handleSubmit}
-          disabled={loading || !formData.name}
-          className={`h-16 rounded-2xl items-center justify-center mt-8 shadow-lg ${loading || !formData.name ? 'bg-gray-200' : 'bg-primary shadow-primary/20'}`}
+        <MotiView
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
         >
-           <Text className="text-white font-bold text-lg">
-              {loading ? "Создание..." : "Создать группу"}
-           </Text>
-        </Pressable>
+          <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+             <View style={{ gap: SPACING.xl }}>
+                <View>
+                   <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Название группы *</Text>
+                    <TextInput
+                      style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground, borderWidth: 1, borderColor: COLORS.border }}
+                      placeholder="Напр: Утренняя группа"
+                      placeholderTextColor={COLORS.mutedForeground}
+                      value={formData.name}
+                      onChangeText={(val) => setFormData({...formData, name: val})}
+                   />
+                </View>
+
+                <View>
+                   <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Выбрать учителя</Text>
+                   <TouchableOpacity style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: COLORS.border }}>
+                      <Text style={{ fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: formData.teacherId ? COLORS.foreground : COLORS.mutedForeground }}>{formData.teacherId ? "Игорь Соколов" : "Не выбран"}</Text>
+                      <Feather name="chevron-down" size={18} color={COLORS.mutedForeground} />
+                   </TouchableOpacity>
+                </View>
+
+                <View>
+                   <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Расписание</Text>
+                   <TextInput
+                      style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground, borderWidth: 1, borderColor: COLORS.border }}
+                      placeholder="Напр: Вт, Чт 16:00"
+                      placeholderTextColor={COLORS.mutedForeground}
+                      value={formData.schedule}
+                      onChangeText={(val) => setFormData({...formData, schedule: val})}
+                   />
+                </View>
+
+                <View>
+                   <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Макс. учеников</Text>
+                   <TextInput
+                      style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground, borderWidth: 1, borderColor: COLORS.border }}
+                      placeholder="12"
+                      placeholderTextColor={COLORS.mutedForeground}
+                      keyboardType="numeric"
+                      value={formData.maxStudents}
+                      onChangeText={(val) => setFormData({...formData, maxStudents: val})}
+                   />
+                </View>
+             </View>
+          </View>
+
+          <TouchableOpacity
+            onPress={handleSubmit}
+            disabled={loading || !formData.name}
+            style={{ height: 60, borderRadius: RADIUS.xl, alignItems: 'center', justifyContent: 'center', marginTop: SPACING.xxl, backgroundColor: loading || !formData.name ? COLORS.border : COLORS.primary, ...SHADOWS.md }}
+          >
+             <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: 16 }}>
+                {loading ? "СОЗДАНИЕ..." : "СОЗДАТЬ ГРУППУ"}
+             </Text>
+          </TouchableOpacity>
+        </MotiView>
       </ScrollView>
     </View>
   );

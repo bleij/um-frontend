@@ -63,6 +63,11 @@ export default function TabsLayout() {
       <Tabs.Screen name="organization/tasks" options={{ href: null }} />
       <Tabs.Screen name="organization/staff" options={{ href: null }} />
       <Tabs.Screen name="organization/groups" options={{ href: null }} />
+
+      {/* TEACHER SCREENS */}
+      <Tabs.Screen name="teacher/groups" options={{ href: null }} />
+      <Tabs.Screen name="teacher/group/[id]" options={{ href: null }} />
+      <Tabs.Screen name="teacher/student/[id]" options={{ href: null }} />
     </Tabs>
   );
 

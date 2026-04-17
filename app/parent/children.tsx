@@ -6,7 +6,9 @@ import {
     ScrollView,
     Text,
     TouchableOpacity,
-    View
+    View,
+    Platform,
+    useWindowDimensions
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useParentData } from "../../contexts/ParentDataContext";

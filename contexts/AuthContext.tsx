@@ -17,7 +17,9 @@ export type UserRole =
   | "child"
   | "young-adult"
   | "mentor"
-  | "org";
+  | "org"
+  | "teacher"
+  | "admin";
 
 export interface AuthUser {
   id: string;
@@ -109,6 +111,7 @@ function parseRole(value: string | null | undefined): UserRole {
     "young-adult",
     "mentor",
     "org",
+    "teacher",
   ];
 
   if (value && allowed.includes(value as UserRole)) {

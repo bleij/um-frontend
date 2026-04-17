@@ -1,18 +1,19 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Platform,
-  Pressable,
   ScrollView,
   Text,
   TextInput,
   useWindowDimensions,
   View,
+  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 const COURSES = [
   { id: "1", name: "Робототехника", students: 18, age: "6-11", price: 25000, status: "active", icon: "cpu" },
@@ -25,7 +26,7 @@ export default function OrgCourses() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
   
   const [search, setSearch] = useState("");
   const filtered = COURSES.filter((c) =>
@@ -34,122 +35,130 @@ export default function OrgCourses() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
-              <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>Курсы</Text>
-              <Pressable
-                onPress={() => router.push("/organization/course/create" as any)}
-                style={{
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  paddingHorizontal: 16,
-                  height: 40,
-                  borderRadius: 20,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ color: "white", fontWeight: "700", fontSize: 13 }}>+ Добавить</Text>
-              </Pressable>
-            </View>
+      {/* Header - Unified Brand Style */}
+      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          style={{ paddingBottom: SPACING.xl }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: SPACING.md,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", flex: 1 }}>Курсы</Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/organization/course/create" as any)}
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    paddingHorizontal: SPACING.lg,
+                    height: 44,
+                    borderRadius: RADIUS.md,
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: 13 }}>+ Добавить</Text>
+                </TouchableOpacity>
+              </View>
 
-            <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 16, paddingHorizontal: 16, height: 48 }}>
-               <Feather name="search" size={18} color="rgba(255,255,255,0.6)" style={{ marginRight: 10 }} />
-               <TextInput
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder="Поиск курса..."
-                  placeholderTextColor="rgba(255,255,255,0.5)"
-                  style={{ color: "white", flex: 1, fontSize: 15, fontWeight: "500" }}
-               />
+              <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: RADIUS.lg, paddingHorizontal: SPACING.lg, height: 52, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+                 <Feather name="search" size={18} color="rgba(255,255,255,0.6)" style={{ marginRight: SPACING.sm }} />
+                 <TextInput
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholder="Поиск курса..."
+                    placeholderTextColor="rgba(255,255,255,0.5)"
+                    style={{ color: "white", flex: 1, fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium }}
+                 />
+              </View>
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
+          paddingHorizontal: paddingX,
+          paddingTop: SPACING.xl,
           paddingBottom: 100,
         }}
         showsVerticalScrollIndicator={false}
       >
          {/* Summary Row */}
-         <View className="flex-row gap-3 mb-8">
-            <View style={SHADOWS.sm} className="flex-1 bg-white p-5 rounded-3xl border border-gray-100">
-               <Text className="text-2xl font-black text-primary">{COURSES.length}</Text>
-               <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Курсов</Text>
+         <View style={{ flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xxl }}>
+            <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, padding: SPACING.xl, borderRadius: RADIUS.xxl, borderWidth: 1, borderColor: COLORS.border }}>
+               <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{COURSES.length}</Text>
+               <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>Курсов</Text>
             </View>
-            <View style={SHADOWS.sm} className="flex-1 bg-white p-5 rounded-3xl border border-gray-100">
-               <Text className="text-2xl font-black text-gray-900">{COURSES.reduce((s,c)=>s+c.students, 0)}</Text>
-               <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">Учеников</Text>
+            <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, padding: SPACING.xl, borderRadius: RADIUS.xxl, borderWidth: 1, borderColor: COLORS.border }}>
+               <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{COURSES.reduce((s,c)=>s+c.students, 0)}</Text>
+               <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, marginTop: 4 }}>Учеников</Text>
             </View>
          </View>
 
          {/* Courses List */}
-         <View className="gap-6">
-            {filtered.map((course) => (
-               <Pressable
+         <View style={{ gap: SPACING.lg }}>
+            {filtered.map((course, idx) => (
+               <MotiView
                   key={course.id}
-                  onPress={() => router.push(`/organization/course/${course.id}` as any)}
-                  style={SHADOWS.md}
-                  className="bg-white rounded-[40px] p-6 border border-gray-50 overflow-hidden"
+                  from={{ opacity: 0, translateY: 20 }}
+                  animate={{ opacity: 1, translateY: 0 }}
+                  transition={{ delay: idx * 100 }}
                >
-                  <View className="flex-row items-center justify-between mb-6">
-                     <View className="flex-row items-center gap-4">
-                        <View className="w-14 h-14 rounded-[20px] bg-purple-50 items-center justify-center">
-                           <Feather name={course.icon as any} size={28} color={COLORS.primary} />
+                  <TouchableOpacity
+                     onPress={() => router.push(`/organization/course/${course.id}` as any)}
+                     style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: 40, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' }}
+                  >
+                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: SPACING.xl }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.lg }}>
+                           <View style={{ width: 56, height: 56, borderRadius: RADIUS.xl, backgroundColor: 'rgba(108, 92, 231, 0.05)', alignItems: 'center', justifyContent: 'center' }}>
+                              <Feather name={course.icon as any} size={28} color={COLORS.primary} />
+                           </View>
+                           <View>
+                              <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{course.name}</Text>
+                              <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{course.age} лет</Text>
+                           </View>
                         </View>
-                        <View>
-                           <Text className="text-xl font-bold text-gray-900">{course.name}</Text>
-                           <Text className="text-sm text-gray-400 font-medium">{course.age} лет</Text>
+                        <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.lg, backgroundColor: course.status === 'active' ? 'rgba(52, 199, 89, 0.1)' : COLORS.background }}>
+                           <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, color: course.status === 'active' ? COLORS.success : COLORS.mutedForeground }}>
+                              {course.status === 'active' ? 'Активен' : 'Пауза'}
+                           </Text>
                         </View>
                      </View>
-                     <View className={`px-3 py-1.5 rounded-xl ${course.status === 'active' ? 'bg-green-50' : 'bg-gray-100'}`}>
-                        <Text className={`text-[10px] font-black uppercase tracking-wider ${course.status === 'active' ? 'text-green-600' : 'text-gray-400'}`}>
-                           {course.status === 'active' ? 'Активен' : 'Пауза'}
-                        </Text>
-                     </View>
-                  </View>
 
-                  <View className="flex-row justify-between items-end">
-                     <View>
-                        <View className="flex-row items-center gap-2 mb-1">
-                           <Feather name="users" size={14} color="#9CA3AF" />
-                           <Text className="text-xs font-bold text-gray-700">{course.students} учеников</Text>
+                     <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+                        <View>
+                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                              <Feather name="users" size={14} color={COLORS.mutedForeground} />
+                              <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.mutedForeground }}>{course.students} учеников</Text>
+                           </View>
+                           <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{course.price.toLocaleString()} ₸/МЕС</Text>
                         </View>
-                        <Text className="text-lg font-black text-primary">{course.price.toLocaleString()} ₸/мес</Text>
-                     </View>
-                     
-                     <View className="flex-row gap-2">
-                        <Pressable className="w-10 h-10 bg-gray-50 rounded-2xl items-center justify-center border border-gray-100">
-                           <Feather name="edit-2" size={16} color={COLORS.mutedForeground} />
-                        </Pressable>
-                        <View className="w-10 h-10 bg-primary rounded-2xl items-center justify-center shadow-lg shadow-primary/20">
-                           <Feather name="chevron-right" size={20} color="white" />
+                        
+                        <View style={{ flexDirection: 'row', gap: SPACING.sm }}>
+                           <TouchableOpacity style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}>
+                              <Feather name="edit-2" size={16} color={COLORS.mutedForeground} />
+                           </TouchableOpacity>
+                           <View style={{ width: 44, height: 44, backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', ...SHADOWS.md }}>
+                              <Feather name="chevron-right" size={20} color="white" />
+                           </View>
                         </View>
                      </View>
-                  </View>
-               </Pressable>
+                  </TouchableOpacity>
+               </MotiView>
             ))}
          </View>
       </ScrollView>
