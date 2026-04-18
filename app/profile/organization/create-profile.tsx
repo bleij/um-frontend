@@ -14,9 +14,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LAYOUT } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
+import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
 export default function CreateProfileOrganization() {
   const router = useRouter();
+  const { user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
@@ -33,9 +36,41 @@ export default function CreateProfileOrganization() {
     description: "",
     capacity: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleMockSubmit = () => {
-    router.push("/profile/common/done");
+  const handleMockSubmit = async () => {
+    setError(null);
+    if (!formData.orgName.trim()) { setError("Укажите название организации."); return; }
+
+    setSubmitting(true);
+    try {
+      if (supabase && isSupabaseConfigured) {
+        const capacityNum = parseInt(formData.capacity, 10);
+        const { error: insertErr } = await supabase.from("organizations").insert({
+          owner_user_id: user?.id ?? null,
+          name: formData.orgName.trim(),
+          category: formData.orgType.trim() || null,
+          org_type: formData.orgType.trim() || null,
+          contact_person: formData.contactPerson.trim() || null,
+          email: formData.email.trim() || null,
+          phone: formData.phone.trim() || user?.phone || null,
+          city: formData.city.trim() || null,
+          address: formData.address.trim() || null,
+          description: formData.description.trim() || null,
+          capacity: Number.isFinite(capacityNum) ? capacityNum : null,
+          status: "pending",
+        });
+        if (insertErr) {
+          setError(insertErr.message);
+          setSubmitting(false);
+          return;
+        }
+      }
+      router.push("/profile/common/done");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -205,16 +240,21 @@ export default function CreateProfileOrganization() {
               </View>
             </View>
 
+            {error && (
+              <Text className="text-red-600 text-sm mb-3 text-center">{error}</Text>
+            )}
             <TouchableOpacity
               onPress={handleMockSubmit}
+              disabled={submitting}
               className="w-full rounded-xl overflow-hidden shadow-md mt-2"
+              style={{ opacity: submitting ? 0.6 : 1 }}
             >
               <LinearGradient
                 colors={["#6C5CE7", "#8B7FE8"]}
                 className="w-full py-4 items-center justify-center"
               >
                 <Text className="text-white font-bold text-lg">
-                  Создать профиль
+                  {submitting ? "Отправка..." : "Отправить на модерацию"}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>

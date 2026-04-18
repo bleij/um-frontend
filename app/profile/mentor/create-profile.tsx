@@ -14,9 +14,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LAYOUT } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
+import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
 export default function MentorCreateProfile() {
   const router = useRouter();
+  const { user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
@@ -34,9 +37,41 @@ export default function MentorCreateProfile() {
     description: "",
     workload: "",
   });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleMockSubmit = () => {
-    router.push("/(tabs)/home" as any);
+  const handleMockSubmit = async () => {
+    setError(null);
+    const fullName = `${formData.firstName} ${formData.lastName}`.trim();
+    if (!fullName) { setError("Укажите имя и фамилию."); return; }
+    if (!formData.specialization.trim()) { setError("Укажите специализацию."); return; }
+
+    setSubmitting(true);
+    try {
+      if (supabase && isSupabaseConfigured) {
+        const { error: insertErr } = await supabase.from("mentor_applications").insert({
+          user_id: user?.id ?? null,
+          name: fullName,
+          specialization: formData.specialization.trim() || null,
+          email: formData.email.trim() || null,
+          phone: formData.phone.trim() || user?.phone || null,
+          experience: formData.experience.trim() || null,
+          education: formData.education.trim() || null,
+          bio: formData.description.trim() || null,
+          expertise: formData.expertise.trim() || null,
+          workload: formData.workload.trim() || null,
+          status: "pending",
+        });
+        if (insertErr) {
+          setError(insertErr.message);
+          setSubmitting(false);
+          return;
+        }
+      }
+      router.push("/profile/common/done");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -239,16 +274,21 @@ export default function MentorCreateProfile() {
               </View>
             </View>
 
+            {error && (
+              <Text className="text-red-600 text-sm mb-3 text-center">{error}</Text>
+            )}
             <TouchableOpacity
               onPress={handleMockSubmit}
+              disabled={submitting}
               className="w-full rounded-xl overflow-hidden shadow-md mt-2"
+              style={{ opacity: submitting ? 0.6 : 1 }}
             >
               <LinearGradient
                 colors={["#6C5CE7", "#8B7FE8"]}
                 className="w-full py-4 items-center justify-center"
               >
                 <Text className="text-white font-bold text-lg">
-                  Создать профиль
+                  {submitting ? "Отправка..." : "Отправить заявку"}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>
