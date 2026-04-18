@@ -5,7 +5,6 @@ import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   ScrollView,
   Text,
@@ -19,8 +18,7 @@ import { useAuth, type UserRole } from "../../contexts/AuthContext";
 
 export default function RoleSelect() {
   const router = useRouter();
-  const { user, pendingRegistration, completeRegistration, setUserRole } =
-    useAuth();
+  const { user, setUserRole } = useAuth();
   const [submittingRole, setSubmittingRole] = useState<UserRole | null>(null);
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -29,31 +27,13 @@ export default function RoleSelect() {
     : LAYOUT.authHorizontalPaddingMobile;
 
   const handleSelect = async (role: UserRole, route: string) => {
-    setSubmittingRole(role);
-
-    if (pendingRegistration) {
-      const result = await completeRegistration(role);
-
-      if (!result.success) {
-        setSubmittingRole(null);
-        Alert.alert(
-          "Ошибка",
-          result.error || "Не удалось завершить регистрацию",
-        );
-        return;
-      }
-    } else if (user) {
-      await setUserRole(role);
-    } else {
-      setSubmittingRole(null);
-      Alert.alert(
-        "Регистрация",
-        "Сначала заполните форму регистрации, затем выберите роль.",
-      );
+    if (!user) {
       router.replace("/register");
       return;
     }
 
+    setSubmittingRole(role);
+    await setUserRole(role);
     setSubmittingRole(null);
     router.replace(route as any);
   };

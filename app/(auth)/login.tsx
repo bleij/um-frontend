@@ -21,15 +21,13 @@ import { useAuth } from "../../contexts/AuthContext";
 export default function LoginScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { loginWithPhone, verificationCodePlaceholder } = useAuth();
+  const { loginWithPhone } = useAuth();
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
-  const [smsCode, setSmsCode] = useState("");
-  const [codeSent, setCodeSent] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
@@ -38,48 +36,36 @@ export default function LoginScreen() {
 
   const formatPhone = (text: string) => {
     const cleaned = text.replace(/[^\d+]/g, "");
-    setPhoneNumber(cleaned);
+    const max = cleaned.startsWith("+") ? 12 : 11;
+    setPhoneNumber(cleaned.slice(0, max));
   };
 
-  const canRequestCode = phoneNumber.length >= 10 && password.length >= 6;
-  const canSubmit = canRequestCode && smsCode.length >= 4;
+  const canSubmit = phoneNumber.replace(/\D/g, "").length >= 10 && password.length >= 6;
 
-  const handleAction = async () => {
+  const handleLogin = async () => {
     setError("");
-
-    if (!codeSent) {
-      if (!canRequestCode) {
-        setError("Введите номер телефона и пароль (не менее 6 символов)");
-      } else {
-        setCodeSent(true);
-      }
-      return;
-    }
-
-    if (!canSubmit) {
-      setError("Введите код подтверждения");
-      return;
-    }
-
     setIsSubmitting(true);
-
-    const result = await loginWithPhone({
-      phone: phoneNumber,
-      password,
-      verificationCode: smsCode,
-    });
-
+    const result = await loginWithPhone(phoneNumber, password);
     setIsSubmitting(false);
-
     if (!result.success) {
       setError(result.error || "Не удалось войти");
       return;
     }
-
     router.replace("/(tabs)/home");
   };
 
-  const buttonLabel = !codeSent ? "Получить код" : "Войти";
+  const inputStyle = {
+    width: "100%" as const,
+    paddingLeft: 48,
+    paddingRight: 16,
+    paddingVertical: 16,
+    backgroundColor: COLORS.muted,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    fontSize: 15,
+    color: COLORS.foreground,
+  };
 
   return (
     <KeyboardAvoidingView
@@ -92,7 +78,7 @@ export default function LoginScreen() {
           contentContainerStyle={{
             flexGrow: 1,
             alignItems: "center",
-            paddingVertical: isDesktop ? 24 : 0,
+            paddingVertical: isDesktop ? 24 : 12,
           }}
           keyboardShouldPersistTaps="handled"
         >
@@ -105,27 +91,13 @@ export default function LoginScreen() {
               paddingTop: 8,
             }}
           >
-            {/* Back Button */}
+            {/* Back */}
             <TouchableOpacity
               onPress={() => router.replace("/intro")}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 32,
-              }}
+              style={{ flexDirection: "row", alignItems: "center", marginBottom: 32 }}
             >
-              <Feather
-                name="arrow-left"
-                size={18}
-                color={COLORS.mutedForeground}
-              />
-              <Text
-                style={{
-                  color: COLORS.mutedForeground,
-                  marginLeft: 8,
-                  fontSize: 14,
-                }}
-              >
+              <Feather name="arrow-left" size={18} color={COLORS.mutedForeground} />
+              <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 14 }}>
                 Назад
               </Text>
             </TouchableOpacity>
@@ -147,18 +119,12 @@ export default function LoginScreen() {
               >
                 Войти в аккаунт
               </Text>
-              <Text
-                style={{
-                  color: COLORS.mutedForeground,
-                  fontSize: 15,
-                  lineHeight: 22,
-                }}
-              >
+              <Text style={{ color: COLORS.mutedForeground, fontSize: 15, lineHeight: 22 }}>
                 Добро пожаловать! Продолжим твой путь к успеху
               </Text>
             </MotiView>
 
-            {/* Phone Input */}
+            {/* Phone */}
             <MotiView
               from={{ opacity: 0, translateY: 20 }}
               animate={{ opacity: 1, translateY: 0 }}
@@ -177,11 +143,7 @@ export default function LoginScreen() {
               </Text>
               <View style={{ position: "relative", justifyContent: "center" }}>
                 <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                  <Feather
-                    name="phone"
-                    size={18}
-                    color={COLORS.mutedForeground}
-                  />
+                  <Feather name="phone" size={18} color={COLORS.mutedForeground} />
                 </View>
                 <TextInput
                   placeholder="+7 (999) 123-45-67"
@@ -189,23 +151,12 @@ export default function LoginScreen() {
                   value={phoneNumber}
                   onChangeText={formatPhone}
                   keyboardType="phone-pad"
-                  style={{
-                    width: "100%",
-                    paddingLeft: 48,
-                    paddingRight: 16,
-                    paddingVertical: 16,
-                    backgroundColor: COLORS.muted,
-                    borderRadius: RADIUS.md,
-                    borderWidth: 2,
-                    borderColor: COLORS.border,
-                    fontSize: 15,
-                    color: COLORS.foreground,
-                  }}
+                  style={inputStyle}
                 />
               </View>
             </MotiView>
 
-            {/* Password Input */}
+            {/* Password */}
             <MotiView
               from={{ opacity: 0, translateY: 20 }}
               animate={{ opacity: 1, translateY: 0 }}
@@ -224,11 +175,7 @@ export default function LoginScreen() {
               </Text>
               <View style={{ position: "relative", justifyContent: "center" }}>
                 <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                  <Feather
-                    name="lock"
-                    size={18}
-                    color={COLORS.mutedForeground}
-                  />
+                  <Feather name="lock" size={18} color={COLORS.mutedForeground} />
                 </View>
                 <TextInput
                   placeholder="Введите пароль"
@@ -236,18 +183,7 @@ export default function LoginScreen() {
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
-                  style={{
-                    width: "100%",
-                    paddingLeft: 48,
-                    paddingRight: 48,
-                    paddingVertical: 16,
-                    backgroundColor: COLORS.muted,
-                    borderRadius: RADIUS.md,
-                    borderWidth: 2,
-                    borderColor: COLORS.border,
-                    fontSize: 15,
-                    color: COLORS.foreground,
-                  }}
+                  style={{ ...inputStyle, paddingRight: 48 }}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -262,69 +198,6 @@ export default function LoginScreen() {
               </View>
             </MotiView>
 
-            {codeSent && (
-              <MotiView
-                from={{ opacity: 0, translateY: 20 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ duration: 450, delay: 180 }}
-                style={{ marginBottom: 12 }}
-              >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "500",
-                    color: COLORS.foreground,
-                    marginBottom: 8,
-                  }}
-                >
-                  Код из СМС
-                </Text>
-                <TextInput
-                  placeholder="Введите код"
-                  placeholderTextColor={COLORS.mutedForeground}
-                  value={smsCode}
-                  onChangeText={setSmsCode}
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  style={{
-                    width: "100%",
-                    paddingHorizontal: 16,
-                    paddingVertical: 16,
-                    backgroundColor: COLORS.muted,
-                    borderRadius: RADIUS.md,
-                    borderWidth: 2,
-                    borderColor: COLORS.border,
-                    fontSize: 18,
-                    color: COLORS.foreground,
-                    textAlign: "center",
-                    letterSpacing: 6,
-                    fontWeight: "700",
-                  }}
-                />
-              </MotiView>
-            )}
-
-            {codeSent && (
-              <View
-                style={{
-                  marginBottom: 20,
-                  padding: 12,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: `${COLORS.primary}10`,
-                }}
-              >
-                <Text
-                  style={{
-                    color: COLORS.primary,
-                    fontWeight: "600",
-                    fontSize: 13,
-                  }}
-                >
-                  Демо-код подтверждения: {verificationCodePlaceholder}
-                </Text>
-              </View>
-            )}
-
             {!!error && (
               <View
                 style={{
@@ -334,15 +207,13 @@ export default function LoginScreen() {
                   backgroundColor: "#FEE2E2",
                 }}
               >
-                <Text
-                  style={{ color: "#B91C1C", fontWeight: "500", fontSize: 13 }}
-                >
+                <Text style={{ color: "#B91C1C", fontWeight: "500", fontSize: 13 }}>
                   {error}
                 </Text>
               </View>
             )}
 
-            {/* Submit Button */}
+            {/* Submit */}
             <MotiView
               from={{ opacity: 0, translateY: 20 }}
               animate={{ opacity: 1, translateY: 0 }}
@@ -350,43 +221,28 @@ export default function LoginScreen() {
               style={{ marginBottom: 24 }}
             >
               <TouchableOpacity
-                onPress={handleAction}
-                disabled={
-                  isSubmitting ||
-                  (!codeSent && !canRequestCode) ||
-                  (codeSent && !canSubmit)
-                }
+                onPress={handleLogin}
+                disabled={isSubmitting || !canSubmit}
                 style={{
                   width: "100%",
                   paddingVertical: 16,
                   borderRadius: RADIUS.md,
                   alignItems: "center",
                   backgroundColor:
-                    isSubmitting ||
-                    (!codeSent && !canRequestCode) ||
-                    (codeSent && !canSubmit)
-                      ? COLORS.muted
-                      : COLORS.primary,
+                    isSubmitting || !canSubmit ? COLORS.muted : COLORS.primary,
                 }}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={COLORS.mutedForeground}
-                  />
+                  <ActivityIndicator size="small" color={COLORS.mutedForeground} />
                 ) : (
                   <Text
                     style={{
                       fontSize: 16,
                       fontWeight: "600",
-                      color:
-                        (!codeSent && !canRequestCode) ||
-                        (codeSent && !canSubmit)
-                          ? COLORS.mutedForeground
-                          : "white",
+                      color: !canSubmit ? COLORS.mutedForeground : "white",
                     }}
                   >
-                    {buttonLabel}
+                    Войти
                   </Text>
                 )}
               </TouchableOpacity>
@@ -394,36 +250,24 @@ export default function LoginScreen() {
 
             {/* Divider */}
             <View
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 20,
-              }}
+              style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
             >
-              <View
-                style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
-              />
+              <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
               <Text
-                style={{
-                  marginHorizontal: 12,
-                  color: COLORS.mutedForeground,
-                  fontSize: 13,
-                }}
+                style={{ marginHorizontal: 12, color: COLORS.mutedForeground, fontSize: 13 }}
               >
                 быстрый вход
               </Text>
-              <View
-                style={{ flex: 1, height: 1, backgroundColor: COLORS.border }}
-              />
+              <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
             </View>
 
-            {/* Social Buttons */}
+            {/* Social */}
             <View
               style={{
                 flexDirection: "row",
                 justifyContent: "center",
                 gap: 12,
-                marginBottom: 32,
+                marginBottom: 16,
               }}
             >
               <TouchableOpacity
@@ -438,11 +282,7 @@ export default function LoginScreen() {
                   justifyContent: "center",
                 }}
               >
-                <Text
-                  style={{ fontSize: 20, fontWeight: "700", color: "#ea4335" }}
-                >
-                  G
-                </Text>
+                <Text style={{ fontSize: 20, fontWeight: "700", color: "#ea4335" }}>G</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={{
@@ -460,28 +300,38 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Spacer */}
-            <View style={{ flex: 1 }} />
-
-            {/* Go to Register */}
-            <View
+            {/* QR Login */}
+            <TouchableOpacity
+              onPress={() => router.push("/(auth)/qr-scan")}
               style={{
                 flexDirection: "row",
+                alignItems: "center",
                 justifyContent: "center",
-                paddingBottom: 24,
+                gap: 10,
+                paddingVertical: 14,
+                borderRadius: RADIUS.md,
+                borderWidth: 2,
+                borderColor: COLORS.border,
+                backgroundColor: COLORS.card,
+                marginBottom: 32,
               }}
+            >
+              <Feather name="grid" size={18} color={COLORS.primary} />
+              <Text style={{ fontSize: 15, fontWeight: "600", color: COLORS.primary }}>
+                Войти по QR-коду
+              </Text>
+            </TouchableOpacity>
+
+            <View style={{ flex: 1 }} />
+
+            <View
+              style={{ flexDirection: "row", justifyContent: "center", paddingBottom: 24 }}
             >
               <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
                 нет аккаунта?{" "}
               </Text>
               <TouchableOpacity onPress={() => router.push("/register")}>
-                <Text
-                  style={{
-                    color: COLORS.primary,
-                    fontWeight: "600",
-                    fontSize: 14,
-                  }}
-                >
+                <Text style={{ color: COLORS.primary, fontWeight: "600", fontSize: 14 }}>
                   Зарегистрироваться
                 </Text>
               </TouchableOpacity>

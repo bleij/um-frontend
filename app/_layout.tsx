@@ -27,7 +27,7 @@ function RootNavigator() {
       return;
     }
 
-    if (user && inAuthGroup && authScreen !== "role") {
+    if (user && inAuthGroup && authScreen !== "role" && authScreen !== "register") {
       router.replace("/(tabs)/home");
     }
   }, [isLoading, router, segments, user]);

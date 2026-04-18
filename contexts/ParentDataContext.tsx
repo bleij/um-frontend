@@ -22,6 +22,8 @@ interface ChildDraft {
   id: string;
   name: string;
   ageGroup: AgeGroup | null;
+  phone?: string;
+  qrToken?: string;
 }
 
 interface ParentDataContextType {
@@ -241,6 +243,8 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
           age: ageGroupToAge(entry.ageGroup),
           ageCategory: ageGroupToCategory(entry.ageGroup),
           interests: [],
+          phone: entry.phone?.trim() || undefined,
+          qrToken: entry.qrToken || undefined,
         }),
       );
 
@@ -275,6 +279,8 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
             age_category: child.ageCategory,
             interests: child.interests,
             talent_profile: child.talentProfile || null,
+            phone: child.phone || null,
+            qr_token: child.qrToken || null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "id" },
