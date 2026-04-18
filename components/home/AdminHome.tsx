@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../constants/theme";
+import { supabase, isSupabaseConfigured } from "../../lib/supabase";
 
 interface MentorApplication {
   id: number;
@@ -54,6 +55,64 @@ const mockFamilies: FamilyAccount[] = [
   { id: 3, parentName: "Руслан Ким", children: 3, plan: "Pro", spent: "320,000 ₸", status: "Active" },
 ];
 
+function useFamilies(): { families: FamilyAccount[]; loading: boolean } {
+  const [families, setFamilies] = useState<FamilyAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      if (!supabase || !isSupabaseConfigured) {
+        if (!cancelled) {
+          setFamilies(mockFamilies);
+          setLoading(false);
+        }
+        return;
+      }
+
+      const [parentsRes, tariffsRes, childrenRes] = await Promise.all([
+        supabase
+          .from("um_user_profiles")
+          .select("id, first_name, last_name")
+          .eq("role", "parent"),
+        supabase.from("parent_profiles").select("user_id, tariff"),
+        supabase.from("child_profiles").select("parent_id"),
+      ]);
+
+      if (cancelled) return;
+
+      const parents = parentsRes.data ?? [];
+      const tariffByUserId = new Map<string, string>(
+        (tariffsRes.data ?? []).map((t: any) => [t.user_id, t.tariff]),
+      );
+      const childCountByParentId = new Map<string, number>();
+      for (const c of childrenRes.data ?? []) {
+        const pid = (c as any).parent_id;
+        childCountByParentId.set(pid, (childCountByParentId.get(pid) ?? 0) + 1);
+      }
+
+      setFamilies(
+        parents.map((p: any, idx: number) => ({
+          id: idx + 1,
+          parentName: `${p.first_name ?? ""} ${p.last_name ?? ""}`.trim() || "—",
+          children: childCountByParentId.get(p.id) ?? 0,
+          plan: tariffByUserId.get(p.id) === "pro" ? "Pro" : "Basic",
+          spent: "—",
+          status: "Active",
+        })),
+      );
+      setLoading(false);
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { families, loading };
+}
+
 interface OrgAccount {
   id: number;
   name: string;
@@ -75,6 +134,7 @@ export default function AdminHome() {
   const isTablet = width >= 768;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
+  const { families, loading: familiesLoading } = useFamilies();
   const [selectedMentor, setSelectedMentor] = useState<MentorApplication | null>(mentorApplications[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("crm");
@@ -186,7 +246,17 @@ export default function AdminHome() {
                   </TouchableOpacity>
                ))}
 
-               {crmSubTab === "users" && mockFamilies.map(f => (
+               {crmSubTab === "users" && familiesLoading && (
+                  <View style={{ padding: SPACING.lg }}>
+                     <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
+                  </View>
+               )}
+               {crmSubTab === "users" && !familiesLoading && families.length === 0 && (
+                  <View style={{ padding: SPACING.lg }}>
+                     <Text style={{ color: COLORS.mutedForeground }}>Пока нет зарегистрированных родителей.</Text>
+                  </View>
+               )}
+               {crmSubTab === "users" && !familiesLoading && families.map(f => (
                   <View 
                      key={f.id}
                      style={{
