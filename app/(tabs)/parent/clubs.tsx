@@ -110,7 +110,7 @@ export default function ParentClubs() {
         contentContainerStyle={{
           paddingHorizontal: horizontalPadding,
           paddingTop: 24,
-          paddingBottom: 40,
+          paddingBottom: 120,
         }}
         showsVerticalScrollIndicator={false}
       >

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Modal, Pressable } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Modal, Pressable, Platform } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
@@ -63,7 +63,7 @@ export default function ParentClubDetails() {
 
     return (
         <View style={{ flex: 1, backgroundColor: "#F9FAFB" }}>
-            <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+            <ScrollView contentContainerStyle={{ paddingBottom: 180 }}>
                 {/* Header with Gradient/Icon instead of placeholder image if needed */}
                 <View style={{ position: "relative" }}>
                     <LinearGradient 
@@ -154,7 +154,7 @@ export default function ParentClubDetails() {
             </ScrollView>
 
             {/* Bottom Bar with Price and Button */}
-            <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "white", padding: 20, borderTopLeftRadius: 32, borderTopRightRadius: 32, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+            <View style={{ position: "absolute", bottom: 0, left: 0, right: 0, backgroundColor: "white", padding: 20, borderTopLeftRadius: 32, borderTopRightRadius: 32, shadowColor: "#000", shadowOpacity: 0.1, shadowRadius: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between", zIndex: 100 }}>
                 <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 12, color: "#9CA3AF" }}>Стоимость</Text>
                     <Text style={{ fontSize: 18, fontWeight: "800", color: "#1F2937" }} numberOfLines={1}>{club.price}</Text>

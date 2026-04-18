@@ -66,6 +66,14 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
       ),
     },
     {
+      key: "chats",
+      label: "Чат",
+      route: "chats",
+      icon: ({ color, size }) => (
+        <Feather name="message-circle" size={size} color={color} />
+      ),
+    },
+    {
       key: "profile",
       label: "Профиль",
       route: "profile",
@@ -679,7 +687,14 @@ export function SideNav({ role }: Props) {
 export default function CustomTabBar({ role }: Props) {
   const { tabs, go, isActive } = useTabNav(role);
   const { width } = useWindowDimensions();
+  const segments = useSegments();
+  
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+
+  // Скрываем табар на деталях кружка
+  const isClubDetail = segments.includes('club') && segments.some(s => s === '[id]' || s.startsWith('club-'));
+  
+  if (isClubDetail && !isDesktop) return null;
 
   return (
     <View
