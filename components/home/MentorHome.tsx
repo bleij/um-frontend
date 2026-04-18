@@ -66,33 +66,24 @@ export default function MentorHome() {
             style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}
           >
             <SafeAreaView edges={["top"]}>
-              <MotiView 
+              <MotiView
                 from={{ opacity: 0, translateY: -10 }}
                 animate={{ opacity: 1, translateY: 0 }}
-                style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md, paddingBottom: SPACING.xl, marginBottom: SPACING.xl }}
+                style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md, paddingBottom: SPACING.xxl }}
               >
                 <View className="flex-row items-center justify-between mb-2">
-                   <View>
-                      <Text style={{ 
-                        fontSize: TYPOGRAPHY.size.xxl, 
-                        fontWeight: TYPOGRAPHY.weight.light, 
-                        color: COLORS.white, 
-                        letterSpacing: TYPOGRAPHY.letterSpacing.tight 
-                      }}>Привет,</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: -SPACING.xs }}>
-                          <Text style={{ 
-                            fontSize: TYPOGRAPHY.size.xxxl, 
-                            fontWeight: TYPOGRAPHY.weight.semibold, 
-                            color: COLORS.white, 
-                            letterSpacing: TYPOGRAPHY.letterSpacing.tight,
-                          }}>Анна Сергеевна!</Text>
-                          {isApproved && (
-                             <View style={{ backgroundColor: COLORS.info, borderRadius: 12, padding: 2, marginLeft: 8 }}>
-                                <Feather name="check" size={12} color="white" />
-                             </View>
-                          )}
-                          <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, marginLeft: 4 }}>👋</Text>
-                       </View>
+                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Text style={{
+                        fontSize: TYPOGRAPHY.size.xxxl,
+                        fontWeight: TYPOGRAPHY.weight.semibold,
+                        color: COLORS.white,
+                        letterSpacing: TYPOGRAPHY.letterSpacing.tight,
+                      }}>Привет, Анна Сергеевна! 👋</Text>
+                      {isApproved && (
+                         <View style={{ backgroundColor: COLORS.info, borderRadius: 12, padding: 2 }}>
+                            <Feather name="check" size={12} color="white" />
+                         </View>
+                      )}
                    </View>
                    <TouchableOpacity 
                      style={{ 
@@ -140,8 +131,6 @@ export default function MentorHome() {
             </SafeAreaView>
           </LinearGradient>
         </View>
-
-        <View style={{ height: SPACING.xl }} />
 
         {/* Next Lesson Card - Squircle Aesthetic */}
         {!isApproved && (

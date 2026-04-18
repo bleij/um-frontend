@@ -94,21 +94,15 @@ export default function YouthHome() {
       <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
-          style={{ paddingBottom: 48 }}
+          style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}
         >
           <SafeAreaView edges={["top"]}>
-            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-              <View className="flex-row items-center justify-between mb-8">
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 32 }}>
+              <View className="flex-row items-center justify-between mb-4">
                  <View>
-                    <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.light, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
-                      Привет,
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
+                      Привет, {firstName}! 👋
                     </Text>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: -SPACING.xs }}>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
-                        {firstName}!
-                      </Text>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, marginLeft: 4 }}>👋</Text>
-                    </View>
                     <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "600", marginTop: 2 }}>
                        {diagnostic?.recommendedConstellation || "Level 8"} • {diagnostic ? "Диагностика пройдена" : "2450 XP"}
                     </Text>
