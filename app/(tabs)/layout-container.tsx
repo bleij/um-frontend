@@ -493,18 +493,24 @@ export function SideNav({ role }: Props) {
         {navTabs.map((item) => {
           const active = isActive(item.route);
           return (
-            <TouchableOpacity
+            <Pressable
               key={item.key}
               onPress={() => go(item.route)}
-              style={{
+              style={({ hovered, pressed }: any) => ({
                 flexDirection: "row",
                 alignItems: "center",
                 paddingHorizontal: 14,
                 paddingVertical: 11,
                 marginBottom: 2,
                 borderRadius: RADIUS.sm,
-                backgroundColor: active ? `${COLORS.primary}12` : "transparent",
-              }}
+                backgroundColor: active
+                  ? `${COLORS.primary}12`
+                  : pressed
+                  ? `${COLORS.primary}10`
+                  : hovered
+                  ? COLORS.muted
+                  : "transparent",
+              })}
             >
               {item.icon({
                 color: active ? COLORS.primary : COLORS.mutedForeground,
@@ -520,7 +526,7 @@ export function SideNav({ role }: Props) {
               >
                 {item.label}
               </Text>
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -535,13 +541,17 @@ export function SideNav({ role }: Props) {
       >
         <Pressable
           onPress={() => setDropdownVisible((v) => !v)}
-          style={{
+          style={({ hovered, pressed }: any) => ({
             flexDirection: "row",
             alignItems: "center",
             padding: 10,
             borderRadius: RADIUS.sm,
-            backgroundColor: dropdownVisible ? COLORS.muted : "transparent",
-          }}
+            backgroundColor: dropdownVisible || pressed
+              ? COLORS.muted
+              : hovered
+              ? `${COLORS.muted}CC`
+              : "transparent",
+          })}
         >
           <View
             style={{
@@ -639,14 +649,21 @@ export function SideNav({ role }: Props) {
               <Pressable
                 key={item.label}
                 onPress={item.onPress}
-                style={{
+                style={({ hovered, pressed }: any) => ({
                   flexDirection: "row",
                   alignItems: "center",
                   paddingHorizontal: 16,
                   paddingVertical: 13,
                   borderBottomWidth: index < arr.length - 1 ? 1 : 0,
                   borderBottomColor: COLORS.border,
-                }}
+                  backgroundColor: pressed
+                    ? COLORS.muted
+                    : hovered
+                    ? item.destructive
+                      ? `${COLORS.destructive}08`
+                      : COLORS.muted
+                    : "transparent",
+                })}
               >
                 <Feather
                   name={item.icon}

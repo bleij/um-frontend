@@ -11,13 +11,6 @@
   [tabindex]:not([tabindex="-1"]) {
     cursor: pointer;
   }
-
-  /* Subtle hover lift on buttons */
-  [role="button"]:hover,
-  button:hover {
-    opacity: 0.85;
-    transition: opacity 0.15s ease;
-  }
 }
 
 /* Disabled elements */
