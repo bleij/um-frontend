@@ -132,6 +132,8 @@ export default function MentorHome() {
           </LinearGradient>
         </View>
 
+        <View style={{ height: SPACING.xl }} />
+
         {/* Next Lesson Card - Squircle Aesthetic */}
         {!isApproved && (
            <MotiView 
