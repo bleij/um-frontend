@@ -13,17 +13,25 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useChats } from "../../../hooks/useChats";
 
 const TABS = ["все", "непрочитанные", "архив"];
 
-const ALL_CHATS = [
-    { id: 1, name: "Ментор Айдар", lastMessage: "Посмотри отчёт, пожалуйста", time: "09:43", unread: true, archived: false, icon: "user" as const },
-    { id: 2, name: "Кружок робототехники", lastMessage: "Завтра занятие в 18:00", time: "Вчера", unread: false, archived: false, icon: "cpu" as const },
-    { id: 3, name: "Мама", lastMessage: "Ты поел?", time: "Вчера", unread: true, archived: false, icon: "heart" as const },
-    { id: 4, name: "Администратор UM", lastMessage: "Подписка активирована", time: "Пн", unread: false, archived: false, icon: "shield" as const },
-    { id: 5, name: "Старый чат", lastMessage: "Ок", time: "Март", unread: false, archived: true, icon: "archive" as const },
-    { id: 6, name: "Тренер по футболу", lastMessage: "Сегодня без тренировки", time: "Пн", unread: false, archived: false, icon: "activity" as const },
-];
+function formatChatTime(isoString: string): string {
+    const d = new Date(isoString);
+    const now = new Date();
+    const isToday =
+        d.getDate() === now.getDate() &&
+        d.getMonth() === now.getMonth() &&
+        d.getFullYear() === now.getFullYear();
+    if (isToday) {
+        return d.toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" });
+    }
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) return "Вчера";
+    return d.toLocaleDateString("ru", { day: "numeric", month: "short" });
+}
 
 export default function ChatsScreen() {
     const router = useRouter();
@@ -31,19 +39,20 @@ export default function ChatsScreen() {
     const IS_DESKTOP = Platform.OS === "web" && width >= 900;
     const [activeTab, setActiveTab] = useState("все");
     const [search, setSearch] = useState("");
+    const { chats, loading } = useChats();
 
     const filteredChats = useMemo(() => {
-        return ALL_CHATS.filter((chat) => {
+        return chats.filter((chat) => {
             const byTab =
                 activeTab === "все"
                     ? !chat.archived
                     : activeTab === "непрочитанные"
-                        ? chat.unread && !chat.archived
+                        ? chat.unread_count > 0 && !chat.archived
                         : chat.archived;
             const bySearch = chat.name.toLowerCase().includes(search.toLowerCase());
             return byTab && bySearch;
         });
-    }, [activeTab, search]);
+    }, [activeTab, search, chats]);
 
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -113,73 +122,81 @@ export default function ChatsScreen() {
 
                     {/* Chat List */}
                     <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}>
-                        {filteredChats.map((chat, idx) => (
-                            <TouchableOpacity
-                                key={chat.id}
-                                activeOpacity={0.7}
-                                style={{ width: "100%" }}
-                                onPress={() =>
-                                    router.push({
-                                        pathname: "/modal/chat",
-                                        params: { id: chat.id, name: chat.name },
-                                    })
-                                }
-                            >
-                                <MotiView
-                                    from={{ opacity: 0, translateY: 15 }}
-                                    animate={{ opacity: 1, translateY: 0 }}
-                                    transition={{ duration: 300, delay: idx * 50 }}
-                                    style={{
-                                        flexDirection: "row",
-                                        alignItems: "center",
-                                        width: "100%",
-                                        marginBottom: 4,
-                                        padding: 12,
-                                        borderRadius: RADIUS.sm,
-                                    }}
+                        {loading ? (
+                            <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
+                                Загрузка...
+                            </Text>
+                        ) : (
+                            filteredChats.map((chat, idx) => (
+                                <TouchableOpacity
+                                    key={chat.id}
+                                    activeOpacity={0.7}
+                                    style={{ width: "100%" }}
+                                    onPress={() =>
+                                        router.push({
+                                            pathname: "/modal/chat",
+                                            params: { id: chat.id, name: chat.name },
+                                        })
+                                    }
                                 >
-                                    {/* Avatar */}
-                                    <View style={{
-                                        width: 52, height: 52, borderRadius: 26,
-                                        backgroundColor: `${COLORS.primary}10`,
-                                        marginRight: 14,
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                    }}>
-                                        <Feather name={chat.icon} size={22} color={COLORS.primary} />
-                                    </View>
+                                    <MotiView
+                                        from={{ opacity: 0, translateY: 15 }}
+                                        animate={{ opacity: 1, translateY: 0 }}
+                                        transition={{ duration: 300, delay: idx * 50 }}
+                                        style={{
+                                            flexDirection: "row",
+                                            alignItems: "center",
+                                            width: "100%",
+                                            marginBottom: 4,
+                                            padding: 12,
+                                            borderRadius: RADIUS.sm,
+                                        }}
+                                    >
+                                        {/* Avatar */}
+                                        <View style={{
+                                            width: 52, height: 52, borderRadius: 26,
+                                            backgroundColor: `${COLORS.primary}10`,
+                                            marginRight: 14,
+                                            justifyContent: "center",
+                                            alignItems: "center",
+                                        }}>
+                                            <Feather name={chat.icon_name as any} size={22} color={COLORS.primary} />
+                                        </View>
 
-                                    {/* Text */}
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={{ fontSize: 15, fontWeight: "600", color: COLORS.foreground }}>
-                                            {chat.name}
-                                        </Text>
-                                        <Text style={{ color: COLORS.mutedForeground, fontSize: 13, marginTop: 2 }}>
-                                            {chat.lastMessage}
-                                        </Text>
-                                    </View>
+                                        {/* Text */}
+                                        <View style={{ flex: 1 }}>
+                                            <Text style={{ fontSize: 15, fontWeight: "600", color: COLORS.foreground }}>
+                                                {chat.name}
+                                            </Text>
+                                            <Text style={{ color: COLORS.mutedForeground, fontSize: 13, marginTop: 2 }}>
+                                                {chat.last_message}
+                                            </Text>
+                                        </View>
 
-                                    {/* Time + Badge */}
-                                    <View style={{ alignItems: "flex-end" }}>
-                                        <Text style={{ color: COLORS.mutedForeground, fontSize: 12, marginBottom: 4 }}>
-                                            {chat.time}
-                                        </Text>
-                                        {chat.unread && !chat.archived && (
-                                            <View style={{
-                                                width: 20, height: 20, borderRadius: 10,
-                                                backgroundColor: COLORS.primary,
-                                                justifyContent: "center",
-                                                alignItems: "center",
-                                            }}>
-                                                <Text style={{ color: "white", fontSize: 10, fontWeight: "600" }}>1</Text>
-                                            </View>
-                                        )}
-                                    </View>
-                                </MotiView>
-                            </TouchableOpacity>
-                        ))}
+                                        {/* Time + Badge */}
+                                        <View style={{ alignItems: "flex-end" }}>
+                                            <Text style={{ color: COLORS.mutedForeground, fontSize: 12, marginBottom: 4 }}>
+                                                {formatChatTime(chat.last_message_at)}
+                                            </Text>
+                                            {chat.unread_count > 0 && !chat.archived && (
+                                                <View style={{
+                                                    width: 20, height: 20, borderRadius: 10,
+                                                    backgroundColor: COLORS.primary,
+                                                    justifyContent: "center",
+                                                    alignItems: "center",
+                                                }}>
+                                                    <Text style={{ color: "white", fontSize: 10, fontWeight: "600" }}>
+                                                        {chat.unread_count}
+                                                    </Text>
+                                                </View>
+                                            )}
+                                        </View>
+                                    </MotiView>
+                                </TouchableOpacity>
+                            ))
+                        )}
 
-                        {filteredChats.length === 0 && (
+                        {!loading && filteredChats.length === 0 && (
                             <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
                                 Чатов нет
                             </Text>

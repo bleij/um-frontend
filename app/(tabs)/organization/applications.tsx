@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React from "react";
 import {
   Platform,
   ScrollView,
@@ -10,54 +10,10 @@ import {
   useWindowDimensions,
   View,
   TouchableOpacity,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-interface Application {
-  id: string;
-  childName: string;
-  age: number;
-  parent: string;
-  club: string;
-  date: string;
-  status: "paid" | "awaiting_payment" | "activated" | "completed";
-  avatar: string;
-}
-
-const MOCK_APPLICATIONS: Application[] = [
-  {
-    id: "1",
-    childName: "Мария Иванова",
-    age: 7,
-    parent: "Екатерина Иванова",
-    club: "Художественная студия",
-    date: "25 фев 2026",
-    status: "paid",
-    avatar: "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
-  },
-  {
-    id: "2",
-    childName: "Дмитрий Петров",
-    age: 14,
-    parent: "Андрей Петров",
-    club: "Футбольная школа",
-    date: "26 фев 2026",
-    status: "awaiting_payment",
-    avatar: "https://images.unsplash.com/photo-1510340842445-b6b8a6c0762e?w=100&h=100&fit=crop",
-  },
-  {
-    id: "3",
-    childName: "София Смирнова",
-    age: 10,
-    parent: "Ольга Смирнова",
-    club: "Программирование",
-    date: "27 фев 2026",
-    status: "paid",
-    avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop",
-  },
-];
+import { useOrgApplications } from "../../../hooks/useOrgData";
 
 export default function OrgApplicationsScreen() {
   const router = useRouter();
@@ -65,9 +21,9 @@ export default function OrgApplicationsScreen() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-  const [apps, setApps] = useState<Application[]>(MOCK_APPLICATIONS);
+  const { apps, approve, reject: rejectApp, loading } = useOrgApplications();
 
-  const getStatusBadge = (status: Application["status"]) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case "paid":
         return (
@@ -93,7 +49,11 @@ export default function OrgApplicationsScreen() {
   };
 
   const handleAction = (id: string, action: 'approve' | 'reject') => {
-    setApps(prev => prev.filter(a => a.id !== id));
+    if (action === 'approve') {
+      approve(id);
+    } else {
+      rejectApp(id);
+    }
   };
 
   return (
@@ -167,13 +127,15 @@ export default function OrgApplicationsScreen() {
                   style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: 40, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xl, marginBottom: SPACING.xl }}>
-                    <Image source={{ uri: app.avatar }} style={{ width: 64, height: 64, borderRadius: RADIUS.full }} />
+                    <View style={{ width: 64, height: 64, borderRadius: RADIUS.full, backgroundColor: `${COLORS.primary}10`, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 24, fontWeight: '700', color: COLORS.primary }}>{app.child_name.charAt(0)}</Text>
+                    </View>
                     <View style={{ flex: 1 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-                        <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{app.childName}</Text>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{app.child_name}</Text>
                         {getStatusBadge(app.status)}
                       </View>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{app.age} лет · {app.parent}</Text>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{app.child_age} лет · {app.parent_name}</Text>
                     </View>
                   </View>
 
@@ -182,7 +144,7 @@ export default function OrgApplicationsScreen() {
                        <Feather name="book-open" size={14} color={COLORS.primary} />
                        <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.foreground }}>{app.club}</Text>
                     </View>
-                    <Text style={{ fontSize: 11, color: COLORS.mutedForeground, marginLeft: 24 }}>Дата заявки: {app.date}</Text>
+                    <Text style={{ fontSize: 11, color: COLORS.mutedForeground, marginLeft: 24 }}>Дата заявки: {app.applied_date}</Text>
                   </View>
 
                   <View style={{ flexDirection: 'row', gap: SPACING.md }}>

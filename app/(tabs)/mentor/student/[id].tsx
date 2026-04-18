@@ -14,12 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
-
-const MOCK_STUDENTS: Record<string, any> = {
-    "1": { name: "Анна Петрова",    age: 8,  level: 5, xp: 1250, progress: 85 },
-    "2": { name: "Максим Иванов",   age: 14, level: 8, xp: 2450, progress: 78 },
-    "3": { name: "София Смирнова",  age: 10, level: 6, xp: 1680, progress: 92 },
-};
+import { useMentorStudents } from "../../../../hooks/useMentorData";
 
 const SKILLS = [
     { label: "Коммуникация", value: 85, color: "#6C5CE7" },
@@ -38,8 +33,18 @@ export default function MentorStudentProfile() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+  const { students, loading } = useMentorStudents();
 
-  const student = MOCK_STUDENTS[id as string] || MOCK_STUDENTS["1"];
+  const studentRaw = students.find((s) => s.id === (id as string)) ?? students[0];
+  const student = studentRaw
+    ? {
+        name: studentRaw.student_name,
+        age: studentRaw.student_age,
+        level: studentRaw.level,
+        xp: studentRaw.xp,
+        progress: studentRaw.progress,
+      }
+    : { name: "—", age: null, level: 1, xp: 0, progress: 0 };
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -89,7 +94,7 @@ export default function MentorStudentProfile() {
                  <View>
                     <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>{student.name}</Text>
                     <View className="flex-row items-center gap-2">
-                       <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', px: SPACING.sm, py: SPACING.xs/2, borderRadius: RADIUS.sm }}>
+                       <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs / 2, borderRadius: RADIUS.sm }}>
                           <Text style={{ color: 'white', fontSize: 10, fontWeight: '700' }}>LVL {student.level}</Text>
                        </View>
                        <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>{student.age} лет</Text>
@@ -174,7 +179,7 @@ export default function MentorStudentProfile() {
         </View>
 
         {/* Add Recommendation Button */}
-        <TouchableOpacity style={{ height: 64, borderRadius: RADIUS.lg, borderWeight: 2, borderStyle: 'dashed', borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm }}>
+        <TouchableOpacity style={{ height: 64, borderRadius: RADIUS.lg, borderWidth: 2, borderStyle: 'dashed', borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm }}>
            <Feather name="plus-circle" size={20} color={COLORS.mutedForeground} />
            <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.mutedForeground }}>Добавить рекомендацию</Text>
         </TouchableOpacity>

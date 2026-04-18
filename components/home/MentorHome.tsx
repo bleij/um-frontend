@@ -21,46 +21,7 @@ import {
    TYPOGRAPHY,
 } from "../../constants/theme";
 import { useDevSettings } from "../../contexts/DevSettingsContext";
-
-const MOCK_STUDENTS = [
-  {
-    id: "1",
-    name: "Анна Петрова",
-    age: 8,
-    level: 5,
-    xp: 1250,
-    progress: 85,
-    skills: { com: 85, lead: 65, cre: 90, log: 75, dis: 70 },
-  },
-  {
-    id: "2",
-    name: "Максим Иванов",
-    age: 12,
-    level: 8,
-    xp: 2450,
-    progress: 78,
-    skills: { com: 78, lead: 65, cre: 85, log: 80, dis: 72 },
-  },
-];
-
-const RECENT_FEEDBACKS = [
-  {
-    id: "1",
-    date: "Сегодня, 14:30",
-    teacher: "Смирнов (Шахматы)",
-    student: "Максим Иванов",
-    tag: "Быстро усвоил",
-    text: "Отлично решил задачу, хотя отвлекался в начале.",
-  },
-  {
-    id: "2",
-    date: "Вчера, 18:00",
-    teacher: "Соколов (Роботы)",
-    student: "Анна Петрова",
-    tag: "Проявила лидерство",
-    text: "Собрала команду и руководила процессом сборки.",
-  },
-];
+import { useMentorStudents, useMentorFeedback } from "../../hooks/useMentorData";
 
 const SKILL_LABELS = ["Ком.", "Лид.", "Кре.", "Лог.", "Дис."];
 
@@ -73,6 +34,8 @@ export default function MentorHome() {
     : SPACING.xl;
 
   const { mentorApproved: isApproved } = useDevSettings();
+  const { students } = useMentorStudents();
+  const { feedback } = useMentorFeedback();
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -519,7 +482,7 @@ export default function MentorHome() {
           </View>
 
           <View className="gap-4">
-            {RECENT_FEEDBACKS.map((fb, idx) => (
+            {feedback.map((fb, idx) => (
               <MotiView
                 key={fb.id}
                 from={{ opacity: 0, translateX: -20 }}
@@ -560,7 +523,7 @@ export default function MentorHome() {
                           color: COLORS.foreground,
                         }}
                       >
-                        {fb.student}
+                        {fb.student_name}
                       </Text>
                       <Text
                         style={{
@@ -569,7 +532,7 @@ export default function MentorHome() {
                           marginTop: 2,
                         }}
                       >
-                        {fb.teacher} • {fb.date}
+                        {fb.teacher_name} • {new Date(fb.created_at).toLocaleDateString("ru", { day: "numeric", month: "short" })}
                       </Text>
                     </View>
                   </View>
@@ -630,7 +593,7 @@ export default function MentorHome() {
           </View>
 
           <View className="gap-5">
-            {MOCK_STUDENTS.map((student, idx) => (
+            {students.map((student, idx) => (
               <MotiView
                 key={student.id}
                 from={{ opacity: 0, translateY: 20 }}
@@ -649,7 +612,7 @@ export default function MentorHome() {
                 <TouchableOpacity
                   activeOpacity={0.8}
                   onPress={() =>
-                    router.push(`/(tabs)/mentor/student/${student.id}` as any)
+                    router.push(`/(tabs)/mentor/student/${student.id}` as any) // student.id is group_members PK
                   }
                 >
                   <View className="flex-row items-center gap-5 mb-6">
@@ -677,7 +640,7 @@ export default function MentorHome() {
                             color: COLORS.primary,
                           }}
                         >
-                          {student.name.charAt(0)}
+                          {student.student_name.charAt(0)}
                         </Text>
                       </LinearGradient>
                     </View>
@@ -690,7 +653,7 @@ export default function MentorHome() {
                           letterSpacing: TYPOGRAPHY.letterSpacing.tight,
                         }}
                       >
-                        {student.name}
+                        {student.student_name}
                       </Text>
                       <Text
                         style={{
@@ -699,7 +662,7 @@ export default function MentorHome() {
                           marginTop: 4,
                         }}
                       >
-                        {student.age} лет • Уровень {student.level}
+                        {student.student_age} лет • Уровень {student.level}
                       </Text>
                     </View>
                     <View

@@ -4,20 +4,14 @@ import React from "react";
 import { Platform, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-const MOCK_ATTENDANCE = [
-  { id: "1", name: "Анна Петрова", present: true, date: "Сегодня, 15:00" },
-  { id: "2", name: "Максим Иванов", present: true, date: "Сегодня, 15:00" },
-  { id: "3", name: "Данияр Сеитов", present: false, date: "Сегодня, 15:00" },
-  { id: "4", name: "Алия Нурова", present: true, date: "Вчера, 15:00" },
-  { id: "5", name: "Тимур Касымов", present: false, date: "Вчера, 15:00" },
-];
+import { useMentorAttendance } from "../../../hooks/useMentorData";
 
 export default function MentorAttendance() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+  const { records, loading } = useMentorAttendance();
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -38,8 +32,13 @@ export default function MentorAttendance() {
           Последние занятия
         </Text>
 
+        {loading && (
+          <Text style={{ textAlign: "center", marginTop: 20, color: COLORS.mutedForeground }}>
+            Загрузка...
+          </Text>
+        )}
         <View style={{ gap: 12 }}>
-          {MOCK_ATTENDANCE.map((item) => (
+          {records.map((item) => (
             <View
               key={item.id}
               style={{

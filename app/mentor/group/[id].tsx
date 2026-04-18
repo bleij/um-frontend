@@ -14,14 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-const MOCK_STUDENTS = [
-  { id: "1", name: "Алихан Сериков", attendance: true, xpAdded: 50 },
-  { id: "2", name: "Мария Иванова", attendance: true, xpAdded: 50 },
-  { id: "3", name: "Тимур Ахметов", attendance: false, xpAdded: 0 },
-  { id: "4", name: "Елена Петрова", attendance: true, xpAdded: 50 },
-  { id: "5", name: "Санжар Болатов", attendance: true, xpAdded: 50 },
-];
+import { useGroupMembers } from "../../../hooks/useMentorData";
 
 export default function MentorGroupDetail() {
   const { id } = useLocalSearchParams();
@@ -30,12 +23,12 @@ export default function MentorGroupDetail() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-  const [students, setStudents] = useState(MOCK_STUDENTS);
+  const { members, loading } = useGroupMembers(id as string);
+  const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({});
 
-  const toggleAttendance = (id: string) => {
-    setStudents(prev => prev.map(s => 
-      s.id === id ? { ...s, attendance: !s.attendance } : s
-    ));
+  const getAttendance = (memberId: string) => attendanceMap[memberId] ?? true;
+  const toggleAttendance = (memberId: string) => {
+    setAttendanceMap(prev => ({ ...prev, [memberId]: !getAttendance(memberId) }));
   };
 
   return (
@@ -89,58 +82,64 @@ export default function MentorGroupDetail() {
         <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
            <View className="flex-row justify-between items-center mb-6">
               <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Посещаемость</Text>
-              <View style={{ backgroundColor: COLORS.muted, px: SPACING.md, py: SPACING.xs, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border }}>
+              <View style={{ backgroundColor: COLORS.muted, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border }}>
                  <Text style={{ fontSize: 9, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textAlign: 'center' }}>ФЕВРАЛЬ 24, 2026</Text>
               </View>
            </View>
 
+           {loading && (
+             <Text style={{ textAlign: "center", color: COLORS.mutedForeground }}>Загрузка...</Text>
+           )}
            <View style={{ gap: SPACING.md }}>
-              {students.map(s => (
+              {members.map(s => {
+                const att = getAttendance(s.id);
+                return (
                 <TouchableOpacity
                   key={s.id}
                   onPress={() => toggleAttendance(s.id)}
-                  style={{ 
-                    flexDirection: 'row', 
-                    alignItems: 'center', 
-                    justifyContent: 'space-between', 
-                    padding: SPACING.lg, 
-                    backgroundColor: COLORS.background, 
-                    borderRadius: RADIUS.lg, 
-                    borderWidth: 1, 
-                    borderColor: COLORS.border 
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: SPACING.lg,
+                    backgroundColor: COLORS.background,
+                    borderRadius: RADIUS.lg,
+                    borderWidth: 1,
+                    borderColor: COLORS.border
                   }}
                 >
                   <View className="flex-row items-center gap-4">
-                     <View style={{ 
-                       width: 44, 
-                       height: 44, 
-                       backgroundColor: COLORS.white, 
-                       borderRadius: RADIUS.full, 
-                       alignItems: 'center', 
-                       justifyContent: 'center', 
-                       borderWidth: 1, 
+                     <View style={{
+                       width: 44,
+                       height: 44,
+                       backgroundColor: COLORS.white,
+                       borderRadius: RADIUS.full,
+                       alignItems: 'center',
+                       justifyContent: 'center',
+                       borderWidth: 1,
                        borderColor: COLORS.border,
                        ...SHADOWS.sm
                      }}>
-                        <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{s.name.charAt(0)}</Text>
+                        <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{s.student_name.charAt(0)}</Text>
                      </View>
-                     <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{s.name}</Text>
+                     <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{s.student_name}</Text>
                   </View>
-                  <View style={{ 
-                    width: 40, 
-                    height: 40, 
-                    borderRadius: RADIUS.md, 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    backgroundColor: s.attendance ? COLORS.success : COLORS.white,
-                    borderWidth: s.attendance ? 0 : 2,
+                  <View style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: RADIUS.md,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: att ? COLORS.success : COLORS.white,
+                    borderWidth: att ? 0 : 2,
                     borderColor: COLORS.muted,
-                    ... (s.attendance ? SHADOWS.md : {})
+                    ...(att ? SHADOWS.md : {})
                   }}>
-                     {s.attendance && <Feather name="check" size={20} color="white" />}
+                     {att && <Feather name="check" size={20} color="white" />}
                   </View>
                 </TouchableOpacity>
-              ))}
+                );
+              })}
            </View>
         </View>
 
@@ -158,7 +157,7 @@ export default function MentorGroupDetail() {
            </View>
            
            <TouchableOpacity 
-              style={{ ...SHADOWS.md, h: 64, backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}
+              style={{ ...SHADOWS.md, height: 64, backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}
               onPress={() => router.back()}
            >
               <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold, fontSize: TYPOGRAPHY.size.md }}>Завершить и начислить XP</Text>

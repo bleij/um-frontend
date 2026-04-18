@@ -1,0 +1,366 @@
+import { useCallback, useEffect, useState } from "react";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
+
+export interface MentorGroup {
+  id: string;
+  mentor_user_id: string | null;
+  name: string;
+  course: string;
+  schedule: string | null;
+  max_students: number;
+  active: boolean;
+  student_count: number;
+  created_at: string;
+}
+
+export interface GroupMember {
+  id: string;
+  group_id: string;
+  student_name: string;
+  student_age: number | null;
+  level: number;
+  xp: number;
+  progress: number;
+  skills: { com: number; lead: number; cre: number; log: number; dis: number };
+  enrolled_at: string;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  name: string;
+  present: boolean;
+  date: string;
+}
+
+export interface StudentGoal {
+  id: string;
+  mentor_user_id: string | null;
+  student_name: string;
+  title: string;
+  deadline_text: string | null;
+  progress: number;
+  color: string;
+  created_at: string;
+}
+
+export interface LearningMaterial {
+  id: string;
+  mentor_user_id: string | null;
+  title: string;
+  material_type: string;
+  icon_name: string;
+  size_label: string;
+  file_url: string | null;
+  color: string;
+  created_at: string;
+}
+
+export interface MentorFeedback {
+  id: string;
+  mentor_user_id: string | null;
+  teacher_name: string | null;
+  student_name: string | null;
+  tag: string | null;
+  text: string;
+  created_at: string;
+}
+
+function ok<T = any>(res: { data: any; error: any }): T[] {
+  if (res.error || !res.data) return [];
+  return res.data as T[];
+}
+
+// ─── useMentorGroups ──────────────────────────────────────────
+export function useMentorGroups() {
+  const { user } = useAuth();
+  const [groups, setGroups] = useState<MentorGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setGroups([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("mentor_groups")
+      .select("*")
+      .eq("mentor_user_id", user.id)
+      .order("created_at", { ascending: true });
+    const raw = ok<any>(res);
+
+    // Fetch member counts for each group
+    const ids = raw.map((g: any) => g.id);
+    const countRes = ids.length
+      ? await supabase
+          .from("group_members")
+          .select("group_id")
+          .in("group_id", ids)
+      : { data: [], error: null };
+    const countMap = new Map<string, number>();
+    for (const row of ok<any>(countRes)) {
+      countMap.set(row.group_id, (countMap.get(row.group_id) ?? 0) + 1);
+    }
+
+    setGroups(
+      raw.map((g: any) => ({
+        ...g,
+        student_count: countMap.get(g.id) ?? 0,
+      }))
+    );
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { groups, loading, refresh };
+}
+
+// ─── useGroupMembers ──────────────────────────────────────────
+export function useGroupMembers(groupId: string | null) {
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !groupId) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("group_members")
+      .select("*")
+      .eq("group_id", groupId)
+      .order("enrolled_at", { ascending: true });
+    setMembers(ok<GroupMember>(res));
+    setLoading(false);
+  }, [groupId]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { members, loading, refresh };
+}
+
+// ─── useMentorStudents ────────────────────────────────────────
+export function useMentorStudents() {
+  const { user } = useAuth();
+  const [students, setStudents] = useState<GroupMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    // Fetch mentor's group IDs first
+    const groupRes = await supabase
+      .from("mentor_groups")
+      .select("id")
+      .eq("mentor_user_id", user.id);
+    const groupIds = ok<any>(groupRes).map((g: any) => g.id);
+    if (!groupIds.length) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
+    const memberRes = await supabase
+      .from("group_members")
+      .select("*")
+      .in("group_id", groupIds)
+      .order("enrolled_at", { ascending: true });
+    setStudents(ok<GroupMember>(memberRes));
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { students, loading, refresh };
+}
+
+// ─── useMentorFeedback ────────────────────────────────────────
+export function useMentorFeedback() {
+  const { user } = useAuth();
+  const [feedback, setFeedback] = useState<MentorFeedback[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setFeedback([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("mentor_feedback")
+      .select("*")
+      .eq("mentor_user_id", user.id)
+      .order("created_at", { ascending: false });
+    setFeedback(ok<MentorFeedback>(res));
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { feedback, loading, refresh };
+}
+
+// ─── useStudentGoals ──────────────────────────────────────────
+export function useStudentGoals() {
+  const { user } = useAuth();
+  const [goals, setGoals] = useState<StudentGoal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setGoals([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("student_goals")
+      .select("*")
+      .eq("mentor_user_id", user.id)
+      .order("created_at", { ascending: true });
+    setGoals(ok<StudentGoal>(res));
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const updateProgress = async (id: string, progress: number) => {
+    if (!supabase) return;
+    await supabase.from("student_goals").update({ progress }).eq("id", id);
+    refresh();
+  };
+
+  return { goals, loading, refresh, updateProgress };
+}
+
+// ─── useLearningMaterials ─────────────────────────────────────
+export function useLearningMaterials() {
+  const { user } = useAuth();
+  const [materials, setMaterials] = useState<LearningMaterial[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setMaterials([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("learning_materials")
+      .select("*")
+      .eq("mentor_user_id", user.id)
+      .order("created_at", { ascending: true });
+    setMaterials(ok<LearningMaterial>(res));
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { materials, loading, refresh };
+}
+
+// ─── useMentorAttendance ──────────────────────────────────────
+export function useMentorAttendance() {
+  const { user } = useAuth();
+  const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    // Fetch mentor groups
+    const groupRes = await supabase
+      .from("mentor_groups")
+      .select("id")
+      .eq("mentor_user_id", user.id);
+    const groupIds = ok<any>(groupRes).map((g: any) => g.id);
+    if (!groupIds.length) {
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch sessions
+    const sessionRes = await supabase
+      .from("attendance_sessions")
+      .select("id, session_date, group_id")
+      .in("group_id", groupIds)
+      .order("session_date", { ascending: false });
+    const sessions = ok<any>(sessionRes);
+    if (!sessions.length) {
+      setRecords([]);
+      setLoading(false);
+      return;
+    }
+
+    const sessionIds = sessions.map((s: any) => s.id);
+    const sessionMap = new Map<string, string>(
+      sessions.map((s: any) => [s.id, s.session_date])
+    );
+
+    // Fetch records + member names
+    const recRes = await supabase
+      .from("attendance_records")
+      .select("id, session_id, member_id, present")
+      .in("session_id", sessionIds);
+    const recRows = ok<any>(recRes);
+
+    const memberIds = [...new Set(recRows.map((r: any) => r.member_id))];
+    const memberRes = memberIds.length
+      ? await supabase
+          .from("group_members")
+          .select("id, student_name")
+          .in("id", memberIds)
+      : { data: [], error: null };
+    const memberMap = new Map<string, string>(
+      ok<any>(memberRes).map((m: any) => [m.id, m.student_name])
+    );
+
+    const flat: AttendanceRecord[] = recRows.map((r: any) => ({
+      id: r.id,
+      name: memberMap.get(r.member_id) ?? "—",
+      present: r.present,
+      date: sessionMap.get(r.session_id)
+        ? new Date(sessionMap.get(r.session_id)!).toLocaleDateString("ru", {
+            day: "numeric",
+            month: "short",
+          }) + ", 15:00"
+        : "—",
+    }));
+
+    setRecords(flat);
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { records, loading, refresh };
+}

@@ -15,12 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-const MOCK_GROUPS = [
-  { id: "1", name: "Старшая группа A", course: "Робототехника", students: 12, time: "Пн, Ср 15:00", nextLesson: "Сегодня, 15:00", active: true },
-  { id: "2", name: "Middle Python", course: "Программирование", students: 8, time: "Вт, Чт 16:45", nextLesson: "Завтра, 16:45", active: true },
-  { id: "3", name: "Младшая группа B", course: "Робототехника", students: 10, time: "Сб 10:00", nextLesson: "Суббота, 10:00", active: false },
-];
+import { useMentorGroups } from "../../../hooks/useMentorData";
 
 export default function MentorGroups() {
   const router = useRouter();
@@ -29,9 +24,10 @@ export default function MentorGroups() {
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const [search, setSearch] = useState("");
+  const { groups, loading } = useMentorGroups();
 
-  const filtered = MOCK_GROUPS.filter(g => 
-     g.name.toLowerCase().includes(search.toLowerCase()) || 
+  const filtered = groups.filter(g =>
+     g.name.toLowerCase().includes(search.toLowerCase()) ||
      g.course.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -99,6 +95,11 @@ export default function MentorGroups() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {loading && (
+          <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
+            Загрузка...
+          </Text>
+        )}
         <View style={{ gap: SPACING.lg }}>
            {filtered.map((group) => (
               <Pressable
@@ -150,31 +151,31 @@ export default function MentorGroups() {
                  <View className="flex-row items-center gap-6 mb-6">
                     <View className="flex-row items-center gap-2">
                        <Feather name="users" size={16} color={COLORS.mutedForeground} />
-                       <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.foreground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.students} уч.</Text>
+                       <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.foreground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.student_count} уч.</Text>
                     </View>
                     <View className="flex-row items-center gap-2">
                        <Feather name="calendar" size={16} color={COLORS.mutedForeground} />
-                       <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.foreground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.time}</Text>
+                       <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.foreground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.schedule}</Text>
                     </View>
                  </View>
 
-                 <View style={{ 
-                   paddingTop: SPACING.lg, 
-                   borderTopWidth: 1, 
-                   borderTopColor: COLORS.border, 
-                   flexDirection: "row", 
-                   alignItems: "center", 
-                   justifyContent: "space-between" 
+                 <View style={{
+                   paddingTop: SPACING.lg,
+                   borderTopWidth: 1,
+                   borderTopColor: COLORS.border,
+                   flexDirection: "row",
+                   alignItems: "center",
+                   justifyContent: "space-between"
                  }}>
                     <View>
-                       <Text style={{ 
-                         fontSize: 10, 
-                         color: COLORS.mutedForeground, 
-                         fontWeight: TYPOGRAPHY.weight.bold, 
-                         textTransform: 'uppercase', 
-                         marginBottom: 2 
-                       }}>Следующее занятие</Text>
-                       <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{group.nextLesson}</Text>
+                       <Text style={{
+                         fontSize: 10,
+                         color: COLORS.mutedForeground,
+                         fontWeight: TYPOGRAPHY.weight.bold,
+                         textTransform: 'uppercase',
+                         marginBottom: 2
+                       }}>Расписание</Text>
+                       <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{group.schedule ?? "—"}</Text>
                     </View>
                     <View style={{ 
                       width: 44, 

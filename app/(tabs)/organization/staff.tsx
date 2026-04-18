@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React from "react";
 import {
   Platform,
   ScrollView,
@@ -13,46 +13,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { useOrgStaff } from "../../../hooks/useOrgData";
+import type { OrgStaffMember } from "../../../hooks/useOrgData";
 
-interface Teacher {
-  id: string;
-  full_name: string;
-  phone: string;
-  email: string;
-  specialization: string;
-  rating: number;
-  status: "active" | "invited" | "inactive";
-}
-
-const MOCK_TEACHERS: Teacher[] = [
-  {
-    id: "1",
-    full_name: "Анна Петрова",
-    phone: "+7 701 123 45 67",
-    email: "anna@example.com",
-    specialization: "Рисование и живопись",
-    rating: 4.9,
-    status: "active",
-  },
-  {
-    id: "2",
-    full_name: "Игорь Соколов",
-    phone: "+7 707 987 65 43",
-    email: "igor@example.com",
-    specialization: "Робототехника",
-    rating: 4.7,
-    status: "invited",
-  },
-  {
-    id: "3",
-    full_name: "Марина Иванова",
-    phone: "+7 702 555 11 22",
-    email: "marina@example.com",
-    specialization: "Английский язык",
-    rating: 4.8,
-    status: "active",
-  },
-];
+type Teacher = OrgStaffMember;
 
 export default function OrgStaffScreen() {
   const router = useRouter();
@@ -60,8 +24,7 @@ export default function OrgStaffScreen() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-  const [teachers] = useState<Teacher[]>(MOCK_TEACHERS);
-  const [loading] = useState(false);
+  const { staff: teachers, loading } = useOrgStaff();
 
   const getStatusBadge = (status: Teacher["status"]) => {
     switch (status) {

@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React from "react";
 import {
   Platform,
   ScrollView,
@@ -13,50 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-interface Group {
-  id: string;
-  group_name: string;
-  course_title: string;
-  status: "active" | "inactive";
-  current_students: number;
-  max_students: number;
-  teacher_name?: string;
-  schedule?: string;
-}
-
-const MOCK_GROUPS: Group[] = [
-  {
-    id: "1",
-    group_name: "Группа К-1",
-    course_title: "Робототехника",
-    status: "active",
-    current_students: 12,
-    max_students: 15,
-    teacher_name: "Игорь Соколов",
-    schedule: "Пн, Ср, Пт 15:00",
-  },
-  {
-    id: "2",
-    group_name: "Группа А-3",
-    course_title: "Английский язык",
-    status: "active",
-    current_students: 8,
-    max_students: 12,
-    teacher_name: "Марина Иванова",
-    schedule: "Вт, Чт 16:30",
-  },
-  {
-    id: "3",
-    group_name: "Группа Х-10",
-    course_title: "Рисование",
-    status: "inactive",
-    current_students: 0,
-    max_students: 20,
-    teacher_name: "Анна Петрова",
-    schedule: "Сб 11:00",
-  },
-];
+import { useOrgGroups } from "../../../hooks/useOrgData";
 
 export default function OrgGroupsScreen() {
   const router = useRouter();
@@ -64,8 +21,18 @@ export default function OrgGroupsScreen() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-  const [groups] = useState<Group[]>(MOCK_GROUPS);
-  const [loading] = useState(false);
+  const { groups: rawGroups, loading } = useOrgGroups();
+  // Map to the shape the UI expects
+  const groups = rawGroups.map((g) => ({
+    id: g.id,
+    group_name: g.name,
+    course_title: g.course ?? "",
+    status: g.active ? "active" as const : "inactive" as const,
+    current_students: g.enrolled,
+    max_students: g.capacity,
+    teacher_name: undefined as string | undefined,
+    schedule: g.schedule ?? undefined,
+  }));
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -133,7 +100,7 @@ export default function OrgGroupsScreen() {
                       <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 4 }}>{group.group_name}</Text>
                       <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold }}>{group.course_title}</Text>
                     </View>
-                    <View style={{ px: 12, py: 6, borderRadius: RADIUS.lg, backgroundColor: group.status === 'active' ? 'rgba(52, 199, 89, 0.1)' : COLORS.background }}>
+                    <View style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.lg, backgroundColor: group.status === 'active' ? 'rgba(52, 199, 89, 0.1)' : COLORS.background }}>
                       <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: group.status === 'active' ? COLORS.success : COLORS.mutedForeground }}>{group.status === 'active' ? 'АКТИВНА' : 'НЕАКТИВНА'}</Text>
                     </View>
                   </View>

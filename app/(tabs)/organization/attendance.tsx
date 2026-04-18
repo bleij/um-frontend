@@ -3,7 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  Image,
   Platform,
   ScrollView,
   Text,
@@ -13,49 +12,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
-
-const CLUBS = [
-  { id: "art", name: "Художественная студия" },
-  { id: "football", name: "Футбол" },
-  { id: "coding", name: "Программирование" },
-];
+import { useOrgApplications } from "../../../hooks/useOrgData";
 
 const SESSIONS = [
   { date: "21 фев", day: "ПН" },
   { date: "23 фев", day: "СР" },
   { date: "26 фев", day: "ПН" },
   { date: "28 фев", day: "СР" },
-];
-
-const MOCK_STUDENTS = [
-  {
-    id: "1",
-    name: "Анна Петрова",
-    avatar:
-      "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
-    attendance: [true, true, true, false],
-  },
-  {
-    id: "2",
-    name: "Мария Иванова",
-    avatar:
-      "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
-    attendance: [true, false, true, true],
-  },
-  {
-    id: "3",
-    name: "София Смирнова",
-    avatar:
-      "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
-    attendance: [true, true, true, true],
-  },
-  {
-    id: "4",
-    name: "Елизавета Новикова",
-    avatar:
-      "https://images.unsplash.com/photo-1628435509114-969a718d64e8?w=100&h=100&fit=crop",
-    attendance: [false, true, true, true],
-  },
 ];
 
 export default function OrgAttendance() {
@@ -65,15 +28,34 @@ export default function OrgAttendance() {
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : 20;
-  const [selectedClub, setSelectedClub] = useState("art");
+
+  const { apps, loading } = useOrgApplications();
+  // Build club list dynamically from applications
+  const clubs = Array.from(new Set(apps.map((a) => a.club).filter(Boolean))).map((c) => ({
+    id: c as string,
+    name: c as string,
+  }));
+  const [selectedClub, setSelectedClub] = useState<string>("");
+
+  // Students for selected club (activated/paid applications)
+  const activeStudents = apps.filter(
+    (a) =>
+      (a.status === "activated" || a.status === "paid") &&
+      (selectedClub === "" || a.club === selectedClub)
+  ).map((a) => ({
+    id: a.id,
+    name: a.child_name,
+    // Seed random-ish attendance for display purposes
+    attendance: SESSIONS.map((_, i) => (a.id.charCodeAt(i % a.id.length) % 3) !== 0),
+  }));
 
   const getRate = (arr: boolean[]) =>
-    Math.round((arr.filter(Boolean).length / arr.length) * 100);
+    arr.length ? Math.round((arr.filter(Boolean).length / arr.length) * 100) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <LinearGradient
-        colors={[COLORS.gradientFrom, COLORS.gradientTo]}
+        colors={COLORS.gradients.header as any}
         style={{
           paddingBottom: 24,
           borderBottomLeftRadius: 32,
@@ -111,7 +93,7 @@ export default function OrgAttendance() {
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {CLUBS.map((club) => (
+              {clubs.map((club) => (
                 <TouchableOpacity
                   key={club.id}
                   onPress={() => setSelectedClub(club.id)}
@@ -207,21 +189,25 @@ export default function OrgAttendance() {
           </View>
 
           {/* Table Body */}
+          {loading && (
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
+            </View>
+          )}
           <View>
-            {MOCK_STUDENTS.map((student, sIdx) => (
+            {activeStudents.map((student, sIdx) => (
               <View
                 key={student.id}
                 className={`flex-row p-3 items-center ${
-                  sIdx !== MOCK_STUDENTS.length - 1
+                  sIdx !== activeStudents.length - 1
                     ? "border-b border-gray-50"
                     : ""
                 }`}
               >
                 <View className="flex-1 flex-row items-center gap-2">
-                  <Image
-                    source={{ uri: student.avatar }}
-                    className="w-8 h-8 rounded-full bg-gray-100"
-                  />
+                  <View className="w-8 h-8 rounded-full bg-gray-100 items-center justify-center">
+                    <Text style={{ fontWeight: "700", color: COLORS.primary, fontSize: 12 }}>{student.name.charAt(0)}</Text>
+                  </View>
                   <Text
                     numberOfLines={1}
                     className="text-xs font-bold text-gray-800 flex-1"

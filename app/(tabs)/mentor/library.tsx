@@ -4,19 +4,14 @@ import React from "react";
 import { Platform, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-const MOCK_MATERIALS = [
-  { id: "1", title: "Введение в робототехнику", type: "Презентация", size: "2.4 MB", icon: "file-text" as const, color: COLORS.primary },
-  { id: "2", title: "Основы программирования: Урок 1", type: "PDF", size: "1.1 MB", icon: "book" as const, color: COLORS.info },
-  { id: "3", title: "Задания по логике (Блок 3)", type: "Документ", size: "0.8 MB", icon: "clipboard" as const, color: COLORS.warning },
-  { id: "4", title: "Видео-урок: Сборка модели", type: "Видео", size: "45 MB", icon: "video" as const, color: COLORS.success },
-];
+import { useLearningMaterials } from "../../../hooks/useMentorData";
 
 export default function MentorLibrary() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+  const { materials, loading } = useLearningMaterials();
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -37,8 +32,13 @@ export default function MentorLibrary() {
           Учебные материалы
         </Text>
 
+        {loading && (
+          <Text style={{ textAlign: "center", marginTop: 20, color: COLORS.mutedForeground }}>
+            Загрузка...
+          </Text>
+        )}
         <View style={{ gap: 12 }}>
-          {MOCK_MATERIALS.map((item) => (
+          {materials.map((item) => (
             <TouchableOpacity
               key={item.id}
               activeOpacity={0.8}
@@ -64,14 +64,14 @@ export default function MentorLibrary() {
                   marginRight: 14,
                 }}
               >
-                <Feather name={item.icon} size={22} color={item.color} />
+                <Feather name={item.icon_name as any} size={22} color={item.color} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>
                   {item.title}
                 </Text>
                 <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>
-                  {item.type} · {item.size}
+                  {item.material_type} · {item.size_label}
                 </Text>
               </View>
               <Feather name="download" size={18} color={COLORS.mutedForeground} />

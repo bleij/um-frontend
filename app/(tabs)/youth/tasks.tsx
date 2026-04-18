@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React from "react";
 import {
   Platform,
   Pressable,
@@ -12,24 +12,24 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { useStudentTasks } from "../../../hooks/useStudentData";
 
-const MOCK_TASKS = [
-    { id: 1, title: "Нарисовать пейзаж", club: "Художественная студия", xp: 50, completed: true, color: "#A78BFA" },
-    { id: 2, title: "Домашнее задание", club: "Программирование", xp: 40, completed: false, color: "#6C5CE7" },
-    { id: 3, title: "Выучить 10 слов", club: "Английский язык", xp: 30, completed: false, color: "#3B82F6" },
-    { id: 4, title: "Пробежать 1 км", club: "Футбол", xp: 45, completed: false, color: "#10B981" },
-];
+// Color palette cycling for tasks
+const TASK_COLORS = ["#A78BFA", "#6C5CE7", "#3B82F6", "#10B981", "#F59E0B", "#EF4444"];
 
 export default function YouthTasks() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const [tasks, setTasks] = useState(MOCK_TASKS);
+  const { tasks: rawTasks, toggleTask, loading } = useStudentTasks();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-  const toggleTask = (id: number) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-  };
+  const tasks = rawTasks.map((t, i) => ({
+    ...t,
+    completed: t.done,
+    xp: t.xp_reward,
+    color: TASK_COLORS[i % TASK_COLORS.length],
+  }));
 
   const doneCount = tasks.filter(t => t.completed).length;
   const totalXP = tasks.filter(t => t.completed).reduce((sum, t) => sum + t.xp, 0);
@@ -85,8 +85,13 @@ export default function YouthTasks() {
         <Text className="text-lg font-black text-gray-900 mb-4 px-1">Твой список дел</Text>
         
         <View className="gap-3">
+           {loading ? (
+              <Text style={{ textAlign: "center", marginTop: 20, color: COLORS.mutedForeground }}>
+                Загрузка...
+              </Text>
+           ) : null}
            {tasks.map(task => (
-              <Pressable 
+              <Pressable
                  key={task.id}
                  onPress={() => toggleTask(task.id)}
                  style={SHADOWS.sm}

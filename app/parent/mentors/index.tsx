@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React from "react";
 import {
   Platform,
   ScrollView,
@@ -10,50 +10,10 @@ import {
   useWindowDimensions,
   View,
   TouchableOpacity,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-interface Mentor {
-  id: string;
-  name: string;
-  specialization: string;
-  rating: number;
-  students: number;
-  avatar: string;
-  tags: string[];
-}
-
-const MOCK_MENTORS: Mentor[] = [
-  {
-    id: "1",
-    name: "Алексей Смирнов",
-    specialization: "IT Разработчик, Математика",
-    rating: 4.9,
-    students: 12,
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
-    tags: ["программирование", "робототехника", "логика"],
-  },
-  {
-    id: "2",
-    name: "Елена Чернова",
-    specialization: "Арт-директор, Психолог",
-    rating: 4.8,
-    students: 15,
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
-    tags: ["живопись", "эмоциональный интеллект", "социум"],
-  },
-  {
-    id: "3",
-    name: "Тимур Аскаров",
-    specialization: "Инженер, Шахматист",
-    rating: 5.0,
-    students: 8,
-    avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop",
-    tags: ["стратегия", "математика", "изобретения"],
-  },
-];
+import { usePublicMentors } from "../../../hooks/usePublicMentors";
 
 export default function ParentMentorsScreen() {
   const router = useRouter();
@@ -61,7 +21,16 @@ export default function ParentMentorsScreen() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-  const [mentors] = useState<Mentor[]>(MOCK_MENTORS);
+  const { mentors: rawMentors, loading } = usePublicMentors();
+  // Map to UI shape
+  const mentors = rawMentors.map((m) => ({
+    id: m.id,
+    name: m.name ?? "—",
+    specialization: m.specialization ?? "",
+    rating: m.rating ?? 0,
+    students: m.sessions ?? 0,
+    tags: [] as string[],
+  }));
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -94,6 +63,11 @@ export default function ParentMentorsScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {loading && (
+          <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
+            Загрузка...
+          </Text>
+        )}
          <View style={{ gap: SPACING.lg }}>
             {mentors.map((mentor, idx) => (
               <MotiView
@@ -104,7 +78,9 @@ export default function ParentMentorsScreen() {
               >
                  <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: 32, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
                     <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
-                       <Image source={{ uri: mentor.avatar }} style={{ width: 80, height: 80, borderRadius: 24, backgroundColor: COLORS.muted }} />
+                       <View style={{ width: 80, height: 80, borderRadius: 24, backgroundColor: `${COLORS.primary}10`, alignItems: 'center', justifyContent: 'center' }}>
+                         <Text style={{ fontSize: 30, fontWeight: '700', color: COLORS.primary }}>{mentor.name.charAt(0)}</Text>
+                       </View>
                        <View style={{ flex: 1, justifyContent: 'center' }}>
                           <Text style={{ fontSize: 18, fontWeight: '800', color: COLORS.foreground, marginBottom: 4 }}>{mentor.name}</Text>
                           <Text style={{ fontSize: 12, color: COLORS.mutedForeground, fontWeight: '600', marginBottom: 8 }}>{mentor.specialization}</Text>

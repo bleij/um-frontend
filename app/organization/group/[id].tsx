@@ -124,7 +124,7 @@ export default function GroupDetailScreen() {
         {/* Details List */}
         <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xxl, borderWidth: 1, borderColor: COLORS.border }}>
            <View style={{ gap: SPACING.xl }}>
-              <View style={{ flexDirection: 'row', alignItems: 'start', gap: SPACING.lg }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.lg }}>
                  <View style={{ width: 44, height: 44, backgroundColor: 'rgba(108, 92, 231, 0.05)', borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
                     <Feather name="award" size={20} color={COLORS.primary} />
                  </View>
@@ -134,7 +134,7 @@ export default function GroupDetailScreen() {
                  </View>
               </View>
 
-              <View style={{ flexDirection: 'row', alignItems: 'start', gap: SPACING.lg }}>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.lg }}>
                  <View style={{ width: 44, height: 44, backgroundColor: 'rgba(108, 92, 231, 0.05)', borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
                     <Feather name="clock" size={20} color={COLORS.primary} />
                  </View>
@@ -147,7 +147,7 @@ export default function GroupDetailScreen() {
         </View>
 
         {/* Student List */}
-        <View style={{ marginBottom: SPACING.lg, flexDirection: 'row', justifyBetween: 'space-between', alignItems: 'center' }}>
+        <View style={{ marginBottom: SPACING.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
            <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, flex: 1 }}>Список учеников</Text>
            <TouchableOpacity 
              onPress={() => router.push(`/organization/group/${id}/attendance` as any)} 

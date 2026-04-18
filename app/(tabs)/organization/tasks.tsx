@@ -13,49 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-const MOCK_TASKS = [
-  {
-    id: "1",
-    title: "Нарисовать пейзаж",
-    club: "Художественная студия",
-    clubId: "art",
-    assignedTo: "Все ученики",
-    dueDate: "28 фев 2026",
-    xp: 50,
-    completed: 12,
-    total: 18,
-  },
-  {
-    id: "2",
-    title: "Техника ведения мяча",
-    club: "Футбол",
-    clubId: "football",
-    assignedTo: "Все ученики",
-    dueDate: "1 мар 2026",
-    xp: 45,
-    completed: 18,
-    total: 24,
-  },
-  {
-    id: "3",
-    title: "Создать простую программу",
-    club: "Программирование",
-    clubId: "coding",
-    assignedTo: "Все ученики",
-    dueDate: "2 мар 2026",
-    xp: 60,
-    completed: 8,
-    total: 15,
-  },
-];
-
-const CLUBS = [
-  { id: "all", name: "Все кружки" },
-  { id: "art", name: "Художественная студия" },
-  { id: "football", name: "Футбол" },
-  { id: "coding", name: "Программирование" },
-];
+import { useOrgTasks } from "../../../hooks/useOrgData";
 
 export default function OrgTasks() {
   const router = useRouter();
@@ -63,11 +21,21 @@ export default function OrgTasks() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
   const [selectedClub, setSelectedClub] = useState("all");
+  const { tasks: allTasks, loading } = useOrgTasks();
+
+  // Build clubs list dynamically from fetched tasks
+  const clubs = [
+    { id: "all", name: "Все кружки" },
+    ...Array.from(new Set(allTasks.map((t) => t.club).filter(Boolean))).map((c) => ({
+      id: c as string,
+      name: c as string,
+    })),
+  ];
 
   const filtered =
     selectedClub === "all"
-      ? MOCK_TASKS
-      : MOCK_TASKS.filter((t) => t.clubId === selectedClub);
+      ? allTasks
+      : allTasks.filter((t) => t.club === selectedClub);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -111,7 +79,7 @@ export default function OrgTasks() {
               </View>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 px-1">
-                {CLUBS.map((club) => (
+                {clubs.map((club) => (
                   <TouchableOpacity
                     key={club.id}
                     onPress={() => setSelectedClub(club.id)}
@@ -142,8 +110,13 @@ export default function OrgTasks() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {loading && (
+          <Text style={{ textAlign: "center", marginTop: 20, color: COLORS.mutedForeground }}>
+            Загрузка...
+          </Text>
+        )}
         {filtered.map((task, idx) => {
-          const percent = Math.round((task.completed / task.total) * 100);
+          const percent = Math.round(((task.completed_students ?? 0) / Math.max(task.total_students, 1)) * 100);
           return (
             <MotiView
                key={task.id}
@@ -162,8 +135,8 @@ export default function OrgTasks() {
                            <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{task.club}</Text>
                         </View>
                      </View>
-                     <View style={{ backgroundColor: 'rgba(108, 92, 231, 0.05)', px: 12, py: 6, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'rgba(108, 92, 231, 0.1)' }}>
-                        <Text style={{ color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 11 }}>+{task.xp} XP</Text>
+                     <View style={{ backgroundColor: 'rgba(108, 92, 231, 0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'rgba(108, 92, 231, 0.1)' }}>
+                        <Text style={{ color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 11 }}>+{task.xp_reward} XP</Text>
                      </View>
                   </View>
 
@@ -173,24 +146,24 @@ export default function OrgTasks() {
                            <Feather name="users" size={12} color={COLORS.mutedForeground} />
                            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Кому</Text>
                         </View>
-                        <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{task.assignedTo}</Text>
+                        <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Все ученики</Text>
                      </View>
                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                            <Feather name="clock" size={12} color={COLORS.mutedForeground} />
                            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Срок</Text>
                         </View>
-                        <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{task.dueDate}</Text>
+                        <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{task.due_date}</Text>
                      </View>
                   </View>
 
                   <View style={{ marginBottom: SPACING.xl }}>
                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 8 }}>
                         <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Прогресс выполнения</Text>
-                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{task.completed}/{task.total}</Text>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{task.completed_students}/{task.total_students}</Text>
                      </View>
-                     <View style={{ h: 6, bg: COLORS.border, borderRadius: RADIUS.full, overflow: 'hidden' }}>
-                        <View style={{ width: `${percent}%`, h: 'full', bg: COLORS.primary }} />
+                     <View style={{ height: 6, backgroundColor: COLORS.border, borderRadius: RADIUS.full, overflow: 'hidden' }}>
+                        <View style={{ width: `${percent}%`, height: '100%', backgroundColor: COLORS.primary }} />
                      </View>
                   </View>
 

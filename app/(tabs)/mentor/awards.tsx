@@ -4,18 +4,14 @@ import React from "react";
 import { Platform, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-const MOCK_GOALS = [
-  { id: "1", title: "Завершить курс по Робототехнике", student: "Анна Петрова", deadline: "30 апреля", progress: 85, color: COLORS.primary },
-  { id: "2", title: "Улучшить навык коммуникации", student: "Максим Иванов", deadline: "15 мая", progress: 60, color: COLORS.success },
-  { id: "3", title: "Создать первый проект", student: "Данияр Сеитов", deadline: "1 июня", progress: 30, color: COLORS.warning },
-];
+import { useStudentGoals } from "../../../hooks/useMentorData";
 
 export default function MentorAwards() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+  const { goals, loading } = useStudentGoals();
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -36,8 +32,13 @@ export default function MentorAwards() {
           Активные цели
         </Text>
 
+        {loading && (
+          <Text style={{ textAlign: "center", marginTop: 20, color: COLORS.mutedForeground }}>
+            Загрузка...
+          </Text>
+        )}
         <View style={{ gap: 16 }}>
-          {MOCK_GOALS.map((goal) => (
+          {goals.map((goal) => (
             <View
               key={goal.id}
               style={{
@@ -55,7 +56,7 @@ export default function MentorAwards() {
                 {goal.title}
               </Text>
               <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginBottom: 12 }}>
-                {goal.student} · Срок: {goal.deadline}
+                {goal.student_name} · Срок: {goal.deadline_text}
               </Text>
 
               {/* Progress bar */}
