@@ -3,16 +3,13 @@ import {
     Text,
     ScrollView,
     Platform,
-    Dimensions,
+    useWindowDimensions,
 } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import { Feather } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
-
-const { width } = Dimensions.get("window");
-const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 /* ---------- русская локаль для календаря ---------- */
 LocaleConfig.locales["ru"] = {
@@ -42,6 +39,8 @@ function formatDate(dateStr: string) {
 }
 
 export default function AnalyticsScreen() {
+    const { width } = useWindowDimensions();
+    const IS_DESKTOP = Platform.OS === "web" && width >= 900;
     const today = new Date();
     const initialDate = today.toISOString().slice(0, 10);
     const [selectedDate, setSelectedDate] = useState(initialDate);
@@ -65,8 +64,8 @@ export default function AnalyticsScreen() {
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
             <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-                <ScrollView contentContainerStyle={{ paddingTop: 12, paddingBottom: 120, paddingHorizontal: 16, alignItems: "center" }}>
-                    <View style={{ width: IS_DESKTOP ? "55%" : "100%" }}>
+                <ScrollView contentContainerStyle={{ paddingTop: 12, paddingBottom: 120, paddingHorizontal: 16 }}>
+                    <View style={{ maxWidth: IS_DESKTOP ? 600 : undefined, alignSelf: IS_DESKTOP ? "center" : undefined, width: "100%" }}>
                         {/* Header */}
                         <Text style={{ fontSize: 24, fontWeight: "700", color: COLORS.foreground, marginBottom: 16 }}>
                             Календарь

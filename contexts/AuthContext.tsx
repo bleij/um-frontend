@@ -457,8 +457,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const devLogin = useCallback(async (role: UserRole) => {
+    // Use a stable, valid UUID per role so Supabase FK references don't 400.
+    const DEV_IDS: Record<UserRole, string> = {
+      parent:      "d0000000-0000-4000-a000-000000000001",
+      youth:       "d0000000-0000-4000-a000-000000000002",
+      child:       "d0000000-0000-4000-a000-000000000003",
+      "young-adult":"d0000000-0000-4000-a000-000000000004",
+      mentor:      "d0000000-0000-4000-a000-000000000005",
+      org:         "d0000000-0000-4000-a000-000000000006",
+      teacher:     "d0000000-0000-4000-a000-000000000007",
+      admin:       "d0000000-0000-4000-a000-000000000008",
+    };
     const nextUser = toAuthUser({
-      id: "dev_user_" + Date.now(),
+      id: DEV_IDS[role] ?? "d0000000-0000-4000-a000-000000000009",
       phone: "79991234567",
       role: role,
       firstName: "Dev",

@@ -90,27 +90,37 @@ export default function ParentCalendar() {
           paddingHorizontal: horizontalPadding,
           paddingTop: 24,
           paddingBottom: 40,
+          // On web, cap content width and center it so the calendar doesn't stretch
+          maxWidth: isDesktop ? 600 : undefined,
+          alignSelf: isDesktop ? "center" : undefined,
+          width: "100%",
         }}
         showsVerticalScrollIndicator={false}
       >
         {/* Calendar Grid */}
-        <View style={SHADOWS.md} className="bg-white rounded-[40px] p-6 mb-8 border border-gray-50">
-           <View className="flex-row mb-4">
+        <View style={{ ...SHADOWS.md, backgroundColor: "white", borderRadius: 32, padding: 20, marginBottom: 32, borderWidth: 1, borderColor: "#F9FAFB" }}>
+           {/* Weekday headers */}
+           <View style={{ flexDirection: "row", marginBottom: 8 }}>
               {WEEKDAYS.map(d => (
-                 <Text key={d} className="flex-1 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">{d}</Text>
+                 <Text key={d} style={{ flex: 1, textAlign: "center", fontSize: 10, fontWeight: "900", color: "#9CA3AF", textTransform: "uppercase", letterSpacing: 1 }}>{d}</Text>
               ))}
            </View>
-           <View className="flex-row flex-wrap">
+           {/* Day cells — fixed 40px height avoids giant cells on wide web */}
+           <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
               {days.map((day, idx) => (
-                 <View key={idx} className="w-[14.28%] aspect-square p-1 items-center justify-center">
+                 <View key={idx} style={{ width: "14.2857%", height: 44, padding: 2, alignItems: "center", justifyContent: "center" }}>
                     {day && (
-                       <Pressable 
+                       <Pressable
                           onPress={() => setSelectedDay(day)}
-                          className={`w-full h-full rounded-2xl items-center justify-center ${day === selectedDay ? 'bg-purple-600' : 'bg-transparent'}`}
+                          style={{
+                            width: "100%", height: "100%", borderRadius: 12,
+                            backgroundColor: day === selectedDay ? "#7C3AED" : "transparent",
+                            alignItems: "center", justifyContent: "center",
+                          }}
                        >
-                          <Text className={`font-bold text-sm ${day === selectedDay ? 'text-white' : 'text-gray-900'}`}>{day}</Text>
-                          {day === 15 && ! (day === selectedDay) && (
-                             <View className="absolute bottom-1.5 w-1 h-1 rounded-full bg-purple-600" />
+                          <Text style={{ fontWeight: "700", fontSize: 14, color: day === selectedDay ? "white" : "#111827" }}>{day}</Text>
+                          {day === 15 && day !== selectedDay && (
+                             <View style={{ position: "absolute", bottom: 4, width: 4, height: 4, borderRadius: 2, backgroundColor: "#7C3AED" }} />
                           )}
                        </Pressable>
                     )}

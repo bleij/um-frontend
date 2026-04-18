@@ -8,7 +8,7 @@ import {
     Text,
     TouchableOpacity,
     useWindowDimensions,
-    View
+    View,
 } from "react-native";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
@@ -572,105 +572,101 @@ export function SideNav({ role }: Props) {
             {userName}
           </Text>
           <Feather
-            name={dropdownVisible ? "chevron-down" : "chevron-up"}
+            name={dropdownVisible ? "chevron-up" : "chevron-down"}
             size={16}
             color={COLORS.mutedForeground}
           />
         </Pressable>
       </View>
 
-      {/* Dropdown menu (rendered as modal for backdrop dismiss) */}
+      {/* Dropdown menu — inline absolute (no Modal = no cooldown on web) */}
       {dropdownVisible && (
-        <Modal
-          transparent
-          animationType="none"
-          onRequestClose={() => setDropdownVisible(false)}
-        >
+        <>
+          {/* Transparent backdrop — catches outside clicks */}
           <Pressable
-            style={{ flex: 1 }}
             onPress={() => setDropdownVisible(false)}
+            style={{
+              position: "absolute",
+              // cover the full screen from inside the SideNav tree
+              top: -9999,
+              left: -9999,
+              right: -9999,
+              bottom: -9999,
+              zIndex: 99,
+            }}
+          />
+          <View
+            style={{
+              position: "absolute",
+              bottom: 80,
+              left: 12,
+              width: LAYOUT.sideNavWidth - 24,
+              backgroundColor: COLORS.card,
+              borderRadius: RADIUS.md,
+              borderWidth: 1,
+              borderColor: COLORS.border,
+              overflow: "hidden",
+              zIndex: 100,
+              ...SHADOWS.md,
+            }}
           >
-            <View
-              style={{
-                position: "absolute",
-                bottom: 80,
-                left: 12,
-                width: LAYOUT.sideNavWidth - 24,
-                backgroundColor: COLORS.card,
-                borderRadius: RADIUS.md,
-                borderWidth: 1,
-                borderColor: COLORS.border,
-                overflow: "hidden",
-                ...SHADOWS.md,
-              }}
-            >
-              {[
-                {
-                  label: "Редактировать профиль",
-                  icon: "user" as const,
-                  onPress: () => {
-                    setDropdownVisible(false);
-                    go("profile");
-                  },
-                  destructive: false,
-                },
-                {
-                  label: "Способы оплаты",
-                  icon: "credit-card" as const,
-                  onPress: () => setDropdownVisible(false),
-                  destructive: false,
-                },
-                {
-                  label: "Настройки",
-                  icon: "settings" as const,
-                  onPress: () => setDropdownVisible(false),
-                  destructive: false,
-                },
-                {
-                  label: "Выйти",
-                  icon: "log-out" as const,
-                  onPress: handleLogout,
-                  destructive: true,
-                },
-              ].map((item, index, arr) => (
-                <Pressable
-                  key={item.label}
-                  onPress={item.onPress}
+            {[
+              {
+                label: "Редактировать профиль",
+                icon: "user" as const,
+                onPress: () => { setDropdownVisible(false); go("profile"); },
+                destructive: false,
+              },
+              {
+                label: "Способы оплаты",
+                icon: "credit-card" as const,
+                onPress: () => setDropdownVisible(false),
+                destructive: false,
+              },
+              {
+                label: "Настройки",
+                icon: "settings" as const,
+                onPress: () => setDropdownVisible(false),
+                destructive: false,
+              },
+              {
+                label: "Выйти",
+                icon: "log-out" as const,
+                onPress: handleLogout,
+                destructive: true,
+              },
+            ].map((item, index, arr) => (
+              <Pressable
+                key={item.label}
+                onPress={item.onPress}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  paddingHorizontal: 16,
+                  paddingVertical: 13,
+                  borderBottomWidth: index < arr.length - 1 ? 1 : 0,
+                  borderBottomColor: COLORS.border,
+                }}
+              >
+                <Feather
+                  name={item.icon}
+                  size={16}
+                  color={item.destructive ? COLORS.destructive : COLORS.mutedForeground}
+                  style={{ marginRight: 12 }}
+                />
+                <Text
                   style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    paddingHorizontal: 16,
-                    paddingVertical: 13,
-                    borderBottomWidth: index < arr.length - 1 ? 1 : 0,
-                    borderBottomColor: COLORS.border,
+                    fontSize: 14,
+                    color: item.destructive ? COLORS.destructive : COLORS.foreground,
+                    fontWeight: item.destructive ? "500" : "400",
                   }}
                 >
-                  <Feather
-                    name={item.icon}
-                    size={16}
-                    color={
-                      item.destructive
-                        ? COLORS.destructive
-                        : COLORS.mutedForeground
-                    }
-                    style={{ marginRight: 12 }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      color: item.destructive
-                        ? COLORS.destructive
-                        : COLORS.foreground,
-                      fontWeight: item.destructive ? "500" : "400",
-                    }}
-                  >
-                    {item.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </Pressable>
-        </Modal>
+                  {item.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
       )}
 
       {/* Notifications modal */}

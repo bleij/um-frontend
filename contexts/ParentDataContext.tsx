@@ -34,6 +34,8 @@ interface ParentDataContextType {
   isLoading: boolean;
   setActiveChildId: (id: string | null) => void;
   addChild: (child: Child) => Promise<void>;
+  removeChild: (childId: string) => Promise<void>;
+  updateChild: (childId: string, patch: Partial<Child>) => Promise<void>;
   saveParentProfile: (
     profile: ParentProfileData,
     draftChildren: ChildDraft[],
@@ -322,6 +324,34 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const removeChild = async (childId: string) => {
+    const next = childrenProfile.filter((c) => c.id !== childId);
+    setChildrenProfile(next);
+    if (activeChildId === childId) setActiveChildId(next[0]?.id ?? null);
+    await persistChildren(next);
+    if (supabase && isSupabaseConfigured) {
+      await supabase.from("child_profiles").delete().eq("id", childId);
+    }
+  };
+
+  const updateChild = async (childId: string, patch: Partial<Child>) => {
+    const next = childrenProfile.map((c) =>
+      c.id === childId ? normalizeChild({ ...c, ...patch }) : c,
+    );
+    setChildrenProfile(next);
+    await persistChildren(next);
+    const updated = next.find((c) => c.id === childId);
+    if (supabase && isSupabaseConfigured && updated) {
+      await supabase.from("child_profiles").update({
+        name: updated.name,
+        age: updated.age,
+        age_category: updated.ageCategory,
+        interests: updated.interests,
+        updated_at: new Date().toISOString(),
+      }).eq("id", childId);
+    }
+  };
+
   const updateChildDiagnostic = async (
     childId: string,
     diagnostic: Diagnostic,
@@ -371,6 +401,8 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
         isLoading,
         setActiveChildId,
         addChild,
+        removeChild,
+        updateChild,
         saveParentProfile,
         updateChildDiagnostic,
         setParentTariff,

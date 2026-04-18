@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, ScrollView, Switch } from 'react-native';
+import {
+  View, Text, TouchableOpacity, Modal, StyleSheet,
+  ScrollView, Switch, Platform, useWindowDimensions, Pressable,
+} from 'react-native';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { useParentData } from '../contexts/ParentDataContext';
 import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
 import { Feather } from '@expo/vector-icons';
 
 export function DevRoleSwitcher() {
-  // Only show in development
   if (!__DEV__) return null;
 
   const [visible, setVisible] = useState(false);
   const { user, setUserRole, devLogin, devMode, setDevMode } = useAuth();
   const { parentProfile, setParentTariff } = useParentData();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 768;
 
   const roles: UserRole[] = ['parent', 'youth', 'child', 'mentor', 'org', 'teacher', 'admin'];
 
@@ -38,15 +42,19 @@ export function DevRoleSwitcher() {
       <Modal
         visible={visible}
         transparent
-        animationType="slide"
+        animationType={isDesktop ? 'fade' : 'slide'}
         onRequestClose={() => setVisible(false)}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
+        {/* Backdrop — stops propagation so inner presses don't bubble up */}
+        <Pressable
+          style={[styles.modalOverlay, isDesktop && styles.modalOverlayDesktop]}
           onPress={() => setVisible(false)}
         >
-          <View style={styles.modalContent} onStartShouldSetResponder={() => true}>
+          {/* Inner card — swallows taps so backdrop doesn't fire */}
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={[styles.modalContent, isDesktop && styles.modalContentDesktop]}
+          >
             <View style={styles.header}>
               <Text style={styles.title}>Developer Tools</Text>
               <TouchableOpacity onPress={() => setVisible(false)}>
@@ -54,9 +62,10 @@ export function DevRoleSwitcher() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Dev mode toggle */}
               <View style={styles.devModeRow}>
-                <View>
+                <View style={{ flex: 1, marginRight: 12 }}>
                   <Text style={styles.devModeTitle}>Dev Mode</Text>
                   <Text style={styles.devModeSubtitle}>Disable auto-redirect to Home</Text>
                 </View>
@@ -67,44 +76,52 @@ export function DevRoleSwitcher() {
                 />
               </View>
 
+              {/* Tariff toggle (parent/child roles) */}
               {['parent', 'youth', 'child'].includes(user?.role || '') && (
-                 <View style={styles.devModeRow}>
-                   <View>
-                     <Text style={styles.devModeTitle}>Tariff Status: {parentProfile?.tariff?.toUpperCase() || 'BASIC'}</Text>
-                     <Text style={styles.devModeSubtitle}>Toggle PRO features for parent/child</Text>
-                   </View>
-                   <Switch
-                     value={parentProfile?.tariff === 'pro'}
-                     onValueChange={(val) => setParentTariff(val ? 'pro' : 'basic')}
-                     trackColor={{ false: COLORS.muted, true: '#A78BFA' }}
-                   />
-                 </View>
+                <View style={styles.devModeRow}>
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text style={styles.devModeTitle}>
+                      Tariff: {parentProfile?.tariff?.toUpperCase() || 'BASIC'}
+                    </Text>
+                    <Text style={styles.devModeSubtitle}>Toggle PRO features</Text>
+                  </View>
+                  <Switch
+                    value={parentProfile?.tariff === 'pro'}
+                    onValueChange={(val) => setParentTariff(val ? 'pro' : 'basic')}
+                    trackColor={{ false: COLORS.muted, true: '#A78BFA' }}
+                  />
+                </View>
               )}
 
-              <Text style={styles.sectionTitle}>Current Role: {user?.role || 'None'}</Text>
-              
+              {/* Current user info */}
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Role</Text>
+                <Text style={styles.infoValue}>{user?.role || 'none'}</Text>
+              </View>
+              <View style={[styles.infoRow, { marginBottom: 16 }]}>
+                <Text style={styles.infoLabel}>User ID</Text>
+                <Text style={[styles.infoValue, { fontSize: 11 }]} numberOfLines={1}>
+                  {user?.id || '—'}
+                </Text>
+              </View>
+
+              <Text style={styles.sectionTitle}>Switch role</Text>
               <View style={styles.grid}>
                 {roles.map((role) => (
                   <TouchableOpacity
                     key={role}
-                    style={[
-                      styles.roleButton,
-                      user?.role === role && styles.activeRoleButton
-                    ]}
+                    style={[styles.roleButton, user?.role === role && styles.activeRoleButton]}
                     onPress={() => handleSwitch(role)}
                   >
-                    <Text style={[
-                      styles.roleButtonText,
-                      user?.role === role && styles.activeRoleButtonText
-                    ]}>
+                    <Text style={[styles.roleButtonText, user?.role === role && styles.activeRoleButtonText]}>
                       {role}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </ScrollView>
-          </View>
-        </TouchableOpacity>
+          </Pressable>
+        </Pressable>
       </Modal>
     </>
   );
@@ -130,17 +147,29 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
   },
+  // Mobile: slide-up sheet
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+  },
+  // Desktop: centered dialog
+  modalOverlayDesktop: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalContent: {
     backgroundColor: COLORS.background,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
     padding: 24,
-    minHeight: 300,
+    maxHeight: '85%',
+  },
+  modalContentDesktop: {
+    borderRadius: RADIUS.lg,
+    width: 420,
+    maxHeight: '80%',
+    ...SHADOWS.lg,
   },
   header: {
     flexDirection: 'row',
@@ -154,38 +183,58 @@ const styles = StyleSheet.create({
     color: COLORS.foreground,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 16,
+    marginBottom: 12,
     color: COLORS.mutedForeground,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   devModeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 20,
-    marginBottom: 20,
+    paddingBottom: 16,
+    marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   devModeTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: COLORS.foreground,
   },
   devModeSubtitle: {
     fontSize: 12,
     color: COLORS.mutedForeground,
+    marginTop: 2,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  infoLabel: {
+    fontSize: 13,
+    color: COLORS.mutedForeground,
+  },
+  infoValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.foreground,
+    flex: 1,
+    textAlign: 'right',
+    marginLeft: 12,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8,
     marginBottom: 24,
   },
   roleButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.muted,
     borderWidth: 1,
@@ -198,19 +247,9 @@ const styles = StyleSheet.create({
   roleButtonText: {
     color: COLORS.foreground,
     fontWeight: '500',
+    fontSize: 13,
   },
   activeRoleButtonText: {
     color: 'white',
   },
-  forceLoginButton: {
-    marginTop: 10,
-    padding: 15,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.secondary,
-    alignItems: 'center',
-  },
-  forceLoginText: {
-    color: 'white',
-    fontWeight: '600',
-  }
 });
