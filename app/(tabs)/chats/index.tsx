@@ -4,8 +4,8 @@ import {
     TouchableOpacity,
     ScrollView,
     TextInput,
-    Dimensions,
     Platform,
+    useWindowDimensions,
 } from "react-native";
 import { useState, useMemo } from "react";
 import { MotiView } from "moti";
@@ -13,9 +13,6 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
-
-const { width } = Dimensions.get("window");
-const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 const TABS = ["все", "непрочитанные", "архив"];
 
@@ -30,6 +27,8 @@ const ALL_CHATS = [
 
 export default function ChatsScreen() {
     const router = useRouter();
+    const { width } = useWindowDimensions();
+    const IS_DESKTOP = Platform.OS === "web" && width >= 900;
     const [activeTab, setActiveTab] = useState("все");
     const [search, setSearch] = useState("");
 
@@ -118,6 +117,7 @@ export default function ChatsScreen() {
                             <TouchableOpacity
                                 key={chat.id}
                                 activeOpacity={0.7}
+                                style={{ width: "100%" }}
                                 onPress={() =>
                                     router.push({
                                         pathname: "/modal/chat",
@@ -132,6 +132,7 @@ export default function ChatsScreen() {
                                     style={{
                                         flexDirection: "row",
                                         alignItems: "center",
+                                        width: "100%",
                                         marginBottom: 4,
                                         padding: 12,
                                         borderRadius: RADIUS.sm,
