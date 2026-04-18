@@ -60,12 +60,15 @@ export default function ParentHome() {
             <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                 <View>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.light, color: "white", opacity: 0.85 }}>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.light, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
                     Привет,
                   </Text>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", letterSpacing: -0.5, marginTop: -4 }}>
-                    {user?.firstName || parentProfile?.name || 'Родитель'}!
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: -SPACING.xs }}>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
+                      {user?.firstName || parentProfile?.name || 'Родитель'}!
+                    </Text>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, marginLeft: 4 }}>👋</Text>
+                  </View>
                 </View>
                 <Pressable
                   onPress={() => setNotificationsVisible(true)}

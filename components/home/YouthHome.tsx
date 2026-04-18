@@ -100,8 +100,16 @@ export default function YouthHome() {
             <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
               <View className="flex-row items-center justify-between mb-8">
                  <View>
-                    <Text style={{ fontSize: 24, fontWeight: "800", color: "white" }}>Привет, {firstName}! 👋</Text>
-                    <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "600" }}>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.light, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
+                      Привет,
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: -SPACING.xs }}>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
+                        {firstName}!
+                      </Text>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, marginLeft: 4 }}>👋</Text>
+                    </View>
+                    <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "600", marginTop: 2 }}>
                        {diagnostic?.recommendedConstellation || "Level 8"} • {diagnostic ? "Диагностика пройдена" : "2450 XP"}
                     </Text>
                  </View>

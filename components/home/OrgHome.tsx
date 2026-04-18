@@ -12,10 +12,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
-
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import { MotiView } from "moti";
-import { TYPOGRAPHY, SPACING } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
 import { useDevSettings } from "../../contexts/DevSettingsContext";
 
 const STATS = [
@@ -34,6 +33,7 @@ const QUICK_ACTIONS = [
 
 export default function OrgHome() {
   const router = useRouter();
+  const { user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
@@ -61,8 +61,18 @@ export default function OrgHome() {
               >
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                   <View>
-                    <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.light, color: "white", opacity: 0.8 }}>Управление</Text>
-                    <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", letterSpacing: -0.5 }}>ДЦ «Звёздочка»</Text>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.light, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
+                      Привет,
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: -SPACING.xs }}>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.white, letterSpacing: TYPOGRAPHY.letterSpacing.tight }}>
+                        {user?.firstName || 'Директор'}!
+                      </Text>
+                      <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, marginLeft: 4 }}>👋</Text>
+                    </View>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: 'rgba(255,255,255,0.65)', fontWeight: TYPOGRAPHY.weight.medium, marginTop: 2 }}>
+                      ДЦ «Звёздочка»
+                    </Text>
                   </View>
                   <TouchableOpacity
                     style={{
