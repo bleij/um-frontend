@@ -8,7 +8,7 @@ import {
   ScrollView,
   Text,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NotificationsModal } from "../../app/(tabs)/layout-container";
@@ -17,8 +17,7 @@ import {
   LAYOUT,
   RADIUS,
   SHADOWS,
-  SPACING,
-  TYPOGRAPHY,
+  TYPOGRAPHY
 } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParentData } from "../../contexts/ParentDataContext";
@@ -62,11 +61,15 @@ export default function ParentHome() {
       <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
-          style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}
+          style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
         >
           <SafeAreaView edges={["top"]}>
             <View
-              style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 32 }}
+              style={{
+                paddingHorizontal: horizontalPadding,
+                paddingTop: 12,
+                paddingBottom: 32,
+              }}
             >
               <View
                 style={{
@@ -84,7 +87,8 @@ export default function ParentHome() {
                     letterSpacing: TYPOGRAPHY.letterSpacing.tight,
                   }}
                 >
-                  Привет, {user?.firstName || parentProfile?.name || 'Родитель'}! 👋
+                  Привет, {user?.firstName || parentProfile?.name || "Родитель"}
+                  !
                 </Text>
                 <Pressable
                   onPress={() => setNotificationsVisible(true)}
