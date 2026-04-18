@@ -1,0 +1,103 @@
+import { Feather } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import React from "react";
+import { Platform, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+
+const MOCK_ATTENDANCE = [
+  { id: "1", name: "Анна Петрова", present: true, date: "Сегодня, 15:00" },
+  { id: "2", name: "Максим Иванов", present: true, date: "Сегодня, 15:00" },
+  { id: "3", name: "Данияр Сеитов", present: false, date: "Сегодня, 15:00" },
+  { id: "4", name: "Алия Нурова", present: true, date: "Вчера, 15:00" },
+  { id: "5", name: "Тимур Касымов", present: false, date: "Вчера, 15:00" },
+];
+
+export default function MentorAttendance() {
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <SafeAreaView edges={["top"]} style={{ backgroundColor: COLORS.primary }}>
+        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: paddingX, paddingVertical: 16, gap: 12 }}>
+          <TouchableOpacity
+            onPress={() => router.back()}
+            style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
+          >
+            <Feather name="arrow-left" size={20} color="white" />
+          </TouchableOpacity>
+          <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: "white" }}>График посещений</Text>
+        </View>
+      </SafeAreaView>
+
+      <ScrollView contentContainerStyle={{ paddingHorizontal: paddingX, paddingTop: 24, paddingBottom: 110 }}>
+        <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 16 }}>
+          Последние занятия
+        </Text>
+
+        <View style={{ gap: 12 }}>
+          {MOCK_ATTENDANCE.map((item) => (
+            <View
+              key={item.id}
+              style={{
+                ...SHADOWS.strict,
+                backgroundColor: COLORS.surface,
+                borderRadius: RADIUS.lg,
+                padding: 16,
+                flexDirection: "row",
+                alignItems: "center",
+                borderWidth: 1,
+                borderColor: COLORS.border,
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: RADIUS.full,
+                  backgroundColor: item.present ? COLORS.success + "15" : COLORS.destructive + "15",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginRight: 12,
+                }}
+              >
+                <Feather
+                  name={item.present ? "check" : "x"}
+                  size={18}
+                  color={item.present ? COLORS.success : COLORS.destructive}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>
+                  {item.name}
+                </Text>
+                <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>{item.date}</Text>
+              </View>
+              <View
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: RADIUS.sm,
+                  backgroundColor: item.present ? COLORS.success + "15" : COLORS.destructive + "15",
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: TYPOGRAPHY.weight.bold,
+                    color: item.present ? COLORS.success : COLORS.destructive,
+                  }}
+                >
+                  {item.present ? "Присутствовал" : "Отсутствовал"}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}

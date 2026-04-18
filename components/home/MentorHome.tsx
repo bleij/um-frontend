@@ -60,7 +60,7 @@ export default function MentorHome() {
         }}
       >
         {/* Header - Restored Violet Aesthetic */}
-        <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
           <LinearGradient 
             colors={COLORS.gradients.header as any}
             style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}

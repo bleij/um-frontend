@@ -1,3 +1,28 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Web: cursor & hover states ──────────────────────────────────────────── */
+@media (hover: hover) {
+  /* Pointer cursor on all interactive elements */
+  [role="button"],
+  button,
+  a,
+  [tabindex]:not([tabindex="-1"]) {
+    cursor: pointer;
+  }
+
+  /* Subtle hover lift on buttons */
+  [role="button"]:hover,
+  button:hover {
+    opacity: 0.85;
+    transition: opacity 0.15s ease;
+  }
+}
+
+/* Disabled elements */
+[disabled],
+[aria-disabled="true"] {
+  cursor: not-allowed !important;
+  opacity: 0.5;
+}

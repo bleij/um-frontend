@@ -48,7 +48,7 @@ export default function OrgHome() {
         }}
       >
         {/* Header - Premium Atmos Aesthetic */}
-        <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+        <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
           <LinearGradient
             colors={['#1E3A8A', '#3B82F6']}
             style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}
@@ -163,21 +163,22 @@ export default function OrgHome() {
         {/* Quick Actions - High Fidelity Cards */}
         <View style={{ paddingHorizontal: horizontalPadding, opacity: isVerified ? 1 : 0.5 }}>
           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 16, paddingLeft: 4 }}>Управление</Text>
-          <View className="flex-row flex-wrap gap-4 mb-8">
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
             {QUICK_ACTIONS.map((item, idx) => (
               <MotiView
                 key={item.label}
                 from={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 300 + idx * 50 }}
-                style={{ 
-                  ...SHADOWS.strict, 
-                  width: (width - horizontalPadding*2 - 16) / 2,
-                  backgroundColor: COLORS.surface, 
-                  padding: 24, 
-                  borderRadius: RADIUS.xxl, 
-                  borderWidth: 1, 
-                  borderColor: COLORS.border 
+                style={{
+                  ...SHADOWS.strict,
+                  flexBasis: isDesktop ? '22%' : '47%',
+                  flexGrow: 1,
+                  backgroundColor: COLORS.surface,
+                  padding: 24,
+                  borderRadius: RADIUS.xxl,
+                  borderWidth: 1,
+                  borderColor: COLORS.border,
                 }}
               >
                 <Pressable onPress={() => router.push(item.route as any)}>
