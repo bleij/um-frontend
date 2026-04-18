@@ -29,6 +29,7 @@ export interface Child {
   ageCategory?: "child" | "teen" | "young-adult";
   interests: string[];
   talentProfile?: Diagnostic;
+  qrToken?: string;
   createdAt?: string;
 }
 

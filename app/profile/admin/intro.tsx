@@ -8,16 +8,14 @@ import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 
 export default function AdminIntroScreen() {
-  const { completeRegistration } = useAuth();
+  const { setUserRole } = useAuth();
 
   useEffect(() => {
-    // В случае администратора мы просто сразу подтверждаем регистрацию профиля
-    // с искусственной задержкой для показа красивого лоадера.
     const timer = setTimeout(() => {
-      completeRegistration("admin");
+      setUserRole("admin");
     }, 2000);
     return () => clearTimeout(timer);
-  }, [completeRegistration]);
+  }, [setUserRole]);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>

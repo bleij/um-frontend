@@ -29,8 +29,14 @@ function RootNavigator() {
       return;
     }
 
-    // Skip auto-redirect to home if devMode is enabled
-    if (user && inAuthGroup && authScreen !== "role" && !devMode) {
+    // Skip auto-redirect to home if devMode is enabled or user is mid-register
+    if (
+      user &&
+      inAuthGroup &&
+      authScreen !== "role" &&
+      authScreen !== "register" &&
+      !devMode
+    ) {
       router.replace("/(tabs)/home");
     }
   }, [isLoading, router, segments, user, devMode]);
@@ -64,7 +70,7 @@ function RootNavigator() {
 
         {/* TEST ROUTE */}
         <Stack.Screen
-          name="test/index"
+          name="parent/testing/index"
           options={{ presentation: "fullScreenModal" }}
         />
       </Stack>

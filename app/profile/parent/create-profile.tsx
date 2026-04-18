@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import QRCode from "react-native-qrcode-svg";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -17,12 +18,19 @@ import { LAYOUT } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
 
+function generateQRToken(): string {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
 type AgeGroup = "6-11" | "12-17" | "18-20";
 
 type Child = {
   id: string;
   name: string;
   ageGroup: AgeGroup | null;
+  hasPhone: boolean | null;
+  phone: string;
+  qrToken: string | null;
 };
 
 const AGE_OPTIONS: { label: string; value: AgeGroup }[] = [
@@ -63,21 +71,25 @@ export default function CreateProfileParent() {
   }, [user]);
 
   const [children, setChildren] = useState<Child[]>([
-    { id: makeId(), name: "", ageGroup: null },
+    { id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrToken: null },
   ]);
 
   const canContinue = useMemo(() => {
     const hasParent = parentData.firstName.trim().length > 0;
-    const hasValidChild = children.some(
-      (c) => c.name.trim().length > 0 && !!c.ageGroup,
-    );
+    const hasValidChild = children.some((c) => {
+      if (!c.name.trim() || !c.ageGroup) return false;
+      if (c.hasPhone === null) return false;
+      if (c.hasPhone && !c.phone.trim()) return false;
+      if (!c.hasPhone && !c.qrToken) return false;
+      return true;
+    });
     return hasParent && hasValidChild;
   }, [parentData, children]);
 
   function addChild() {
     setChildren((prev) => [
       ...prev,
-      { id: makeId(), name: "", ageGroup: null },
+      { id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrToken: null },
     ]);
   }
 
@@ -85,7 +97,7 @@ export default function CreateProfileParent() {
     setChildren((prev) => {
       const next = prev.filter((c) => c.id !== id);
       return next.length === 0
-        ? [{ id: makeId(), name: "", ageGroup: null }]
+        ? [{ id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrToken: null }]
         : next;
     });
   }
@@ -97,7 +109,16 @@ export default function CreateProfileParent() {
   }
 
   const handleMockSubmit = async () => {
-    await saveParentProfile(parentData, children);
+    await saveParentProfile(
+      parentData,
+      children.map((c) => ({
+        id: c.id,
+        name: c.name,
+        ageGroup: c.ageGroup,
+        phone: c.hasPhone ? c.phone : undefined,
+        qrToken: !c.hasPhone ? (c.qrToken ?? undefined) : undefined,
+      })),
+    );
     router.push("/profile/parent/create-child-profile");
   };
 
@@ -281,6 +302,168 @@ export default function CreateProfileParent() {
                       </TouchableOpacity>
                     );
                   })}
+                </View>
+
+                {/* Phone / QR section */}
+                <View
+                  style={{
+                    marginTop: 16,
+                    borderTopWidth: 1,
+                    borderTopColor: "#E5E7EB",
+                    paddingTop: 16,
+                  }}
+                >
+                  <Text className="text-sm font-medium text-gray-700 mb-3">
+                    Есть ли у ребёнка свой номер телефона?
+                  </Text>
+                  <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
+                    {(["YES", "NO"] as const).map((opt) => {
+                      const active =
+                        opt === "YES" ? child.hasPhone === true : child.hasPhone === false;
+                      return (
+                        <TouchableOpacity
+                          key={opt}
+                          onPress={() =>
+                            updateChild(child.id, {
+                              hasPhone: opt === "YES",
+                              phone: "",
+                              qrToken: null,
+                            })
+                          }
+                          style={{
+                            flex: 1,
+                            paddingVertical: 10,
+                            borderRadius: 12,
+                            borderWidth: 2,
+                            borderColor: active ? "#9333EA" : "#E5E7EB",
+                            backgroundColor: active ? "#F5F3FF" : "#F9FAFB",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontWeight: "600",
+                              color: active ? "#7C3AED" : "#6B7280",
+                            }}
+                          >
+                            {opt === "YES" ? "Да" : "Нет"}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  {child.hasPhone === true && (
+                    <View>
+                      <Text className="text-sm font-medium text-gray-700 mb-1">
+                        Номер телефона ребёнка
+                      </Text>
+                      <TextInput
+                        value={child.phone}
+                        onChangeText={(text) =>
+                          updateChild(child.id, {
+                            phone: text.replace(/[^\d+]/g, ""),
+                          })
+                        }
+                        placeholder="+7 (___) ___-__-__"
+                        keyboardType="phone-pad"
+                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                      />
+                    </View>
+                  )}
+
+                  {child.hasPhone === false && (
+                    <View style={{ alignItems: "center" }}>
+                      {child.qrToken ? (
+                        <>
+                          <View
+                            style={{
+                              padding: 16,
+                              backgroundColor: "#F9FAFB",
+                              borderRadius: 16,
+                              marginBottom: 12,
+                            }}
+                          >
+                            <QRCode
+                              value={JSON.stringify({
+                                v: 1,
+                                type: "child_link",
+                                childId: child.id,
+                                parentId: user?.id ?? "",
+                                token: child.qrToken,
+                              })}
+                              size={160}
+                            />
+                          </View>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              color: "#6B7280",
+                              textAlign: "center",
+                              marginBottom: 8,
+                            }}
+                          >
+                            Покажите этот QR-код ребёнку для входа в приложение
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() =>
+                              updateChild(child.id, {
+                                qrToken: generateQRToken(),
+                              })
+                            }
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <Feather name="refresh-cw" size={14} color="#9333EA" />
+                            <Text
+                              style={{
+                                fontSize: 13,
+                                color: "#9333EA",
+                                fontWeight: "500",
+                              }}
+                            >
+                              Обновить QR-код
+                            </Text>
+                          </TouchableOpacity>
+                        </>
+                      ) : (
+                        <TouchableOpacity
+                          onPress={() =>
+                            updateChild(child.id, {
+                              qrToken: generateQRToken(),
+                            })
+                          }
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: 8,
+                            paddingVertical: 12,
+                            paddingHorizontal: 20,
+                            borderRadius: 12,
+                            borderWidth: 2,
+                            borderColor: "#9333EA",
+                            borderStyle: "dashed",
+                            width: "100%",
+                          }}
+                        >
+                          <Feather name="grid" size={18} color="#9333EA" />
+                          <Text
+                            style={{
+                              color: "#7C3AED",
+                              fontWeight: "600",
+                              fontSize: 14,
+                            }}
+                          >
+                            Создать QR-код для входа
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  )}
                 </View>
               </View>
             ))}

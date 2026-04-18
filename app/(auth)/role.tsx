@@ -5,7 +5,6 @@ import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Platform,
   ScrollView,
   Text,
@@ -19,8 +18,7 @@ import { useAuth, type UserRole } from "../../contexts/AuthContext";
 
 export default function RoleSelect() {
   const router = useRouter();
-  const { user, pendingRegistration, completeRegistration, setUserRole } =
-    useAuth();
+  const { user, setUserRole } = useAuth();
   const [submittingRole, setSubmittingRole] = useState<UserRole | null>(null);
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -28,15 +26,20 @@ export default function RoleSelect() {
     ? LAYOUT.authHorizontalPaddingDesktop
     : LAYOUT.authHorizontalPaddingMobile;
 
-  const handleSelect = (role: UserRole, route: string) => {
+  const handleSelect = async (role: UserRole, route: string) => {
     setSubmittingRole(role);
 
-    // If we're at the start of registration, just go to register with the role
-    router.push({
-      pathname: "/register",
-      params: { role, targetProfileRoute: route }
-    });
-    
+    if (user) {
+      // Already authed (e.g. dev mode) — just set role and continue
+      await setUserRole(role);
+    } else {
+      // Pre-registration: carry role + target profile route into register
+      router.push({
+        pathname: "/register",
+        params: { role, targetProfileRoute: route },
+      });
+    }
+
     setSubmittingRole(null);
   };
 

@@ -17,7 +17,7 @@ import {Feather} from "@expo/vector-icons";
 const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
-type Role = "parent" | "youth" | "org" | "mentor";
+type Role = "parent" | "youth" | "child" | "young-adult" | "org" | "mentor";
 
 const SUBSCRIPTIONS = {
     parent: [
@@ -81,7 +81,8 @@ export default function SubscribeScreen() {
     const plans = useMemo(() => {
         if (!role) return [];
         if (role === "mentor") return [];
-        return SUBSCRIPTIONS[role as keyof typeof SUBSCRIPTIONS] ?? [];
+        const key = (role === "child" || role === "young-adult") ? "youth" : role;
+        return SUBSCRIPTIONS[key as keyof typeof SUBSCRIPTIONS] ?? [];
     }, [role]);
 
     async function choosePlan(title: string) {
