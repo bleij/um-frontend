@@ -219,7 +219,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (rawUser) {
           try {
-            setUser(JSON.parse(rawUser) as AuthUser);
+            const parsed = JSON.parse(rawUser) as AuthUser;
+            // Reject stale dev users that used non-UUID ids (e.g. "dev_user_...").
+            // They cause 400s on Supabase queries. Force a clean state instead.
+            const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (uuidRe.test(parsed.id)) {
+              setUser(parsed);
+            } else {
+              await AsyncStorage.removeItem(AUTH_USER_KEY);
+            }
           } catch {
             await AsyncStorage.removeItem(AUTH_USER_KEY);
           }
