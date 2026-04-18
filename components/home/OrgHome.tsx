@@ -16,6 +16,7 @@ import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 
 import { MotiView } from "moti";
 import { TYPOGRAPHY, SPACING } from "../../constants/theme";
+import { useDevSettings } from "../../contexts/DevSettingsContext";
 
 const STATS = [
   { label: "Кружков", value: "8", icon: "book-open" as const, color: COLORS.primary },
@@ -36,6 +37,7 @@ export default function OrgHome() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const { orgVerified: isVerified } = useDevSettings();
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -92,8 +94,36 @@ export default function OrgHome() {
             </SafeAreaView>
           </LinearGradient>
         </View>
+        {/* Pending verification banner */}
+        {!isVerified && (
+          <MotiView
+            from={{ opacity: 0, translateY: -8 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            style={{ paddingHorizontal: horizontalPadding, marginTop: 24, marginBottom: 8 }}
+          >
+            <View style={{
+              backgroundColor: '#FEF9C3',
+              borderRadius: RADIUS.lg,
+              padding: 16,
+              borderWidth: 1,
+              borderColor: '#FDE047',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+            }}>
+              <View style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: '#FDE04730', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="clock" size={20} color="#854D0E" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#1C1C1E' }}>Организация на проверке</Text>
+                <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Ваша заявка рассматривается администратором. Полный доступ откроется после верификации.</Text>
+              </View>
+            </View>
+          </MotiView>
+        )}
+
         {/* Stats Grid - Horizon Premium style */}
-        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32 }}>
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32, opacity: isVerified ? 1 : 0.5 }}>
           <View className="flex-row gap-4 mb-4">
             {STATS.slice(0, 2).map((stat, idx) => (
               <MotiView
@@ -131,7 +161,7 @@ export default function OrgHome() {
         </View>
 
         {/* Quick Actions - High Fidelity Cards */}
-        <View style={{ paddingHorizontal: horizontalPadding }}>
+        <View style={{ paddingHorizontal: horizontalPadding, opacity: isVerified ? 1 : 0.5 }}>
           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 16, paddingLeft: 4 }}>Управление</Text>
           <View className="flex-row flex-wrap gap-4 mb-8">
             {QUICK_ACTIONS.map((item, idx) => (

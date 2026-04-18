@@ -4,6 +4,7 @@ import {
   ScrollView, Switch, Platform, useWindowDimensions, Pressable,
 } from 'react-native';
 import { useAuth, UserRole } from '../contexts/AuthContext';
+import { useDevSettings } from '../contexts/DevSettingsContext';
 import { useParentData } from '../contexts/ParentDataContext';
 import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
 import { Feather } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ export function DevRoleSwitcher() {
   const [visible, setVisible] = useState(false);
   const { user, setUserRole, devLogin, devMode, setDevMode } = useAuth();
   const { parentProfile, setParentTariff } = useParentData();
+  const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified } = useDevSettings();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
 
@@ -89,6 +91,40 @@ export function DevRoleSwitcher() {
                     value={parentProfile?.tariff === 'pro'}
                     onValueChange={(val) => setParentTariff(val ? 'pro' : 'basic')}
                     trackColor={{ false: COLORS.muted, true: '#A78BFA' }}
+                  />
+                </View>
+              )}
+
+              {/* Mentor approval toggle */}
+              {user?.role === 'mentor' && (
+                <View style={styles.devModeRow}>
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text style={styles.devModeTitle}>
+                      Mentor: {mentorApproved ? 'Approved ✓' : 'Pending…'}
+                    </Text>
+                    <Text style={styles.devModeSubtitle}>Simulate admin approval state</Text>
+                  </View>
+                  <Switch
+                    value={mentorApproved}
+                    onValueChange={setMentorApproved}
+                    trackColor={{ false: COLORS.muted, true: COLORS.success }}
+                  />
+                </View>
+              )}
+
+              {/* Org verification toggle */}
+              {user?.role === 'org' && (
+                <View style={styles.devModeRow}>
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text style={styles.devModeTitle}>
+                      Org: {orgVerified ? 'Verified ✓' : 'Pending…'}
+                    </Text>
+                    <Text style={styles.devModeSubtitle}>Simulate admin verification state</Text>
+                  </View>
+                  <Switch
+                    value={orgVerified}
+                    onValueChange={setOrgVerified}
+                    trackColor={{ false: COLORS.muted, true: COLORS.success }}
                   />
                 </View>
               )}

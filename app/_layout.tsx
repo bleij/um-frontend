@@ -7,6 +7,7 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
+import { DevSettingsProvider } from "../contexts/DevSettingsContext";
 import { ParentDataProvider } from "../contexts/ParentDataContext";
 import "../global.css";
 
@@ -83,7 +84,9 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ParentDataProvider>
-        <RootNavigator />
+        <DevSettingsProvider>
+          <RootNavigator />
+        </DevSettingsProvider>
       </ParentDataProvider>
     </AuthProvider>
   );

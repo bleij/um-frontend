@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, TYPOGRAPHY, SPACING, RADIUS } from "../../constants/theme";
+import { useDevSettings } from "../../contexts/DevSettingsContext";
 
 const MOCK_STUDENTS = [
   {
@@ -48,8 +49,7 @@ export default function MentorHome() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-  // Mock approval status
-  const [isApproved, setIsApproved] = React.useState(false); // Change to true to see approved state
+  const { mentorApproved: isApproved } = useDevSettings();
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -150,8 +150,7 @@ export default function MentorHome() {
              animate={{ opacity: 1, translateY: 0 }}
              style={{ paddingHorizontal: paddingX, marginBottom: 24 }}
            >
-              <TouchableOpacity 
-                onPress={() => setIsApproved(true)} // DEV TOGGLE
+              <TouchableOpacity
                 activeOpacity={0.9}
                 style={{ 
                   backgroundColor: COLORS.warning + '15', 
