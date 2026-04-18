@@ -240,7 +240,7 @@ export default function MentorHome() {
         </View>
 
         {/* SESSION REQUESTS (System Call Widget) */}
-        <View style={{ paddingHorizontal: paddingX }} className="mb-8">
+        <View style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.5, pointerEvents: isApproved ? 'auto' : 'none' }} className="mb-8">
            <View className="flex-row justify-between items-center mb-4 px-1">
               <View className="flex-row items-center gap-2">
                  <Feather name="video" size={20} color={COLORS.primary} />
@@ -438,7 +438,7 @@ export default function MentorHome() {
         {/* Quick Tools */}
         <View style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }}>
            <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.xl }}>Инструменты</Text>
-           <View className="flex-row flex-wrap gap-4">
+           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
               {[
                  { icon: 'users', label: 'Группы', color: COLORS.primary, route: '/(tabs)/mentor/groups' },
                  { icon: 'calendar', label: 'График', color: COLORS.success, route: '/(tabs)/mentor/attendance' },
@@ -450,8 +450,11 @@ export default function MentorHome() {
                     from={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 400, delay: 400 + idx * 50 }}
-                    style={{ 
-                        width: (width - paddingX*2 - SPACING.lg) / 2,
+                    style={{
+                        // Desktop: 4 columns; mobile: 2 columns — percentage avoids
+                        // the sidebar-width-included-in-`width` miscalculation.
+                        flexBasis: isDesktop ? '22%' : '47%',
+                        flexGrow: 1,
                         ...SHADOWS.strict,
                         borderRadius: RADIUS.xxl,
                         backgroundColor: COLORS.surface,
@@ -460,9 +463,9 @@ export default function MentorHome() {
                         borderColor: COLORS.border
                     }}
                  >
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         onPress={() => router.push(action.route as any)}
-                        className="items-center justify-center flex-1"
+                        style={{ alignItems: 'center', justifyContent: 'center' }}
                     >
                         <View style={{ backgroundColor: action.color + '10', width: 56, height: 56, borderRadius: RADIUS.full, alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
                            <Feather name={action.icon as any} size={24} color={action.color} />
