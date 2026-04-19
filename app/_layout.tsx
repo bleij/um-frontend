@@ -11,6 +11,7 @@ import { DevSettingsProvider } from "../contexts/DevSettingsContext";
 import { ParentDataProvider } from "../contexts/ParentDataContext";
 import "../global.css";
 
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { DevRoleSwitcher } from "../components/DevRoleSwitcher";
 
 function RootNavigator() {
@@ -82,12 +83,14 @@ function RootNavigator() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <ParentDataProvider>
-        <DevSettingsProvider>
-          <RootNavigator />
-        </DevSettingsProvider>
-      </ParentDataProvider>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <AuthProvider>
+        <ParentDataProvider>
+          <DevSettingsProvider>
+            <RootNavigator />
+          </DevSettingsProvider>
+        </ParentDataProvider>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -158,11 +158,11 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
       ),
     },
     {
-      key: "youth/goals",
-      label: "Цели",
-      route: "youth/goals",
+      key: "youth/games",
+      label: "Игры",
+      route: "youth/games",
       icon: ({ color, size }) => (
-        <Feather name="target" size={size} color={color} />
+        <Feather name="layout" size={size} color={color} />
       ),
     },
     {
@@ -199,6 +199,14 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
       route: "analytics",
       icon: ({ color, size }) => (
         <Feather name="star" size={size} color={color} />
+      ),
+    },
+    {
+      key: "youth/games",
+      label: "Игры",
+      route: "youth/games",
+      icon: ({ color, size }) => (
+        <Feather name="layout" size={size} color={color} />
       ),
     },
     {
