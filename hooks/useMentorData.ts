@@ -364,3 +364,157 @@ export function useMentorAttendance() {
 
   return { records, loading, refresh };
 }
+
+// ─── useLearningPath ──────────────────────────────────────────
+export interface LearningPathStep {
+  id: string;
+  student_name: string;
+  phase: string;
+  phase_order: number;
+  status: "active" | "completed";
+  item_text: string;
+  done: boolean;
+}
+
+export function useLearningPath(studentName?: string) {
+  const { user } = useAuth();
+  const [steps, setSteps] = useState<LearningPathStep[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setSteps([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    let q = supabase
+      .from("learning_path_steps")
+      .select("*")
+      .eq("mentor_user_id", user.id)
+      .order("phase_order", { ascending: true });
+    if (studentName) q = q.eq("student_name", studentName);
+    const res = await q;
+    setSteps(ok<LearningPathStep>(res));
+    setLoading(false);
+  }, [user?.id, studentName]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const toggleStep = async (id: string) => {
+    if (!supabase) return;
+    const step = steps.find((s) => s.id === id);
+    if (!step) return;
+    await supabase
+      .from("learning_path_steps")
+      .update({ done: !step.done })
+      .eq("id", id);
+    refresh();
+  };
+
+  const addStep = async (phase: string, phaseOrder: number, itemText: string, sName?: string) => {
+    if (!supabase || !user?.id) return;
+    await supabase.from("learning_path_steps").insert({
+      mentor_user_id: user.id,
+      student_name: sName ?? studentName ?? "",
+      phase,
+      phase_order: phaseOrder,
+      status: "active",
+      item_text: itemText,
+      done: false,
+    });
+    refresh();
+  };
+
+  return { steps, loading, refresh, toggleStep, addStep };
+}
+
+// ─── useMentorProfile ────────────────────────────────────────
+export interface MentorProfileStats {
+  studentCount: number;
+  groupCount: number;
+}
+
+export function useMentorProfileStats() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<MentorProfileStats>({ studentCount: 0, groupCount: 0 });
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setStats({ studentCount: 0, groupCount: 0 });
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const groupRes = await supabase
+      .from("mentor_groups")
+      .select("id")
+      .eq("mentor_user_id", user.id);
+    const groupIds = ok<any>(groupRes).map((g: any) => g.id);
+    let studentCount = 0;
+    if (groupIds.length) {
+      const countRes = await supabase
+        .from("group_members")
+        .select("id", { count: "exact", head: true })
+        .in("group_id", groupIds);
+      studentCount = (countRes as any).count ?? 0;
+    }
+    setStats({ studentCount, groupCount: groupIds.length });
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { stats, loading };
+}
+
+// ─── useMentorRequests ────────────────────────────────────────
+export interface MentorRequest {
+  id: string;
+  request_type: "mentorship" | "session";
+  parent_name: string | null;
+  child_name: string | null;
+  interest_text: string | null;
+  status: "pending" | "accepted" | "rejected";
+  slots: string[] | null;
+  created_at: string;
+}
+
+export function useMentorRequests() {
+  const { user } = useAuth();
+  const [requests, setRequests] = useState<MentorRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setRequests([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("mentorship_requests")
+      .select("*")
+      .eq("mentor_user_id", user.id)
+      .order("created_at", { ascending: false });
+    setRequests(ok<MentorRequest>(res));
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const respond = async (id: string, status: "accepted" | "rejected") => {
+    if (!supabase) return;
+    await supabase.from("mentorship_requests").update({ status }).eq("id", id);
+    refresh();
+  };
+
+  return { requests, loading, refresh, respond };
+}

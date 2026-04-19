@@ -2,28 +2,25 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
-import {
-  Alert,
-  Platform,
-  Pressable,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from "react-native";
+import { Alert, Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ScreenHeader from "../../../components/ui/ScreenHeader";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useMentorProfileStats } from "../../../hooks/useMentorData";
 
 export default function MentorProfile() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : LAYOUT.dashboardHorizontalPaddingMobile;
+
+  const { stats } = useMentorProfileStats();
+
+  const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Ментор";
 
   const handleLogout = async () => {
     if (Platform.OS === "web") {
@@ -45,21 +42,9 @@ export default function MentorProfile() {
   };
 
   const menuItems = [
-    {
-      icon: "award" as const,
-      label: "Мои квалификации",
-      action: () => Alert.alert("В разработке"),
-    },
-    {
-      icon: "users" as const,
-      label: "Мои ученики",
-      action: () => router.push("/(tabs)/home"),
-    },
-    {
-      icon: "settings" as const,
-      label: "Настройки",
-      action: () => Alert.alert("В разработке"),
-    },
+    { icon: "award" as const, label: "Мои квалификации", action: () => Alert.alert("В разработке") },
+    { icon: "users" as const, label: "Мои ученики", action: () => router.push("/(tabs)/home") },
+    { icon: "settings" as const, label: "Настройки", action: () => Alert.alert("В разработке") },
   ];
 
   return (
@@ -81,12 +66,7 @@ export default function MentorProfile() {
             alignItems: "center",
           }}
         >
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined,
-            }}
-          >
+          <View style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.dashboardMaxWidth : undefined }}>
             {/* Profile Info */}
             <View
               style={{
@@ -113,95 +93,39 @@ export default function MentorProfile() {
               >
                 <Feather name="user-check" size={32} color={COLORS.primary} />
               </View>
-              <Text
-                style={{
-                  fontSize: 22,
-                  fontWeight: "700",
-                  color: COLORS.foreground,
-                  marginBottom: 4,
-                }}
-              >
-                Анна Сергеевна
+
+              <Text style={{ fontSize: 22, fontWeight: "700", color: COLORS.foreground, marginBottom: 4 }}>
+                {displayName}
               </Text>
-              <Text
-                style={{
-                  color: COLORS.primary,
-                  fontWeight: "600",
-                  marginBottom: 20,
-                }}
-              >
-                Старший Ментор
+              <Text style={{ color: COLORS.primary, fontWeight: "600", marginBottom: 20 }}>
+                Ментор
               </Text>
 
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  gap: 16,
-                }}
-              >
+              <View style={{ flexDirection: "row", justifyContent: "center", gap: 16 }}>
                 <View style={{ alignItems: "center" }}>
                   <LinearGradient
                     colors={[COLORS.primary, COLORS.secondary]}
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 18,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
+                    style={{ width: 56, height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 8 }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        fontWeight: "800",
-                        color: "white",
-                      }}
-                    >
-                      12
+                    <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>
+                      {stats.studentCount}
                     </Text>
                   </LinearGradient>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: COLORS.mutedForeground,
-                      fontWeight: "500",
-                    }}
-                  >
+                  <Text style={{ fontSize: 12, color: COLORS.mutedForeground, fontWeight: "500" }}>
                     Учеников
                   </Text>
                 </View>
                 <View style={{ alignItems: "center" }}>
                   <LinearGradient
                     colors={[COLORS.primary, COLORS.secondary]}
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 18,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
+                    style={{ width: 56, height: 56, borderRadius: 18, alignItems: "center", justifyContent: "center", marginBottom: 8 }}
                   >
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        fontWeight: "800",
-                        color: "white",
-                      }}
-                    >
-                      5+
+                    <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>
+                      {stats.groupCount}
                     </Text>
                   </LinearGradient>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: COLORS.mutedForeground,
-                      fontWeight: "500",
-                    }}
-                  >
-                    Лет работы
+                  <Text style={{ fontSize: 12, color: COLORS.mutedForeground, fontWeight: "500" }}>
+                    Групп
                   </Text>
                 </View>
               </View>
@@ -236,27 +160,12 @@ export default function MentorProfile() {
                       marginRight: 14,
                     }}
                   >
-                    <Feather
-                      name={item.icon}
-                      size={20}
-                      color={COLORS.primary}
-                    />
+                    <Feather name={item.icon} size={20} color={COLORS.primary} />
                   </View>
-                  <Text
-                    style={{
-                      flex: 1,
-                      fontWeight: "600",
-                      color: COLORS.foreground,
-                      fontSize: 16,
-                    }}
-                  >
+                  <Text style={{ flex: 1, fontWeight: "600", color: COLORS.foreground, fontSize: 16 }}>
                     {item.label}
                   </Text>
-                  <Feather
-                    name="chevron-right"
-                    size={20}
-                    color={COLORS.mutedForeground}
-                  />
+                  <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
                 </Pressable>
               ))}
             </View>
@@ -276,14 +185,7 @@ export default function MentorProfile() {
               }}
             >
               <Feather name="log-out" size={18} color={COLORS.destructive} />
-              <Text
-                style={{
-                  color: COLORS.destructive,
-                  fontWeight: "600",
-                  fontSize: 16,
-                  marginLeft: 8,
-                }}
-              >
+              <Text style={{ color: COLORS.destructive, fontWeight: "600", fontSize: 16, marginLeft: 8 }}>
                 Выйти из системы
               </Text>
             </Pressable>

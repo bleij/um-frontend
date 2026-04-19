@@ -223,3 +223,52 @@ export function useOrgTasks() {
 
   return { tasks, loading, refresh };
 }
+
+// ─── useOrgSchedule ───────────────────────────────────────────
+export interface OrgScheduleItem {
+  id: string;
+  org_id: string;
+  time_label: string;
+  subject: string;
+  group_name: string;
+  teacher_name: string;
+  room: string;
+  color: string;
+  day_of_week: number;
+}
+
+export function useOrgSchedule(dayOfWeek?: number) {
+  const { user } = useAuth();
+  const [items, setItems] = useState<OrgScheduleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+    let q = supabase
+      .from("org_schedule_items")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("time_label", { ascending: true });
+    if (dayOfWeek !== undefined) q = q.eq("day_of_week", dayOfWeek);
+    const res = await q;
+    setItems(ok<OrgScheduleItem>(res));
+    setLoading(false);
+  }, [user?.id, dayOfWeek]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { items, loading, refresh };
+}

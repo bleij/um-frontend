@@ -3,34 +3,29 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../../constants/theme";
+import { useGroupMembers } from "../../../../hooks/useMentorData";
 
 type AttendanceStatus = "present" | "absent" | "late" | null;
 
+const SKILLS = [
+  { value: "leadership", label: "Лидерство", icon: "award" },
+  { value: "logic", label: "Логика", icon: "cpu" },
+  { value: "creativity", label: "Креативность", icon: "pen-tool" },
+  { value: "communication", label: "Коммуникация", icon: "message-circle" },
+  { value: "teamwork", label: "Командная работа", icon: "users" },
+  { value: "problem_solving", label: "Решение задач", icon: "target" },
+];
+
 export default function TeacherGroupDetail() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { members, loading } = useGroupMembers(id ?? null);
 
   const [activeTab, setActiveTab] = useState<"attendance" | "progress">("attendance");
   const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceStatus>>({});
-  
   const [selectedSkill, setSelectedSkill] = useState("");
   const [progressNotes, setProgressNotes] = useState("");
-
-  const students = [
-    { id: "s1", full_name: "Иван Иванов", age: 14 },
-    { id: "s2", full_name: "Анна Смирнова", age: 15 },
-    { id: "s3", full_name: "Петр Петров", age: 14 },
-  ];
-
-  const skills = [
-    { value: "leadership", label: "Лидерство", icon: "award" },
-    { value: "logic", label: "Логика", icon: "cpu" },
-    { value: "creativity", label: "Креативность", icon: "pen-tool" },
-    { value: "communication", label: "Коммуникация", icon: "message-circle" },
-    { value: "teamwork", label: "Командная работа", icon: "users" },
-    { value: "problem_solving", label: "Решение задач", icon: "target" },
-  ];
 
   const todayDate = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
 
@@ -46,7 +41,6 @@ export default function TeacherGroupDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Header */}
       <View style={{ paddingTop: 60, paddingHorizontal: 24, paddingBottom: 16, backgroundColor: COLORS.card, borderBottomWidth: 1, borderBottomColor: COLORS.border }}>
         <TouchableOpacity onPress={() => router.back()} style={{ flexDirection: "row", alignItems: "center", marginBottom: 16 }}>
           <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
@@ -59,33 +53,22 @@ export default function TeacherGroupDetail() {
           </View>
           <View>
             <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>Управление группой</Text>
-            <Text style={{ color: COLORS.mutedForeground }}>{students.length} учеников</Text>
+            <Text style={{ color: COLORS.mutedForeground }}>
+              {loading ? "Загрузка..." : `${members.length} учеников`}
+            </Text>
           </View>
         </View>
 
-        {/* Tabs */}
         <View style={{ flexDirection: "row", gap: 8, marginTop: 24 }}>
           <TouchableOpacity
             onPress={() => setActiveTab("attendance")}
-            style={{
-              flex: 1,
-              paddingVertical: 10,
-              alignItems: "center",
-              borderRadius: RADIUS.md,
-              backgroundColor: activeTab === "attendance" ? COLORS.primary : COLORS.muted,
-            }}
+            style={{ flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: RADIUS.md, backgroundColor: activeTab === "attendance" ? COLORS.primary : COLORS.muted }}
           >
             <Text style={{ fontWeight: "600", color: activeTab === "attendance" ? "white" : COLORS.mutedForeground }}>Посещаемость</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab("progress")}
-            style={{
-              flex: 1,
-              paddingVertical: 10,
-              alignItems: "center",
-              borderRadius: RADIUS.md,
-              backgroundColor: activeTab === "progress" ? COLORS.primary : COLORS.muted,
-            }}
+            style={{ flex: 1, paddingVertical: 10, alignItems: "center", borderRadius: RADIUS.md, backgroundColor: activeTab === "progress" ? COLORS.primary : COLORS.muted }}
           >
             <Text style={{ fontWeight: "600", color: activeTab === "progress" ? "white" : COLORS.mutedForeground }}>Фидбэк (Прогресс)</Text>
           </TouchableOpacity>
@@ -105,22 +88,24 @@ export default function TeacherGroupDetail() {
               </TouchableOpacity>
             </View>
 
-            {students.map((student) => {
-              const status = attendanceData[student.id];
+            {members.map((member) => {
+              const status = attendanceData[member.id];
               return (
                 <TouchableOpacity
-                  key={student.id}
-                  onPress={() => toggleAttendance(student.id)}
+                  key={member.id}
+                  onPress={() => toggleAttendance(member.id)}
                   activeOpacity={0.8}
                   style={{ backgroundColor: COLORS.card, padding: 16, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
                 >
                   <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                     <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" }}>
-                      <Text style={{ color: "white", fontWeight: "700", fontSize: 18 }}>{student.full_name.charAt(0)}</Text>
+                      <Text style={{ color: "white", fontWeight: "700", fontSize: 18 }}>{member.student_name.charAt(0)}</Text>
                     </View>
                     <View>
-                      <Text style={{ fontWeight: "600", fontSize: 16, color: COLORS.foreground }}>{student.full_name}</Text>
-                      <Text style={{ color: COLORS.mutedForeground, fontSize: 12 }}>{student.age} лет</Text>
+                      <Text style={{ fontWeight: "600", fontSize: 16, color: COLORS.foreground }}>{member.student_name}</Text>
+                      {member.student_age && (
+                        <Text style={{ color: COLORS.mutedForeground, fontSize: 12 }}>{member.student_age} лет</Text>
+                      )}
                     </View>
                   </View>
                   <View style={{
@@ -145,19 +130,21 @@ export default function TeacherGroupDetail() {
             {!selectedStudent ? (
               <>
                 <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>Выберите ученика для фидбэка (оценки прогресса)</Text>
-                {students.map((student) => (
+                {members.map((member) => (
                   <TouchableOpacity
-                    key={student.id}
-                    onPress={() => setSelectedStudent(student)}
+                    key={member.id}
+                    onPress={() => setSelectedStudent(member)}
                     style={{ backgroundColor: COLORS.card, padding: 16, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}
                   >
                     <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
                       <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primary, alignItems: "center", justifyContent: "center" }}>
-                        <Text style={{ color: "white", fontWeight: "700", fontSize: 18 }}>{student.full_name.charAt(0)}</Text>
+                        <Text style={{ color: "white", fontWeight: "700", fontSize: 18 }}>{member.student_name.charAt(0)}</Text>
                       </View>
                       <View>
-                        <Text style={{ fontWeight: "600", fontSize: 16, color: COLORS.foreground }}>{student.full_name}</Text>
-                        <Text style={{ color: COLORS.mutedForeground, fontSize: 12 }}>{student.age} лет</Text>
+                        <Text style={{ fontWeight: "600", fontSize: 16, color: COLORS.foreground }}>{member.student_name}</Text>
+                        {member.student_age && (
+                          <Text style={{ color: COLORS.mutedForeground, fontSize: 12 }}>{member.student_age} лет</Text>
+                        )}
                       </View>
                     </View>
                     <Feather name="trending-up" size={20} color={COLORS.mutedForeground} />
@@ -167,8 +154,10 @@ export default function TeacherGroupDetail() {
             ) : (
               <View style={{ gap: 16 }}>
                 <View style={{ backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.lg }}>
-                  <Text style={{ color: "white", fontSize: 18, fontWeight: "700" }}>{selectedStudent.full_name}</Text>
-                  <Text style={{ color: "rgba(255,255,255,0.8)" }}>{selectedStudent.age} лет</Text>
+                  <Text style={{ color: "white", fontSize: 18, fontWeight: "700" }}>{selectedStudent.student_name}</Text>
+                  {selectedStudent.student_age && (
+                    <Text style={{ color: "rgba(255,255,255,0.8)" }}>{selectedStudent.student_age} лет</Text>
+                  )}
                   <TouchableOpacity onPress={() => setSelectedStudent(null)} style={{ marginTop: 8 }}>
                     <Text style={{ color: "white", textDecorationLine: "underline" }}>Выбрать другого ученика</Text>
                   </TouchableOpacity>
@@ -176,7 +165,7 @@ export default function TeacherGroupDetail() {
 
                 <Text style={{ fontWeight: "600", color: COLORS.foreground }}>Выберите навык или достижение:</Text>
                 <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-                  {skills.map((skill) => (
+                  {SKILLS.map((skill) => (
                     <TouchableOpacity
                       key={skill.value}
                       onPress={() => setSelectedSkill(skill.value)}
@@ -187,7 +176,7 @@ export default function TeacherGroupDetail() {
                         borderRadius: RADIUS.lg,
                         borderWidth: 2,
                         borderColor: selectedSkill === skill.value ? COLORS.primary : COLORS.border,
-                        alignItems: "center"
+                        alignItems: "center",
                       }}
                     >
                       <Feather name={skill.icon as any} size={24} color={selectedSkill === skill.value ? COLORS.primary : COLORS.foreground} style={{ marginBottom: 8 }} />
@@ -196,33 +185,20 @@ export default function TeacherGroupDetail() {
                   ))}
                 </View>
 
-                <Text style={{ fontWeight: "600", color: COLORS.foreground, marginTop: 8 }}>Фидбэк учителю / ментору (необязательно)</Text>
+                <Text style={{ fontWeight: "600", color: COLORS.foreground, marginTop: 8 }}>Фидбэк (необязательно)</Text>
                 <TextInput
                   value={progressNotes}
                   onChangeText={setProgressNotes}
                   placeholder="Например: Отлично справился с логической задачей"
                   placeholderTextColor={COLORS.mutedForeground}
-                  style={{
-                    backgroundColor: COLORS.card,
-                    borderWidth: 1,
-                    borderColor: COLORS.border,
-                    borderRadius: RADIUS.md,
-                    padding: 16,
-                    color: COLORS.foreground,
-                    minHeight: 100,
-                  }}
+                  style={{ backgroundColor: COLORS.card, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: 16, color: COLORS.foreground, minHeight: 100 }}
                   multiline
                   textAlignVertical="top"
                 />
 
                 <TouchableOpacity
                   disabled={!selectedSkill}
-                  style={{
-                    backgroundColor: selectedSkill ? COLORS.primary : COLORS.muted,
-                    padding: 16,
-                    borderRadius: RADIUS.md,
-                    alignItems: "center"
-                  }}
+                  style={{ backgroundColor: selectedSkill ? COLORS.primary : COLORS.muted, padding: 16, borderRadius: RADIUS.md, alignItems: "center" }}
                 >
                   <Text style={{ color: selectedSkill ? "white" : COLORS.mutedForeground, fontWeight: "600", fontSize: 16 }}>Сохранить фидбэк</Text>
                 </TouchableOpacity>

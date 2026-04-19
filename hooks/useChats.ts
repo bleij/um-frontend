@@ -85,3 +85,66 @@ export function useChats() {
 
   return { chats, loading, refresh, archiveChat, markRead };
 }
+
+// ─── useChatMessages ──────────────────────────────────────────
+export interface ChatMessage {
+  id: string;
+  conversation_id: string;
+  sender_id: string | null;
+  body: string;
+  created_at: string;
+  is_mine: boolean;
+}
+
+export function useChatMessages(conversationId: string | null) {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !conversationId) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true });
+    const rows = ok<any>(res);
+    setMessages(
+      rows.map((m: any) => ({
+        id: m.id,
+        conversation_id: m.conversation_id,
+        sender_id: m.sender_id,
+        body: m.body,
+        created_at: m.created_at,
+        is_mine: m.sender_id === user?.id,
+      }))
+    );
+    setLoading(false);
+  }, [conversationId, user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const sendMessage = async (text: string) => {
+    if (!supabase || !conversationId || !text.trim()) return;
+    await supabase.from("messages").insert({
+      conversation_id: conversationId,
+      sender_id: user?.id ?? null,
+      body: text.trim(),
+    });
+    // Update conversation last_message
+    await supabase
+      .from("conversations")
+      .update({ last_message: text.trim(), last_message_at: new Date().toISOString() })
+      .eq("id", conversationId);
+    refresh();
+  };
+
+  return { messages, loading, refresh, sendMessage };
+}

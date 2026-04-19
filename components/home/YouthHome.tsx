@@ -30,45 +30,10 @@ const SKILLS = [
   { label: "Дисциплина", value: 72, color: "#10B981" },
 ];
 
-const MENTOR_TASKS = [
-  { id: 1, title: "Выступить перед зеркалом 5 мин", done: true, xp: 50 },
-  { id: 2, title: "Придумать идею для робота", done: false, xp: 100 },
-  { id: 3, title: "Сделать ДЗ по математике", done: false, xp: 50 },
-];
-
-const ACHIEVEMENTS = [
-  {
-    id: 1,
-    icon: "zap",
-    title: "Быстрый старт",
-    description: "5 задач за день",
-    unlocked: true,
-  },
-  {
-    id: 2,
-    icon: "star",
-    title: "Лидер группы",
-    description: "Лучший отзыв",
-    unlocked: true,
-  },
-  {
-    id: 3,
-    icon: "target",
-    title: "Снайпер",
-    description: "10 задач подряд",
-    unlocked: false,
-  },
-  {
-    id: 4,
-    icon: "award",
-    title: "Чемпион",
-    description: "Топ 1 месяца",
-    unlocked: false,
-  },
-];
 
 import { useParentData } from "../../contexts/ParentDataContext";
 import { courses } from "../../data/courses";
+import { useStudentTasks, useYouthAchievements } from "../../hooks/useStudentData";
 
 export default function YouthHome() {
   const router = useRouter();
@@ -117,13 +82,8 @@ export default function YouthHome() {
         { label: "Дисциплина", value: 72, color: "#10B981" },
       ];
 
-  const [tasks, setTasks] = useState(MENTOR_TASKS);
-
-  const toggleTask = (id: number) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
-    );
-  };
+  const { tasks, toggleTask } = useStudentTasks();
+  const { achievements } = useYouthAchievements();
 
   // Mock roles and features
   const isIndependent = true; // "Подросток сам принимает решения"
@@ -305,26 +265,28 @@ export default function YouthHome() {
           )}
         </View>
 
-        {/* Schedule */}
-        <View
-          className="mb-8 p-6 bg-blue-50 rounded-[32px] border border-blue-100 flex-row items-center justify-between"
-          style={SHADOWS.sm}
-        >
-          <View className="flex-1 mr-4">
-            <Text className="text-xs font-bold text-blue-500 uppercase mb-1">
-              Сегодня
-            </Text>
-            <Text className="text-lg font-black text-blue-900 mb-1">
-              Робототехника
-            </Text>
-            <Text className="text-sm font-semibold text-blue-700">
-              16:00 • Ауд. 302
-            </Text>
+        {/* Upcoming tasks hint */}
+        {tasks.length > 0 && (
+          <View
+            className="mb-8 p-6 bg-blue-50 rounded-[32px] border border-blue-100 flex-row items-center justify-between"
+            style={SHADOWS.sm}
+          >
+            <View className="flex-1 mr-4">
+              <Text className="text-xs font-bold text-blue-500 uppercase mb-1">
+                Следующее задание
+              </Text>
+              <Text className="text-lg font-black text-blue-900 mb-1" numberOfLines={1}>
+                {tasks.find((t) => !t.done)?.title ?? tasks[0].title}
+              </Text>
+              <Text className="text-sm font-semibold text-blue-700">
+                +{tasks.find((t) => !t.done)?.xp_reward ?? tasks[0].xp_reward} XP
+              </Text>
+            </View>
+            <View className="w-12 h-12 rounded-2xl bg-blue-500 items-center justify-center">
+              <Feather name="target" size={24} color="white" />
+            </View>
           </View>
-          <View className="w-12 h-12 rounded-2xl bg-blue-500 items-center justify-center">
-            <Feather name="clock" size={24} color="white" />
-          </View>
-        </View>
+        )}
 
         {/* Skills Section */}
         <View
@@ -541,7 +503,7 @@ export default function YouthHome() {
                         color: item.done ? "#166534" : "#854D0E",
                       }}
                     >
-                      +{item.xp} XP
+                      +{item.xp_reward} XP
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -560,7 +522,7 @@ export default function YouthHome() {
             showsHorizontalScrollIndicator={false}
             className="-mx-1 px-1 overflow-visible"
           >
-            {ACHIEVEMENTS.map((ach) => (
+            {achievements.map((ach) => (
               <View
                 key={ach.id}
                 style={{ ...SHADOWS.sm, opacity: ach.unlocked ? 1 : 0.5 }}
@@ -571,20 +533,16 @@ export default function YouthHome() {
                     width: 56,
                     height: 56,
                     borderRadius: RADIUS.full,
-                    backgroundColor: ach.unlocked
-                      ? COLORS.primary + "15"
-                      : COLORS.muted,
+                    backgroundColor: ach.unlocked ? COLORS.primary + "15" : COLORS.muted,
                     alignItems: "center",
                     justifyContent: "center",
                     marginBottom: 12,
                   }}
                 >
                   <Feather
-                    name={ach.icon as any}
+                    name={ach.unlocked ? (ach.icon_name as any) : "lock"}
                     size={24}
-                    color={
-                      ach.unlocked ? COLORS.primary : COLORS.mutedForeground
-                    }
+                    color={ach.unlocked ? COLORS.primary : COLORS.mutedForeground}
                   />
                 </View>
                 <Text
@@ -596,16 +554,10 @@ export default function YouthHome() {
                     marginBottom: 4,
                   }}
                 >
-                  {ach.title}
+                  {ach.name}
                 </Text>
-                <Text
-                  style={{
-                    fontSize: 10,
-                    color: COLORS.mutedForeground,
-                    textAlign: "center",
-                  }}
-                >
-                  {ach.description}
+                <Text style={{ fontSize: 10, color: COLORS.mutedForeground, textAlign: "center" }}>
+                  {ach.description ?? ""}
                 </Text>
               </View>
             ))}

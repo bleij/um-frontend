@@ -21,7 +21,8 @@ import {
    TYPOGRAPHY,
 } from "../../constants/theme";
 import { useDevSettings } from "../../contexts/DevSettingsContext";
-import { useMentorStudents, useMentorFeedback } from "../../hooks/useMentorData";
+import { useAuth } from "../../contexts/AuthContext";
+import { useMentorStudents, useMentorFeedback, useMentorGroups, useMentorRequests } from "../../hooks/useMentorData";
 
 const SKILL_LABELS = ["Ком.", "Лид.", "Кре.", "Лог.", "Дис."];
 
@@ -34,8 +35,16 @@ export default function MentorHome() {
     : SPACING.xl;
 
   const { mentorApproved: isApproved } = useDevSettings();
+  const { user } = useAuth();
   const { students } = useMentorStudents();
   const { feedback } = useMentorFeedback();
+  const { groups } = useMentorGroups();
+  const { requests, respond } = useMentorRequests();
+
+  const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Ментор";
+  const nextGroup = groups.find((g) => g.active) ?? groups[0];
+  const sessionRequests = requests.filter((r) => r.request_type === "session" && r.status === "pending");
+  const mentorshipRequests = requests.filter((r) => r.request_type === "mentorship" && r.status === "pending");
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -77,7 +86,7 @@ export default function MentorHome() {
                         letterSpacing: TYPOGRAPHY.letterSpacing.tight,
                       }}
                     >
-                      Привет, Анна Сергеевна!
+                      Привет, {displayName}!
                     </Text>
                     {isApproved && (
                       <View
@@ -128,13 +137,13 @@ export default function MentorHome() {
                       fontWeight: TYPOGRAPHY.weight.medium,
                     }}
                   >
-                    Ожидается 4 занятия • Среда, 16 апр
+                    {groups.length > 0 ? `${groups.length} ${groups.length === 1 ? "группа" : "групп"}` : "Нет групп"} • {new Date().toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "short" })}
                   </Text>
 
                   {/* Wallet Block */}
                   <TouchableOpacity className="bg-white/10 px-3 py-1.5 rounded-full border border-white/20 flex-row items-center gap-2">
                     <Feather name="credit-card" size={14} color="white" />
-                    <Text className="text-white font-bold">45,000 ₸</Text>
+                    <Text className="text-white font-bold">{students.length} учеников</Text>
                   </TouchableOpacity>
                 </View>
               </MotiView>
@@ -240,7 +249,7 @@ export default function MentorHome() {
               <View className="flex-row justify-between items-start mb-8">
                 <View className="bg-white/20 px-4 py-2 rounded-full border border-white/30 backdrop-blur-md">
                   <Text className="text-white text-[10px] font-extrabold tracking-widest uppercase">
-                    Live • через 15 мин
+                    {nextGroup ? "Активная группа" : "Нет занятий"}
                   </Text>
                 </View>
                 <View className="bg-white/20 p-3 rounded-full border border-white/30">
@@ -256,12 +265,12 @@ export default function MentorHome() {
                   letterSpacing: TYPOGRAPHY.letterSpacing.tight,
                 }}
               >
-                Робототехника
+                {nextGroup?.course ?? "Нет группы"}
               </Text>
               <View className="flex-row items-center mb-8 opacity-90">
-                <Feather name="map-pin" size={14} color="white" />
+                <Feather name="users" size={14} color="white" />
                 <Text className="text-white text-md font-medium ml-2">
-                  Старшая группа A • Каб. 204
+                  {nextGroup?.name ?? "—"}{nextGroup?.schedule ? ` • ${nextGroup.schedule}` : ""}
                 </Text>
               </View>
 
@@ -275,7 +284,7 @@ export default function MentorHome() {
                   justifyContent: "center",
                   ...SHADOWS.md,
                 }}
-                onPress={() => router.push("/mentor/group/1" as any)}
+                onPress={() => nextGroup && router.push(`/mentor/group/${nextGroup.id}` as any)}
               >
                 <Text
                   style={{
@@ -303,103 +312,60 @@ export default function MentorHome() {
           <View className="flex-row justify-between items-center mb-4 px-1">
             <View className="flex-row items-center gap-2">
               <Feather name="video" size={20} color={COLORS.primary} />
-              <Text
-                style={{
-                  fontSize: TYPOGRAPHY.size.lg,
-                  fontWeight: TYPOGRAPHY.weight.semibold,
-                  color: COLORS.foreground,
-                }}
-              >
+              <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>
                 Ежемесячные сессии
               </Text>
             </View>
-            <View className="bg-orange-100 px-2 py-0.5 rounded-full">
-              <Text className="text-orange-600 text-xs font-bold">1 новое</Text>
-            </View>
+            {sessionRequests.length > 0 && (
+              <View className="bg-orange-100 px-2 py-0.5 rounded-full">
+                <Text className="text-orange-600 text-xs font-bold">{sessionRequests.length} новое</Text>
+              </View>
+            )}
           </View>
 
-          <MotiView
-            from={{ opacity: 0, translateY: 10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            style={{
-              ...SHADOWS.strict,
-              backgroundColor: COLORS.surface,
-              borderRadius: RADIUS.lg,
-              padding: SPACING.xl,
-              borderWidth: 1,
-              borderColor: COLORS.primary + "30",
-              borderLeftWidth: 4,
-              borderLeftColor: COLORS.primary,
-            }}
-          >
-            <View className="flex-row justify-between items-start mb-3">
-              <View>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.md,
-                    fontWeight: TYPOGRAPHY.weight.bold,
-                    color: COLORS.foreground,
-                  }}
-                >
-                  Родитель: Елена (Иван)
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: COLORS.mutedForeground,
-                    marginTop: 2,
-                  }}
-                >
-                  Запрос на согласование времени
-                </Text>
-              </View>
-              <View
-                style={{
-                  backgroundColor: COLORS.warning + "15",
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: RADIUS.sm,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 10,
-                    fontWeight: TYPOGRAPHY.weight.bold,
-                    color: COLORS.warning,
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Ожидает
-                </Text>
-              </View>
+          {sessionRequests.length === 0 ? (
+            <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border, alignItems: "center" }}>
+              <Text style={{ color: COLORS.mutedForeground, fontSize: TYPOGRAPHY.size.sm }}>Новых запросов нет</Text>
             </View>
-
-            <Text
-              style={{
-                fontSize: 13,
-                color: COLORS.foreground,
-                marginBottom: 12,
-              }}
+          ) : sessionRequests.map((req) => (
+            <MotiView
+              key={req.id}
+              from={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={{ ...SHADOWS.strict, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.primary + "30", borderLeftWidth: 4, borderLeftColor: COLORS.primary, marginBottom: SPACING.md }}
             >
-              Предложенные слоты:
-            </Text>
-            <View className="flex-row gap-2 mb-4">
-              {["Пн 18:00", "Вт 10:00", "Сб 12:00"].map((slot, i) => (
-                <TouchableOpacity
-                  key={i}
-                  className="bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1 items-center"
-                >
-                  <Text className="text-gray-700 font-semibold text-xs">
-                    {slot}
+              <View className="flex-row justify-between items-start mb-3">
+                <View>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
+                    {req.parent_name ? `Родитель: ${req.parent_name}${req.child_name ? ` (${req.child_name})` : ""}` : req.child_name ?? "Запрос"}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+                  <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>
+                    {req.interest_text ?? "Запрос на согласование времени"}
+                  </Text>
+                </View>
+                <View style={{ backgroundColor: COLORS.warning + "15", paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.sm }}>
+                  <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.warning, textTransform: "uppercase" }}>Ожидает</Text>
+                </View>
+              </View>
 
-            <TouchableOpacity className="bg-primary py-3 rounded-xl items-center">
-              <Text className="text-white font-bold">Выбрать время</Text>
-            </TouchableOpacity>
-          </MotiView>
+              {req.slots && req.slots.length > 0 && (
+                <>
+                  <Text style={{ fontSize: 13, color: COLORS.foreground, marginBottom: 12 }}>Предложенные слоты:</Text>
+                  <View className="flex-row gap-2 mb-4">
+                    {req.slots.map((slot, i) => (
+                      <TouchableOpacity key={i} className="bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1 items-center">
+                        <Text className="text-gray-700 font-semibold text-xs">{slot}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              <TouchableOpacity onPress={() => respond(req.id, "accepted")} className="bg-primary py-3 rounded-xl items-center">
+                <Text className="text-white font-bold">Подтвердить</Text>
+              </TouchableOpacity>
+            </MotiView>
+          ))}
         </View>
 
         {/* MENTORSHIP REQUESTS */}
@@ -419,39 +385,34 @@ export default function MentorHome() {
             </Text>
           </View>
 
-          <View
-            style={{
-              ...SHADOWS.sm,
-              backgroundColor: COLORS.surface,
-              borderRadius: RADIUS.lg,
-              padding: SPACING.lg,
-              borderWidth: 1,
-              borderColor: COLORS.border,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center">
-                <Feather name="user-plus" size={18} color="#3B82F6" />
+          {mentorshipRequests.length === 0 ? (
+            <View style={{ ...SHADOWS.sm, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, alignItems: "center" }}>
+              <Text style={{ color: COLORS.mutedForeground, fontSize: TYPOGRAPHY.size.sm }}>Новых заявок нет</Text>
+            </View>
+          ) : mentorshipRequests.map((req) => (
+            <View
+              key={req.id}
+              style={{ ...SHADOWS.sm, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: SPACING.sm }}
+            >
+              <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center">
+                  <Feather name="user-plus" size={18} color="#3B82F6" />
+                </View>
+                <View>
+                  <Text className="font-bold text-gray-900">{req.child_name ?? "Ученик"}</Text>
+                  <Text className="text-xs text-gray-500">{req.interest_text ?? ""}</Text>
+                </View>
               </View>
-              <View>
-                <Text className="font-bold text-gray-900">Данияр (14 лет)</Text>
-                <Text className="text-xs text-gray-500">
-                  Хочет развивать логику
-                </Text>
+              <View className="flex-row gap-2">
+                <TouchableOpacity onPress={() => respond(req.id, "rejected")} className="w-8 h-8 rounded-full bg-red-50 items-center justify-center border border-red-100">
+                  <Feather name="x" size={16} color="#EF4444" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => respond(req.id, "accepted")} className="w-8 h-8 rounded-full bg-green-50 items-center justify-center border border-green-100">
+                  <Feather name="check" size={16} color="#10B981" />
+                </TouchableOpacity>
               </View>
             </View>
-            <View className="flex-row gap-2">
-              <TouchableOpacity className="w-8 h-8 rounded-full bg-red-50 items-center justify-center border border-red-100">
-                <Feather name="x" size={16} color="#EF4444" />
-              </TouchableOpacity>
-              <TouchableOpacity className="w-8 h-8 rounded-full bg-green-50 items-center justify-center border border-green-100">
-                <Feather name="check" size={16} color="#10B981" />
-              </TouchableOpacity>
-            </View>
-          </View>
+          ))}
         </View>
         {/* FEEDBACK FEED (Phase 4.1) */}
         <View

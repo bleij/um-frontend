@@ -55,3 +55,130 @@ export function useStudentTasks() {
 
   return { tasks, loading, refresh, toggleTask };
 }
+
+// ─── useYouthGoals ────────────────────────────────────────────
+export interface YouthGoalStep {
+  id: string;
+  text: string;
+  done: boolean;
+  step_order: number;
+}
+
+export interface YouthGoal {
+  id: string;
+  title: string;
+  progress: number;
+  color: string;
+  steps: YouthGoalStep[];
+}
+
+export function useYouthGoals() {
+  const { user } = useAuth();
+  const [goals, setGoals] = useState<YouthGoal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setGoals([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const goalRes = await supabase
+      .from("youth_goals")
+      .select("*")
+      .eq("student_user_id", user.id)
+      .order("created_at", { ascending: true });
+    const rawGoals = ok<any>(goalRes);
+    const ids = rawGoals.map((g: any) => g.id);
+
+    let stepsMap = new Map<string, YouthGoalStep[]>();
+    if (ids.length) {
+      const stepsRes = await supabase
+        .from("youth_goal_steps")
+        .select("*")
+        .in("goal_id", ids)
+        .order("step_order", { ascending: true });
+      for (const s of ok<any>(stepsRes)) {
+        const arr = stepsMap.get(s.goal_id) ?? [];
+        arr.push({ id: s.id, text: s.text, done: s.done, step_order: s.step_order });
+        stepsMap.set(s.goal_id, arr);
+      }
+    }
+
+    setGoals(
+      rawGoals.map((g: any) => ({
+        id: g.id,
+        title: g.title,
+        progress: g.progress,
+        color: g.color,
+        steps: stepsMap.get(g.id) ?? [],
+      }))
+    );
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { goals, loading, refresh };
+}
+
+// ─── useYouthAchievements ─────────────────────────────────────
+export interface UserAchievement {
+  id: string;
+  name: string;
+  icon_name: string;
+  description: string | null;
+  unlocked: boolean;
+}
+
+export function useYouthAchievements() {
+  const { user } = useAuth();
+  const [achievements, setAchievements] = useState<UserAchievement[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured) {
+      setAchievements([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    // Load catalog
+    const catalogRes = await supabase
+      .from("achievements_catalog")
+      .select("*")
+      .order("name", { ascending: true });
+    const catalog = ok<any>(catalogRes);
+
+    // Load user's unlocked achievements
+    const unlockedSet = new Set<string>();
+    if (user?.id) {
+      const userRes = await supabase
+        .from("user_achievements")
+        .select("achievement_id")
+        .eq("user_id", user.id)
+        .eq("unlocked", true);
+      for (const r of ok<any>(userRes)) unlockedSet.add(r.achievement_id);
+    }
+
+    setAchievements(
+      catalog.map((a: any) => ({
+        id: a.id,
+        name: a.name,
+        icon_name: a.icon_name,
+        description: a.description,
+        unlocked: unlockedSet.has(a.id),
+      }))
+    );
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { achievements, loading, refresh };
+}

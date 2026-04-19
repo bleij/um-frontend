@@ -1,185 +1,158 @@
+import { MotiView } from "moti";
+import React, { useRef, useState } from "react";
 import {
-    View,
-    Text,
-    ScrollView,
-    TouchableOpacity,
-    TextInput,
-    Platform,
-    Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
-import {useLocalSearchParams, useRouter} from "expo-router";
-import {LinearGradient} from "expo-linear-gradient";
-import {useMemo, useState} from "react";
-import {MotiView} from "moti";
-
-const {width} = Dimensions.get("window");
-const IS_DESKTOP = Platform.OS === "web" && width >= 900;
-
-/* ------------------ ДЕМО-СООБЩЕНИЯ ПО ЧАТАМ ------------------ */
-const MESSAGES_BY_CHAT: Record<string, any[]> = {
-    "1": [
-        {from: "them", text: "Посмотри отчёт, пожалуйста"},
-        {from: "me", text: "Хорошо, сегодня проверю"},
-        {from: "them", text: "Спасибо, важно до завтра"},
-    ],
-    "2": [
-        {from: "them", text: "Завтра занятие в 18:00"},
-        {from: "me", text: "Принял, будем"},
-    ],
-    "3": [
-        {from: "them", text: "Ты поел?"},
-        {from: "me", text: "Да, всё хорошо"},
-        {from: "them", text: "Ладно, не задерживайся"},
-    ],
-    "4": [
-        {from: "them", text: "Подписка активирована"},
-        {from: "me", text: "Спасибо"},
-    ],
-    "5": [
-        {from: "them", text: "Ок"},
-    ],
-    "6": [
-        {from: "them", text: "Сегодня без тренировки"},
-        {from: "me", text: "Понял, спасибо"},
-    ],
-};
+import { LinearGradient } from "expo-linear-gradient";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useChatMessages } from "../../hooks/useChats";
 
 export default function ChatModal() {
-    const router = useRouter();
-    const {id, name} = useLocalSearchParams();
-    const [input, setInput] = useState("");
+  const router = useRouter();
+  const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+  const { width } = useWindowDimensions();
+  const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
-    const messages = useMemo(() => {
-        return MESSAGES_BY_CHAT[String(id)] || [];
-    }, [id]);
+  const { messages, loading, sendMessage } = useChatMessages(id ?? null);
+  const [input, setInput] = useState("");
+  const scrollRef = useRef<ScrollView>(null);
 
-    return (
-        <LinearGradient
-            colors={["#6C5CE7", "#FFFFFF", "#6C5CE7"]}
-            start={{x: 0, y: 0}}   // слева
-            end={{x: 1, y: 0}}     // вправо
-            style={{flex: 1}}
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const text = input;
+    setInput("");
+    await sendMessage(text);
+    scrollRef.current?.scrollToEnd({ animated: true });
+  };
+
+  return (
+    <LinearGradient
+      colors={["#6C5CE7", "#FFFFFF", "#6C5CE7"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 0 }}
+      style={{ flex: 1 }}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <View
+          style={{
+            flex: 1,
+            alignSelf: "center",
+            width: IS_DESKTOP ? "50%" : "100%",
+            backgroundColor: "white",
+          }}
         >
-            <View
+          {/* Header */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 16,
+              paddingTop: Platform.OS === "ios" ? 54 : 32,
+              borderBottomWidth: 1,
+              borderColor: "#eee",
+              backgroundColor: "white",
+            }}
+          >
+            <TouchableOpacity onPress={() => router.back()}>
+              <Text style={{ fontSize: 18 }}>←</Text>
+            </TouchableOpacity>
+            <Text style={{ fontSize: 18, fontWeight: "700", marginLeft: 12 }}>
+              {name}
+            </Text>
+          </View>
+
+          {/* Messages */}
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={{ padding: 16, paddingBottom: 16 }}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+          >
+            {loading && (
+              <Text style={{ textAlign: "center", color: "#9CA3AF", marginVertical: 16 }}>
+                Загрузка...
+              </Text>
+            )}
+            {!loading && messages.length === 0 && (
+              <Text style={{ textAlign: "center", color: "#9CA3AF", marginVertical: 32 }}>
+                Нет сообщений. Напишите первым!
+              </Text>
+            )}
+            {messages.map((msg, idx) => (
+              <MotiView
+                key={msg.id ?? idx}
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ duration: 250 }}
                 style={{
-                    flex: 1,
-                    alignSelf: "center",
-                    width: IS_DESKTOP ? "50%" : "100%",
-                    backgroundColor: "white",
+                  alignSelf: msg.is_mine ? "flex-end" : "flex-start",
+                  backgroundColor: msg.is_mine ? "#6C5CE7" : "#F1F1F1",
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                  borderRadius: 18,
+                  marginBottom: 10,
+                  maxWidth: "80%",
                 }}
+              >
+                <Text style={{ color: msg.is_mine ? "white" : "black", fontSize: 15 }}>
+                  {msg.body}
+                </Text>
+              </MotiView>
+            ))}
+          </ScrollView>
+
+          {/* Input */}
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              padding: 12,
+              borderTopWidth: 1,
+              borderColor: "#eee",
+              backgroundColor: "white",
+            }}
+          >
+            <TextInput
+              value={input}
+              onChangeText={setInput}
+              placeholder="Введите сообщение..."
+              style={{
+                flex: 1,
+                backgroundColor: "#F1F1F1",
+                borderRadius: 20,
+                paddingHorizontal: 14,
+                paddingVertical: 10,
+                marginRight: 10,
+              }}
+              onSubmitEditing={handleSend}
+              returnKeyType="send"
+            />
+            <TouchableOpacity
+              onPress={handleSend}
+              style={{
+                backgroundColor: input.trim() ? "#6C5CE7" : "#E5E7EB",
+                paddingHorizontal: 16,
+                paddingVertical: 10,
+                borderRadius: 20,
+              }}
             >
-                {/* HEADER */}
-                <View
-                    style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        paddingHorizontal: 16,
-                        paddingVertical: 16,
-                        paddingTop: Platform.OS === "ios" ? 54 : 32, // ✅ ВОТ ФИКС
-                        borderBottomWidth: 1,
-                        borderColor: "#eee",
-                        backgroundColor: "white",
-                    }}
-                >
-                    <TouchableOpacity onPress={() => router.back()}>
-                        <Text style={{fontSize: 18}}>←</Text>
-                    </TouchableOpacity>
-
-                    <Text
-                        style={{
-                            fontSize: 18,
-                            fontWeight: "700",
-                            marginLeft: 12,
-                        }}
-                    >
-                        {name}
-                    </Text>
-                </View>
-
-                {/* MESSAGES */}
-                <ScrollView
-                    contentContainerStyle={{
-                        padding: 16,
-                        paddingBottom: 120,
-                    }}
-                >
-                    {messages.map((msg, idx) => {
-                        const mine = msg.from === "me";
-
-                        return (
-                            <MotiView
-                                key={idx}
-                                from={{opacity: 0, translateY: 10}}
-                                animate={{opacity: 1, translateY: 0}}
-                                transition={{duration: 250}}
-                                style={{
-                                    alignSelf: mine ? "flex-end" : "flex-start",
-                                    backgroundColor: mine
-                                        ? "#6C5CE7"
-                                        : "#F1F1F1",
-                                    paddingVertical: 10,
-                                    paddingHorizontal: 14,
-                                    borderRadius: 18,
-                                    marginBottom: 10,
-                                    maxWidth: "80%",
-                                }}
-                            >
-                                <Text
-                                    style={{
-                                        color: mine ? "white" : "black",
-                                        fontSize: 15,
-                                    }}
-                                >
-                                    {msg.text}
-                                </Text>
-                            </MotiView>
-                        );
-                    })}
-                </ScrollView>
-
-                {/* INPUT */}
-                <View
-                    style={{
-                        position: "absolute",
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        padding: 12,
-                        borderTopWidth: 1,
-                        borderColor: "#eee",
-                        backgroundColor: "white",
-                    }}
-                >
-                    <TextInput
-                        value={input}
-                        onChangeText={setInput}
-                        placeholder="Введите сообщение..."
-                        style={{
-                            flex: 1,
-                            backgroundColor: "#F1F1F1",
-                            borderRadius: 20,
-                            paddingHorizontal: 14,
-                            paddingVertical: 10,
-                            marginRight: 10,
-                        }}
-                    />
-
-                    <TouchableOpacity
-                        style={{
-                            backgroundColor: "#6C5CE7",
-                            paddingHorizontal: 16,
-                            paddingVertical: 10,
-                            borderRadius: 20,
-                        }}
-                    >
-                        <Text style={{color: "white", fontWeight: "600"}}>
-                            Отпр.
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-        </LinearGradient>
-    );
+              <Text style={{ color: input.trim() ? "white" : "#9CA3AF", fontWeight: "600" }}>
+                Отпр.
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </LinearGradient>
+  );
 }
