@@ -10,6 +10,7 @@ import React, {
   type ReactNode,
 } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { getUseRealOtpSetting } from "./DevSettingsContext";
 
 export type UserRole =
   | "parent"
@@ -258,8 +259,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Введите корректный номер телефона" };
     }
 
-    // Dev bypass: skip real SMS
-    if (DEV_OTP) return { success: true };
+    // Dev bypass: skip real SMS unless "Use Real OTP" is toggled on
+    const useRealOtp = await getUseRealOtpSetting();
+    if (DEV_OTP && !useRealOtp) return { success: true };
 
     if (supabase && isSupabaseConfigured) {
       const { error } = await supabase.auth.signInWithOtp({ phone: normalized });
@@ -326,8 +328,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ): Promise<AuthActionResult> => {
       const normalized = normalizePhone(phone);
 
-      // Dev bypass: accept the dev code without hitting Supabase
-      const isDevBypass = DEV_OTP && otp === DEV_OTP;
+      // Dev bypass: accept the dev code without hitting Supabase,
+      // unless the user has toggled "Use Real OTP" in the dev switcher.
+      const useRealOtp = await getUseRealOtpSetting();
+      const isDevBypass = DEV_OTP && !useRealOtp && otp === DEV_OTP;
 
       if (!isDevBypass && supabase && isSupabaseConfigured) {
         const { data, error } = await supabase.auth.verifyOtp({

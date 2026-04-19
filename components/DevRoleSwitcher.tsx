@@ -13,9 +13,9 @@ export function DevRoleSwitcher() {
   if (!__DEV__) return null;
 
   const [visible, setVisible] = useState(false);
-  const { user, setUserRole, devLogin, devMode, setDevMode } = useAuth();
+  const { user, setUserRole, devLogin, devMode, setDevMode, devOtpCode } = useAuth();
   const { parentProfile, setParentTariff } = useParentData();
-  const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified } = useDevSettings();
+  const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp } = useDevSettings();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
 
@@ -75,6 +75,23 @@ export function DevRoleSwitcher() {
                   value={devMode}
                   onValueChange={setDevMode}
                   trackColor={{ false: COLORS.muted, true: COLORS.primary }}
+                />
+              </View>
+
+              {/* OTP mode toggle — always visible in dev */}
+              <View style={styles.devModeRow}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={styles.devModeTitle}>
+                    OTP: {useRealOtp ? "Real SMS ✉️" : `Fake (${devOtpCode ?? "1234"})`}
+                  </Text>
+                  <Text style={styles.devModeSubtitle}>
+                    {useRealOtp ? "Supabase sends a real SMS code" : "Any login accepts the dev code above"}
+                  </Text>
+                </View>
+                <Switch
+                  value={useRealOtp}
+                  onValueChange={setUseRealOtp}
+                  trackColor={{ false: COLORS.muted, true: '#F59E0B' }}
                 />
               </View>
 

@@ -6,13 +6,20 @@
  * so DevRoleSwitcher never renders and these values are always the
  * "approved" defaults.
  */
-import React, { createContext, useContext, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { createContext, useContext, useEffect, useState } from "react";
+
+const USE_REAL_OTP_KEY = "um_dev_use_real_otp";
 
 interface DevSettings {
   mentorApproved: boolean;
   setMentorApproved: (v: boolean) => void;
   orgVerified: boolean;
   setOrgVerified: (v: boolean) => void;
+  /** When false (default): DEV_OTP env var is used and SMS is skipped.
+   *  When true: real Supabase OTP is sent and the actual code is required. */
+  useRealOtp: boolean;
+  setUseRealOtp: (v: boolean) => Promise<void>;
 }
 
 const DevSettingsContext = createContext<DevSettings>({
@@ -20,16 +27,29 @@ const DevSettingsContext = createContext<DevSettings>({
   setMentorApproved: () => {},
   orgVerified: true,
   setOrgVerified: () => {},
+  useRealOtp: false,
+  setUseRealOtp: async () => {},
 });
 
 export function DevSettingsProvider({ children }: { children: React.ReactNode }) {
-  // Default false so you see the pending view first when switching into the role,
-  // which mirrors the real onboarding flow.
   const [mentorApproved, setMentorApproved] = useState(false);
   const [orgVerified, setOrgVerified] = useState(false);
+  const [useRealOtp, setUseRealOtpState] = useState(false);
+
+  // Hydrate persisted value on mount
+  useEffect(() => {
+    AsyncStorage.getItem(USE_REAL_OTP_KEY).then((v) => {
+      if (v !== null) setUseRealOtpState(v === "true");
+    });
+  }, []);
+
+  const setUseRealOtp = async (v: boolean) => {
+    setUseRealOtpState(v);
+    await AsyncStorage.setItem(USE_REAL_OTP_KEY, v ? "true" : "false");
+  };
 
   return (
-    <DevSettingsContext.Provider value={{ mentorApproved, setMentorApproved, orgVerified, setOrgVerified }}>
+    <DevSettingsContext.Provider value={{ mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp }}>
       {children}
     </DevSettingsContext.Provider>
   );
@@ -37,4 +57,10 @@ export function DevSettingsProvider({ children }: { children: React.ReactNode })
 
 export function useDevSettings(): DevSettings {
   return useContext(DevSettingsContext);
+}
+
+/** Read the persisted real-OTP flag outside of React (used in AuthContext hooks). */
+export async function getUseRealOtpSetting(): Promise<boolean> {
+  const v = await AsyncStorage.getItem(USE_REAL_OTP_KEY);
+  return v === "true";
 }
