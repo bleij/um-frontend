@@ -15,19 +15,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import { MotiView } from "moti";
 import { useDevSettings } from "../../contexts/DevSettingsContext";
-
-const STATS = [
-  { label: "Кружков", value: "8", icon: "book-open" as const, color: COLORS.primary },
-  { label: "Учеников", value: "124", icon: "users" as const, color: '#10B981' },
-  { label: "Заявок", value: "15", icon: "clipboard" as const, color: '#F59E0B' },
-  { label: "Доход (₸)", value: "450k", icon: "credit-card" as const, color: '#6366F1' },
-];
+import { useOrgProfile, useOrgStats, useOrgSchedule } from "../../hooks/useOrgData";
 
 const QUICK_ACTIONS = [
-  { label: "Заявки", icon: "clipboard", badge: 15, route: "/organization/applications", color: '#F59E0B' },
-  { label: "Курсы", icon: "book", badge: 0, route: "/organization/courses", color: COLORS.primary },
-  { label: "Учителя", icon: "users", badge: 0, route: "/organization/staff", color: '#6366F1' },
-  { label: "Группы", icon: "layers", badge: 0, route: "/organization/groups", color: '#10B981' },
+  { label: "Заявки", icon: "clipboard", route: "/organization/applications", color: '#F59E0B' },
+  { label: "Курсы", icon: "book", route: "/organization/courses", color: COLORS.primary },
+  { label: "Учителя", icon: "users", route: "/organization/staff", color: '#6366F1' },
+  { label: "Группы", icon: "layers", route: "/organization/groups", color: '#10B981' },
 ];
 
 export default function OrgHome() {
@@ -36,6 +30,18 @@ export default function OrgHome() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
   const { orgVerified: isVerified } = useDevSettings();
+  const { orgName } = useOrgProfile();
+  const { stats } = useOrgStats();
+  const todayDow = (new Date().getDay() + 6) % 7; // Mon=0
+  const { items: todaySchedule } = useOrgSchedule(todayDow);
+  const firstClass = todaySchedule[0] ?? null;
+
+  const STATS_TILES = [
+    { label: "Кружков",   value: String(stats.groupCount),   icon: "book-open" as const, color: COLORS.primary },
+    { label: "Учеников",  value: String(stats.studentCount), icon: "users" as const,     color: '#10B981' },
+    { label: "Заявок",    value: String(stats.pendingCount), icon: "clipboard" as const, color: '#F59E0B' },
+    { label: "Учителей",  value: String(stats.staffCount),   icon: "user-check" as const,color: '#6366F1' },
+  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -60,7 +66,7 @@ export default function OrgHome() {
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
                   <View>
                     <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.light, color: "white", opacity: 0.8 }}>Управление</Text>
-                    <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", letterSpacing: -0.5 }}>ДЦ «Звёздочка»</Text>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", letterSpacing: -0.5 }}>{orgName || "Моя организация"}</Text>
                   </View>
                   <TouchableOpacity
                     style={{
@@ -123,7 +129,7 @@ export default function OrgHome() {
         {/* Stats Grid - Horizon Premium style */}
         <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32, opacity: isVerified ? 1 : 0.5 }}>
           <View className="flex-row gap-4 mb-4">
-            {STATS.slice(0, 2).map((stat, idx) => (
+            {STATS_TILES.slice(0, 2).map((stat, idx) => (
               <MotiView
                 key={stat.label}
                 from={{ opacity: 0, scale: 0.9 }}
@@ -140,7 +146,7 @@ export default function OrgHome() {
             ))}
           </View>
           <View className="flex-row gap-4 mb-8">
-            {STATS.slice(2, 4).map((stat, idx) => (
+            {STATS_TILES.slice(2, 4).map((stat, idx) => (
               <MotiView
                 key={stat.label}
                 from={{ opacity: 0, scale: 0.9 }}
@@ -162,51 +168,62 @@ export default function OrgHome() {
         <View style={{ paddingHorizontal: horizontalPadding, opacity: isVerified ? 1 : 0.5 }}>
           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 16, paddingLeft: 4 }}>Управление</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 32 }}>
-            {QUICK_ACTIONS.map((item, idx) => (
-              <MotiView
-                key={item.label}
-                from={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 300 + idx * 50 }}
-                style={{
-                  ...SHADOWS.strict,
-                  flexBasis: isDesktop ? '22%' : '47%',
-                  flexGrow: 1,
-                  backgroundColor: COLORS.surface,
-                  padding: 24,
-                  borderRadius: RADIUS.xxl,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                }}
-              >
-                <Pressable onPress={() => router.push(item.route as any)}>
-                  <View style={{ backgroundColor: item.color + '10', width: 48, height: 48, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                    <Feather name={item.icon as any} size={22} color={item.color} />
-                  </View>
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.foreground }}>{item.label}</Text>
-                  
-                  {item.badge > 0 && (
-                    <View style={{ position: 'absolute', top: -8, right: -8, backgroundColor: COLORS.destructive, borderRadius: 12, minWidth: 24, height: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'white', ...SHADOWS.sm }}>
-                      <Text className="text-[10px] font-black text-white">{item.badge}</Text>
+            {QUICK_ACTIONS.map((item, idx) => {
+              const badge = item.label === "Заявки" ? stats.pendingCount : 0;
+              return (
+                <MotiView
+                  key={item.label}
+                  from={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 300 + idx * 50 }}
+                  style={{
+                    ...SHADOWS.strict,
+                    flexBasis: isDesktop ? '22%' : '47%',
+                    flexGrow: 1,
+                    backgroundColor: COLORS.surface,
+                    padding: 24,
+                    borderRadius: RADIUS.xxl,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                  }}
+                >
+                  <Pressable onPress={() => router.push(item.route as any)}>
+                    <View style={{ backgroundColor: item.color + '10', width: 48, height: 48, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                      <Feather name={item.icon as any} size={22} color={item.color} />
                     </View>
-                  )}
-                </Pressable>
-              </MotiView>
-            ))}
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: COLORS.foreground }}>{item.label}</Text>
+                    {badge > 0 && (
+                      <View style={{ position: 'absolute', top: -8, right: -8, backgroundColor: COLORS.destructive, borderRadius: 12, minWidth: 24, height: 24, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'white', ...SHADOWS.sm }}>
+                        <Text className="text-[10px] font-black text-white">{badge}</Text>
+                      </View>
+                    )}
+                  </Pressable>
+                </MotiView>
+              );
+            })}
           </View>
 
           {/* Schedule Preview Elegant */}
           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 16, paddingLeft: 4 }}>График на сегодня</Text>
-          <View 
+          <View
             style={{ ...SHADOWS.strict, backgroundColor: COLORS.surface, borderRadius: RADIUS.xxl, padding: 20, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', marginBottom: 32 }}
           >
             <View style={{ width: 56, height: 56, backgroundColor: COLORS.muted, borderRadius: RADIUS.xl, alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
               <Feather name="calendar" size={24} color={COLORS.primary} />
             </View>
-            <View className="flex-1">
-              <Text style={{ fontSize: 16, fontWeight: '800', color: COLORS.foreground }}>Робототехника</Text>
-              <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>Группа A1 · 14:00 (Каб. 305)</Text>
-            </View>
+            {firstClass ? (
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: COLORS.foreground }}>{firstClass.subject}</Text>
+                <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>
+                  {firstClass.group_name}{firstClass.room ? ` · ${firstClass.time_label} (${firstClass.room})` : ` · ${firstClass.time_label}`}
+                </Text>
+              </View>
+            ) : (
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: COLORS.foreground }}>Нет занятий сегодня</Text>
+                <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>Посмотрите расписание на другой день</Text>
+              </View>
+            )}
             <TouchableOpacity onPress={() => router.push('/organization/schedule')}>
                <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
             </TouchableOpacity>

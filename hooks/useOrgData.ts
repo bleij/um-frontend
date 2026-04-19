@@ -224,6 +224,101 @@ export function useOrgTasks() {
   return { tasks, loading, refresh };
 }
 
+// ─── useOrgProfile ────────────────────────────────────────────
+export function useOrgProfile() {
+  const { user } = useAuth();
+  const [orgName, setOrgName] = useState<string>("");
+  const [orgId, setOrgId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) { setLoading(false); return; }
+    supabase
+      .from("organizations")
+      .select("id, name")
+      .eq("owner_user_id", user.id)
+      .limit(1)
+      .maybeSingle()
+      .then((res) => {
+        setOrgName(res.data?.name ?? "");
+        setOrgId(res.data?.id ?? null);
+        setLoading(false);
+      });
+  }, [user?.id]);
+
+  return { orgName, orgId, loading };
+}
+
+// ─── useOrgStats ──────────────────────────────────────────────
+export interface OrgStats {
+  groupCount: number;
+  studentCount: number;
+  pendingCount: number;
+  staffCount: number;
+}
+
+export function useOrgStats() {
+  const { user } = useAuth();
+  const [stats, setStats] = useState<OrgStats>({ groupCount: 0, studentCount: 0, pendingCount: 0, staffCount: 0 });
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) { setLoading(false); return; }
+    setLoading(true);
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) { setLoading(false); return; }
+    const [groups, apps, staff] = await Promise.all([
+      supabase.from("org_groups").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("active", true),
+      supabase.from("org_applications").select("id, status").eq("org_id", orgId),
+      supabase.from("org_staff").select("id", { count: "exact", head: true }).eq("org_id", orgId).eq("status", "active"),
+    ]);
+    const allApps = ok<any>(apps);
+    setStats({
+      groupCount: groups.count ?? 0,
+      studentCount: allApps.filter((a: any) => ["paid", "activated"].includes(a.status)).length,
+      pendingCount: allApps.filter((a: any) => a.status === "awaiting_payment").length,
+      staffCount: staff.count ?? 0,
+    });
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { stats, loading, refresh };
+}
+
+// ─── useOrgGroupById ─────────────────────────────────────────
+export function useOrgGroupById(id: string | undefined) {
+  const [group, setGroup] = useState<OrgGroup | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured || !id) { setLoading(false); return; }
+    supabase.from("org_groups").select("*").eq("id", id).maybeSingle().then((res) => {
+      setGroup(res.data ?? null);
+      setLoading(false);
+    });
+  }, [id]);
+
+  return { group, loading };
+}
+
+// ─── useOrgStaffById ─────────────────────────────────────────
+export function useOrgStaffById(id: string | undefined) {
+  const [member, setMember] = useState<OrgStaffMember | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!supabase || !isSupabaseConfigured || !id) { setLoading(false); return; }
+    supabase.from("org_staff").select("*").eq("id", id).maybeSingle().then((res) => {
+      setMember(res.data ?? null);
+      setLoading(false);
+    });
+  }, [id]);
+
+  return { member, loading };
+}
+
 // ─── useOrgSchedule ───────────────────────────────────────────
 export interface OrgScheduleItem {
   id: string;

@@ -1,8 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -13,43 +15,68 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
+import { useOrgGroupById, useOrgApplications } from "../../../../hooks/useOrgData";
 
-interface Student {
+type AttendanceStatus = 'present' | 'absent' | 'sick' | null;
+
+interface StudentRow {
   id: string;
-  full_name: string;
-  status: 'present' | 'absent' | 'sick' | null;
+  name: string;
+  age: number | null;
+  status: AttendanceStatus;
 }
 
 export default function AttendanceScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-  const [date] = useState(new Date().toLocaleDateString("ru-RU", { day: 'numeric', month: 'long' }));
-  
-  const [students, setStudents] = useState<Student[]>([
-    { id: "1", full_name: "Алихан Сериков", status: null },
-    { id: "2", full_name: "Мария Иванова", status: null },
-    { id: "3", full_name: "Тимур Ахметов", status: null },
-    { id: "4", full_name: "Елена Петрова", status: null },
-    { id: "5", full_name: "Санжар Болатов", status: null },
-  ]);
+  const date = new Date().toLocaleDateString("ru-RU", { day: 'numeric', month: 'long' });
 
-  const toggleStatus = (studentId: string, status: Student['status']) => {
-      setStudents(prev => prev.map(s => s.id === studentId ? { ...s, status } : s));
+  const { group } = useOrgGroupById(id);
+  const { apps, loading } = useOrgApplications();
+
+  const [students, setStudents] = useState<StudentRow[]>([]);
+
+  useEffect(() => {
+    const enrolled = apps.filter(
+      (a) => ["paid", "activated"].includes(a.status) &&
+        (!group?.course || a.club === group.course)
+    );
+    setStudents(enrolled.map((a) => ({
+      id: a.id,
+      name: a.child_name,
+      age: a.child_age,
+      status: null,
+    })));
+  }, [apps, group]);
+
+  const toggleStatus = (studentId: string, status: AttendanceStatus) => {
+    setStudents((prev) => prev.map((s) => s.id === studentId ? { ...s, status } : s));
   };
 
   const handleSave = () => {
-      // API call to save attendance
-      alert("Посещаемость успешно сохранена!");
-      router.back();
+    const unmarked = students.filter((s) => s.status === null).length;
+    if (unmarked > 0) {
+      Alert.alert(
+        "Не все отмечены",
+        `${unmarked} ученика(ов) без статуса. Сохранить всё равно?`,
+        [
+          { text: "Отмена", style: "cancel" },
+          { text: "Сохранить", onPress: () => router.back() },
+        ]
+      );
+    } else {
+      Alert.alert("Готово", "Посещаемость сохранена!", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Header - Unified Brand Style */}
       <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
@@ -58,23 +85,20 @@ export default function AttendanceScreen() {
           <SafeAreaView edges={["top"]}>
             <View style={{ paddingHorizontal: horizontalPadding, paddingTop: SPACING.md }}>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
-                 <TouchableOpacity
-                    onPress={() => router.back()}
-                    style={{
-                       width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)",
-                       alignItems: "center", justifyContent: "center"
-                    }}
-                 >
-                    <Feather name="arrow-left" size={20} color="white" />
-                 </TouchableOpacity>
-                 <Text style={{ flex: 1, marginLeft: SPACING.md, fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>
-                    Отметка посещаемости
-                 </Text>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{ width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ flex: 1, marginLeft: SPACING.md, fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>
+                  Отметка посещаемости
+                </Text>
               </View>
 
               <View>
                 <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", marginBottom: 4 }}>
-                  Группа К-1
+                  {group?.name ?? "Группа"}
                 </Text>
                 <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>
                   Сегодня, {date}
@@ -86,59 +110,81 @@ export default function AttendanceScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
-          paddingBottom: 100,
-        }}
+        contentContainerStyle={{ paddingHorizontal: horizontalPadding, paddingTop: 24, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-         <View className="mb-4">
-            <Text className="text-lg font-bold text-gray-900 mb-2">Список учеников</Text>
-            <Text className="text-xs text-gray-500">Отметьте тех, кто пришел или по какой причине отсутствует.</Text>
-         </View>
+        <View style={{ marginBottom: 16 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: COLORS.foreground, marginBottom: 4 }}>Список учеников</Text>
+          <Text style={{ fontSize: 12, color: COLORS.mutedForeground }}>Отметьте присутствие или причину отсутствия.</Text>
+        </View>
 
-         <View className="gap-3">
-            {students.map((student) => (
-               <View key={student.id} style={SHADOWS.sm} className="bg-white rounded-3xl p-5 border border-gray-100">
-                  <Text className="font-bold text-gray-900 text-lg mb-4">{student.full_name}</Text>
-                  
-                  <View className="flex-row gap-2">
-                     <Pressable 
-                        onPress={() => toggleStatus(student.id, 'present')}
-                        className={`flex-1 py-3 items-center justify-center rounded-2xl border-2 ${student.status === 'present' ? 'bg-green-500 border-green-500' : 'bg-transparent border-gray-100'}`}
-                     >
-                        <Text className={`font-bold ${student.status === 'present' ? 'text-white' : 'text-gray-400'}`}>Был</Text>
-                     </Pressable>
-                     
-                     <Pressable 
-                        onPress={() => toggleStatus(student.id, 'absent')}
-                        className={`flex-1 py-3 items-center justify-center rounded-2xl border-2 ${student.status === 'absent' ? 'bg-red-500 border-red-500' : 'bg-transparent border-gray-100'}`}
-                     >
-                        <Text className={`font-bold ${student.status === 'absent' ? 'text-white' : 'text-gray-400'}`}>Не был</Text>
-                     </Pressable>
+        {loading && <ActivityIndicator size="small" color={COLORS.primary} style={{ marginVertical: 20 }} />}
 
-                     <Pressable 
-                        onPress={() => toggleStatus(student.id, 'sick')}
-                        className={`flex-1 py-3 items-center justify-center rounded-2xl border-2 ${student.status === 'sick' ? 'bg-yellow-500 border-yellow-500' : 'bg-transparent border-gray-100'}`}
-                     >
-                        <Text className={`font-bold ${student.status === 'sick' ? 'text-white' : 'text-gray-400'}`}>Болел</Text>
-                     </Pressable>
-                  </View>
-               </View>
-            ))}
-         </View>
+        {!loading && students.length === 0 && (
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <Feather name="users" size={36} color={COLORS.muted} />
+            <Text style={{ marginTop: 12, color: COLORS.mutedForeground, fontWeight: '600', textAlign: 'center' }}>
+              Нет зачисленных учеников в этой группе
+            </Text>
+          </View>
+        )}
+
+        <View style={{ gap: 12 }}>
+          {students.map((student) => (
+            <View key={student.id} style={{ ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.lg }}>
+                <View style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+                  <Feather name="user" size={18} color={COLORS.mutedForeground} />
+                </View>
+                <View>
+                  <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, fontSize: 16 }}>{student.name}</Text>
+                  {student.age && (
+                    <Text style={{ fontSize: 12, color: COLORS.mutedForeground }}>{student.age} лет</Text>
+                  )}
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {(
+                  [
+                    { key: 'present', label: 'Был', color: '#22C55E' },
+                    { key: 'absent',  label: 'Не был', color: '#EF4444' },
+                    { key: 'sick',    label: 'Болел', color: '#F59E0B' },
+                  ] as const
+                ).map(({ key, label, color }) => {
+                  const active = student.status === key;
+                  return (
+                    <Pressable
+                      key={key}
+                      onPress={() => toggleStatus(student.id, key)}
+                      style={{
+                        flex: 1, paddingVertical: 12, alignItems: 'center', justifyContent: 'center',
+                        borderRadius: RADIUS.lg, borderWidth: 2,
+                        backgroundColor: active ? color : 'transparent',
+                        borderColor: active ? color : COLORS.border,
+                      }}
+                    >
+                      <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: active ? 'white' : COLORS.mutedForeground, fontSize: 13 }}>
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          ))}
+        </View>
       </ScrollView>
 
-      {/* Footer Fixed Save Button */}
-       <View className="absolute bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 shadow-xl" style={{ borderTopLeftRadius: 32, borderTopRightRadius: 32 }}>
-          <TouchableOpacity 
-              onPress={handleSave}
-              className="bg-primary rounded-2xl py-4 items-center justify-center"
-          >
-             <Text className="text-white font-black text-lg">Сохранить</Text>
-          </TouchableOpacity>
-       </View>
+      {/* Fixed Save Button */}
+      <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: 24, backgroundColor: COLORS.white, borderTopLeftRadius: 32, borderTopRightRadius: 32, borderTopWidth: 1, borderColor: COLORS.border, ...SHADOWS.lg }}>
+        <TouchableOpacity
+          onPress={handleSave}
+          style={{ backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, paddingVertical: 16, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold, fontSize: 16 }}>Сохранить</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

@@ -2,8 +2,9 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React from "react";
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   Text,
@@ -13,50 +14,29 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-interface Group {
-  id: string;
-  group_name: string;
-  course_title: string;
-  current_students: number;
-}
+import { useOrgStaffById, useOrgGroups } from "../../../hooks/useOrgData";
 
 export default function StaffDetailScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
-  const [staff] = useState({
-    id: id,
-    full_name: "Игорь Соколов",
-    specialization: "Робототехника, Электроника",
-    phone: "+7 777 555 44 33",
-    email: "sokolov@um.app",
-    status: "active",
-    rating: 4.8,
-    total_students: 45,
-    groups_count: 4,
-  });
+  const { member: staff, loading: staffLoading } = useOrgStaffById(id);
+  const { groups, loading: groupsLoading } = useOrgGroups();
 
-  const [groups] = useState<Group[]>([
-    { id: "1", group_name: "Группа К-1", course_title: "Робототехника", current_students: 12 },
-    { id: "2", group_name: "Группа К-2", course_title: "Робототехника", current_students: 10 },
-    { id: "3", group_name: "Продвинутый JS", course_title: "Программирование", current_students: 15 },
-    { id: "4", group_name: "Arduino Basic", course_title: "Робототехника", current_students: 8 },
-  ]);
+  const loading = staffLoading || groupsLoading;
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Header - Unified Brand Style */}
       <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
           style={{ paddingBottom: SPACING.xl }}
         >
           <SafeAreaView edges={["top"]}>
-            <MotiView 
+            <MotiView
               from={{ opacity: 0, translateY: -10 }}
               animate={{ opacity: 1, translateY: 0 }}
               style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}
@@ -64,15 +44,7 @@ export default function StaffDetailScreen() {
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
                 <TouchableOpacity
                   onPress={() => router.back()}
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: RADIUS.md,
-                    backgroundColor: "rgba(255,255,255,0.2)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: SPACING.md,
-                  }}
+                  style={{ width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: SPACING.md }}
                 >
                   <Feather name="arrow-left" size={20} color="white" />
                 </TouchableOpacity>
@@ -81,97 +53,116 @@ export default function StaffDetailScreen() {
                 </Text>
               </View>
 
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
-                <View style={{ width: 80, height: 80, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: RADIUS.full, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.3)" }}>
-                   <Text style={{ fontSize: TYPOGRAPHY.size.huge, fontWeight: TYPOGRAPHY.weight.bold, color: "white" }}>{staff.full_name.charAt(0)}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>
-                    {staff.full_name}
-                  </Text>
-                  <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium, marginBottom: 8 }}>
-                    {staff.specialization}
-                  </Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.md }}>
-                     <Feather name="star" size={10} color="#FFD700" fill="#FFD700" />
-                     <Text style={{ color: "white", fontSize: 11, fontWeight: TYPOGRAPHY.weight.bold }}>{staff.rating}</Text>
+              {staff ? (
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 20 }}>
+                  <View style={{ width: 80, height: 80, backgroundColor: "rgba(255,255,255,0.2)", borderRadius: RADIUS.full, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.3)" }}>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.huge, fontWeight: TYPOGRAPHY.weight.bold, color: "white" }}>
+                      {staff.full_name.charAt(0)}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>
+                      {staff.full_name}
+                    </Text>
+                    <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium, marginBottom: 8 }}>
+                      {staff.specialization ?? "—"}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: "rgba(255,255,255,0.2)", alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.md }}>
+                      <Feather name="star" size={10} color="#FFD700" />
+                      <Text style={{ color: "white", fontSize: 11, fontWeight: TYPOGRAPHY.weight.bold }}>{staff.rating.toFixed(1)}</Text>
+                    </View>
                   </View>
                 </View>
-              </View>
+              ) : loading ? (
+                <ActivityIndicator color="white" />
+              ) : null}
             </MotiView>
           </SafeAreaView>
         </LinearGradient>
       </View>
 
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: paddingX,
-          paddingTop: SPACING.xl,
-          paddingBottom: 40,
-        }}
+        contentContainerStyle={{ paddingHorizontal: paddingX, paddingTop: SPACING.xl, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Stats Grid */}
         <View style={{ flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xl }}>
-           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border }}>
-              <View style={{ width: 52, height: 52, backgroundColor: 'rgba(108, 92, 231, 0.05)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm }}>
-                 <Feather name="layers" size={24} color={COLORS.primary} />
-              </View>
-              <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{staff.groups_count}</Text>
-              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Групп</Text>
-           </View>
-           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border }}>
-              <View style={{ width: 52, height: 52, backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm }}>
-                 <Feather name="users" size={24} color="#3B82F6" />
-              </View>
-              <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{staff.total_students}</Text>
-              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Учеников</Text>
-           </View>
+          <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+            <View style={{ width: 52, height: 52, backgroundColor: 'rgba(108, 92, 231, 0.05)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm }}>
+              <Feather name="layers" size={24} color={COLORS.primary} />
+            </View>
+            <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{groups.length}</Text>
+            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Групп</Text>
+          </View>
+          <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border }}>
+            <View style={{ width: 52, height: 52, backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm }}>
+              <Feather name="users" size={24} color="#3B82F6" />
+            </View>
+            <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
+              {groups.reduce((sum, g) => sum + g.enrolled, 0)}
+            </Text>
+            <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1 }}>Учеников</Text>
+          </View>
         </View>
 
         {/* Contact Info */}
-        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
-           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Контактная информация</Text>
-           <View style={{ gap: SPACING.md }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
-                 <View style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
+        {staff && (
+          <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
+            <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Контактная информация</Text>
+            <View style={{ gap: SPACING.md }}>
+              {staff.phone && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
+                  <View style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
                     <Feather name="phone" size={18} color={COLORS.primary} />
-                 </View>
-                 <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{staff.phone}</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
-                 <View style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
+                  </View>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{staff.phone}</Text>
+                </View>
+              )}
+              {staff.email && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.md }}>
+                  <View style={{ width: 44, height: 44, backgroundColor: COLORS.background, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}>
                     <Feather name="mail" size={18} color={COLORS.primary} />
-                 </View>
-                 <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{staff.email}</Text>
-              </View>
-           </View>
-        </View>
+                  </View>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{staff.email}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Groups List */}
-        <View style={{ marginBottom: SPACING.md }}>
-           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Группы преподавателя</Text>
-        </View>
+        <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.md }}>
+          Группы организации
+        </Text>
+
+        {!loading && groups.length === 0 && (
+          <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+            <Feather name="layers" size={36} color={COLORS.muted} />
+            <Text style={{ marginTop: 12, color: COLORS.mutedForeground, fontWeight: '600', textAlign: 'center' }}>
+              Нет групп
+            </Text>
+          </View>
+        )}
 
         <View style={{ gap: SPACING.sm }}>
-           {groups.map((group) => (
-             <TouchableOpacity
-                key={group.id}
-                onPress={() => router.push(`/organization/group/${group.id}` as any)}
-                style={{ ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}
-             >
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                   <View>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 2 }}>{group.group_name}</Text>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.course_title}</Text>
-                   </View>
-                   <View style={{ backgroundColor: COLORS.background, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.lg, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Feather name="users" size={12} color={COLORS.primary} />
-                      <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{group.current_students}</Text>
-                   </View>
+          {groups.map((group) => (
+            <TouchableOpacity
+              key={group.id}
+              onPress={() => router.push(`/organization/group/${group.id}` as any)}
+              style={{ ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}
+            >
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: 2 }}>{group.name}</Text>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.medium }}>{group.course ?? "—"}</Text>
                 </View>
-             </TouchableOpacity>
-           ))}
+                <View style={{ backgroundColor: COLORS.background, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.lg, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Feather name="users" size={12} color={COLORS.primary} />
+                  <Text style={{ fontSize: 12, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{group.enrolled}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
     </View>

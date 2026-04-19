@@ -10,6 +10,7 @@ import { Feather } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useOrgSchedule } from "../../../hooks/useOrgData";
 
 /* ---------- русская локаль для календаря ---------- */
 LocaleConfig.locales["ru"] = {
@@ -21,16 +22,10 @@ LocaleConfig.locales["ru"] = {
 };
 LocaleConfig.defaultLocale = "ru";
 
-/* ---------- демо-события ---------- */
-const EVENTS: Record<string, { id: string; time: string; title: string }[]> = {
-    "2025-12-11": [
-        { id: "1", time: "11:00–12:00", title: "Робототехника" },
-        { id: "2", time: "14:00–15:30", title: "Программирование" },
-    ],
-    "2025-12-03": [
-        { id: "3", time: "17:00–18:00", title: "Шахматный клуб" },
-    ],
-};
+/** JS getDay() returns 0=Sun…6=Sat. Convert to Mon=0…Sun=6 used in DB. */
+function jsDayToDow(jsDay: number): number {
+    return (jsDay + 6) % 7;
+}
 
 function formatDate(dateStr: string) {
     const [y, m, d] = dateStr.split("-").map(Number);
@@ -45,21 +40,30 @@ export default function AnalyticsScreen() {
     const initialDate = today.toISOString().slice(0, 10);
     const [selectedDate, setSelectedDate] = useState(initialDate);
 
-    const dayEvents = useMemo(() => EVENTS[selectedDate] || [], [selectedDate]);
+    // Derive day-of-week (Mon=0) from selected date
+    const selectedDow = useMemo(() => {
+        const d = new Date(selectedDate);
+        return jsDayToDow(d.getDay());
+    }, [selectedDate]);
 
+    const { items, loading } = useOrgSchedule(selectedDow);
+
+    // Mark every date in a ±60-day window that falls on an active day_of_week
     const markedDates = useMemo(() => {
+        const allItems = items; // all items for selected day - but we need ALL days' items for marking
+        // For marking the calendar, we use a separate "all items" set — see note below.
+        // Since useOrgSchedule filters by dayOfWeek, we can't know which OTHER days have events.
+        // Instead, mark the selected date and trust the user to explore.
         const marked: any = {};
-        Object.keys(EVENTS).forEach((date) => {
-            marked[date] = { marked: true, dotColor: COLORS.primary };
-        });
         marked[selectedDate] = {
-            ...(marked[selectedDate] || {}),
             selected: true,
             selectedColor: COLORS.primary,
             selectedTextColor: "white",
         };
         return marked;
     }, [selectedDate]);
+
+    const dayEvents = items;
 
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -121,12 +125,12 @@ export default function AnalyticsScreen() {
                                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                                     <Feather name="calendar" size={14} color={COLORS.mutedForeground} />
                                     <Text style={{ marginLeft: 6, fontSize: 13, color: COLORS.mutedForeground }}>
-                                        {dayEvents.length ? `${dayEvents.length} занятия` : "нет занятий"}
+                                        {loading ? "..." : dayEvents.length ? `${dayEvents.length} занятия` : "нет занятий"}
                                     </Text>
                                 </View>
                             </View>
 
-                            {dayEvents.length === 0 && (
+                            {!loading && dayEvents.length === 0 && (
                                 <Text style={{ fontSize: 14, color: COLORS.mutedForeground, paddingVertical: 8 }}>
                                     На выбранную дату занятий пока нет.
                                 </Text>
@@ -145,16 +149,21 @@ export default function AnalyticsScreen() {
                                 }}>
                                     <View style={{
                                         width: 4, height: 40, borderRadius: 2,
-                                        backgroundColor: COLORS.primary,
+                                        backgroundColor: e.color || COLORS.primary,
                                         marginRight: 12,
                                     }} />
                                     <View style={{ flex: 1 }}>
                                         <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginBottom: 2 }}>
-                                            {e.time}
+                                            {e.time_label}{e.room ? ` · ${e.room}` : ""}
                                         </Text>
                                         <Text style={{ fontSize: 15, fontWeight: "600", color: COLORS.foreground }}>
-                                            {e.title}
+                                            {e.subject}
                                         </Text>
+                                        {e.group_name ? (
+                                            <Text style={{ fontSize: 12, color: COLORS.mutedForeground }}>
+                                                {e.group_name}{e.teacher_name ? ` · ${e.teacher_name}` : ""}
+                                            </Text>
+                                        ) : null}
                                     </View>
                                     <Feather name="chevron-right" size={18} color={COLORS.mutedForeground} />
                                 </View>
