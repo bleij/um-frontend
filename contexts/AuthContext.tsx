@@ -457,8 +457,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(nextUser);
       await persistAuthUser(nextUser);
       if (supabase && isSupabaseConfigured) {
-        await supabase.auth.updateUser({ data: { role } });
-        await upsertRemoteProfile(nextUser);
+        // Only touch remote profile when there's a real Supabase auth session.
+        // Dev mode uses fake UUIDs with no session — auth.uid() would be null,
+        // causing any RLS-protected upsert to fail with 401.
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          await supabase.auth.updateUser({ data: { role } });
+          await upsertRemoteProfile(nextUser);
+        }
       }
     },
     [user],

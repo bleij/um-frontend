@@ -154,7 +154,7 @@ create policy "admin bypass mr" on public.mentorship_requests
 -- ── SEED DATA (dev mentor UUID) ───────────────────────────────────────────
 do $$
 declare
-  mentor_id uuid := 'd0000000-0000-4000-a000-000000000004'::uuid;
+  mentor_id uuid := 'd0000000-0000-4000-a000-000000000005'::uuid;
 begin
 
 -- learning_path_steps
