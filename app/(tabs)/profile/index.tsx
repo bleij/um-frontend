@@ -6,9 +6,10 @@ import { useAuth } from "../../../contexts/AuthContext";
 import MentorProfile from "../../profile/mentor/index";
 import OrgProfile from "../../profile/organization/index";
 import ParentProfile from "../../profile/parent/index";
+import TeacherProfile from "../../profile/teacher/index";
 import YouthProfile from "../../profile/youth/index";
 
-type Role = "parent" | "youth" | "child" | "mentor" | "org";
+type Role = "parent" | "youth" | "child" | "mentor" | "org" | "teacher";
 
 export default function ProfileScreenRouter() {
   const { user, isLoading } = useAuth();
@@ -45,6 +46,8 @@ export default function ProfileScreenRouter() {
       return <MentorProfile />;
     case "org":
       return <OrgProfile />;
+    case "teacher":
+      return <TeacherProfile />;
     default:
       return <ParentProfile />;
   }

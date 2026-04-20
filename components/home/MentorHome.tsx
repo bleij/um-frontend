@@ -1,832 +1,383 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React from "react";
+import React, { useState } from "react";
 import {
-   Platform,
-   ScrollView,
-   Text,
-   TouchableOpacity,
-   useWindowDimensions,
-   View,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
-   COLORS,
-   LAYOUT,
-   RADIUS,
-   SHADOWS,
-   SPACING,
-   TYPOGRAPHY,
+    COLORS,
+    LAYOUT,
+    RADIUS,
+    SHADOWS,
+    SPACING,
+    TYPOGRAPHY,
 } from "../../constants/theme";
-import { useDevSettings } from "../../contexts/DevSettingsContext";
 import { useAuth } from "../../contexts/AuthContext";
-import { useMentorStudents, useMentorFeedback, useMentorGroups, useMentorRequests } from "../../hooks/useMentorData";
-
-const SKILL_LABELS = ["Ком.", "Лид.", "Кре.", "Лог.", "Дис."];
+import { useMentorStudents, useMentorRequests } from "../../hooks/useMentorData";
 
 export default function MentorHome() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const paddingX = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : SPACING.xl;
+  const paddingX = isDesktop ? 40 : 24;
 
-  const { mentorApproved: isApproved } = useDevSettings();
   const { user } = useAuth();
   const { students } = useMentorStudents();
-  const { feedback } = useMentorFeedback();
-  const { groups } = useMentorGroups();
   const { requests, respond } = useMentorRequests();
+  const [isAcceptingOrders, setIsAcceptingOrders] = useState(true);
 
-  const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Ментор";
-  const nextGroup = groups.find((g) => g.active) ?? groups[0];
-  const sessionRequests = requests.filter((r) => r.request_type === "session" && r.status === "pending");
+  const displayName = user?.firstName || "Арман";
+  
+  const todayTasks = [
+    { id: 1, time: '14:00', child: 'Алишер Н.', status: 'paid', subject: 'Креативность' },
+    { id: 2, time: '16:00', child: 'Мирас К.', status: 'paid', subject: 'Лидерство' },
+    { id: 3, time: '18:00', child: 'София П.', status: 'awaiting_report', subject: 'Коммуникация' },
+  ];
+
   const mentorshipRequests = requests.filter((r) => r.request_type === "mentorship" && r.status === "pending");
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          paddingBottom: 110,
-        }}
-      >
-        {/* Header - Restored Violet Aesthetic */}
-        <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
-          <LinearGradient
-            colors={COLORS.gradients.header as any}
-            style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
-          >
+    <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
+        
+        {/* Violet Header Section */}
+        <LinearGradient
+            colors={["#6C5CE7", "#8B7FE8"]}
+            style={styles.headerGradient}
+        >
             <SafeAreaView edges={["top"]}>
-              <MotiView
-                from={{ opacity: 0, translateY: -10 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                style={{
-                  paddingHorizontal: paddingX,
-                  paddingTop: SPACING.md,
-                  paddingBottom: SPACING.xxl,
-                }}
-              >
-                <View className="flex-row items-center justify-between mb-2">
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: TYPOGRAPHY.size.xxxl,
-                        fontWeight: TYPOGRAPHY.weight.semibold,
-                        color: COLORS.white,
-                        letterSpacing: TYPOGRAPHY.letterSpacing.tight,
-                      }}
-                    >
-                      Привет, {displayName}!
-                    </Text>
-                    {isApproved && (
-                      <View
-                        style={{
-                          backgroundColor: COLORS.info,
-                          borderRadius: 12,
-                          padding: 2,
-                        }}
-                      >
-                        <Feather name="check" size={12} color="white" />
-                      </View>
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: RADIUS.lg,
-                      backgroundColor: "rgba(255,255,255,0.2)",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      borderWidth: 1,
-                      borderColor: "rgba(255,255,255,0.3)",
-                    }}
-                  >
-                    <Feather name="bell" size={22} color={COLORS.white} />
-                    <View
-                      style={{
-                        position: "absolute",
-                        top: 14,
-                        right: 14,
-                        width: 12,
-                        height: 12,
-                        backgroundColor: COLORS.destructive,
-                        borderRadius: 6,
-                        borderWidth: 2,
-                        borderColor: COLORS.white,
-                      }}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View className="flex-row items-center justify-between mt-2">
-                  <Text
-                    style={{
-                      color: "rgba(255,255,255,0.8)",
-                      fontSize: TYPOGRAPHY.size.sm,
-                      fontWeight: TYPOGRAPHY.weight.medium,
-                    }}
-                  >
-                    {groups.length > 0 ? `${groups.length} ${groups.length === 1 ? "группа" : "групп"}` : "Нет групп"} • {new Date().toLocaleDateString("ru-RU", { weekday: "long", day: "numeric", month: "short" })}
-                  </Text>
-
-                  {/* Wallet Block */}
-                  <TouchableOpacity className="bg-white/10 px-3 py-1.5 rounded-full border border-white/20 flex-row items-center gap-2">
-                    <Feather name="credit-card" size={14} color="white" />
-                    <Text className="text-white font-bold">{students.length} учеников</Text>
-                  </TouchableOpacity>
-                </View>
-              </MotiView>
-            </SafeAreaView>
-          </LinearGradient>
-        </View>
-
-        <View style={{ height: SPACING.xl }} />
-
-        {/* Next Lesson Card - Squircle Aesthetic */}
-        {!isApproved && (
-          <MotiView
-            from={{ opacity: 0, translateY: -10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            style={{ paddingHorizontal: paddingX, marginBottom: 24 }}
-          >
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={{
-                backgroundColor: COLORS.warning + "15",
-                borderRadius: RADIUS.lg,
-                padding: 16,
-                borderWidth: 1,
-                borderColor: COLORS.warning + "30",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-              }}
-            >
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: COLORS.warning + "20",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="clock" size={20} color={COLORS.warning} />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-bold text-gray-900">
-                  Ваша заявка на рассмотрении
-                </Text>
-                <Text className="text-xs text-gray-500">
-                  Дождитесь одобрения администратором для полного доступа ко
-                  всем функциям.
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </MotiView>
-        )}
-
-        <View
-          style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }}
-          className="mb-8"
-        >
-          <View className="flex-row justify-between items-end mb-4 px-1">
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.lg,
-                fontWeight: TYPOGRAPHY.weight.semibold,
-                color: COLORS.foreground,
-              }}
-            >
-              Ближайшее занятие
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/(tabs)/mentor/schedule" as any)}
-            >
-              <Text
-                style={{
-                  color: COLORS.info,
-                  fontWeight: TYPOGRAPHY.weight.semibold,
-                  fontSize: TYPOGRAPHY.size.sm,
-                }}
-              >
-                См. всё
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <MotiView
-            from={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 500, delay: 100 }}
-            style={{
-              ...SHADOWS.strict,
-              borderRadius: RADIUS.xxl,
-              overflow: "hidden",
-              backgroundColor: COLORS.surface,
-              borderWidth: 1,
-              borderColor: "rgba(0,0,0,0.03)",
-            }}
-          >
-            <LinearGradient
-              colors={COLORS.gradients.primary as any}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ padding: SPACING.xl }}
-            >
-              <View className="flex-row justify-between items-start mb-8">
-                <View className="bg-white/20 px-4 py-2 rounded-full border border-white/30 backdrop-blur-md">
-                  <Text className="text-white text-[10px] font-extrabold tracking-widest uppercase">
-                    {nextGroup ? "Активная группа" : "Нет занятий"}
-                  </Text>
-                </View>
-                <View className="bg-white/20 p-3 rounded-full border border-white/30">
-                  <Feather name="zap" size={20} color="white" />
-                </View>
-              </View>
-              <Text
-                style={{
-                  fontSize: TYPOGRAPHY.size.huge,
-                  fontWeight: TYPOGRAPHY.weight.bold,
-                  color: COLORS.white,
-                  marginBottom: SPACING.xs,
-                  letterSpacing: TYPOGRAPHY.letterSpacing.tight,
-                }}
-              >
-                {nextGroup?.course ?? "Нет группы"}
-              </Text>
-              <View className="flex-row items-center mb-8 opacity-90">
-                <Feather name="users" size={14} color="white" />
-                <Text className="text-white text-md font-medium ml-2">
-                  {nextGroup?.name ?? "—"}{nextGroup?.schedule ? ` • ${nextGroup.schedule}` : ""}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                activeOpacity={0.9}
-                style={{
-                  backgroundColor: COLORS.white,
-                  height: 60,
-                  borderRadius: RADIUS.full,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  ...SHADOWS.md,
-                }}
-                onPress={() => nextGroup && router.push(`/mentor/group/${nextGroup.id}` as any)}
-              >
-                <Text
-                  style={{
-                    color: COLORS.primary,
-                    fontWeight: TYPOGRAPHY.weight.bold,
-                    fontSize: TYPOGRAPHY.size.lg,
-                  }}
-                >
-                  Начать занятие
-                </Text>
-              </TouchableOpacity>
-            </LinearGradient>
-          </MotiView>
-        </View>
-
-        {/* SESSION REQUESTS (System Call Widget) */}
-        <View
-          style={{
-            paddingHorizontal: paddingX,
-            opacity: isApproved ? 1 : 0.5,
-            pointerEvents: isApproved ? "auto" : "none",
-          }}
-          className="mb-8"
-        >
-          <View className="flex-row justify-between items-center mb-4 px-1">
-            <View className="flex-row items-center gap-2">
-              <Feather name="video" size={20} color={COLORS.primary} />
-              <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>
-                Ежемесячные сессии
-              </Text>
-            </View>
-            {sessionRequests.length > 0 && (
-              <View className="bg-orange-100 px-2 py-0.5 rounded-full">
-                <Text className="text-orange-600 text-xs font-bold">{sessionRequests.length} новое</Text>
-              </View>
-            )}
-          </View>
-
-          {sessionRequests.length === 0 ? (
-            <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.border, alignItems: "center" }}>
-              <Text style={{ color: COLORS.mutedForeground, fontSize: TYPOGRAPHY.size.sm }}>Новых запросов нет</Text>
-            </View>
-          ) : sessionRequests.map((req) => (
-            <MotiView
-              key={req.id}
-              from={{ opacity: 0, translateY: 10 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              style={{ ...SHADOWS.strict, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.xl, borderWidth: 1, borderColor: COLORS.primary + "30", borderLeftWidth: 4, borderLeftColor: COLORS.primary, marginBottom: SPACING.md }}
-            >
-              <View className="flex-row justify-between items-start mb-3">
-                <View>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
-                    {req.parent_name ? `Родитель: ${req.parent_name}${req.child_name ? ` (${req.child_name})` : ""}` : req.child_name ?? "Запрос"}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: COLORS.mutedForeground, marginTop: 2 }}>
-                    {req.interest_text ?? "Запрос на согласование времени"}
-                  </Text>
-                </View>
-                <View style={{ backgroundColor: COLORS.warning + "15", paddingHorizontal: 8, paddingVertical: 4, borderRadius: RADIUS.sm }}>
-                  <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.warning, textTransform: "uppercase" }}>Ожидает</Text>
-                </View>
-              </View>
-
-              {req.slots && req.slots.length > 0 && (
-                <>
-                  <Text style={{ fontSize: 13, color: COLORS.foreground, marginBottom: 12 }}>Предложенные слоты:</Text>
-                  <View className="flex-row gap-2 mb-4">
-                    {req.slots.map((slot, i) => (
-                      <TouchableOpacity key={i} className="bg-gray-50 border border-gray-200 px-3 py-2 rounded-lg flex-1 items-center">
-                        <Text className="text-gray-700 font-semibold text-xs">{slot}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </>
-              )}
-
-              <TouchableOpacity onPress={() => respond(req.id, "accepted")} className="bg-primary py-3 rounded-xl items-center">
-                <Text className="text-white font-bold">Подтвердить</Text>
-              </TouchableOpacity>
-            </MotiView>
-          ))}
-        </View>
-
-        {/* MENTORSHIP REQUESTS */}
-        <View
-          style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }}
-          className="mb-8"
-        >
-          <View className="flex-row justify-between items-center mb-4 px-1">
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.lg,
-                fontWeight: TYPOGRAPHY.weight.semibold,
-                color: COLORS.foreground,
-              }}
-            >
-              Заявки на сопровождение
-            </Text>
-          </View>
-
-          {mentorshipRequests.length === 0 ? (
-            <View style={{ ...SHADOWS.sm, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, alignItems: "center" }}>
-              <Text style={{ color: COLORS.mutedForeground, fontSize: TYPOGRAPHY.size.sm }}>Новых заявок нет</Text>
-            </View>
-          ) : mentorshipRequests.map((req) => (
-            <View
-              key={req.id}
-              style={{ ...SHADOWS.sm, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: SPACING.sm }}
-            >
-              <View className="flex-row items-center gap-3">
-                <View className="w-10 h-10 bg-blue-50 rounded-full items-center justify-center">
-                  <Feather name="user-plus" size={18} color="#3B82F6" />
-                </View>
-                <View>
-                  <Text className="font-bold text-gray-900">{req.child_name ?? "Ученик"}</Text>
-                  <Text className="text-xs text-gray-500">{req.interest_text ?? ""}</Text>
-                </View>
-              </View>
-              <View className="flex-row gap-2">
-                <TouchableOpacity onPress={() => respond(req.id, "rejected")} className="w-8 h-8 rounded-full bg-red-50 items-center justify-center border border-red-100">
-                  <Feather name="x" size={16} color="#EF4444" />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => respond(req.id, "accepted")} className="w-8 h-8 rounded-full bg-green-50 items-center justify-center border border-green-100">
-                  <Feather name="check" size={16} color="#10B981" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
-        </View>
-        {/* FEEDBACK FEED (Phase 4.1) */}
-        <View
-          style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }}
-          className="mb-8"
-        >
-          <View className="flex-row justify-between items-center mb-5 px-1">
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.lg,
-                fontWeight: TYPOGRAPHY.weight.semibold,
-                color: COLORS.foreground,
-              }}
-            >
-              Лента обновлений
-            </Text>
-            <TouchableOpacity>
-              <Text
-                style={{
-                  color: COLORS.info,
-                  fontWeight: TYPOGRAPHY.weight.semibold,
-                  fontSize: TYPOGRAPHY.size.sm,
-                }}
-              >
-                Все отзывы
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          <View className="gap-4">
-            {feedback.map((fb, idx) => (
-              <MotiView
-                key={fb.id}
-                from={{ opacity: 0, translateX: -20 }}
-                animate={{ opacity: 1, translateX: 0 }}
-                transition={{ duration: 400, delay: 200 + idx * 100 }}
-                style={{
-                  ...SHADOWS.strict,
-                  backgroundColor: COLORS.surface,
-                  borderRadius: RADIUS.lg,
-                  padding: SPACING.xl,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                }}
-              >
-                <View className="flex-row justify-between items-start mb-3">
-                  <View className="flex-row items-center gap-3">
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: RADIUS.md,
-                        backgroundColor: COLORS.primary + "15",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Feather
-                        name="message-circle"
-                        size={18}
-                        color={COLORS.primary}
-                      />
-                    </View>
-                    <View>
-                      <Text
-                        style={{
-                          fontSize: TYPOGRAPHY.size.sm,
-                          fontWeight: TYPOGRAPHY.weight.bold,
-                          color: COLORS.foreground,
-                        }}
-                      >
-                        {fb.student_name}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 10,
-                          color: COLORS.mutedForeground,
-                          marginTop: 2,
-                        }}
-                      >
-                        {fb.teacher_name} • {new Date(fb.created_at).toLocaleDateString("ru", { day: "numeric", month: "short" })}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-                <View
-                  style={{
-                    alignSelf: "flex-start",
-                    paddingHorizontal: 12,
-                    paddingVertical: 4,
-                    backgroundColor: COLORS.success + "15",
-                    borderRadius: RADIUS.md,
-                    marginBottom: 8,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 10,
-                      fontWeight: TYPOGRAPHY.weight.bold,
-                      color: COLORS.success,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    {fb.tag}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.sm,
-                    color: COLORS.mutedForeground,
-                    lineHeight: 20,
-                  }}
-                >
-                  "{fb.text}"
-                </Text>
-              </MotiView>
-            ))}
-          </View>
-        </View>
-
-        {/* My Students - High Fidelity Cards */}
-        <View
-          style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }}
-          className="mb-8"
-        >
-          <View className="flex-row justify-between items-center mb-5 px-1">
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.lg,
-                fontWeight: TYPOGRAPHY.weight.semibold,
-                color: COLORS.foreground,
-              }}
-            >
-              Мои ученики
-            </Text>
-            <TouchableOpacity className="w-11 h-11 items-center justify-center bg-muted rounded-full">
-              <Feather name="filter" size={18} color={COLORS.mutedForeground} />
-            </TouchableOpacity>
-          </View>
-
-          <View className="gap-5">
-            {students.map((student, idx) => (
-              <MotiView
-                key={student.id}
-                from={{ opacity: 0, translateY: 20 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ duration: 500, delay: 200 + idx * 100 }}
-                style={{
-                  ...SHADOWS.strict,
-                  borderRadius: RADIUS.xxl,
-                  backgroundColor: COLORS.surface,
-                  padding: SPACING.xl,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  overflow: "hidden",
-                }}
-              >
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() =>
-                    router.push(`/(tabs)/mentor/student/${student.id}` as any) // student.id is group_members PK
-                  }
-                >
-                  <View className="flex-row items-center gap-5 mb-6">
-                    <View
-                      style={{
-                        width: 68,
-                        height: 68,
-                        borderRadius: RADIUS.xl,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <LinearGradient
-                        colors={COLORS.gradients.surface as any}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Text
-                          style={{
-                            fontSize: 28,
-                            fontWeight: TYPOGRAPHY.weight.bold,
-                            color: COLORS.primary,
-                          }}
-                        >
-                          {student.student_name.charAt(0)}
-                        </Text>
-                      </LinearGradient>
-                    </View>
-                    <View className="flex-1">
-                      <Text
-                        style={{
-                          fontSize: TYPOGRAPHY.size.xl,
-                          fontWeight: TYPOGRAPHY.weight.semibold,
-                          color: COLORS.foreground,
-                          letterSpacing: TYPOGRAPHY.letterSpacing.tight,
-                        }}
-                      >
-                        {student.student_name}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: TYPOGRAPHY.size.sm,
-                          color: COLORS.mutedForeground,
-                          marginTop: 4,
-                        }}
-                      >
-                        {student.student_age} лет • Уровень {student.level}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        backgroundColor: COLORS.primary + "10",
-                        paddingHorizontal: 16,
-                        paddingVertical: 8,
-                        borderRadius: RADIUS.full,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          fontSize: TYPOGRAPHY.size.md,
-                          fontWeight: TYPOGRAPHY.weight.bold,
-                          color: COLORS.primary,
-                        }}
-                      >
-                        {student.progress}%
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Indicators */}
-                  <View className="flex-row gap-3 mb-6">
-                    {Object.values(student.skills).map((val, i) => (
-                      <View key={i} className="flex-1">
-                        <View
-                          style={{
-                            height: 60,
-                            backgroundColor: COLORS.muted,
-                            borderRadius: RADIUS.md,
-                            justifyContent: "flex-end",
-                            overflow: "hidden",
-                          }}
-                        >
-                          <LinearGradient
-                            colors={COLORS.gradients.primary as any}
-                            style={{ height: `${val}%` }}
-                          />
+                <View style={[styles.headerContent, { paddingHorizontal: paddingX }]}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                        <View style={styles.avatarContainer}>
+                           <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
                         </View>
-                        <Text
-                          style={{
-                            fontSize: 9,
-                            color: COLORS.mutedForeground,
-                            fontWeight: "700",
-                            textAlign: "center",
-                            marginTop: 8,
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {SKILL_LABELS[i]}
+                        <View>
+                            <Text style={styles.greeting}>Добрый день, {displayName}!</Text>
+                            <Text style={styles.roleLabel}>Ментор • Психолог</Text>
+                        </View>
+                    </View>
+                    <TouchableOpacity style={styles.bellBtn}>
+                        <Feather name="bell" size={20} color="white" />
+                        <View style={styles.bellDot} />
+                    </TouchableOpacity>
+                </View>
+
+                {/* Status Toggle Card */}
+                <View style={[styles.statusToggle, { marginHorizontal: paddingX }]}>
+                    <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                             <View style={[styles.statusDot, { backgroundColor: isAcceptingOrders ? '#4ADE80' : '#9CA3AF' }]} />
+                             <Text style={styles.statusTitle}>Принимаю заказы</Text>
+                        </View>
+                        <Text style={styles.statusSub}>
+                            {isAcceptingOrders ? 'Вы видны в поиске' : 'Режим отпуска'}
                         </Text>
-                      </View>
+                    </View>
+                    <TouchableOpacity 
+                        onPress={() => setIsAcceptingOrders(!isAcceptingOrders)}
+                        style={[styles.switch, isAcceptingOrders && styles.switchActive]}
+                    >
+                        <MotiView 
+                          animate={{ translateX: isAcceptingOrders ? 20 : 0 }}
+                          style={styles.switchThumb} 
+                        />
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
+        </LinearGradient>
+
+        <View style={{ paddingHorizontal: paddingX, marginTop: 24 }}>
+            
+            {/* Today's Tasks */}
+            <View style={{ marginBottom: 32 }}>
+                <View style={styles.sectionHeader}>
+                    <Text style={styles.sectionTitle}>Задачи на сегодня</Text>
+                    <TouchableOpacity>
+                        <Text style={styles.viewAllBtn}>См. все</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={{ gap: 12 }}>
+                    {todayTasks.map((task) => (
+                        <TouchableOpacity 
+                            key={task.id} 
+                            style={styles.taskCard}
+                            onPress={() => {
+                                // Find student by name (mock logic) or use first available
+                                const targetStudent = students.find(s => s.student_name.includes(task.child.split(' ')[0])) || students[0];
+                                if (targetStudent) {
+                                    router.push(`/(tabs)/mentor/student/${targetStudent.id}` as any);
+                                }
+                            }}
+                        >
+                            <View style={styles.taskTimeBox}>
+                                <Text style={styles.taskTimeHour}>{task.time.split(':')[0]}</Text>
+                                <Text style={styles.taskTimeMin}>{task.time.split(':')[1]}</Text>
+                            </View>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.taskChild}>{task.child}</Text>
+                                <Text style={styles.taskSubject}>{task.subject}</Text>
+                            </View>
+                            <View style={[styles.statusBadge, task.status === 'paid' ? styles.statusPaid : styles.statusWait]}>
+                                <Text style={[styles.statusText, task.status === 'paid' ? styles.statusPaidText : styles.statusWaitText]}>
+                                    {task.status === 'paid' ? 'Оплачено' : 'Ждет отчета'}
+                                </Text>
+                            </View>
+                        </TouchableOpacity>
                     ))}
-                  </View>
+                </View>
+            </View>
 
-                  <View className="flex-row gap-3">
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push("/(tabs)/mentor/learning-path" as any)
-                      }
-                      className="bg-purple-50 flex-row flex-1 py-3 px-2 items-center justify-center rounded-xl"
-                    >
-                      <Feather
-                        name="trending-up"
-                        size={14}
-                        color={COLORS.primary}
-                      />
-                      <Text
-                        className="text-xs font-bold text-primary ml-1.5"
-                        numberOfLines={1}
-                      >
-                        Анализ
-                      </Text>
-                    </TouchableOpacity>
+            {/* Mentorship Requests */}
+            {mentorshipRequests.length > 0 && (
+                <View style={{ marginBottom: 32 }}>
+                    <Text style={styles.sectionTitle}>Заявки на сопровождение</Text>
+                    <View style={{ gap: 12, marginTop: 16 }}>
+                        {mentorshipRequests.map((req) => (
+                            <View key={req.id} style={styles.requestCard}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12 }}>
+                                    <View style={styles.reqIconBox}>
+                                        <Feather name="user-plus" size={18} color={COLORS.primary} />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.reqName}>{req.child_name || "Новый ученик"}</Text>
+                                        <Text style={styles.reqSub}>{req.interest_text || "Хочет на пробный период"}</Text>
+                                    </View>
+                                </View>
+                                <View style={{ flexDirection: 'row', gap: 8 }}>
+                                    <TouchableOpacity onPress={() => respond(req.id, "rejected")} style={styles.actionBtnReject}>
+                                        <Feather name="x" size={16} color="#EF4444" />
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => respond(req.id, "accepted")} style={styles.actionBtnAccept}>
+                                        <Feather name="check" size={16} color="#10B981" />
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+            )}
 
-                    <TouchableOpacity
-                      onPress={() =>
-                        router.push("/(tabs)/mentor/attendance" as any)
-                      }
-                      className="bg-blue-50 flex-row flex-1 py-3 px-2 items-center justify-center rounded-xl"
-                    >
-                      <Feather name="check-square" size={14} color="#3B82F6" />
-                      <Text
-                        className="text-xs font-bold text-blue-500 ml-1.5"
-                        numberOfLines={1}
-                      >
-                        Визиты
-                      </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      onPress={() => router.push("/(tabs)/chats" as any)}
-                      className="bg-green-50 w-12 items-center justify-center rounded-xl"
-                    >
-                      <Feather
-                        name="message-square"
-                        size={16}
-                        color="#10B981"
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </TouchableOpacity>
-              </MotiView>
-            ))}
-          </View>
-        </View>
-
-        {/* Quick Tools */}
-        <View
-          style={{ paddingHorizontal: paddingX, opacity: isApproved ? 1 : 0.6 }}
-        >
-          <Text
-            style={{
-              fontSize: TYPOGRAPHY.size.lg,
-              fontWeight: TYPOGRAPHY.weight.semibold,
-              color: COLORS.foreground,
-              marginBottom: SPACING.xl,
-            }}
-          >
-            Инструменты
-          </Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 16 }}>
-            {[
-              {
-                icon: "users",
-                label: "Группы",
-                color: COLORS.primary,
-                route: "/(tabs)/mentor/groups",
-              },
-              {
-                icon: "calendar",
-                label: "График",
-                color: COLORS.success,
-                route: "/(tabs)/mentor/attendance",
-              },
-              {
-                icon: "target",
-                label: "Цели",
-                color: COLORS.warning,
-                route: "/(tabs)/mentor/awards",
-              },
-              {
-                icon: "book",
-                label: "База",
-                color: COLORS.info,
-                route: "/(tabs)/mentor/library",
-              },
-            ].map((action, idx) => (
-              <MotiView
-                key={idx}
-                from={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 400, delay: 400 + idx * 50 }}
-                style={{
-                  // Desktop: 4 columns; mobile: 2 columns — percentage avoids
-                  // the sidebar-width-included-in-`width` miscalculation.
-                  flexBasis: isDesktop ? "22%" : "47%",
-                  flexGrow: 1,
-                  ...SHADOWS.strict,
-                  borderRadius: RADIUS.xxl,
-                  backgroundColor: COLORS.surface,
-                  padding: SPACING.xl,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => router.push(action.route as any)}
-                  style={{ alignItems: "center", justifyContent: "center" }}
+            {/* Quick Stats Widget */}
+            <View style={styles.statsRow}>
+                <TouchableOpacity 
+                   onPress={() => router.push("/(tabs)/mentor/wallet")}
+                   style={styles.statInfoCard}
                 >
-                  <View
-                    style={{
-                      backgroundColor: action.color + "10",
-                      width: 56,
-                      height: 56,
-                      borderRadius: RADIUS.full,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 12,
-                    }}
-                  >
-                    <Feather
-                      name={action.icon as any}
-                      size={24}
-                      color={action.color}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      fontSize: TYPOGRAPHY.size.sm,
-                      fontWeight: TYPOGRAPHY.weight.semibold,
-                      color: COLORS.foreground,
-                    }}
-                  >
-                    {action.label}
-                  </Text>
+                   <View style={[styles.statIconBox, { backgroundColor: '#F0FDF4' }]}>
+                        <Feather name="trending-up" size={18} color="#16A34A" />
+                   </View>
+                   <View>
+                        <Text style={styles.statInfoVal}>87 000 ₸</Text>
+                        <Text style={styles.statInfoLabel}>Доход (мес)</Text>
+                   </View>
                 </TouchableOpacity>
-              </MotiView>
-            ))}
-          </View>
+                <View style={styles.statInfoCard}>
+                   <View style={[styles.statIconBox, { backgroundColor: '#EEF2FF' }]}>
+                        <Feather name="users" size={18} color="#4F46E5" />
+                   </View>
+                   <View>
+                        <Text style={styles.statInfoVal}>{students.length}</Text>
+                        <Text style={styles.statInfoLabel}>Учеников</Text>
+                   </View>
+                </View>
+            </View>
+
         </View>
+
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+    headerGradient: {
+        paddingBottom: 40,
+        borderBottomLeftRadius: 40,
+        borderBottomRightRadius: 40,
+        ...(SHADOWS.md as any)
+    },
+    headerContent: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 20,
+        marginBottom: 24
+    },
+    avatarContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 2,
+        borderColor: 'white'
+    },
+    avatarText: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: '800'
+    },
+    greeting: {
+        color: 'white',
+        fontSize: 18,
+        fontWeight: '700'
+    },
+    roleLabel: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 12,
+        fontWeight: '500'
+    },
+    bellBtn: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    bellDot: {
+        position: 'absolute',
+        top: 12,
+        right: 12,
+        width: 8,
+        height: 8,
+        backgroundColor: '#EF4444',
+        borderRadius: 4,
+        borderWidth: 1.5,
+        borderColor: '#6C5CE7'
+    },
+    statusToggle: {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderRadius: 20,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    statusDot: {
+        width: 8,
+        height: 8,
+        borderRadius: 4
+    },
+    statusTitle: {
+        color: 'white',
+        fontWeight: '700',
+        fontSize: 15
+    },
+    statusSub: {
+        color: 'rgba(255,255,255,0.7)',
+        fontSize: 11,
+        marginTop: 2
+    },
+    switch: {
+        width: 48,
+        height: 28,
+        borderRadius: 14,
+        backgroundColor: 'rgba(255,255,255,0.3)',
+        padding: 3
+    },
+    switchActive: {
+        backgroundColor: '#4ADE80'
+    },
+    switchThumb: {
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: 'white'
+    },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: COLORS.foreground
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end',
+        marginBottom: 16
+    },
+    viewAllBtn: {
+        color: COLORS.primary,
+        fontSize: 13,
+        fontWeight: '700'
+    },
+    taskCard: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        ...SHADOWS.sm
+    },
+    taskTimeBox: {
+        alignItems: 'center',
+        minWidth: 40
+    },
+    taskTimeHour: {
+        fontSize: 22,
+        fontWeight: '800',
+        color: COLORS.primary
+    },
+    taskTimeMin: {
+        fontSize: 11,
+        color: COLORS.mutedForeground,
+        marginTop: -2
+    },
+    taskChild: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: COLORS.foreground
+    },
+    taskSubject: {
+        fontSize: 13,
+        color: COLORS.mutedForeground,
+        marginTop: 2
+    },
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10
+    },
+    statusPaid: { backgroundColor: '#F0FDF4' },
+    statusWait: { backgroundColor: '#FFFBEB' },
+    statusText: { fontSize: 10, fontWeight: '700' },
+    statusPaidText: { color: '#16A34A' },
+    statusWaitText: { color: '#D97706' },
+    requestCard: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        ...SHADOWS.sm,
+        borderLeftWidth: 4,
+        borderLeftColor: COLORS.primary
+    },
+    reqIconBox: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: '#F5F3FF',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    reqName: { fontSize: 15, fontWeight: '700', color: COLORS.foreground },
+    reqSub: { fontSize: 12, color: COLORS.mutedForeground, marginTop: 1 },
+    actionBtnAccept: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F0FDF4', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#DCFCE7' },
+    actionBtnReject: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FEE2E2' },
+    statsRow: { flexDirection: 'row', gap: 16 },
+    statInfoCard: { flex: 1, backgroundColor: 'white', borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12, ...SHADOWS.sm },
+    statIconBox: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    statInfoVal: { fontSize: 16, fontWeight: '800', color: COLORS.foreground },
+    statInfoLabel: { fontSize: 11, color: COLORS.mutedForeground }
+});

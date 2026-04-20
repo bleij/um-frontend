@@ -36,6 +36,9 @@ interface ParentDataContextType {
   addChild: (child: Child) => Promise<void>;
   removeChild: (childId: string) => Promise<void>;
   updateChild: (childId: string, patch: Partial<Child>) => Promise<void>;
+  updateParentProfile: (
+    profile: Partial<ParentProfileData>,
+  ) => Promise<void>;
   saveParentProfile: (
     profile: ParentProfileData,
     draftChildren: ChildDraft[],
@@ -225,6 +228,33 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updateParentProfile = async (
+    profile: Partial<ParentProfileData>,
+  ) => {
+    if (!user || !parentProfile) return;
+
+    const updatedProfile: ParentProfileData = {
+      ...parentProfile,
+      ...profile,
+    };
+
+    setParentProfile(updatedProfile);
+    await persistProfile(updatedProfile);
+
+    if (supabase && isSupabaseConfigured) {
+      await supabase.from("parent_profiles").upsert(
+        {
+          user_id: user.id,
+          first_name: updatedProfile.firstName,
+          last_name: updatedProfile.lastName || null,
+          phone: updatedProfile.phone || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" },
+      );
+    }
+  };
+
   const saveParentProfile = async (
     profile: ParentProfileData,
     draftChildren: ChildDraft[],
@@ -235,6 +265,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
       firstName: profile.firstName.trim() || user.firstName,
       lastName: profile.lastName?.trim() || user.lastName,
       phone: profile.phone?.trim() || user.phone,
+      tariff: profile.tariff || parentProfile?.tariff || "basic",
     };
 
     const mappedChildren = draftChildren
@@ -404,6 +435,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
         removeChild,
         updateChild,
         saveParentProfile,
+        updateParentProfile,
         updateChildDiagnostic,
         setParentTariff,
       }}

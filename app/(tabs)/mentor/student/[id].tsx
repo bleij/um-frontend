@@ -1,189 +1,472 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React from "react";
 import {
   Platform,
-  Pressable,
   ScrollView,
+  StyleSheet,
   Text,
+  TouchableOpacity,
   useWindowDimensions,
   View,
-  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
 import { useMentorStudents } from "../../../../hooks/useMentorData";
 
-const SKILLS = [
-    { label: "Коммуникация", value: 85, color: "#6C5CE7" },
-    { label: "Креативность", value: 90, color: "#A78BFA" },
-    { label: "Логика",       value: 75, color: "#3B82F6" },
-];
-
-const TESTS = [
-    { name: "Креативность",           score: 92, date: "15 янв" },
-    { name: "Эмоциональный интеллект",score: 85, date: "1 фев"  },
-];
-
-export default function MentorStudentProfile() {
+export default function MentorStudentDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
-  const { students, loading } = useMentorStudents();
+  const paddingX = isDesktop ? 40 : 20;
 
-  const studentRaw = students.find((s) => s.id === (id as string)) ?? students[0];
-  const student = studentRaw
-    ? {
-        name: studentRaw.student_name,
-        age: studentRaw.student_age,
-        level: studentRaw.level,
-        xp: studentRaw.xp,
-        progress: studentRaw.progress,
-      }
-    : { name: "—", age: null, level: 1, xp: 0, progress: 0 };
+  const { students, loading } = useMentorStudents();
+  const student = students.find((s) => s.id === (id as string)) || students[0];
+
+  if (!student) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Ученик не найден</Text>
+      </View>
+    );
+  }
+
+  // Mock data additions for high-fidelity
+  const studentDetails = {
+    parentName: 'Айгуль Нурмуханбетова',
+    parentPhone: '+7 (701) 234-56-78',
+    city: 'Алматы',
+    school: 'Гимназия №159',
+    grade: '7 класс',
+    subjects: ['Креативность', 'Коммуникация'],
+    goals: 'Развитие творческого мышления и уверенности в публичных выступлениях',
+    notes: 'Активный и любознательный ребенок. Хорошо воспринимает информацию через практические задания.',
+    skills: [
+        { label: 'Креативность', value: 75, color: '#6C5CE7' },
+        { label: 'Коммуникация', value: 60, color: '#A78BFA' },
+        { label: 'Лидерство', value: 50, color: '#3B82F6' },
+        { label: 'Критическое мышление', value: 70, color: '#10B981' },
+    ],
+    history: [
+        { id: 1, date: '12 апр', subject: 'Креативность', duration: '60 мин', rating: 5 },
+        { id: 2, date: '10 апр', subject: 'Коммуникация', duration: '60 мин', rating: 5 },
+        { id: 3, date: '08 апр', subject: 'Креативность', duration: '60 мин', rating: 4 },
+    ]
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Header - Unified Brand Style */}
-      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
-        <LinearGradient
-          colors={COLORS.gradients.header as any}
-          style={{ paddingBottom: SPACING.xl }}
-        >
-          <SafeAreaView edges={["top"]}>
-            <MotiView 
-              from={{ opacity: 0, translateY: -10 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: RADIUS.md,
-                    backgroundColor: "rgba(255,255,255,0.2)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: SPACING.md,
-                  }}
+    <View style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header Section */}
+        <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={styles.header}>
+            <SafeAreaView edges={["top"]}>
+                <View style={[styles.headerTop, { paddingHorizontal: paddingX }]}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+                        <Feather name="arrow-left" size={20} color="white" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle}>Профиль ученика</Text>
+                    <TouchableOpacity style={styles.editBtn}>
+                        <Feather name="edit-3" size={20} color="white" />
+                    </TouchableOpacity>
+                </View>
+
+                <MotiView 
+                    from={{ opacity: 0, translateY: 10 }}
+                    animate={{ opacity: 1, translateY: 0 }}
+                    style={[styles.profileCard, { marginHorizontal: paddingX }]}
                 >
-                  <Feather name="arrow-left" size={20} color="white" />
-                </TouchableOpacity>
-                <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>Профиль ученика</Text>
-              </View>
-
-              <View className="flex-row items-center gap-5">
-                 <View style={{ 
-                    width: 72, 
-                    height: 72, 
-                    backgroundColor: 'rgba(255,255,255,0.2)', 
-                    borderRadius: RADIUS.lg, 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    borderWidth: 2, 
-                    borderColor: 'rgba(255,255,255,0.3)' 
-                 }}>
-                    <Text style={{ fontSize: 32, fontWeight: "700", color: "white" }}>{student.name.charAt(0)}</Text>
-                 </View>
-                 <View>
-                    <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>{student.name}</Text>
-                    <View className="flex-row items-center gap-2">
-                       <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs / 2, borderRadius: RADIUS.sm }}>
-                          <Text style={{ color: 'white', fontSize: 10, fontWeight: '700' }}>LVL {student.level}</Text>
-                       </View>
-                       <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>{student.age} лет</Text>
+                    <View style={styles.profileHeader}>
+                        <View style={styles.avatarBox}>
+                            <Text style={styles.avatarText}>{student.student_name.charAt(0)}</Text>
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.studentName}>{student.student_name}</Text>
+                            <Text style={styles.studentGrade}>{studentDetails.grade} • {studentDetails.school}</Text>
+                        </View>
                     </View>
-                 </View>
-              </View>
-            </MotiView>
-          </SafeAreaView>
+
+                    <View style={styles.statsRow}>
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>8</Text>
+                            <Text style={styles.statLabel}>Сессий</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <Text style={styles.statValue}>{student.progress}%</Text>
+                            <Text style={styles.statLabel}>Прогресс</Text>
+                        </View>
+                        <View style={styles.statDivider} />
+                        <View style={styles.statItem}>
+                            <MaterialCommunityIcons name="star" size={24} color="#FFD700" />
+                            <Text style={styles.statLabel}>Отличник</Text>
+                        </View>
+                    </View>
+                </MotiView>
+            </SafeAreaView>
         </LinearGradient>
-      </View>
 
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: paddingX,
-          paddingTop: SPACING.xl,
-          paddingBottom: 40,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Core Stats Row */}
-        <View className="flex-row gap-3 mb-8">
-           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border }}>
-              <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{student.xp}</Text>
-              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>Очков XP</Text>
-           </View>
-           <View style={{ ...SHADOWS.strict, flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border }}>
-              <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.success }}>{student.progress}%</Text>
-              <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>Прогресс</Text>
-           </View>
-        </View>
-
-        {/* Action Buttons */}
-        <View className="flex-row gap-4 mb-8">
-           <TouchableOpacity 
-              onPress={() => router.push("/(tabs)/mentor/learning-path" as any)}
-              style={{ ...SHADOWS.md, flex: 1, height: 56, backgroundColor: COLORS.primary, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}
-           >
-              <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold }}>План развития</Text>
-           </TouchableOpacity>
-           <TouchableOpacity 
-              onPress={() => router.push("/(tabs)/chats" as any)}
-              style={{ width: 56, height: 56, backgroundColor: COLORS.muted, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' }}
-           >
-              <Feather name="message-circle" size={24} color={COLORS.primary} />
-           </TouchableOpacity>
-        </View>
-
-        {/* Skills Section */}
-        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
-           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Профиль навыков</Text>
-           <View style={{ gap: SPACING.lg }}>
-              {SKILLS.map(skill => (
-                <View key={skill.label}>
-                   <View className="flex-row justify-between mb-2">
-                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>{skill.label}</Text>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{skill.value}%</Text>
-                   </View>
-                   <View style={{ height: 8, backgroundColor: COLORS.muted, borderRadius: RADIUS.full, overflow: 'hidden' }}>
-                      <View style={{ width: `${skill.value}%`, backgroundColor: skill.color }} className="h-full rounded-full" />
-                   </View>
+        <View style={[styles.content, { paddingHorizontal: paddingX }]}>
+            {/* Contact Info */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Контакты родителя</Text>
+                <View style={styles.infoCard}>
+                    <View style={styles.infoItem}>
+                        <Feather name="user" size={18} color="#6C5CE7" />
+                        <Text style={styles.infoText}>{studentDetails.parentName}</Text>
+                    </View>
+                    <View style={styles.infoItem}>
+                        <Feather name="phone" size={18} color="#6C5CE7" />
+                        <Text style={styles.infoText}>{studentDetails.parentPhone}</Text>
+                    </View>
+                    <View style={styles.infoItem}>
+                        <Feather name="map-pin" size={18} color="#6C5CE7" />
+                        <Text style={styles.infoText}>{studentDetails.city}</Text>
+                    </View>
                 </View>
-              ))}
-           </View>
-        </View>
+            </View>
 
-        {/* Results Section */}
-        <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
-           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Результаты тестов</Text>
-           <View style={{ gap: SPACING.md }}>
-              {TESTS.map((test, index) => (
-                <View key={index} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: SPACING.lg, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border }}>
-                   <View>
-                      <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{test.name}</Text>
-                      <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>{test.date}</Text>
-                   </View>
-                   <View style={{ width: 48, height: 48, borderRadius: RADIUS.md, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center', ...SHADOWS.sm }}>
-                      <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary, fontSize: TYPOGRAPHY.size.lg }}>{test.score}</Text>
-                   </View>
+            {/* Subjects & Goals */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Направления и цели</Text>
+                <View style={styles.tagsRow}>
+                    {studentDetails.subjects.map(sub => (
+                        <View key={sub} style={styles.tag}>
+                            <Text style={styles.tagText}>{sub}</Text>
+                        </View>
+                    ))}
                 </View>
-              ))}
-           </View>
-        </View>
+                <View style={styles.goalCard}>
+                    <Text style={styles.goalText}>{studentDetails.goals}</Text>
+                </View>
+            </View>
 
-        {/* Add Recommendation Button */}
-        <TouchableOpacity style={{ height: 64, borderRadius: RADIUS.lg, borderWidth: 2, borderStyle: 'dashed', borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: SPACING.sm }}>
-           <Feather name="plus-circle" size={20} color={COLORS.mutedForeground} />
-           <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.mutedForeground }}>Добавить рекомендацию</Text>
-        </TouchableOpacity>
+            {/* Skills */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Развитие навыков</Text>
+                <View style={styles.skillsCard}>
+                    {studentDetails.skills.map((skill, idx) => (
+                        <View key={skill.label} style={{ marginBottom: idx === studentDetails.skills.length - 1 ? 0 : 16 }}>
+                            <View style={styles.skillHeader}>
+                                <Text style={styles.skillLabel}>{skill.label}</Text>
+                                <Text style={styles.skillValue}>{skill.value}%</Text>
+                            </View>
+                            <View style={styles.skillBarBg}>
+                                <MotiView 
+                                    from={{ width: 0 }}
+                                    animate={{ width: `${skill.value}%` as any }}
+                                    transition={{ duration: 1000, type: 'timing' }}
+                                    style={[styles.skillBarFill, { backgroundColor: skill.color }]} 
+                                />
+                            </View>
+                        </View>
+                    ))}
+                </View>
+            </View>
+
+            {/* Session History */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>История сессий</Text>
+                <View style={{ gap: 12 }}>
+                    {studentDetails.history.map(session => (
+                        <View key={session.id} style={styles.historyCard}>
+                            <View style={{ flex: 1 }}>
+                                <Text style={styles.historySubject}>{session.subject}</Text>
+                                <Text style={styles.historyDate}>{session.date} • {session.duration}</Text>
+                            </View>
+                            <View style={styles.ratingRow}>
+                                {[...Array(5)].map((_, i) => (
+                                    <MaterialCommunityIcons 
+                                        key={i} 
+                                        name={i < session.rating ? "star" : "star-outline"} 
+                                        size={16} 
+                                        color="#FFD700" 
+                                    />
+                                ))}
+                            </View>
+                        </View>
+                    ))}
+                </View>
+            </View>
+
+            {/* Notes */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Заметки ментора</Text>
+                <View style={styles.notesCard}>
+                    <Text style={styles.notesText}>{studentDetails.notes}</Text>
+                </View>
+            </View>
+
+            {/* CTA Button */}
+            <TouchableOpacity style={styles.mainActionBtn}>
+                <LinearGradient 
+                    colors={["#6C5CE7", "#A78BFA"]} 
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                    style={styles.actionGradient}
+                >
+                    <Text style={styles.actionBtnText}>Начать сессию</Text>
+                </LinearGradient>
+            </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#F8F7FF",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    paddingBottom: 40,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+  },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+  },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  editBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerTitle: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "800",
+  },
+  profileCard: {
+    backgroundColor: "white",
+    borderRadius: 32,
+    padding: 24,
+    marginTop: 20,
+    ...SHADOWS.lg,
+  },
+  profileHeader: {
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  avatarBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#F5F3FF",
+    borderWidth: 4,
+    borderColor: "#EEF2FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#6C5CE7",
+  },
+  studentName: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: COLORS.foreground,
+  },
+  studentGrade: {
+    fontSize: 14,
+    color: COLORS.mutedForeground,
+    marginTop: 4,
+  },
+  statsRow: {
+    flexDirection: "row",
+    backgroundColor: "#F8F7FF",
+    borderRadius: 24,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: "#E5E7EB",
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: "#6C5CE7",
+  },
+  statLabel: {
+    fontSize: 12,
+    color: COLORS.mutedForeground,
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  content: {
+    paddingTop: 32,
+    paddingBottom: 120,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: COLORS.foreground,
+    marginBottom: 16,
+  },
+  infoCard: {
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 20,
+    gap: 16,
+    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  infoText: {
+    fontSize: 15,
+    color: COLORS.foreground,
+    fontWeight: "500",
+  },
+  tagsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 16,
+  },
+  tag: {
+    backgroundColor: "#F5F3FF",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  tagText: {
+    color: "#6C5CE7",
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  goalCard: {
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 16,
+    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  goalText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.foreground,
+  },
+  skillsCard: {
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 24,
+    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  skillHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  skillLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.foreground,
+  },
+  skillValue: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#6C5CE7",
+  },
+  skillBarBg: {
+    height: 8,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  skillBarFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  historyCard: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  historySubject: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: COLORS.foreground,
+  },
+  historyDate: {
+    fontSize: 13,
+    color: COLORS.mutedForeground,
+    marginTop: 2,
+  },
+  ratingRow: {
+    flexDirection: "row",
+    gap: 2,
+  },
+  notesCard: {
+    backgroundColor: "#FFFBEB",
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "#FEF3C7",
+  },
+  notesText: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: "#92400E",
+  },
+  mainActionBtn: {
+    marginTop: 8,
+    borderRadius: 20,
+    overflow: "hidden",
+    ...SHADOWS.md,
+  },
+  actionGradient: {
+    paddingVertical: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  actionBtnText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+});

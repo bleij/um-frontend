@@ -119,7 +119,7 @@ export default function CreateProfileParent() {
         qrToken: !c.hasPhone ? (c.qrToken ?? undefined) : undefined,
       })),
     );
-    router.push("/profile/parent/create-child-profile");
+    router.push("/profile/common/done");
   };
 
   return (

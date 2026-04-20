@@ -94,7 +94,7 @@ export default function ParentHome() {
                     letterSpacing: TYPOGRAPHY.letterSpacing.tight,
                   }}
                 >
-                  Привет, {user?.firstName || parentProfile?.name || "Родитель"}
+                  Привет, {user?.firstName || parentProfile?.firstName || "Родитель"}
                   !
                 </Text>
                 <Pressable

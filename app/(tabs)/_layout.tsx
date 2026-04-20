@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Platform, useWindowDimensions, View } from "react-native";
 import { LAYOUT } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
-import CustomTabBar, { SideNav } from "./layout-container";
+import CustomTabBar, { SideNav, TabIcon } from "./layout-container";
 
 export default function TabsLayout() {
   const { user } = useAuth();
@@ -11,6 +11,7 @@ export default function TabsLayout() {
 
   const role = useMemo(() => user?.role || "parent", [user?.role]);
   const hideForMentor = role === "mentor" || role === "org";
+
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
 
   const screens = (
@@ -22,14 +23,26 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="home/index" options={{ href: "/home" }} />
 
-      {/* CHATS - доступно всем */}
-      <Tabs.Screen name="chats/index" options={{ href: "/chats" }} />
-
       {/* ANALYTICS — доступно всем */}
       <Tabs.Screen name="analytics/index" options={{ href: "/analytics" }} />
 
       {/* PROFILE — доступно всем */}
       <Tabs.Screen name="profile/index" options={{ href: "/profile" }} />
+
+      <Tabs.Screen
+        name="chats/index"
+        options={{
+          title: "Чаты",
+          href: user?.role === "child" ? null : "/chats",
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon
+              icon={focused ? "message-square" : "message-square"}
+              color={color}
+              focused={focused}
+            />
+          ),
+        }}
+      />
 
       {/* CATALOG — скрыт у ментора */}
       <Tabs.Screen
@@ -51,7 +64,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="youth/achievements" options={{ href: null }} />
 
       {/* MENTOR SCREENS */}
-      <Tabs.Screen name="mentor/groups" options={{ href: null }} />
+      <Tabs.Screen name="mentor/students" options={{ href: null }} />
+      <Tabs.Screen name="mentor/wallet" options={{ href: null }} />
       <Tabs.Screen name="mentor/learning-path" options={{ href: null }} />
       <Tabs.Screen name="mentor/student/[id]" options={{ href: null }} />
 
@@ -66,7 +80,8 @@ export default function TabsLayout() {
 
       {/* TEACHER SCREENS */}
       <Tabs.Screen name="teacher/groups" options={{ href: null }} />
-      <Tabs.Screen name="teacher/group/[id]" options={{ href: null }} />
+      <Tabs.Screen name="teacher/group/[id]/index" options={{ href: null }} />
+      <Tabs.Screen name="teacher/group/[id]/journal" options={{ href: null }} />
       <Tabs.Screen name="teacher/student/[id]" options={{ href: null }} />
     </Tabs>
   );

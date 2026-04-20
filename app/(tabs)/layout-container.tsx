@@ -29,6 +29,26 @@ type TabItem = {
   icon: (props: { color: string; size: number }) => React.ReactNode;
 };
 
+export function TabIcon({ icon, color, focused }: { icon: any; color: string; focused: boolean }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Feather name={icon} size={22} color={color} />
+      {focused && (
+        <View 
+          style={{ 
+            position: 'absolute', 
+            bottom: -8, 
+            width: 4, 
+            height: 4, 
+            borderRadius: 2, 
+            backgroundColor: color 
+          }} 
+        />
+      )}
+    </View>
+  );
+}
+
 type Props = { role: Role | string | null };
 
 const COMMON_HOME: TabItem = {
@@ -86,11 +106,19 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
   mentor: [
     COMMON_HOME,
     {
-      key: "mentor/groups",
-      label: "Группы",
-      route: "mentor/groups",
+      key: "mentor/students",
+      label: "Ученики",
+      route: "mentor/students",
       icon: ({ color, size }) => (
         <Feather name="users" size={size} color={color} />
+      ),
+    },
+    {
+      key: "mentor/wallet",
+      label: "Кошелек",
+      route: "mentor/wallet",
+      icon: ({ color, size }) => (
+        <Feather name="credit-card" size={size} color={color} />
       ),
     },
     {
@@ -167,10 +195,10 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
     },
     {
       key: "analytics",
-      label: "Прогресс",
+      label: "Календарь",
       route: "analytics",
       icon: ({ color, size }) => (
-        <Feather name="trending-up" size={size} color={color} />
+        <Feather name="calendar" size={size} color={color} />
       ),
     },
     {
@@ -185,22 +213,6 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
 
   child: [
     COMMON_HOME,
-    {
-      key: "chats",
-      label: "Чат",
-      route: "chats",
-      icon: ({ color, size }) => (
-        <Feather name="message-circle" size={size} color={color} />
-      ),
-    },
-    {
-      key: "analytics",
-      label: "Успехи",
-      route: "analytics",
-      icon: ({ color, size }) => (
-        <Feather name="star" size={size} color={color} />
-      ),
-    },
     {
       key: "youth/games",
       label: "Игры",

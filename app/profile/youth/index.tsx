@@ -94,8 +94,8 @@ export default function YouthProfile() {
             <View
               style={{
                 backgroundColor: COLORS.card,
-                padding: 28,
-                borderRadius: RADIUS.lg,
+                padding: 24,
+                borderRadius: RADIUS.xxl,
                 alignItems: "center",
                 marginBottom: 24,
                 borderWidth: 1,
@@ -107,43 +107,48 @@ export default function YouthProfile() {
                 style={{
                   width: 80,
                   height: 80,
-                  borderRadius: 40,
+                  borderRadius: 30,
                   backgroundColor: `${COLORS.primary}10`,
                   alignItems: "center",
                   justifyContent: "center",
                   marginBottom: 16,
+                  borderWidth: 2,
+                  borderColor: 'white'
                 }}
               >
-                <Feather name="user" size={32} color={COLORS.primary} />
+                <Text style={{ fontSize: 32 }}>🧑</Text>
               </View>
               <Text
                 style={{
-                  fontSize: 22,
-                  fontWeight: "700",
+                  fontSize: 24,
+                  fontWeight: "900",
                   color: COLORS.foreground,
                   marginBottom: 4,
                 }}
               >
                 Максим
               </Text>
-              <Text style={{ color: COLORS.mutedForeground, marginBottom: 12 }}>
-                Student • Level 8
+              <Text style={{ color: COLORS.mutedForeground, fontWeight: '700', marginBottom: 12 }}>
+                 Средняя группа • 12 лет
               </Text>
               
               <View style={{ 
-                backgroundColor: isPro ? '#A78BFA' : COLORS.muted, 
-                paddingHorizontal: 12, 
-                paddingVertical: 4, 
+                backgroundColor: isPro ? '#F5F3FF' : COLORS.muted, 
+                paddingHorizontal: 16, 
+                paddingVertical: 6, 
                 borderRadius: RADIUS.full,
-                marginBottom: 20
+                marginBottom: 20,
+                borderWidth: 1,
+                borderColor: isPro ? '#DDD6FE' : 'transparent'
               }}>
                 <Text style={{ 
-                  color: isPro ? 'white' : COLORS.mutedForeground, 
+                  color: isPro ? COLORS.primary : COLORS.mutedForeground, 
                   fontSize: 10, 
-                  fontWeight: '800',
-                  textTransform: 'uppercase'
+                  fontWeight: '900',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1
                 }}>
-                  {isPro ? 'PRO STATUS' : 'BASIC TARIFF'}
+                  {isPro ? '✨ Family PRO ✨' : 'Basic Plan'}
                 </Text>
               </View>
 
@@ -151,128 +156,78 @@ export default function YouthProfile() {
                 style={{
                   flexDirection: "row",
                   justifyContent: "center",
-                  gap: 16,
+                  gap: 32,
                 }}
               >
                 <View style={{ alignItems: "center" }}>
-                  <LinearGradient
-                    colors={[COLORS.primary, COLORS.secondary]}
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 18,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        fontWeight: "800",
-                        color: "white",
-                      }}
-                    >
-                      24
-                    </Text>
-                  </LinearGradient>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: COLORS.mutedForeground,
-                      fontWeight: "500",
-                    }}
-                  >
-                    Достижений
-                  </Text>
+                   <Text style={{ fontSize: 20, fontWeight: "900", color: COLORS.foreground }}>2450</Text>
+                   <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: "800", textTransform: 'uppercase', marginTop: 2 }}>XP</Text>
                 </View>
+                <View style={{ width: 1, height: 30, backgroundColor: COLORS.border }} />
                 <View style={{ alignItems: "center" }}>
-                  <LinearGradient
-                    colors={[COLORS.primary, COLORS.secondary]}
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 18,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: 8,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontSize: 20,
-                        fontWeight: "800",
-                        color: "white",
-                      }}
-                    >
-                      8
-                    </Text>
-                  </LinearGradient>
-                  <Text
-                    style={{
-                      fontSize: 12,
-                      color: COLORS.mutedForeground,
-                      fontWeight: "500",
-                    }}
-                  >
-                    Курсов
-                  </Text>
+                   <Text style={{ fontSize: 20, fontWeight: "900", color: COLORS.foreground }}>Level 8</Text>
+                   <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: "800", textTransform: 'uppercase', marginTop: 2 }}>Rank</Text>
                 </View>
               </View>
             </View>
 
-            {/* Menu Items */}
+            {/* Diagnostic Results Preview */}
             <View style={{ marginBottom: 24 }}>
-              {menuItems.map((item, index) => (
-                <Pressable
-                  key={index}
-                  onPress={item.action}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    padding: 16,
-                    backgroundColor: COLORS.card,
-                    borderRadius: RADIUS.sm,
-                    marginBottom: 10,
-                    borderWidth: 1,
-                    borderColor: COLORS.border,
-                    ...SHADOWS.sm,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 14,
-                      backgroundColor: `${COLORS.primary}10`,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginRight: 14,
-                    }}
-                  >
-                    <Feather
-                      name={item.icon}
-                      size={20}
-                      color={COLORS.primary}
-                    />
-                  </View>
-                  <Text
-                    style={{
-                      flex: 1,
-                      fontWeight: "600",
-                      color: COLORS.foreground,
-                      fontSize: 16,
-                    }}
-                  >
-                    {item.label}
-                  </Text>
-                  <Feather
-                    name="chevron-right"
-                    size={20}
-                    color={COLORS.mutedForeground}
-                  />
-                </Pressable>
-              ))}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <Text style={{ fontSize: 18, fontWeight: '900', color: COLORS.foreground }}>Мои таланты</Text>
+                    <Pressable onPress={() => router.push("/profile/youth/results" as any)}>
+                        <Text style={{ color: COLORS.primary, fontWeight: '700', fontSize: 12 }}>Все детали</Text>
+                    </Pressable>
+                </View>
+                <View style={{ backgroundColor: COLORS.card, padding: 20, borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm }}>
+                    <View style={{ gap: 12 }}>
+                        {[
+                            { label: 'Креативность', val: 85, col: '#A78BFA' },
+                            { label: 'Логика', val: 70, col: '#3B82F6' },
+                            { label: 'Лидерство', val: 62, col: '#10B981' }
+                        ].map((s, i) => (
+                            <View key={i}>
+                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
+                                    <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.mutedForeground }}>{s.label}</Text>
+                                    <Text style={{ fontSize: 12, fontWeight: '800', color: COLORS.foreground }}>{s.val}%</Text>
+                                </View>
+                                <View style={{ height: 6, backgroundColor: '#F3F4F6', borderRadius: 3, overflow: 'hidden' }}>
+                                    <View style={{ width: `${s.val}%`, height: '100%', backgroundColor: s.col, borderRadius: 3 }} />
+                                </View>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+            </View>
+
+            {/* My Mentor */}
+            <View style={{ marginBottom: 24 }}>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: COLORS.foreground, marginBottom: 12 }}>Мой Ментор</Text>
+                <View style={{ backgroundColor: '#F5F3FF', padding: 16, borderRadius: RADIUS.xl, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#DDD6FE' }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 24 }}>👩‍🏫</Text>
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 16 }}>
+                        <Text style={{ fontSize: 16, fontWeight: '900', color: COLORS.foreground }}>Алия Маратова</Text>
+                        <Text style={{ fontSize: 12, color: COLORS.primary, fontWeight: '600' }}>Психолог-профориентолог</Text>
+                    </View>
+                    <Feather name="message-circle" size={20} color={COLORS.primary} />
+                </View>
+            </View>
+
+            {/* My Clubs */}
+            <View style={{ marginBottom: 24, width: '100%' }}>
+                <Text style={{ fontSize: 18, fontWeight: '900', color: COLORS.foreground, marginBottom: 12, textAlign: 'left' }}>Мои кружки</Text>
+                <View style={{ backgroundColor: COLORS.card, padding: 16, borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center' }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#F0FDF4', alignItems: 'center', justifyContent: 'center' }}>
+                        <Feather name="code" size={20} color="#16A34A" />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 16 }}>
+                        <Text style={{ fontSize: 15, fontWeight: '800', color: COLORS.foreground }}>Робототехника</Text>
+                        <Text style={{ fontSize: 12, color: COLORS.mutedForeground }}>Пн, Ср • 16:00</Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
+                </View>
             </View>
 
             {/* Logout */}

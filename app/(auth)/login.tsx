@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
@@ -8,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -15,7 +17,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
@@ -54,291 +56,304 @@ export default function LoginScreen() {
     router.replace("/(tabs)/home");
   };
 
-  const inputStyle = {
-    width: "100%" as const,
-    paddingLeft: 48,
-    paddingRight: 16,
-    paddingVertical: 16,
-    backgroundColor: COLORS.muted,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    fontSize: 15,
-    color: COLORS.foreground,
-  };
-
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1, backgroundColor: COLORS.background }}
     >
       <StatusBar style="dark" />
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            alignItems: "center",
-            paddingVertical: isDesktop ? 24 : 12,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View
-            style={{
-              flex: 1,
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
-              paddingHorizontal: horizontalPadding,
-              paddingTop: 8,
+      <View style={{ flex: 1 }}>
+        {/* Background Blobs */}
+        <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+            <View style={{ 
+                position: 'absolute', 
+                top: -60, 
+                left: -60, 
+                width: 220, 
+                height: 220, 
+                borderRadius: 110, 
+                backgroundColor: `${COLORS.primary}10`,
+            }} />
+            <View style={{ 
+                position: 'absolute', 
+                bottom: '15%', 
+                right: -80, 
+                width: 280, 
+                height: 280, 
+                borderRadius: 140, 
+                backgroundColor: `${COLORS.secondary}05`,
+            }} />
+        </View>
+
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              alignItems: "center",
+              paddingVertical: isDesktop ? 24 : 12,
             }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {/* Back */}
-            <TouchableOpacity
-              onPress={() => router.replace("/intro")}
-              style={{ flexDirection: "row", alignItems: "center", marginBottom: 32 }}
+            <View
+              style={{
+                flex: 1,
+                width: "100%",
+                maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+                paddingHorizontal: horizontalPadding,
+                paddingTop: 8,
+              }}
             >
-              <Feather name="arrow-left" size={18} color={COLORS.mutedForeground} />
-              <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 14 }}>
-                Назад
-              </Text>
-            </TouchableOpacity>
-
-            {/* Header */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ duration: 500 }}
-              style={{ marginBottom: 32 }}
-            >
-              <Text
+              {/* Back Button */}
+              <TouchableOpacity
+                onPress={() => router.replace("/intro")}
                 style={{
-                  fontSize: 28,
-                  fontWeight: "700",
-                  color: COLORS.foreground,
-                  marginBottom: 8,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 32,
                 }}
               >
-                Войти в аккаунт
-              </Text>
-              <Text style={{ color: COLORS.mutedForeground, fontSize: 15, lineHeight: 22 }}>
-                Добро пожаловать! Продолжим твой путь к успеху
-              </Text>
-            </MotiView>
+                <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
+                <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: '500' }}>
+                  Назад
+                </Text>
+              </TouchableOpacity>
 
-            {/* Phone */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ duration: 500, delay: 100 }}
-              style={{ marginBottom: 16 }}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "500",
-                  color: COLORS.foreground,
-                  marginBottom: 8,
-                }}
+              {/* Header */}
+              <MotiView
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ duration: 500 }}
+                style={{ marginBottom: 32 }}
               >
-                Номер телефона
-              </Text>
-              <View style={{ position: "relative", justifyContent: "center" }}>
-                <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                  <Feather name="phone" size={18} color={COLORS.mutedForeground} />
+                <Text style={{ fontSize: 32, fontWeight: "900", color: COLORS.foreground, marginBottom: 8, letterSpacing: -1 }}>
+                   С возвращением!
+                </Text>
+                <Text style={{ color: COLORS.mutedForeground, fontSize: 16, lineHeight: 24 }}>
+                   Введите данные ниже, чтобы продолжить обучение и достигать новых высот
+                </Text>
+              </MotiView>
+
+              {/* Form Card */}
+              <MotiView
+                  from={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 100 }}
+                  style={{ backgroundColor: 'white', borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md }}
+              >
+                {/* Phone Field */}
+                <View style={{ marginBottom: 20 }}>
+                    <Text style={styles.label}>НОМЕР ТЕЛЕФОНА</Text>
+                    <View style={styles.inputWrapper}>
+                        <Feather name="phone" size={18} color={COLORS.mutedForeground} style={styles.inputIcon} />
+                        <TextInput
+                            placeholder="+7 (___) ___-__-__"
+                            placeholderTextColor={COLORS.mutedForeground}
+                            value={phoneNumber}
+                            onChangeText={formatPhone}
+                            keyboardType="phone-pad"
+                            className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border border-gray-100"
+                            style={styles.inputText}
+                        />
+                    </View>
                 </View>
-                <TextInput
-                  placeholder="+7 (999) 123-45-67"
-                  placeholderTextColor={COLORS.mutedForeground}
-                  value={phoneNumber}
-                  onChangeText={formatPhone}
-                  keyboardType="phone-pad"
-                  style={inputStyle}
-                />
-              </View>
-            </MotiView>
 
-            {/* Password */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ duration: 500, delay: 150 }}
-              style={{ marginBottom: 12 }}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  fontWeight: "500",
-                  color: COLORS.foreground,
-                  marginBottom: 8,
-                }}
-              >
-                Пароль
-              </Text>
-              <View style={{ position: "relative", justifyContent: "center" }}>
-                <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                  <Feather name="lock" size={18} color={COLORS.mutedForeground} />
+                {/* Password Field */}
+                <View style={{ marginBottom: 12 }}>
+                    <Text style={styles.label}>ПАРОЛЬ</Text>
+                    <View style={styles.inputWrapper}>
+                        <Feather name="lock" size={18} color={COLORS.mutedForeground} style={styles.inputIcon} />
+                        <TextInput
+                            placeholder="Ваш пароль"
+                            placeholderTextColor={COLORS.mutedForeground}
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry={!showPassword}
+                            className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border border-gray-100"
+                            style={styles.inputText}
+                        />
+                        <TouchableOpacity 
+                            onPress={() => setShowPassword(!showPassword)} 
+                            style={styles.eyeIcon}
+                        >
+                            <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={COLORS.mutedForeground} />
+                        </TouchableOpacity>
+                    </View>
                 </View>
-                <TextInput
-                  placeholder="Введите пароль"
-                  placeholderTextColor={COLORS.mutedForeground}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={{ position: "absolute", right: 16, zIndex: 1 }}
+
+                <TouchableOpacity 
+                  onPress={() => {/* Forgot password logic */}}
+                  style={{ alignSelf: 'flex-end', marginBottom: 24 }}
                 >
-                  <Feather
-                    name={showPassword ? "eye-off" : "eye"}
-                    size={18}
-                    color={COLORS.mutedForeground}
-                  />
+                  <Text style={{ color: COLORS.primary, fontSize: 13, fontWeight: '700' }}>Забыли пароль?</Text>
+                </TouchableOpacity>
+
+                {error && (
+                    <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={styles.errorBox}>
+                        <Text style={styles.errorText}>{error}</Text>
+                    </MotiView>
+                )}
+
+                {/* Submit button inside card for cohesion */}
+                <TouchableOpacity
+                    onPress={handleLogin}
+                    disabled={isSubmitting || !canSubmit}
+                    activeOpacity={0.8}
+                >
+                    <LinearGradient
+                        colors={canSubmit ? [COLORS.primary, COLORS.secondary] : [COLORS.muted, COLORS.muted]}
+                        style={styles.submitBtn}
+                    >
+                        {isSubmitting ? (
+                            <ActivityIndicator size="small" color="white" />
+                        ) : (
+                            <Text style={{ 
+                                fontSize: 18, 
+                                fontWeight: "800", 
+                                color: canSubmit ? "white" : COLORS.mutedForeground 
+                            }}>
+                                Войти
+                            </Text>
+                        )}
+                    </LinearGradient>
+                </TouchableOpacity>
+              </MotiView>
+
+              {/* Login Alternatives */}
+              <View style={{ marginTop: 32 }}>
+                <View style={styles.dividerRow}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>или войти через</Text>
+                    <View style={styles.dividerLine} />
+                </View>
+
+                <View style={styles.socialRow}>
+                    <TouchableOpacity style={styles.socialBtn}>
+                         <Text style={{ fontSize: 20, fontWeight: "900", color: "#ea4335" }}>G</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.socialBtn}>
+                         <Feather name="github" size={22} color={COLORS.foreground} />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        onPress={() => router.push("/(auth)/qr-scan")}
+                        style={styles.qrBtn}
+                    >
+                        <Feather name="grid" size={20} color={COLORS.primary} />
+                        <Text style={styles.qrBtnText}>QR</Text>
+                    </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Register link */}
+              <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
+                <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Нет аккаунта? </Text>
+                <TouchableOpacity onPress={() => router.push("/register")}>
+                  <Text style={{ color: COLORS.primary, fontWeight: "800", fontSize: 15 }}>Зарегистрироваться</Text>
                 </TouchableOpacity>
               </View>
-            </MotiView>
-
-            {!!error && (
-              <View
-                style={{
-                  marginBottom: 16,
-                  padding: 12,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: "#FEE2E2",
-                }}
-              >
-                <Text style={{ color: "#B91C1C", fontWeight: "500", fontSize: 13 }}>
-                  {error}
-                </Text>
-              </View>
-            )}
-
-            {/* Submit */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ duration: 500, delay: 200 }}
-              style={{ marginBottom: 24 }}
-            >
-              <TouchableOpacity
-                onPress={handleLogin}
-                disabled={isSubmitting || !canSubmit}
-                style={{
-                  width: "100%",
-                  paddingVertical: 16,
-                  borderRadius: RADIUS.md,
-                  alignItems: "center",
-                  backgroundColor:
-                    isSubmitting || !canSubmit ? COLORS.muted : COLORS.primary,
-                }}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator size="small" color={COLORS.mutedForeground} />
-                ) : (
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: "600",
-                      color: !canSubmit ? COLORS.mutedForeground : "white",
-                    }}
-                  >
-                    Войти
-                  </Text>
-                )}
-              </TouchableOpacity>
-            </MotiView>
-
-            {/* Divider */}
-            <View
-              style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}
-            >
-              <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
-              <Text
-                style={{ marginHorizontal: 12, color: COLORS.mutedForeground, fontSize: 13 }}
-              >
-                быстрый вход
-              </Text>
-              <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
             </View>
-
-            {/* Social */}
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                gap: 12,
-                marginBottom: 16,
-              }}
-            >
-              <TouchableOpacity
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: COLORS.card,
-                  borderWidth: 2,
-                  borderColor: COLORS.border,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Text style={{ fontSize: 20, fontWeight: "700", color: "#ea4335" }}>G</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={{
-                  width: 56,
-                  height: 56,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: COLORS.card,
-                  borderWidth: 2,
-                  borderColor: COLORS.border,
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <Feather name="github" size={22} color={COLORS.foreground} />
-              </TouchableOpacity>
-            </View>
-
-            {/* QR Login */}
-            <TouchableOpacity
-              onPress={() => router.push("/(auth)/qr-scan")}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                paddingVertical: 14,
-                borderRadius: RADIUS.md,
-                borderWidth: 2,
-                borderColor: COLORS.border,
-                backgroundColor: COLORS.card,
-                marginBottom: 32,
-              }}
-            >
-              <Feather name="grid" size={18} color={COLORS.primary} />
-              <Text style={{ fontSize: 15, fontWeight: "600", color: COLORS.primary }}>
-                Войти по QR-коду
-              </Text>
-            </TouchableOpacity>
-
-            <View style={{ flex: 1 }} />
-
-            <View
-              style={{ flexDirection: "row", justifyContent: "center", paddingBottom: 24 }}
-            >
-              <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
-                нет аккаунта?{" "}
-              </Text>
-              <TouchableOpacity onPress={() => router.push("/register")}>
-                <Text style={{ color: COLORS.primary, fontWeight: "600", fontSize: 14 }}>
-                  Зарегистрироваться
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+    label: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: COLORS.foreground,
+        marginBottom: 8,
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        opacity: 0.6,
+    },
+    inputWrapper: {
+        position: 'relative',
+        justifyContent: 'center',
+    },
+    inputIcon: {
+        position: 'absolute',
+        left: 16,
+        zIndex: 1,
+    },
+    inputText: {
+        fontSize: 15,
+        fontWeight: '500',
+    },
+    eyeIcon: {
+        position: 'absolute',
+        right: 16,
+        zIndex: 1,
+    },
+    errorBox: {
+        marginBottom: 16,
+        padding: 12,
+        borderRadius: RADIUS.md,
+        backgroundColor: '#FEE2E2',
+        borderWidth: 1,
+        borderColor: '#FCA5A5'
+    },
+    errorText: {
+        color: '#B91C1C',
+        textAlign: 'center',
+        fontSize: 13,
+        fontWeight: '600'
+    },
+    submitBtn: {
+        paddingVertical: 18,
+        borderRadius: RADIUS.xl,
+        alignItems: "center",
+        justifyContent: "center",
+        ...SHADOWS.md,
+    },
+    dividerRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginBottom: 20,
+    },
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: COLORS.border,
+    },
+    dividerText: {
+        marginHorizontal: 12,
+        color: COLORS.mutedForeground,
+        fontSize: 13,
+        fontWeight: '500'
+    },
+    socialRow: {
+        flexDirection: "row",
+        justifyContent: "center",
+        gap: 12,
+    },
+    socialBtn: {
+        width: 60,
+        height: 60,
+        borderRadius: RADIUS.xl,
+        backgroundColor: 'white',
+        borderWidth: 2,
+        borderColor: COLORS.border,
+        alignItems: "center",
+        justifyContent: "center",
+        ...SHADOWS.sm,
+    },
+    qrBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+        paddingHorizontal: 20,
+        borderRadius: RADIUS.xl,
+        backgroundColor: 'white',
+        borderWidth: 2,
+        borderColor: COLORS.border,
+        ...SHADOWS.sm,
+    },
+    qrBtnText: {
+        fontSize: 15,
+        fontWeight: "800",
+        color: COLORS.primary
+    }
+});

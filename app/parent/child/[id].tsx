@@ -246,6 +246,63 @@ export default function ParentChildDetails() {
             </View>
          )}
 
+         {/* Enrolled Clubs */}
+         <View style={{ marginTop: 8 }}>
+            <View className="flex-row items-center gap-2 mb-4 px-1">
+               <Feather name="shopping-bag" size={20} color={COLORS.primary} />
+               <Text className="text-lg font-black text-gray-900">Записан в кружки</Text>
+            </View>
+            <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 border border-gray-100">
+                <View className="flex-row items-center justify-between mb-4">
+                    <View className="flex-1">
+                        <Text className="font-bold text-gray-900">Робототехника (Продвинутый)</Text>
+                        <Text className="text-xs text-gray-500 mt-1">Школа программирования UM</Text>
+                    </View>
+                    <View className="bg-green-50 px-3 py-1 rounded-full">
+                        <Text className="text-green-600 font-bold text-[10px]">ОПЛАЧЕНО</Text>
+                    </View>
+                </View>
+                <View className="flex-row gap-3">
+                   <View className="bg-gray-50 px-3 py-2 rounded-xl flex-row items-center gap-2">
+                       <Feather name="calendar" size={12} color={COLORS.mutedForeground} />
+                       <Text className="text-xs text-gray-600 font-medium">Пн, Ср, Пт</Text>
+                   </View>
+                   <View className="bg-gray-50 px-3 py-2 rounded-xl flex-row items-center gap-2">
+                       <Feather name="clock" size={12} color={COLORS.mutedForeground} />
+                       <Text className="text-xs text-gray-600 font-medium">16:00</Text>
+                   </View>
+                </View>
+            </View>
+         </View>
+
+         {/* My Mentor Section */}
+         <View style={{ marginTop: 32 }}>
+            <View className="flex-row items-center gap-2 mb-4 px-1">
+               <Feather name="user-check" size={20} color="#10B981" />
+               <Text className="text-lg font-black text-gray-900">Персональный ментор</Text>
+            </View>
+            <TouchableOpacity 
+               onPress={() => router.push("/chats" as any)}
+               style={SHADOWS.sm} 
+               className="bg-white rounded-[32px] p-4 border border-gray-100 flex-row items-center gap-4"
+            >
+               <View className="w-16 h-16 bg-purple-50 rounded-2xl items-center justify-center border border-purple-100">
+                  <Text className="text-2xl">👩‍🏫</Text>
+               </View>
+               <View className="flex-1">
+                  <Text className="font-black text-gray-900 text-lg">Алия Маратова</Text>
+                  <Text className="text-xs font-bold text-primary mt-0.5">Психолог-профориентолог</Text>
+                  <View className="flex-row items-center gap-1 mt-2">
+                     <View className="w-2 h-2 rounded-full bg-green-500" />
+                     <Text className="text-[10px] font-bold text-gray-400 uppercase">В сети</Text>
+                  </View>
+               </View>
+               <TouchableOpacity className="w-12 h-12 bg-purple-50 rounded-2xl items-center justify-center">
+                  <Feather name="message-circle" size={20} color={COLORS.primary} />
+               </TouchableOpacity>
+            </TouchableOpacity>
+         </View>
+
          {/* QR Code Login Stub */}
          {!child.phone && (
             <View style={SHADOWS.sm} className="bg-white rounded-[40px] p-8 mt-8 border border-gray-50 items-center">

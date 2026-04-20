@@ -97,20 +97,12 @@ export default function YouthHome() {
   const quickActions = [
     { label: "Мой пропуск", icon: "maximize", color: "#EC4899", route: "#qr" },
     {
-      label: "Календарь",
+      label: "Расписание",
       icon: "calendar",
       color: "#3B82F6",
       route: "/(tabs)/parent/calendar",
     },
   ];
-  if (isIndependent) {
-    quickActions.push({
-      label: "Ментор",
-      icon: "message-circle",
-      color: "#10B981",
-      route: "/(tabs)/chats",
-    });
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -149,10 +141,10 @@ export default function YouthHome() {
                     }}
                   >
                     {diagnostic?.recommendedConstellation || "Level 8"} •{" "}
-                    {diagnostic ? "Диагностика пройдена" : "2450 XP"}
+                    {diagnostic ? "Профиль готов" : "2450 XP"}
                   </Text>
                 </View>
-                <Pressable className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30">
+                <Pressable onPress={() => router.push("/profile" as any)} className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30">
                   <View className="w-full h-full bg-white/20 items-center justify-center">
                     <Feather name="user" size={20} color="white" />
                   </View>
@@ -161,16 +153,16 @@ export default function YouthHome() {
 
               <View className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
                 <View className="flex-row justify-between items-center mb-3">
-                  <Text className="text-white text-xs font-bold">
-                    Прогресс талантов
+                  <Text className="text-white text-xs font-bold uppercase tracking-wider">
+                    Энергия обучения
                   </Text>
                   <Text className="text-white text-xs font-black">
-                    {diagnostic ? "100%" : "45%"}
+                    85%
                   </Text>
                 </View>
                 <View className="h-2.5 bg-white/20 rounded-full overflow-hidden">
                   <View
-                    style={{ width: diagnostic ? "100%" : "45%" }}
+                    style={{ width: "85%" }}
                     className="h-full bg-white rounded-full"
                   />
                 </View>
@@ -217,27 +209,8 @@ export default function YouthHome() {
           ))}
         </View>
 
-        {/* AI Assistant Insight (BASIC) or Mentor Insight (PRO) */}
+        {/* AI Assistant Insight */}
         <View className="mb-8">
-          {isPro ? (
-            <View
-              style={SHADOWS.md}
-              className="bg-purple-50 p-6 rounded-[32px] border border-purple-100 flex-row items-center gap-4"
-            >
-              <View className="w-12 h-12 bg-white rounded-2xl items-center justify-center border border-purple-200 shadow-sm">
-                <Feather name="message-square" size={24} color="#6C5CE7" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-purple-900 font-black text-sm mb-1 uppercase tracking-tight">
-                  Твой наставник говорит:
-                </Text>
-                <Text className="text-purple-700 text-xs leading-4">
-                  «Привет! Твой прогресс впечатляет. Я добавил пару заданий на
-                  развитие лидерства. Посмотрим?»
-                </Text>
-              </View>
-            </View>
-          ) : (
             <View
               style={SHADOWS.sm}
               className="bg-blue-50 p-6 rounded-[32px] border border-blue-100 flex-row items-center gap-4"
@@ -263,7 +236,6 @@ export default function YouthHome() {
                 </Pressable>
               </View>
             </View>
-          )}
         </View>
 
         {/* Upcoming tasks hint */}

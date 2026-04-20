@@ -1,90 +1,225 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
-import { COLORS, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
-import { useMentorGroups } from "../../../hooks/useMentorData";
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
-export default function TeacherGroups() {
+// MOCK DATA for Teacher
+const MOCK_TEACHER_GROUPS = [
+  {
+    id: 'group-001',
+    group_name: 'Группа А',
+    course_title: 'Робототехника',
+    schedule: 'Пн/Ср/Пт 15:00',
+    current_students: 8,
+    max_students: 12,
+    status: 'active'
+  },
+  {
+    id: 'group-002',
+    group_name: 'Группа Б',
+    course_title: 'Робототехника',
+    schedule: 'Вт/Чт 16:00',
+    current_students: 7,
+    max_students: 10,
+    status: 'active'
+  },
+  {
+    id: 'group-003',
+    group_name: 'Python Junior',
+    course_title: 'Программирование',
+    schedule: 'Сб 10:00',
+    current_students: 12,
+    max_students: 15,
+    status: 'inactive'
+  }
+];
+
+export default function TeacherGroupsScreen() {
   const router = useRouter();
-  const { groups, loading } = useMentorGroups();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const paddingX = isDesktop ? 40 : 24;
+
+  const groups = MOCK_TEACHER_GROUPS;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: COLORS.background }}
-      contentContainerStyle={{ padding: 24, paddingBottom: 100 }}
-    >
-      <View style={{ marginBottom: 24 }}>
-        <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
-          Мои группы
-        </Text>
-        <Text style={{ fontSize: TYPOGRAPHY.size.md, color: COLORS.mutedForeground, marginTop: 4 }}>
-          {loading ? "Загрузка..." : `${groups.length} ${groups.length === 1 ? "группа" : "групп"}`}
-        </Text>
-      </View>
-
-      <View style={{ gap: 12 }}>
-        {groups.map((group) => (
-          <TouchableOpacity
-            key={group.id}
-            activeOpacity={0.8}
-            onPress={() => router.push(`/teacher/group/${group.id}` as any)}
-            style={{
-              backgroundColor: COLORS.card,
-              borderRadius: RADIUS.lg,
-              padding: 20,
-              borderWidth: 1,
-              borderColor: COLORS.border,
-            }}
-          >
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 18, fontWeight: "700", color: COLORS.foreground, marginBottom: 4 }}>
-                  {group.name}
+    <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+        
+        {/* Sticky Header */}
+        <View style={styles.header}>
+            <View style={{ paddingHorizontal: paddingX, paddingVertical: 16 }}>
+                <Text style={styles.headerTitle}>Мои группы</Text>
+                <Text style={styles.headerSubtitle}>
+                    {groups.length} {groups.length === 1 ? 'группа' : 'групп'}
                 </Text>
-                <Text style={{ fontSize: 14, fontWeight: "500", color: COLORS.primary }}>
-                  {group.course}
-                </Text>
-              </View>
-              <Feather name="chevron-right" size={24} color={COLORS.mutedForeground} />
             </View>
+        </View>
 
-            <View style={{ flexDirection: "row", gap: 16, marginBottom: 16 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Feather name="users" size={14} color={COLORS.mutedForeground} />
-                <Text style={{ fontSize: 14, color: COLORS.mutedForeground }}>
-                  {group.student_count} / {group.max_students} учеников
-                </Text>
-              </View>
-              {group.schedule && (
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Feather name="clock" size={14} color={COLORS.mutedForeground} />
-                  <Text style={{ fontSize: 14, color: COLORS.mutedForeground }}>{group.schedule}</Text>
+        <ScrollView 
+            showsVerticalScrollIndicator={false} 
+            contentContainerStyle={{ paddingHorizontal: paddingX, paddingTop: 20, paddingBottom: 100 }}
+        >
+          {groups.length === 0 ? (
+            <View style={styles.emptyState}>
+                <View style={styles.emptyIconBox}>
+                    <Feather name="users" size={32} color={COLORS.mutedForeground} />
                 </View>
-              )}
+                <Text style={styles.emptyTitle}>Нет групп</Text>
+                <Text style={styles.emptySub}>Вы пока не назначены на группы</Text>
             </View>
+          ) : (
+            <View style={{ gap: 16 }}>
+                {groups.map((group, idx) => (
+                    <MotiView
+                        key={group.id}
+                        from={{ opacity: 0, translateY: 10 }}
+                        animate={{ opacity: 1, translateY: 0 }}
+                        transition={{ delay: idx * 100 }}
+                    >
+                        <TouchableOpacity
+                            activeOpacity={0.9}
+                            onPress={() => router.push(`/teacher/group/${group.id}` as any)}
+                            style={styles.groupCard}
+                        >
+                            <View style={styles.cardHeader}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.groupName}>{group.group_name}</Text>
+                                    <Text style={styles.courseTitle}>{group.course_title}</Text>
+                                </View>
+                                <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
+                            </View>
 
-            <View style={{ flexDirection: "row", gap: 8 }}>
-              <View style={{
-                backgroundColor: group.active ? "#DCFCE7" : COLORS.muted,
-                paddingHorizontal: 12,
-                paddingVertical: 4,
-                borderRadius: RADIUS.full,
-              }}>
-                <Text style={{ fontSize: 12, fontWeight: "600", color: group.active ? "#166534" : COLORS.mutedForeground }}>
-                  {group.active ? "Активна" : "Неактивна"}
-                </Text>
-              </View>
+                            <View style={styles.cardInfoRow}>
+                                <View style={styles.infoItem}>
+                                    <View style={styles.infoIconBox}>
+                                        <Feather name="users" size={14} color="#6C5CE7" />
+                                    </View>
+                                    <Text style={styles.infoText}>{group.current_students} / {group.max_students} учеников</Text>
+                                </View>
+                                <View style={styles.infoItem}>
+                                    <View style={styles.infoIconBox}>
+                                        <Feather name="clock" size={14} color="#6C5CE7" />
+                                    </View>
+                                    <Text style={styles.infoText}>{group.schedule}</Text>
+                                </View>
+                            </View>
 
-              {group.student_count >= group.max_students && (
-                <View style={{ backgroundColor: "#FEF9C3", paddingHorizontal: 12, paddingVertical: 4, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 12, fontWeight: "600", color: "#854D0E" }}>Группа заполнена</Text>
-                </View>
-              )}
+                            <View style={styles.cardFooter}>
+                                <View style={[styles.statusBadge, group.status === 'active' ? styles.statusActive : styles.statusInactive]}>
+                                    <Text style={[styles.statusText, group.status === 'active' ? styles.statusActiveText : styles.statusInactiveText]}>
+                                        {group.status === 'active' ? 'Активна' : 'Неактивна'}
+                                    </Text>
+                                </View>
+                                {group.current_students >= group.max_students && (
+                                    <View style={styles.fullBadge}>
+                                        <Text style={styles.fullText}>Группа заполнена</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </TouchableOpacity>
+                    </MotiView>
+                ))}
             </View>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+          )}
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+    header: {
+        backgroundColor: 'rgba(255,255,255,0.7)',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6',
+        ...Platform.select({
+            web: { backdropFilter: 'blur(10px)' } as any,
+            ios: {  }
+        })
+    },
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: '900',
+        color: COLORS.foreground,
+        letterSpacing: -0.5
+    },
+    headerSubtitle: {
+        fontSize: 14,
+        color: COLORS.mutedForeground,
+        marginTop: 2,
+        fontWeight: '500'
+    },
+    groupCard: {
+        backgroundColor: 'white',
+        borderRadius: 24,
+        padding: 20,
+        ...SHADOWS.sm,
+        borderWidth: 1,
+        borderColor: '#F3F4F6'
+    },
+    cardHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 16
+    },
+    groupName: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: COLORS.foreground
+    },
+    courseTitle: {
+        fontSize: 14,
+        color: COLORS.primary,
+        fontWeight: '600',
+        marginTop: 2
+    },
+    cardInfoRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 16,
+        marginBottom: 16
+    },
+    infoItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8
+    },
+    infoIconBox: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        backgroundColor: '#F5F3FF',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    infoText: {
+        fontSize: 13,
+        color: COLORS.mutedForeground,
+        fontWeight: '500'
+    },
+    cardFooter: {
+        flexDirection: 'row',
+        gap: 8
+    },
+    statusBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 5,
+        borderRadius: 10
+    },
+    statusActive: { backgroundColor: '#F0FDF4' },
+    statusInactive: { backgroundColor: '#F9FAFB' },
+    statusText: { fontSize: 11, fontWeight: '700' },
+    statusActiveText: { color: '#16A34A' },
+    statusInactiveText: { color: '#6B7280' },
+    fullBadge: { backgroundColor: '#FFFBEB', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
+    fullText: { fontSize: 11, fontWeight: '700', color: '#D97706' },
+    emptyState: { alignItems: 'center', padding: 40 },
+    emptyIconBox: { width: 64, height: 64, borderRadius: 32, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+    emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.foreground },
+    emptySub: { fontSize: 14, color: COLORS.mutedForeground, marginTop: 4, textAlign: 'center' }
+});

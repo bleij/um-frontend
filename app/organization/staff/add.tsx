@@ -147,7 +147,7 @@ export default function StaffAddScreen() {
             animate={{ scale: 1, opacity: 1 }}
             style={{ backgroundColor: 'white', borderRadius: 32, padding: 32, width: '100%', maxWidth: 400, alignItems: 'center' }}
           >
-            <View style={{ width: 64, height: 64, backgroundColor: '#10B98115', borderRadius: 32, itemsCenter: 'center', justifyContent: 'center', marginBottom: 24, alignSelf: 'center', alignItems: 'center' }}>
+            <View style={{ width: 64, height: 64, backgroundColor: '#10B98115', borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 24, alignSelf: 'center' }}>
                <Feather name="check" size={32} color="#10B981" />
             </View>
             

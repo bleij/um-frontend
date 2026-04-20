@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
@@ -13,9 +14,10 @@ import {
   TouchableOpacity,
   View,
   useWindowDimensions,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { useAuth, type UserRole } from "../../contexts/AuthContext";
 
 const ROLES: {
@@ -24,48 +26,44 @@ const ROLES: {
   icon: React.ComponentProps<typeof Feather>["name"];
   role: UserRole;
   route: string;
+  color: string;
+  gradient: [string, string];
 }[] = [
   {
     title: "Родитель",
-    description: "Управление профилями детей, бронирование занятий",
+    description: "Управление профилями детей и кружками",
     icon: "users",
     role: "parent",
     route: "/profile/parent/create-profile",
+    color: "#6C5CE7",
+    gradient: ["#6C5CE7", "#8B7FE8"],
   },
   {
-    title: "Ребенок (6-11 лет)",
-    description: "Рисование, первые навыки и игры",
-    icon: "smile",
-    role: "child",
-    route: "/profile/youth/create-profile-child",
-  },
-  {
-    title: "Подросток (12-17 лет)",
-    description: "Цели, навыки и общение с ментором",
+    title: "Ученик",
+    description: "Цели, достижения и поиск интересов",
     icon: "zap",
     role: "youth",
     route: "/profile/youth/create-profile",
-  },
-  {
-    title: "Студент (18-20 лет)",
-    description: "Профориентация и серьезный рост",
-    icon: "book-open",
-    role: "young-adult",
-    route: "/profile/youth/create-profile-young-adult",
+    color: "#3B82F6",
+    gradient: ["#3B82F6", "#60A5FA"],
   },
   {
     title: "Организация",
-    description: "Управление клубами и учениками",
+    description: "Управление клубами и сотрудниками",
     icon: "briefcase",
     role: "org",
     route: "/profile/organization/create-profile",
+    color: "#10B981",
+    gradient: ["#10B981", "#34D399"],
   },
   {
     title: "Ментор",
-    description: "Создание планов развития и поддержка",
+    description: "Планы развития и сопровождение",
     icon: "user-check",
     role: "mentor",
     route: "/profile/mentor/create-profile",
+    color: "#EF4444",
+    gradient: ["#EF4444", "#F87171"],
   },
 ];
 
@@ -183,30 +181,13 @@ export default function RegisterScreen() {
     return otp.length === 6;
   };
 
-  const getSubtitle = () => {
-    if (step === 0) return "Выберите роль, чтобы продолжить";
-    if (step === 1) return "Введите номер и имя для регистрации";
-    return `Код отправлен на ${phoneNumber}`;
-  };
-
   const getButtonLabel = () => {
     if (step === 0) return "Далее";
     if (step === 1) return "Получить код";
     return "Создать аккаунт";
   };
 
-  const inputStyle = () => ({
-    width: "100%" as const,
-    paddingLeft: 48,
-    paddingRight: 16,
-    paddingVertical: 16,
-    backgroundColor: COLORS.muted,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    fontSize: 15,
-    color: COLORS.foreground,
-  });
+  const currentRoleInfo = ROLES.find(r => r.role === selectedRole);
 
   return (
     <KeyboardAvoidingView
@@ -214,508 +195,288 @@ export default function RegisterScreen() {
       style={{ flex: 1, backgroundColor: COLORS.background }}
     >
       <StatusBar style="dark" />
-      <SafeAreaView style={{ flex: 1 }}>
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            alignItems: "center",
-            paddingVertical: isDesktop ? 24 : 12,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View
-            style={{
-              flex: 1,
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
-              paddingHorizontal: horizontalPadding,
-              paddingTop: 8,
+      <View style={{ flex: 1 }}>
+        {/* Background blobs for color */}
+        <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+            <View style={{ 
+                position: 'absolute', 
+                top: -50, 
+                right: -50, 
+                width: 200, 
+                height: 200, 
+                borderRadius: 100, 
+                backgroundColor: `${selectedRole ? currentRoleInfo?.color : COLORS.primary}10`,
+            }} />
+            <View style={{ 
+                position: 'absolute', 
+                bottom: '20%', 
+                left: -80, 
+                width: 250, 
+                height: 250, 
+                borderRadius: 125, 
+                backgroundColor: `${selectedRole ? currentRoleInfo?.color : COLORS.secondary}05`,
+            }} />
+        </View>
+
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              alignItems: "center",
+              paddingVertical: isDesktop ? 24 : 12,
             }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {/* Back */}
-            <TouchableOpacity
-              onPress={handleBack}
+            <View
               style={{
-                flexDirection: "row",
-                alignItems: "center",
-                marginBottom: 32,
-              }}
-            >
-              <Feather name="arrow-left" size={18} color={COLORS.mutedForeground} />
-              <Text
-                style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 14 }}
-              >
-                Назад
-              </Text>
-            </TouchableOpacity>
-
-            {/* Header */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              transition={{ duration: 500 }}
-              style={{ marginBottom: 32 }}
-            >
-              <Text
-                style={{
-                  fontSize: 28,
-                  fontWeight: "700",
-                  color: COLORS.foreground,
-                  marginBottom: 8,
-                }}
-              >
-                Создайте аккаунт
-              </Text>
-              <Text
-                style={{ color: COLORS.mutedForeground, fontSize: 15, lineHeight: 22 }}
-              >
-                {getSubtitle()}
-              </Text>
-            </MotiView>
-
-            {/* Step 0: Role */}
-            {step === 0 && (
-              <MotiView
-                from={{ opacity: 0, translateY: 10 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ duration: 400 }}
-              >
-                {ROLES.map((item) => {
-                  const isSelected = selectedRole === item.role;
-                  return (
-                    <TouchableOpacity
-                      key={item.role}
-                      onPress={() => {
-                        setSelectedRole(item.role);
-                        setSelectedRoute(item.route);
-                      }}
-                      activeOpacity={0.7}
-                      style={{
-                        flexDirection: "row",
-                        alignItems: "center",
-                        padding: 16,
-                        marginBottom: 10,
-                        borderRadius: RADIUS.md,
-                        borderWidth: 2,
-                        borderColor: isSelected ? COLORS.primary : COLORS.border,
-                        backgroundColor: isSelected
-                          ? `${COLORS.primary}10`
-                          : COLORS.muted,
-                      }}
-                    >
-                      <View
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 12,
-                          backgroundColor: isSelected ? COLORS.primary : COLORS.border,
-                          justifyContent: "center",
-                          alignItems: "center",
-                          marginRight: 14,
-                        }}
-                      >
-                        <Feather
-                          name={item.icon}
-                          size={20}
-                          color={isSelected ? "white" : COLORS.mutedForeground}
-                        />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text
-                          style={{
-                            fontWeight: "600",
-                            fontSize: 15,
-                            color: isSelected ? COLORS.primary : COLORS.foreground,
-                            marginBottom: 2,
-                          }}
-                        >
-                          {item.title}
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            color: COLORS.mutedForeground,
-                            lineHeight: 16,
-                          }}
-                        >
-                          {item.description}
-                        </Text>
-                      </View>
-                      {isSelected && (
-                        <Feather name="check-circle" size={20} color={COLORS.primary} />
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              </MotiView>
-            )}
-
-            {/* Step 1: Phone + Name */}
-            {step === 1 && (
-              <MotiView
-                from={{ opacity: 0, translateY: 10 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ duration: 400 }}
-              >
-                {/* Phone */}
-                <View style={{ marginBottom: 16 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: COLORS.foreground,
-                      marginBottom: 8,
-                    }}
-                  >
-                    Номер телефона
-                  </Text>
-                  <View style={{ position: "relative", justifyContent: "center" }}>
-                    <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                      <Feather name="phone" size={18} color={COLORS.mutedForeground} />
-                    </View>
-                    <TextInput
-                      placeholder="+7 (999) 123-45-67"
-                      placeholderTextColor={COLORS.mutedForeground}
-                      value={phoneNumber}
-                      onChangeText={formatPhone}
-                      keyboardType="phone-pad"
-                      autoFocus
-                      style={inputStyle()}
-                    />
-                  </View>
-                </View>
-
-                {/* First name */}
-                <View style={{ marginBottom: 16 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: COLORS.foreground,
-                      marginBottom: 8,
-                    }}
-                  >
-                    Имя
-                  </Text>
-                  <View style={{ position: "relative", justifyContent: "center" }}>
-                    <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                      <Feather name="user" size={18} color={COLORS.mutedForeground} />
-                    </View>
-                    <TextInput
-                      placeholder="Введите имя"
-                      placeholderTextColor={COLORS.mutedForeground}
-                      value={firstName}
-                      onChangeText={setFirstName}
-                      style={inputStyle()}
-                    />
-                  </View>
-                </View>
-
-                {/* Last name */}
-                <View style={{ marginBottom: 16 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: COLORS.foreground,
-                      marginBottom: 8,
-                    }}
-                  >
-                    Фамилия (опционально)
-                  </Text>
-                  <View style={{ position: "relative", justifyContent: "center" }}>
-                    <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                      <Feather name="user" size={18} color={COLORS.mutedForeground} />
-                    </View>
-                    <TextInput
-                      placeholder="Введите фамилию"
-                      placeholderTextColor={COLORS.mutedForeground}
-                      value={lastName}
-                      onChangeText={setLastName}
-                      style={inputStyle()}
-                    />
-                  </View>
-                </View>
-
-                {/* Password */}
-                <View style={{ marginBottom: 16 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: COLORS.foreground,
-                      marginBottom: 8,
-                    }}
-                  >
-                    Пароль
-                  </Text>
-                  <View style={{ position: "relative", justifyContent: "center" }}>
-                    <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                      <Feather name="lock" size={18} color={COLORS.mutedForeground} />
-                    </View>
-                    <TextInput
-                      placeholder="Минимум 6 символов"
-                      placeholderTextColor={COLORS.mutedForeground}
-                      value={password}
-                      onChangeText={setPassword}
-                      secureTextEntry={!showPassword}
-                      style={{ ...inputStyle(), paddingRight: 48 }}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowPassword(!showPassword)}
-                      style={{ position: "absolute", right: 16, zIndex: 1 }}
-                    >
-                      <Feather
-                        name={showPassword ? "eye-off" : "eye"}
-                        size={18}
-                        color={COLORS.mutedForeground}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Confirm password */}
-                <View style={{ marginBottom: 16 }}>
-                  <Text
-                    style={{
-                      fontSize: 14,
-                      fontWeight: "500",
-                      color: COLORS.foreground,
-                      marginBottom: 8,
-                    }}
-                  >
-                    Подтвердите пароль
-                  </Text>
-                  <View style={{ position: "relative", justifyContent: "center" }}>
-                    <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                      <Feather name="lock" size={18} color={COLORS.mutedForeground} />
-                    </View>
-                    <TextInput
-                      placeholder="Повторите пароль"
-                      placeholderTextColor={COLORS.mutedForeground}
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      secureTextEntry={!showConfirmPassword}
-                      style={{ ...inputStyle(), paddingRight: 48 }}
-                    />
-                    <TouchableOpacity
-                      onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                      style={{ position: "absolute", right: 16, zIndex: 1 }}
-                    >
-                      <Feather
-                        name={showConfirmPassword ? "eye-off" : "eye"}
-                        size={18}
-                        color={COLORS.mutedForeground}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </MotiView>
-            )}
-
-            {/* Dev OTP banner */}
-            {step === 2 && !!devOtpCode && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
-                  marginBottom: 16,
-                  padding: 12,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: "#FEF9C3",
-                  borderWidth: 1,
-                  borderColor: "#FDE047",
-                }}
-              >
-                <Feather name="zap" size={14} color="#854D0E" />
-                <Text style={{ fontSize: 13, color: "#854D0E" }}>
-                  Dev mode — введите код:{" "}
-                  <Text style={{ fontWeight: "700" }}>{devOtpCode}</Text>
-                </Text>
-              </View>
-            )}
-
-            {/* Step 2: OTP */}
-            {step === 2 && (
-              <MotiView
-                from={{ opacity: 0, translateY: 10 }}
-                animate={{ opacity: 1, translateY: 0 }}
-                transition={{ duration: 400 }}
-                style={{ marginBottom: 16 }}
-              >
-                <Text
-                  style={{
-                    fontSize: 14,
-                    fontWeight: "500",
-                    color: COLORS.foreground,
-                    marginBottom: 8,
-                  }}
-                >
-                  Код подтверждения
-                </Text>
-                <View style={{ position: "relative", justifyContent: "center" }}>
-                  <View style={{ position: "absolute", left: 16, zIndex: 1 }}>
-                    <Feather name="lock" size={18} color={COLORS.mutedForeground} />
-                  </View>
-                  <TextInput
-                    placeholder="● ● ● ● ● ●"
-                    placeholderTextColor={COLORS.mutedForeground}
-                    value={otp}
-                    onChangeText={(t) => setOtp(t.replace(/\D/g, "").slice(0, 6))}
-                    keyboardType="number-pad"
-                    autoFocus
-                    style={{
-                      ...inputStyle(),
-                      fontSize: 20,
-                      fontWeight: "600",
-                      letterSpacing: 8,
-                    }}
-                  />
-                </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    setError("");
-                    sendOtp(phoneNumber);
-                  }}
-                  style={{ marginTop: 12, alignSelf: "flex-end" }}
-                >
-                  <Text style={{ color: COLORS.primary, fontSize: 13 }}>
-                    Отправить ещё раз
-                  </Text>
-                </TouchableOpacity>
-              </MotiView>
-            )}
-
-            {!!error && (
-              <View
-                style={{
-                  marginBottom: 16,
-                  marginTop: 8,
-                  padding: 12,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: "#FEE2E2",
-                }}
-              >
-                <Text style={{ color: "#B91C1C", fontWeight: "500", fontSize: 13 }}>
-                  {error}
-                </Text>
-              </View>
-            )}
-
-            {/* Action Button */}
-            <TouchableOpacity
-              onPress={handleAction}
-              disabled={!isButtonEnabled() || isSubmitting}
-              style={{
+                flex: 1,
                 width: "100%",
-                paddingVertical: 16,
-                borderRadius: RADIUS.md,
-                alignItems: "center",
-                backgroundColor: isButtonEnabled() ? COLORS.primary : COLORS.muted,
-                marginTop: 8,
-                marginBottom: 24,
+                maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+                paddingHorizontal: horizontalPadding,
+                paddingTop: 8,
               }}
             >
-              {isSubmitting ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: "600",
-                    color: isButtonEnabled() ? "white" : COLORS.mutedForeground,
-                  }}
-                >
-                  {getButtonLabel()}
-                </Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Divider + Social — only on step 0 */}
-            {step === 0 && (
-              <>
-                <View
+              {/* Header Nav */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                <TouchableOpacity
+                  onPress={handleBack}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    marginBottom: 20,
                   }}
                 >
-                  <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
-                  <Text
-                    style={{
-                      marginHorizontal: 12,
-                      color: COLORS.mutedForeground,
-                      fontSize: 13,
-                    }}
-                  >
-                    или через
+                  <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
+                  <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: '500' }}>
+                    Назад
                   </Text>
-                  <View style={{ flex: 1, height: 1, backgroundColor: COLORS.border }} />
-                </View>
+                </TouchableOpacity>
 
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "center",
-                    gap: 12,
-                    marginBottom: 32,
-                  }}
-                >
-                  <TouchableOpacity
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: RADIUS.md,
-                      backgroundColor: COLORS.card,
-                      borderWidth: 2,
-                      borderColor: COLORS.border,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Text style={{ fontSize: 20, fontWeight: "700", color: "#ea4335" }}>
-                      G
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: RADIUS.md,
-                      backgroundColor: COLORS.card,
-                      borderWidth: 2,
-                      borderColor: COLORS.border,
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Feather name="github" size={22} color={COLORS.foreground} />
-                  </TouchableOpacity>
+                {/* Step Indicator */}
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                    {[0, 1, 2].map((i) => (
+                        <View key={i} style={{ 
+                            width: step === i ? 24 : 8, 
+                            height: 8, 
+                            borderRadius: 4, 
+                            backgroundColor: step === i ? (selectedRole ? currentRoleInfo?.color : COLORS.primary) : COLORS.border,
+                        }} />
+                    ))}
                 </View>
-              </>
-            )}
+              </View>
 
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "center",
-                paddingBottom: 24,
-              }}
-            >
-              <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
-                уже есть аккаунт?{" "}
-              </Text>
-              <TouchableOpacity onPress={() => router.push("/login")}>
-                <Text style={{ color: COLORS.primary, fontWeight: "600", fontSize: 14 }}>
-                  Войти
+              {/* Title Section */}
+              <MotiView
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{ duration: 500 }}
+                style={{ marginBottom: 32 }}
+              >
+                <Text style={{ fontSize: 32, fontWeight: "900", color: COLORS.foreground, marginBottom: 8, letterSpacing: -0.5 }}>
+                  {step === 0 ? "Давайте знакомиться" : step === 1 ? "Детали профиля" : "Почти готово"}
                 </Text>
+                <Text style={{ color: COLORS.mutedForeground, fontSize: 16, lineHeight: 24 }}>
+                  {step === 0 ? "Выберите вашу роль, чтобы мы настроили приложение специально под вас" : 
+                   step === 1 ? "Введите контактные данные для создания вашей учетной записи" : 
+                   `Введите 6-значный код, отправленный на ${phoneNumber}`}
+                </Text>
+              </MotiView>
+
+              {/* Step 0: Vibrant Role Selection */}
+              {step === 0 && (
+                <View>
+                  {ROLES.map((item, index) => {
+                    const isSelected = selectedRole === item.role;
+                    return (
+                      <MotiView
+                        key={item.role}
+                        from={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 300, delay: index * 50 }}
+                      >
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedRole(item.role);
+                            setSelectedRoute(item.route);
+                          }}
+                          activeOpacity={0.8}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            padding: 18,
+                            marginBottom: 12,
+                            borderRadius: RADIUS.xl,
+                            backgroundColor: isSelected ? 'white' : COLORS.card,
+                            borderWidth: 2,
+                            borderColor: isSelected ? item.color : 'transparent',
+                            ...SHADOWS.sm,
+                            elevation: isSelected ? 4 : 1,
+                          }}
+                        >
+                          <LinearGradient
+                            colors={item.gradient}
+                            style={{
+                              width: 54,
+                              height: 54,
+                              borderRadius: 16,
+                              justifyContent: "center",
+                              alignItems: "center",
+                              marginRight: 16,
+                            }}
+                          >
+                            <Feather name={item.icon} size={24} color="white" />
+                          </LinearGradient>
+                          
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontWeight: "800", fontSize: 16, color: COLORS.foreground, marginBottom: 4 }}>
+                              {item.title}
+                            </Text>
+                            <Text style={{ fontSize: 13, color: COLORS.mutedForeground, lineHeight: 18 }}>
+                              {item.description}
+                            </Text>
+                          </View>
+
+                          {isSelected && (
+                            <MotiView from={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring' }}>
+                              <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: item.color, alignItems: 'center', justifyContent: 'center' }}>
+                                <Feather name="check" size={14} color="white" />
+                              </View>
+                            </MotiView>
+                          )}
+                        </TouchableOpacity>
+                      </MotiView>
+                    );
+                  })}
+                </View>
+              )}
+
+              {/* Step 1 & 2: Form Fields */}
+              {(step === 1 || step === 2) && (
+                <MotiView
+                  from={{ opacity: 0, translateX: 10 }}
+                  animate={{ opacity: 1, translateX: 0 }}
+                  style={{ backgroundColor: 'white', borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md }}
+                >
+                  {step === 1 && (
+                    <>
+                      <Field label="Номер телефона" icon="phone" value={phoneNumber} onChange={formatPhone} placeholder="+7 (___) ___-__-__" keyboardType="phone-pad" autoFocus />
+                      <Field label="Имя" icon="user" value={firstName} onChange={setFirstName} placeholder="Как к вам обращаться?" />
+                      <Field label="Фамилия (опционально)" icon="user" value={lastName} onChange={setLastName} placeholder="Ваша фамилия" />
+                      <Field label="Пароль" icon="lock" value={password} onChange={setPassword} placeholder="Минимум 6 символов" secure showToggle={() => setShowPassword(!showPassword)} shown={showPassword} />
+                      <Field label="Подтвердите пароль" icon="lock" value={confirmPassword} onChange={setConfirmPassword} placeholder="Тот же пароль" secure showToggle={() => setShowConfirmPassword(!showConfirmPassword)} shown={showConfirmPassword} />
+                    </>
+                  )}
+
+                  {step === 2 && (
+                    <View style={{ alignItems: 'center' }}>
+                        {!!devOtpCode && (
+                          <View style={{ backgroundColor: '#FEF9C3', padding: 8, borderRadius: 8, marginBottom: 20, width: '100%', alignItems: 'center' }}>
+                             <Text style={{ color: '#854D0E', fontSize: 12, fontWeight: 'bold' }}>DEV MODE: {devOtpCode}</Text>
+                          </View>
+                        )}
+                        <TextInput
+                          placeholder="000000"
+                          placeholderTextColor={COLORS.border}
+                          value={otp}
+                          onChangeText={(t) => setOtp(t.replace(/\D/g, "").slice(0, 6))}
+                          keyboardType="number-pad"
+                          autoFocus
+                          style={{ 
+                            fontSize: 48, 
+                            fontWeight: '900', 
+                            textAlign: 'center', 
+                            letterSpacing: 10,
+                            color: currentRoleInfo?.color || COLORS.primary,
+                            marginBottom: 20
+                          }}
+                        />
+                        <TouchableOpacity onPress={() => sendOtp(phoneNumber)}>
+                          <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
+                            Не получили код? <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: 'bold' }}>Отправить еще раз</Text>
+                          </Text>
+                        </TouchableOpacity>
+                    </View>
+                  )}
+                </MotiView>
+              )}
+
+              {error && (
+                <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ marginTop: 16, padding: 12, borderRadius: RADIUS.md, backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FCA5A5' }}>
+                   <Text style={{ color: '#B91C1C', textAlign: 'center', fontSize: 13, fontWeight: '600' }}>{error}</Text>
+                </MotiView>
+              )}
+
+              {/* Action Button */}
+              <TouchableOpacity
+                onPress={handleAction}
+                disabled={!isButtonEnabled() || isSubmitting}
+                style={{ marginTop: 32 }}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                    colors={isButtonEnabled() ? (currentRoleInfo?.gradient || [COLORS.primary, COLORS.secondary]) : [COLORS.muted, COLORS.muted]}
+                    style={{
+                        paddingVertical: 18,
+                        borderRadius: RADIUS.xl,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        ...SHADOWS.md,
+                    }}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text style={{ fontSize: 18, fontWeight: "800", color: isButtonEnabled() ? "white" : COLORS.mutedForeground }}>
+                      {getButtonLabel()}
+                    </Text>
+                  )}
+                </LinearGradient>
               </TouchableOpacity>
+
+              {/* Login link */}
+              <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
+                <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Уже есть аккаунт? </Text>
+                <TouchableOpacity onPress={() => router.push("/login")}>
+                  <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: "800", fontSize: 15 }}>Войти</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
+
+function Field({ label, icon, value, onChange, placeholder, keyboardType = 'default', secure = false, autoFocus = false, showToggle, shown }: any) {
+    return (
+        <View style={{ marginBottom: 20 }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.foreground, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.7 }}>
+                {label}
+            </Text>
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+                <Feather name={icon} size={18} color={COLORS.mutedForeground} style={{ position: 'absolute', left: 16, zIndex: 1 }} />
+                <TextInput
+                    value={value}
+                    onChangeText={onChange}
+                    placeholder={placeholder}
+                    placeholderTextColor={COLORS.mutedForeground}
+                    keyboardType={keyboardType as any}
+                    secureTextEntry={secure && !shown}
+                    autoFocus={autoFocus}
+                    className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border border-gray-100"
+                    style={{ fontSize: 15, fontWeight: '500' }}
+                />
+                {secure && showToggle && (
+                    <TouchableOpacity onPress={showToggle} style={{ position: 'absolute', right: 16, zIndex: 1 }}>
+                        <Feather name={shown ? 'eye-off' : 'eye'} size={18} color={COLORS.mutedForeground} />
+                    </TouchableOpacity>
+                )}
+            </View>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    // Add any necessary manual styles
+});

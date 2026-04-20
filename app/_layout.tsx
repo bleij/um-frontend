@@ -6,6 +6,7 @@ import {
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../constants/theme";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { DevSettingsProvider } from "../contexts/DevSettingsContext";
 import { ParentDataProvider } from "../contexts/ParentDataContext";
@@ -35,8 +36,8 @@ function RootNavigator() {
     if (
       user &&
       inAuthGroup &&
-      authScreen !== "role" &&
-      authScreen !== "register" &&
+      (authScreen as string) !== "role" &&
+      (authScreen as string) !== "register" &&
       !devMode
     ) {
       router.replace("/(tabs)/home");
