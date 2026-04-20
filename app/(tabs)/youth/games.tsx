@@ -8,12 +8,13 @@ import { COLORS, SHADOWS, RADIUS, SPACING } from "../../../constants/theme";
 import MemoryGame from "../../../components/games/MemoryGame";
 import Game2048 from "../../../components/games/Game2048";
 import Minesweeper from "../../../components/games/Minesweeper";
+import Sudoku from "../../../components/games/Sudoku";
 
 const { width } = Dimensions.get("window");
 
 const GAMES = [
     { id: 'memory', title: 'Пары', icon: 'brain', color: '#6C5CE7', desc: 'Тренируй зрительную память', points: '+20 IQ' },
-    { id: 'sudoku', title: 'Судоку', icon: 'grid', color: '#3B82F6', desc: 'Математическая логика', points: '+50 IQ', locked: true },
+    { id: 'sudoku', title: 'Судоку', icon: 'grid', color: '#3B82F6', desc: 'Математическая логика', points: '+50 IQ' },
     { id: 'minesweeper', title: 'Сапер', icon: 'target', color: '#EF4444', desc: 'Стратегическое мышление', points: '+40 IQ' },
     { id: '2048', title: '2048', icon: 'hash', color: '#F59E0B', desc: 'Складывай числа', points: '+30 IQ' },
 ];
@@ -146,6 +147,7 @@ export default function GamesLobby() {
                         {selectedGame === 'memory' && <MemoryGame onFinish={handleFinishGame} />}
                         {selectedGame === '2048' && <Game2048 onFinish={handleFinishGame} />}
                         {selectedGame === 'minesweeper' && <Minesweeper onFinish={handleFinishGame} />}
+                        {selectedGame === 'sudoku' && <Sudoku onFinish={handleFinishGame} />}
                     </SafeAreaView>
                 </GestureHandlerRootView>
             </Modal>
