@@ -32,7 +32,7 @@ const SKILLS = [
 
 
 import { useParentData } from "../../contexts/ParentDataContext";
-import { courses } from "../../data/courses";
+import { courseGradient, usePublicCourses } from "../../hooks/usePublicData";
 import { useStudentTasks, useYouthAchievements } from "../../hooks/useStudentData";
 
 export default function YouthHome() {
@@ -40,6 +40,7 @@ export default function YouthHome() {
   const { user } = useAuth();
   const { childrenProfile, activeChildId, parentProfile } = useParentData();
   const { width } = useWindowDimensions();
+  const { courses } = usePublicCourses();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
@@ -386,33 +387,44 @@ export default function YouthHome() {
             showsHorizontalScrollIndicator={false}
             className="-mx-1 px-1 overflow-visible"
           >
-            {courses.slice(0, 3).map((rec, idx) => (
-              <View
-                key={rec.id}
-                style={SHADOWS.sm}
-                className="w-64 bg-white rounded-[32px] overflow-hidden border border-gray-50 mr-4 pb-4"
-              >
-                <View className="h-32 bg-purple-50 items-center justify-center">
-                  <Feather name="cpu" size={32} color="#A78BFA" />
-                </View>
-                <View className="p-4">
-                  <Text className="font-bold text-gray-900 mb-1">
-                    {rec.title}
-                  </Text>
-                  <Text
-                    className="text-xs text-gray-400 mb-3"
-                    numberOfLines={2}
-                  >
-                    {rec.description}
-                  </Text>
-                  <Pressable className="bg-purple-100 py-3 rounded-xl items-center">
-                    <Text className="text-purple-600 font-bold text-xs uppercase">
-                      {isIndependent ? "Записаться" : "Хочу сюда"}
-                    </Text>
-                  </Pressable>
-                </View>
+            {courses.length === 0 ? (
+              <View style={{ width: 240, backgroundColor: "#F9FAFB", borderRadius: 28, padding: 24, alignItems: "center", justifyContent: "center", marginRight: 16, borderWidth: 1, borderColor: "#F3F4F6" }}>
+                <Feather name="inbox" size={28} color="#D1D5DB" />
+                <Text style={{ color: "#9CA3AF", fontWeight: "700", fontSize: 12, marginTop: 10, textAlign: "center" }}>
+                  Курсы скоро появятся
+                </Text>
               </View>
-            ))}
+            ) : courses.slice(0, 3).map((rec, idx) => {
+              const [c1] = courseGradient(idx);
+              return (
+                <View
+                  key={rec.id}
+                  style={[SHADOWS.sm, { width: 220, backgroundColor: "white", borderRadius: 28, overflow: "hidden", borderWidth: 1, borderColor: "#F9FAFB", marginRight: 16, paddingBottom: 16 }]}
+                >
+                  <View style={{ height: 120, backgroundColor: c1 + "15", alignItems: "center", justifyContent: "center" }}>
+                    <Feather name={(rec.icon as any) || "book-open"} size={32} color={c1} />
+                  </View>
+                  <View style={{ padding: 14 }}>
+                    <Text style={{ fontWeight: "800", color: "#111827", marginBottom: 2 }} numberOfLines={1}>
+                      {rec.title}
+                    </Text>
+                    {rec.org_name ? (
+                      <Text style={{ fontSize: 11, color: "#9CA3AF", fontWeight: "600", marginBottom: 8 }} numberOfLines={1}>
+                        {rec.org_name}
+                      </Text>
+                    ) : null}
+                    <Pressable
+                      onPress={() => router.push(`/parent/club/${rec.id}` as any)}
+                      style={{ backgroundColor: "#EDE9FE", paddingVertical: 10, borderRadius: 14, alignItems: "center" }}
+                    >
+                      <Text style={{ color: "#6C5CE7", fontWeight: "800", fontSize: 11, textTransform: "uppercase" }}>
+                        {isIndependent ? "Записаться" : "Хочу сюда"}
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
           </ScrollView>
         </View>
 

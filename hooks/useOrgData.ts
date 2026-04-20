@@ -14,11 +14,28 @@ export interface OrgStaffMember {
   created_at: string;
 }
 
+export interface OrgCourse {
+  id: string;
+  org_id: string;
+  title: string;
+  description: string | null;
+  level: "beginner" | "intermediate" | "advanced";
+  price: number;
+  icon: string;
+  skills: string[];
+  status: "draft" | "active" | "archived";
+  age_min: number | null;
+  age_max: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface OrgGroup {
   id: string;
   org_id: string;
   name: string;
   course: string | null;
+  course_id: string | null;
   schedule: string | null;
   capacity: number;
   enrolled: number;
@@ -332,6 +349,110 @@ export interface OrgScheduleItem {
   day_of_week: number;
 }
 
+// ─── useOrgCourses ────────────────────────────────────────────
+type CourseInput = {
+  title: string;
+  description?: string;
+  level: string;
+  price: number;
+  icon: string;
+  skills: string[];
+  status: string;
+};
+
+export function useOrgCourses() {
+  const { user } = useAuth();
+  const [courses, setCourses] = useState<OrgCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setCourses([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) { setCourses([]); setLoading(false); return; }
+    const res = await supabase
+      .from("org_courses")
+      .select("*")
+      .eq("org_id", orgId)
+      .order("created_at", { ascending: true });
+    setCourses(ok<OrgCourse>(res));
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const createCourse = useCallback(async (
+    data: CourseInput,
+  ): Promise<{ data: OrgCourse | null; error: string | null }> => {
+    if (!supabase || !isSupabaseConfigured || !user?.id)
+      return { data: null, error: "Not configured" };
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) return { data: null, error: "Organisation not found" };
+    const res = await supabase
+      .from("org_courses")
+      .insert({ ...data, org_id: orgId })
+      .select()
+      .single();
+    if (res.error) return { data: null, error: res.error.message };
+    refresh();
+    return { data: res.data as OrgCourse, error: null };
+  }, [user?.id, refresh]);
+
+  const updateCourse = useCallback(async (
+    id: string,
+    data: Partial<CourseInput>,
+  ): Promise<{ error: string | null }> => {
+    if (!supabase) return { error: "Not configured" };
+    const res = await supabase
+      .from("org_courses")
+      .update({ ...data, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (res.error) return { error: res.error.message };
+    refresh();
+    return { error: null };
+  }, [refresh]);
+
+  const deleteCourse = useCallback(async (
+    id: string,
+  ): Promise<{ error: string | null }> => {
+    if (!supabase) return { error: "Not configured" };
+    const res = await supabase.from("org_courses").delete().eq("id", id);
+    if (res.error) return { error: res.error.message };
+    refresh();
+    return { error: null };
+  }, [refresh]);
+
+  return { courses, loading, refresh, createCourse, updateCourse, deleteCourse };
+}
+
+// ─── useOrgCourseById ─────────────────────────────────────────
+export function useOrgCourseById(id: string | undefined) {
+  const [course, setCourse] = useState<OrgCourse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(() => {
+    if (!supabase || !isSupabaseConfigured || !id) { setLoading(false); return; }
+    supabase
+      .from("org_courses")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle()
+      .then((res) => {
+        setCourse(res.data ?? null);
+        setLoading(false);
+      });
+  }, [id]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { course, loading, refresh };
+}
+
+// ─── useOrgSchedule ───────────────────────────────────────────
 export function useOrgSchedule(dayOfWeek?: number) {
   const { user } = useAuth();
   const [items, setItems] = useState<OrgScheduleItem[]>([]);

@@ -33,6 +33,7 @@ export interface Organization {
   rating: number;
   active_students: number;
   commission_pct: number;
+  owner_user_id: string | null;
 }
 
 export interface Transaction {
@@ -166,7 +167,7 @@ export function useOrganizations() {
   const refresh = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured) { setLoading(false); return; }
     setLoading(true);
-    const res = await supabase.from("organizations").select("*").order("created_at", { ascending: false });
+    const res = await supabase.from("organizations").select("*, owner_user_id").order("created_at", { ascending: false });
     setData(ok<Organization>(res));
     setLoading(false);
   }, []);
@@ -315,7 +316,86 @@ export function useAIRules() {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
-  return { data, loading, refresh };
+
+  const toggle = async (id: string, enabled: boolean) => {
+    if (!supabase) return;
+    await supabase.from("ai_rules").update({ enabled }).eq("id", id);
+    refresh();
+  };
+
+  const updateRule = async (
+    id: string,
+    patch: Partial<Pick<AIRule, "name" | "condition" | "recommendation_title" | "recommendation_body">>,
+  ) => {
+    if (!supabase) return;
+    await supabase.from("ai_rules").update(patch).eq("id", id);
+    refresh();
+  };
+
+  return { data, loading, refresh, toggle, updateRule };
+}
+
+export interface AdminEnrollment {
+  id: string;
+  org_id: string;
+  org_name: string;
+  child_name: string;
+  child_age: number | null;
+  parent_name: string | null;
+  club: string | null;
+  applied_date: string | null;
+  status: "paid" | "awaiting_payment" | "activated" | "completed" | "rejected";
+  created_at: string;
+}
+
+export function useAdminEnrollments() {
+  const [data, setData] = useState<AdminEnrollment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured) { setLoading(false); return; }
+    setLoading(true);
+    const [appRes, orgsRes] = await Promise.all([
+      supabase.from("org_applications").select("*").order("created_at", { ascending: false }).limit(200),
+      supabase.from("organizations").select("id, name"),
+    ]);
+    const orgMap = new Map<string, string>(ok<any>(orgsRes).map((o) => [o.id, o.name]));
+    setData(
+      ok<any>(appRes).map((a) => ({
+        id: a.id,
+        org_id: a.org_id,
+        org_name: orgMap.get(a.org_id) ?? "—",
+        child_name: a.child_name,
+        child_age: a.child_age ?? null,
+        parent_name: a.parent_name ?? null,
+        club: a.club ?? null,
+        applied_date: a.applied_date ?? null,
+        status: a.status,
+        created_at: a.created_at,
+      })),
+    );
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const markPaid = async (id: string) => {
+    if (!supabase) return;
+    await supabase.from("org_applications").update({ status: "paid" }).eq("id", id);
+    refresh();
+  };
+  const activate = async (id: string) => {
+    if (!supabase) return;
+    await supabase.from("org_applications").update({ status: "activated" }).eq("id", id);
+    refresh();
+  };
+  const reject = async (id: string) => {
+    if (!supabase) return;
+    await supabase.from("org_applications").update({ status: "rejected" }).eq("id", id);
+    refresh();
+  };
+
+  return { data, loading, refresh, markPaid, activate, reject };
 }
 
 export function useTestQuestions() {
@@ -351,6 +431,96 @@ export function useTestQuestions() {
   };
 
   return { data, loading, refresh, remove };
+}
+
+export interface AdminCourse {
+  id: string;
+  org_id: string;
+  org_name: string;
+  title: string;
+  description: string | null;
+  level: string;
+  price: number;
+  skills: string[];
+  status: "draft" | "active" | "archived";
+  age_min: number | null;
+  age_max: number | null;
+  created_at: string;
+}
+
+export interface AdminUser {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  role: string;
+  phone: string | null;
+  updated_at: string;
+}
+
+export function useAdminCourses() {
+  const [data, setData] = useState<AdminCourse[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured) { setLoading(false); return; }
+    setLoading(true);
+    const [coursesRes, orgsRes] = await Promise.all([
+      supabase.from("org_courses").select("*").order("created_at", { ascending: false }),
+      supabase.from("organizations").select("id, name"),
+    ]);
+    const orgMap = new Map<string, string>(ok<any>(orgsRes).map((o) => [o.id, o.name]));
+    setData(
+      ok<any>(coursesRes).map((c) => ({
+        id: c.id,
+        org_id: c.org_id,
+        org_name: orgMap.get(c.org_id) ?? "—",
+        title: c.title,
+        description: c.description ?? null,
+        level: c.level ?? "beginner",
+        price: Number(c.price ?? 0),
+        skills: Array.isArray(c.skills) ? c.skills : [],
+        status: c.status ?? "draft",
+        age_min: c.age_min ?? null,
+        age_max: c.age_max ?? null,
+        created_at: c.created_at,
+      })),
+    );
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const approveCourse = async (id: string) => {
+    if (!supabase) return;
+    await supabase.from("org_courses").update({ status: "active" }).eq("id", id);
+    refresh();
+  };
+  const rejectCourse = async (id: string) => {
+    if (!supabase) return;
+    await supabase.from("org_courses").update({ status: "archived" }).eq("id", id);
+    refresh();
+  };
+
+  return { data, loading, refresh, approveCourse, rejectCourse };
+}
+
+export function useAllUsers() {
+  const [data, setData] = useState<AdminUser[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured) { setLoading(false); return; }
+    setLoading(true);
+    const res = await supabase
+      .from("um_user_profiles")
+      .select("id, first_name, last_name, role, phone, updated_at")
+      .order("updated_at", { ascending: false });
+    setData(ok<AdminUser>(res));
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+  return { data, loading, refresh };
 }
 
 export function useAdminStats(

@@ -21,7 +21,7 @@ import {
 } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParentData } from "../../contexts/ParentDataContext";
-import { courses } from "../../data/courses";
+import { courseGradient, SCORE_TO_SKILLS, usePublicCourses } from "../../hooks/usePublicData";
 
 export default function ParentHome() {
   const router = useRouter();
@@ -43,17 +43,24 @@ export default function ParentHome() {
   const activeChild =
     children.find((child) => child.id === activeChildId) || children[0] || null;
 
-  const recommendations = useMemo(() => {
-    if (!activeChild) return [];
+  const { courses: publicCourses } = usePublicCourses();
 
-    return courses.slice(0, 3).map((course, index) => ({
-      id: String(course.id),
-      title: course.title,
-      age: course.age,
-      for: activeChild.name,
-      rating: (4.6 + index * 0.1).toFixed(1),
-    }));
-  }, [activeChild]);
+  const recommendations = useMemo(() => {
+    if (publicCourses.length === 0) return [];
+    if (!activeChild?.talentProfile) return publicCourses.slice(0, 3);
+
+    const scores = activeChild.talentProfile.scores as Record<string, number>;
+    const topTraits = Object.entries(scores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([t]) => t);
+    const wantedSkills = new Set(topTraits.flatMap((t) => SCORE_TO_SKILLS[t] ?? []));
+
+    const matched = publicCourses.filter((c) =>
+      c.skills.some((s) => wantedSkills.has(s)),
+    );
+    return (matched.length > 0 ? matched : publicCourses).slice(0, 3);
+  }, [activeChild, publicCourses]);
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -283,43 +290,44 @@ export default function ParentHome() {
             showsHorizontalScrollIndicator={false}
             style={{ paddingLeft: horizontalPadding }}
           >
-            {recommendations.map((rec) => (
-              <Pressable
-                key={rec.id}
-                onPress={() => router.push(`/parent/club/${rec.id}` as any)}
-                style={SHADOWS.sm}
-                className="mr-4 w-64 bg-white rounded-[32px] overflow-hidden border border-gray-50"
-              >
-                <View className="h-32 bg-gray-100">
-                  <View className="absolute top-3 right-3 z-10 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full flex-row items-center gap-1">
-                    <Feather name="star" size={10} color="#FBBF24" />
-                    <Text className="text-[10px] font-black text-gray-700">
-                      {rec.rating}
-                    </Text>
-                  </View>
-                  {/* Image placeholder */}
-                  <View className="w-full h-full items-center justify-center">
-                    <Feather name="image" size={24} color="#D1D5DB" />
-                  </View>
-                </View>
-                <View className="p-4">
-                  <Text
-                    className="font-bold text-gray-900 mb-1"
-                    numberOfLines={1}
+            {recommendations.length === 0 ? (
+              <View style={{ width: 260, backgroundColor: "#F9FAFB", borderRadius: 28, padding: 24, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#F3F4F6" }}>
+                <Feather name="inbox" size={28} color="#D1D5DB" />
+                <Text style={{ color: "#9CA3AF", fontWeight: "700", fontSize: 13, marginTop: 10, textAlign: "center" }}>
+                  Курсы появятся{"\n"}когда организации их добавят
+                </Text>
+              </View>
+            ) : (
+              recommendations.map((rec, idx) => {
+                const [c1, c2] = courseGradient(idx);
+                return (
+                  <Pressable
+                    key={rec.id}
+                    onPress={() => router.push(`/parent/club/${rec.id}` as any)}
+                    style={[SHADOWS.sm, { marginRight: 16, width: 240, backgroundColor: "white", borderRadius: 28, overflow: "hidden", borderWidth: 1, borderColor: "#F9FAFB" }]}
                   >
-                    {rec.title}
-                  </Text>
-                  <Text className="text-[10px] text-gray-400 font-bold uppercase mb-3">
-                    {rec.age}
-                  </Text>
-                  <View className="bg-purple-50 self-start px-2 py-1 rounded-lg">
-                    <Text className="text-[9px] font-black text-purple-600 uppercase">
-                      ДЛЯ: {rec.for}
-                    </Text>
-                  </View>
-                </View>
-              </Pressable>
-            ))}
+                    <View style={{ height: 120, backgroundColor: c1 + "20", alignItems: "center", justifyContent: "center" }}>
+                      <Feather name={(rec.icon as any) || "book-open"} size={36} color={c1} />
+                    </View>
+                    <View style={{ padding: 14 }}>
+                      <Text style={{ fontWeight: "800", color: "#111827", marginBottom: 2, fontSize: 14 }} numberOfLines={1}>
+                        {rec.title}
+                      </Text>
+                      {rec.org_name ? (
+                        <Text style={{ fontSize: 11, color: "#9CA3AF", fontWeight: "600", marginBottom: 6 }} numberOfLines={1}>
+                          {rec.org_name}
+                        </Text>
+                      ) : null}
+                      <View style={{ backgroundColor: "#EDE9FE", alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                        <Text style={{ fontSize: 9, fontWeight: "900", color: "#6C5CE7", textTransform: "uppercase" }}>
+                          {rec.price.toLocaleString()} ₸/мес
+                        </Text>
+                      </View>
+                    </View>
+                  </Pressable>
+                );
+              })
+            )}
           </ScrollView>
         </View>
 

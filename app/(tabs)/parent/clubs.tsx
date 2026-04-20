@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -14,62 +15,68 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 import { useParentData } from "../../../contexts/ParentDataContext";
-import { courses } from "../../../data/courses";
+import {
+  courseGradient,
+  SCORE_TO_SKILLS,
+  usePublicCourses,
+} from "../../../hooks/usePublicData";
 
-const CATEGORIES = ["Все", "Технологии", "Искусство", "Спорт", "Мышление"];
-const CATEGORY_TO_TAGS: Record<string, string[]> = {
-  "Технологии": ["it"],
-  "Искусство": ["творчество", "гум"],
-  "Спорт": ["спорт"],
-  "Мышление": ["мат", "естеств"]
-};
+// Skill-based filter chips shown in the catalog
+const SKILL_FILTERS = [
+  "Все", "Код", "Логика", "Математика", "Дизайн",
+  "Языки", "Команда", "Креативность",
+];
 
 export default function ParentClubs() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { childrenProfile, activeChildId } = useParentData();
-  const [activeCategory, setActiveCategory] = useState("Все");
+  const [activeSkill, setActiveSkill] = useState("Все");
   const [search, setSearch] = useState("");
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-  const activeChild = childrenProfile.find(c => c.id === activeChildId) || childrenProfile[0];
+  const { courses, loading } = usePublicCourses();
 
-  const SCORE_TO_TAGS: Record<string, string[]> = {
-    creative: ["творчество", "гум"],
-    logical: ["it", "мат"],
-    social: ["гум", "творчество"],
-    physical: ["спорт"],
-    linguistic: ["гум"]
-  };
+  const activeChild =
+    childrenProfile.find((c) => c.id === activeChildId) || childrenProfile[0];
 
-  const getRecommendations = () => {
-    if (!activeChild?.talentProfile) return [];
+  // ── AI recommendations based on talent profile ──────────────────────────────
+  const recommendedCourses = useMemo(() => {
+    if (!activeChild?.talentProfile || courses.length === 0) return [];
     const scores = activeChild.talentProfile.scores as Record<string, number>;
-    
-    // Find top 2 traits
-    const sortedTraits = Object.entries(scores).sort((a, b) => b[1] - a[1]).slice(0, 2);
-    
-    let recommendedTags: string[] = [];
-    sortedTraits.forEach(([trait]) => {
-       recommendedTags = [...recommendedTags, ...(SCORE_TO_TAGS[trait] || [])];
-    });
+    const topTraits = Object.entries(scores)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([trait]) => trait);
 
-    return courses.filter(club => recommendedTags.includes(club.tag as string)).slice(0, 5);
-  };
+    const wantedSkills = new Set(
+      topTraits.flatMap((t) => SCORE_TO_SKILLS[t] ?? []),
+    );
 
-  const recommendedCourses = getRecommendations();
+    return courses
+      .filter((c) => c.skills.some((s) => wantedSkills.has(s)))
+      .slice(0, 5);
+  }, [activeChild, courses]);
 
-  const filtered = courses.filter((club) => {
-    const matchCat = activeCategory === "Все" || CATEGORY_TO_TAGS[activeCategory]?.includes(club.tag as string);
-    const matchSearch = club.title.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  // ── Filtered list ────────────────────────────────────────────────────────────
+  const filtered = useMemo(
+    () =>
+      courses.filter((c) => {
+        const matchSkill =
+          activeSkill === "Все" || c.skills.includes(activeSkill);
+        const matchSearch = c.title
+          .toLowerCase()
+          .includes(search.toLowerCase());
+        return matchSkill && matchSearch;
+      }),
+    [courses, activeSkill, search],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <LinearGradient
-        colors={['#6C5CE7', '#8B7FE8']}
+        colors={["#6C5CE7", "#8B7FE8"]}
         style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
       >
         <SafeAreaView edges={["top"]}>
@@ -77,139 +84,210 @@ export default function ParentClubs() {
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
               <Pressable
                 onPress={() => router.back()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 20,
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginRight: 12,
-                }}
+                style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
               >
                 <Feather name="arrow-left" size={20} color="white" />
               </Pressable>
-              <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Каталог кружков</Text>
+              <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>
+                Каталог кружков
+              </Text>
+              <Text style={{ color: "rgba(255,255,255,0.6)", fontSize: 13, fontWeight: "600" }}>
+                {courses.length > 0 ? `${courses.length} курсов` : ""}
+              </Text>
             </View>
 
-            <View className="flex-row items-center bg-white/10 backdrop-blur-md rounded-2xl px-4 py-3 border border-white/20">
-               <Feather name="search" size={18} color="white" style={{ opacity: 0.6, marginRight: 10 }} />
-               <TextInput
-                  value={search}
-                  onChangeText={setSearch}
-                  placeholder="Найти кружок..."
-                  placeholderTextColor="rgba(255,255,255,0.6)"
-                  style={{ flex: 1, color: 'white', fontWeight: '500' }}
-               />
+            <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: 16, paddingHorizontal: 16, paddingVertical: 12, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" }}>
+              <Feather name="search" size={18} color="rgba(255,255,255,0.6)" style={{ marginRight: 10 }} />
+              <TextInput
+                value={search}
+                onChangeText={setSearch}
+                placeholder="Найти кружок..."
+                placeholderTextColor="rgba(255,255,255,0.6)"
+                style={{ flex: 1, color: "white", fontWeight: "500" }}
+              />
+              {search.length > 0 && (
+                <Pressable onPress={() => setSearch("")}>
+                  <Feather name="x" size={16} color="rgba(255,255,255,0.6)" />
+                </Pressable>
+              )}
             </View>
           </View>
         </SafeAreaView>
       </LinearGradient>
 
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
-          paddingBottom: 120,
-        }}
+        contentContainerStyle={{ paddingHorizontal: horizontalPadding, paddingTop: 24, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Categories */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6 -mx-1 px-1 overflow-visible">
-           {CATEGORIES.map(cat => (
-              <Pressable 
-                 key={cat}
-                 onPress={() => setActiveCategory(cat)}
-                 className={`mr-3 px-6 py-2.5 rounded-full border ${activeCategory === cat ? 'bg-purple-600 border-purple-600' : 'bg-white border-gray-100'}`}
-              >
-                 <Text className={`font-bold text-sm ${activeCategory === cat ? 'text-white' : 'text-gray-500'}`}>{cat}</Text>
-              </Pressable>
-           ))}
+        {/* Skill filter chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 24, marginHorizontal: -4 }}
+        >
+          {SKILL_FILTERS.map((skill) => (
+            <Pressable
+              key={skill}
+              onPress={() => setActiveSkill(skill)}
+              style={{
+                marginRight: 10,
+                paddingHorizontal: 20,
+                paddingVertical: 9,
+                borderRadius: 999,
+                borderWidth: 1,
+                backgroundColor: activeSkill === skill ? "#6C5CE7" : "white",
+                borderColor: activeSkill === skill ? "#6C5CE7" : "#E5E7EB",
+              }}
+            >
+              <Text style={{ fontWeight: "700", fontSize: 13, color: activeSkill === skill ? "white" : "#6B7280" }}>
+                {skill}
+              </Text>
+            </Pressable>
+          ))}
         </ScrollView>
 
-        {/* AI Recommendations */}
-        {activeChild?.talentProfile && recommendedCourses.length > 0 && search === "" && (
-            <View className="mb-8">
-               <View className="flex-row items-center gap-2 mb-4 px-1">
-                  <View className="w-8 h-8 bg-purple-100 rounded-full items-center justify-center">
-                     <Feather name="zap" size={16} color="#6C5CE7" />
-                  </View>
-                  <View>
-                     <Text className="text-xl font-black text-gray-900">Идеально для {activeChild.name}</Text>
-                     <Text className="text-[11px] font-bold text-purple-600 uppercase">Подобрано ИИ (Карта Талантов)</Text>
-                  </View>
-               </View>
-
-               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-1 px-1 overflow-visible pb-2 pt-1">
-                  {recommendedCourses.map(club => (
-                     <Pressable
-                        key={club.id}
-                        onPress={() => router.push(`/parent/club/${club.id}` as any)}
-                        style={SHADOWS.md}
-                        className="mr-4 w-60 bg-white rounded-[28px] p-1 border border-purple-50"
-                     >
-                        <LinearGradient 
-                           colors={(club.gradient as any) || ["#6C5CE7", "#8B7FE8"]}
-                           style={{ height: 120, borderRadius: 24, padding: 12, justifyContent: "space-between" }}
-                        >
-                           <View className="bg-white/30 self-start px-2 py-1 rounded-lg backdrop-blur-md">
-                              <Text className="text-white text-[10px] font-black uppercase">Мастхэв</Text>
-                           </View>
-                           <Feather name={(club.icon as any) || "star"} size={32} color="rgba(255,255,255,0.8)" style={{ alignSelf: "flex-end" }} />
-                        </LinearGradient>
-                        <View className="p-4">
-                           <Text className="font-bold text-base text-gray-900 mb-1" numberOfLines={1}>{club.title}</Text>
-                           <Text className="text-xs text-gray-400 font-medium mb-3" numberOfLines={1}>{club.shortDescription}</Text>
-                           <View className="flex-row justify-between items-center">
-                               <Text className="text-purple-600 font-black text-sm">{club.price?.toString().split(" ")[1] + " ₸"}</Text>
-                               <View className="bg-gray-50 p-2 rounded-full">
-                                  <Feather name="arrow-right" size={14} color="#6B7280" />
-                               </View>
-                           </View>
-                        </View>
-                     </Pressable>
-                  ))}
-               </ScrollView>
-            </View>
+        {/* Loading */}
+        {loading && (
+          <ActivityIndicator size="large" color="#6C5CE7" style={{ marginVertical: 60 }} />
         )}
 
-        <Text className="text-xl font-black text-gray-900 mb-4 px-1">{search ? "Результаты поиска" : "Все кружки"}</Text>
+        {/* Empty DB state */}
+        {!loading && courses.length === 0 && (
+          <View style={{ alignItems: "center", paddingVertical: 60 }}>
+            <Feather name="inbox" size={48} color="#E5E7EB" />
+            <Text style={{ marginTop: 16, fontSize: 18, fontWeight: "800", color: "#1F2937", textAlign: "center" }}>
+              Курсов пока нет
+            </Text>
+            <Text style={{ marginTop: 8, color: "#6B7280", textAlign: "center", lineHeight: 20 }}>
+              Организации ещё не добавили курсы.{"\n"}Загляните позже.
+            </Text>
+          </View>
+        )}
 
-        <View className="gap-4">
-           {filtered.map(club => (
-              <Pressable
-                 key={club.id}
-                 onPress={() => router.push(`/parent/club/${club.id}` as any)}
-                 style={SHADOWS.sm}
-                 className="flex-row items-center p-4 bg-white rounded-[32px] border border-gray-50"
-              >
-                 <View style={{ backgroundColor: (club.gradient?.[0] || "#6C5CE7") + '15' }} className="w-16 h-16 rounded-2xl items-center justify-center mr-4">
-                    <Feather name={(club.icon as any) || "book-open"} size={24} color={club.gradient?.[0] || "#6C5CE7"} />
-                 </View>
+        {/* AI Recommendations */}
+        {!loading && activeChild?.talentProfile && recommendedCourses.length > 0 && search === "" && activeSkill === "Все" && (
+          <View style={{ marginBottom: 32 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 16, paddingHorizontal: 4 }}>
+              <View style={{ width: 32, height: 32, backgroundColor: "#EDE9FE", borderRadius: 16, alignItems: "center", justifyContent: "center" }}>
+                <Feather name="zap" size={16} color="#6C5CE7" />
+              </View>
+              <View>
+                <Text style={{ fontSize: 18, fontWeight: "900", color: "#111827" }}>
+                  Идеально для {activeChild.name}
+                </Text>
+                <Text style={{ fontSize: 10, fontWeight: "800", color: "#6C5CE7", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                  Подобрано ИИ · Карта Талантов
+                </Text>
+              </View>
+            </View>
 
-                 <View className="flex-1">
-                    <Text className="font-bold text-base text-gray-900" numberOfLines={1}>{club.title}</Text>
-                    <View className="flex-row items-center gap-2 mt-1">
-                       <View className="flex-row items-center gap-1">
-                          <Feather name="star" size={10} color="#FBBF24" />
-                          <Text className="text-[10px] font-black text-gray-700">4.8</Text>
-                       </View>
-                       <Text className="text-[10px] text-gray-400 font-bold uppercase">{club.age}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
+              {recommendedCourses.map((club, idx) => {
+                const grad = courseGradient(idx);
+                return (
+                  <Pressable
+                    key={club.id}
+                    onPress={() => router.push(`/parent/club/${club.id}` as any)}
+                    style={[SHADOWS.md, { marginRight: 16, width: 220, backgroundColor: "white", borderRadius: 28, padding: 4, borderWidth: 1, borderColor: "#EDE9FE" }]}
+                  >
+                    <LinearGradient
+                      colors={grad}
+                      style={{ height: 110, borderRadius: 24, padding: 12, justifyContent: "space-between" }}
+                    >
+                      <View style={{ backgroundColor: "rgba(255,255,255,0.25)", alignSelf: "flex-start", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                        <Text style={{ color: "white", fontSize: 9, fontWeight: "900", textTransform: "uppercase" }}>Мастхэв</Text>
+                      </View>
+                      <Feather name={(club.icon as any) || "star"} size={30} color="rgba(255,255,255,0.8)" style={{ alignSelf: "flex-end" }} />
+                    </LinearGradient>
+                    <View style={{ padding: 12 }}>
+                      <Text style={{ fontWeight: "800", fontSize: 14, color: "#111827", marginBottom: 2 }} numberOfLines={1}>
+                        {club.title}
+                      </Text>
+                      {club.org_name ? (
+                        <Text style={{ fontSize: 11, color: "#9CA3AF", fontWeight: "600", marginBottom: 8 }} numberOfLines={1}>
+                          {club.org_name}
+                        </Text>
+                      ) : null}
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                        <Text style={{ color: "#6C5CE7", fontWeight: "900", fontSize: 13 }}>
+                          {club.price.toLocaleString()} ₸
+                        </Text>
+                        <View style={{ backgroundColor: "#F9FAFB", padding: 6, borderRadius: 999 }}>
+                          <Feather name="arrow-right" size={13} color="#6B7280" />
+                        </View>
+                      </View>
                     </View>
-                 </View>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
 
-                 <View className="items-end">
-                    <Text className="text-purple-600 font-black text-xs" numberOfLines={1}>{club.price}</Text>
-                 </View>
-              </Pressable>
-           ))}
-        </View>
+        {/* All courses list */}
+        {!loading && courses.length > 0 && (
+          <>
+            <Text style={{ fontSize: 18, fontWeight: "900", color: "#111827", marginBottom: 16, paddingHorizontal: 4 }}>
+              {search ? "Результаты поиска" : activeSkill === "Все" ? "Все кружки" : `Навык: ${activeSkill}`}
+            </Text>
 
-        {filtered.length === 0 && (
-           <View className="items-center justify-center py-20">
-              <Feather name="search" size={48} color="#E5E7EB" />
-              <Text className="mt-4 text-gray-400 font-bold text-center">Ничего не найдено</Text>
-           </View>
+            <View style={{ gap: 12 }}>
+              {filtered.map((club, idx) => {
+                const [color] = courseGradient(idx);
+                return (
+                  <Pressable
+                    key={club.id}
+                    onPress={() => router.push(`/parent/club/${club.id}` as any)}
+                    style={[SHADOWS.sm, { flexDirection: "row", alignItems: "center", padding: 16, backgroundColor: "white", borderRadius: 24, borderWidth: 1, borderColor: "#F9FAFB" }]}
+                  >
+                    <View style={{ width: 60, height: 60, borderRadius: 18, backgroundColor: color + "15", alignItems: "center", justifyContent: "center", marginRight: 14 }}>
+                      <Feather name={(club.icon as any) || "book-open"} size={24} color={color} />
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontWeight: "800", fontSize: 15, color: "#111827" }} numberOfLines={1}>
+                        {club.title}
+                      </Text>
+                      {club.org_name ? (
+                        <Text style={{ fontSize: 12, color: "#9CA3AF", fontWeight: "600", marginTop: 1 }} numberOfLines={1}>
+                          {club.org_name}
+                        </Text>
+                      ) : null}
+                      {club.skills.length > 0 && (
+                        <View style={{ flexDirection: "row", gap: 4, marginTop: 5, flexWrap: "wrap" }}>
+                          {club.skills.slice(0, 3).map((s) => (
+                            <View key={s} style={{ backgroundColor: color + "15", paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6 }}>
+                              <Text style={{ fontSize: 9, fontWeight: "800", color, textTransform: "uppercase" }}>{s}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={{ alignItems: "flex-end", marginLeft: 8 }}>
+                      <Text style={{ color: "#6C5CE7", fontWeight: "900", fontSize: 13 }} numberOfLines={1}>
+                        {club.price.toLocaleString()} ₸
+                      </Text>
+                      {(club.age_min || club.age_max) ? (
+                        <Text style={{ fontSize: 10, color: "#9CA3AF", fontWeight: "700", marginTop: 2 }}>
+                          {club.age_min ?? ""}–{club.age_max ?? ""} лет
+                        </Text>
+                      ) : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {filtered.length === 0 && (
+              <View style={{ alignItems: "center", paddingVertical: 40 }}>
+                <Feather name="search" size={40} color="#E5E7EB" />
+                <Text style={{ marginTop: 12, color: "#9CA3AF", fontWeight: "700", textAlign: "center" }}>
+                  Ничего не найдено
+                </Text>
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
     </View>
