@@ -29,9 +29,9 @@ export default function OrgHome() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
-  const { orgVerified: isVerified } = useDevSettings();
-  const { orgName } = useOrgProfile();
-  const { stats } = useOrgStats();
+  const { status: orgStatus, name: orgName } = useOrgProfile();
+  const isVerified = orgStatus === 'verified';
+  const stats = useOrgStats().stats;
   const todayDow = (new Date().getDay() + 6) % 7; // Mon=0
   const { items: todaySchedule } = useOrgSchedule(todayDow);
   const firstClass = todaySchedule[0] ?? null;
@@ -69,6 +69,7 @@ export default function OrgHome() {
                     <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", letterSpacing: -0.5 }}>{orgName || "Моя организация"}</Text>
                   </View>
                   <TouchableOpacity
+                    onPress={() => router.push('/profile/organization')}
                     style={{
                       width: 52,
                       height: 52,
@@ -85,19 +86,20 @@ export default function OrgHome() {
                 </View>
 
                 {/* Sub-header Context Chips */}
-                <View className="flex-row items-center justify-between mt-4">
-                   <View className="bg-white/10 px-4 py-2 rounded-full border border-white/20 backdrop-blur-md">
-                      <Text className="text-white text-[10px] font-extrabold tracking-widest uppercase">Сеть: 3 филиала</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
+                   <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+                      <Text style={{ color: 'white', fontSize: 10, fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' }}>Сеть: 1 филиал</Text>
                    </View>
-                   <TouchableOpacity className="bg-white/10 px-3 py-1.5 rounded-full border border-white/20 flex-row items-center gap-2">
+                   <View style={{ backgroundColor: 'rgba(255,255,255,0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                        <Feather name="trending-up" size={14} color="white" />
-                       <Text className="text-white font-bold text-xs">92% посещаемость</Text>
-                   </TouchableOpacity>
+                       <Text style={{ color: 'white', fontWeight: '700', fontSize: 12 }}>92% посещаемость</Text>
+                   </View>
                 </View>
               </MotiView>
             </SafeAreaView>
           </LinearGradient>
         </View>
+
         {/* Pending verification banner */}
         {!isVerified && (
           <MotiView
@@ -105,30 +107,36 @@ export default function OrgHome() {
             animate={{ opacity: 1, translateY: 0 }}
             style={{ paddingHorizontal: horizontalPadding, marginTop: 24, marginBottom: 8 }}
           >
-            <View style={{
-              backgroundColor: '#FEF9C3',
-              borderRadius: RADIUS.lg,
-              padding: 16,
-              borderWidth: 1,
-              borderColor: '#FDE047',
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-            }}>
-              <View style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: '#FDE04730', alignItems: 'center', justifyContent: 'center' }}>
-                <Feather name="clock" size={20} color="#854D0E" />
+            <TouchableOpacity 
+              onPress={() => router.push('/profile/organization')}
+              activeOpacity={0.9}
+              style={{
+                backgroundColor: '#FFFBEB',
+                borderRadius: RADIUS.xl,
+                padding: 20,
+                borderWidth: 1,
+                borderColor: '#FDE047',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 16,
+                ...SHADOWS.sm,
+              }}
+            >
+              <View style={{ width: 48, height: 48, borderRadius: RADIUS.lg, backgroundColor: '#FEF08A', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="shield" size={24} color="#854D0E" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#1C1C1E' }}>Организация на проверке</Text>
-                <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Ваша заявка рассматривается администратором. Полный доступ откроется после верификации.</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#1C1C1E' }}>Пройдите верификацию</Text>
+                <Text style={{ fontSize: 13, color: '#71717A', marginTop: 4, lineHeight: 18 }}>Чтобы начать принимать оплаты и появиться в поиске, загрузите документы в профиле.</Text>
               </View>
-            </View>
+              <Feather name="chevron-right" size={20} color="#854D0E" />
+            </TouchableOpacity>
           </MotiView>
         )}
 
         {/* Stats Grid - Horizon Premium style */}
-        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32, opacity: isVerified ? 1 : 0.5 }}>
-          <View className="flex-row gap-4 mb-4">
+        <View style={{ paddingHorizontal: horizontalPadding, marginTop: 32 }}>
+          <View style={{ flexDirection: 'row', gap: 16, marginBottom: 16 }}>
             {STATS_TILES.slice(0, 2).map((stat, idx) => (
               <MotiView
                 key={stat.label}

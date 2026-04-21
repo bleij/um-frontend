@@ -1,11 +1,13 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
     ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
@@ -13,7 +15,7 @@ import {
     View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LAYOUT } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 
 export default function CreateProfileTeen() {
   const router = useRouter();
@@ -22,6 +24,7 @@ export default function CreateProfileTeen() {
   const horizontalPadding = isDesktop
     ? LAYOUT.profileHorizontalPaddingDesktop
     : LAYOUT.profileHorizontalPaddingMobile;
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -30,13 +33,14 @@ export default function CreateProfileTeen() {
     otherInterest: "",
     goals: "",
   });
+
   const [interests, setInterests] = useState<string[]>([]);
 
   const availableInterests = [
     "Рисование",
     "Музыка",
     "Спорт",
-    "Программ...",
+    "Программирование",
     "Фото/Видео",
     "Чтение",
     "Танцы",
@@ -59,272 +63,410 @@ export default function CreateProfileTeen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <LinearGradient colors={["#DBEAFE", "#FAF5FF"]} style={{ flex: 1 }}>
-        {/* Header */}
-        <LinearGradient
-          colors={["#3B82F6", "#2563EB"]}
-          className="pt-12 pb-4 shadow-sm z-10 rounded-b-3xl"
-        >
-          <SafeAreaView
-            edges={["top"]}
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
-              alignSelf: "center",
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: horizontalPadding,
-            }}
-          >
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      {/* Background Blobs */}
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+        <View style={{ 
+          position: 'absolute', 
+          top: -100, 
+          right: -100, 
+          width: 400, 
+          height: 400, 
+          borderRadius: 200, 
+          backgroundColor: `${COLORS.primary}08`,
+        }} />
+        <View style={{ 
+          position: 'absolute', 
+          top: '40%', 
+          left: -150, 
+          width: 350, 
+          height: 350, 
+          borderRadius: 175, 
+          backgroundColor: `${COLORS.secondary}05`,
+        }} />
+        <View style={{ 
+          position: 'absolute', 
+          bottom: -50, 
+          right: -50, 
+          width: 300, 
+          height: 300, 
+          borderRadius: 150, 
+          backgroundColor: `${COLORS.accent}05`,
+        }} />
+      </View>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
+          <View style={{ 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            paddingHorizontal: horizontalPadding,
+            paddingVertical: 12,
+          }}>
             <TouchableOpacity
               onPress={() => router.back()}
-              className="p-2 mr-2"
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 22,
+                backgroundColor: 'white',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 16,
+                ...SHADOWS.sm,
+              }}
             >
-              <Feather name="arrow-left" size={24} color="white" />
+              <Feather name="arrow-left" size={20} color={COLORS.foreground} />
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-white">
-              Создать профиль подростка
+            <Text style={{ 
+              fontSize: 22, 
+              fontWeight: '900', 
+              color: COLORS.foreground,
+              letterSpacing: -0.5
+            }}>
+              Мой профиль
             </Text>
-          </SafeAreaView>
-        </LinearGradient>
+          </View>
+        </SafeAreaView>
 
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: horizontalPadding,
-            paddingTop: 16,
+            paddingTop: 8,
             paddingBottom: 60,
-            alignItems: "center",
           }}
           showsVerticalScrollIndicator={false}
         >
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
-            }}
-          >
-            {/* Personal Info */}
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <Feather name="user" size={20} color="#2563EB" />
-                <Text className="text-lg font-semibold text-gray-900 ml-2">
-                  Личная информация
-                </Text>
+          <View style={{ width: "100%", maxWidth: 600, alignSelf: 'center' }}>
+            
+            {/* Header Text */}
+            <View style={{ marginBottom: 32 }}>
+               <Text style={{ fontSize: 32, fontWeight: '900', color: COLORS.foreground, letterSpacing: -1 }}>
+                 Привет! 👋
+               </Text>
+               <Text style={{ fontSize: 16, color: COLORS.mutedForeground, marginTop: 4 }}>
+                 Давай познакомимся поближе
+               </Text>
+            </View>
+
+            {/* Personal Info Card */}
+            <MotiView
+               from={{ opacity: 0, translateY: 20 }}
+               animate={{ opacity: 1, translateY: 0 }}
+               style={styles.card}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconBox, { backgroundColor: `${COLORS.primary}10` }]}>
+                  <Feather name="user" size={18} color={COLORS.primary} />
+                </View>
+                <Text style={styles.cardTitle}>Личные данные</Text>
               </View>
 
-              <View className="space-y-4">
+              <View style={{ gap: 20 }}>
                 <View>
-                  <Text className="text-sm font-medium text-gray-700 mb-1">
-                    Имя
-                  </Text>
+                  <Text style={styles.inputLabel}>Имя</Text>
                   <TextInput
                     value={formData.firstName}
-                    onChangeText={(text) =>
-                      setFormData({ ...formData, firstName: text })
-                    }
-                    placeholder="Введите имя"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                    onChangeText={(text) => setFormData({ ...formData, firstName: text })}
+                    placeholder="Твое имя"
+                    placeholderTextColor={COLORS.tertiary}
+                    style={styles.input}
                   />
                 </View>
+                
                 <View>
-                  <Text className="text-sm font-medium text-gray-700 mb-1">
-                    Фамилия
-                  </Text>
+                  <Text style={styles.inputLabel}>Фамилия</Text>
                   <TextInput
                     value={formData.lastName}
-                    onChangeText={(text) =>
-                      setFormData({ ...formData, lastName: text })
-                    }
-                    placeholder="Введите фамилию"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                    onChangeText={(text) => setFormData({ ...formData, lastName: text })}
+                    placeholder="Твоя фамилия"
+                    placeholderTextColor={COLORS.tertiary}
+                    style={styles.input}
                   />
                 </View>
 
-                <View className="flex-row justify-between">
-                  <View className="flex-1 mr-2">
-                    <Text className="text-sm font-medium text-gray-700 mb-1">
-                      Возраст
-                    </Text>
+                <View style={{ flexDirection: 'row', gap: 16 }}>
+                  <View style={{ flex: 1.2 }}>
+                    <Text style={styles.inputLabel}>Возраст</Text>
                     <TextInput
                       value={formData.age}
-                      onChangeText={(text) =>
-                        setFormData({ ...formData, age: text })
-                      }
-                      placeholder="14"
+                      onChangeText={(text) => setFormData({ ...formData, age: text })}
+                      placeholder="16"
+                      placeholderTextColor={COLORS.tertiary}
                       keyboardType="numeric"
-                      className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 text-center"
+                      style={[styles.input, { textAlign: 'center' }]}
                     />
                   </View>
-                  <View className="flex-1 ml-2">
-                    <Text className="text-sm font-medium text-gray-700 mb-1">
-                      Пол
-                    </Text>
-                    <View className="flex-row rounded-xl overflow-hidden border border-gray-200 bg-gray-50 h-12">
+                  <View style={{ flex: 2 }}>
+                    <Text style={styles.inputLabel}>Пол</Text>
+                    <View style={styles.genderContainer}>
                       <TouchableOpacity
-                        onPress={() =>
-                          setFormData({ ...formData, gender: "male" })
-                        }
-                        className={`flex-1 justify-center items-center ${formData.gender === "male" ? "bg-blue-500" : ""}`}
+                        onPress={() => setFormData({ ...formData, gender: "male" })}
+                        style={[
+                          styles.genderOption, 
+                          formData.gender === "male" && { backgroundColor: COLORS.info }
+                        ]}
                       >
-                        <Text
-                          className={
-                            formData.gender === "male"
-                              ? "text-white font-medium"
-                              : "text-gray-500"
-                          }
-                        >
-                          М
-                        </Text>
+                        <Text style={[
+                          styles.genderText, 
+                          formData.gender === "male" && { color: 'white' }
+                        ]}>М</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
-                        onPress={() =>
-                          setFormData({ ...formData, gender: "female" })
-                        }
-                        className={`flex-1 justify-center items-center ${formData.gender === "female" ? "bg-pink-500" : ""}`}
+                        onPress={() => setFormData({ ...formData, gender: "female" })}
+                        style={[
+                          styles.genderOption, 
+                          formData.gender === "female" && { backgroundColor: '#FF2D55' }
+                        ]}
                       >
-                        <Text
-                          className={
-                            formData.gender === "female"
-                              ? "text-white font-medium"
-                              : "text-gray-500"
-                          }
-                        >
-                          Ж
-                        </Text>
+                        <Text style={[
+                          styles.genderText, 
+                          formData.gender === "female" && { color: 'white' }
+                        ]}>Ж</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 </View>
               </View>
-            </View>
+            </MotiView>
 
-            {/* Interests */}
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <MaterialCommunityIcons
-                  name="star-four-points-outline"
-                  size={20}
-                  color="#2563EB"
-                />
-                <Text className="text-lg font-semibold text-gray-900 ml-2">
-                  Интересы
-                </Text>
+            {/* Interests Card */}
+            <MotiView
+               from={{ opacity: 0, translateY: 20 }}
+               animate={{ opacity: 1, translateY: 0 }}
+               transition={{ delay: 100 }}
+               style={styles.card}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconBox, { backgroundColor: `${COLORS.secondary}10` }]}>
+                  <MaterialCommunityIcons name="star-four-points-outline" size={18} color={COLORS.secondary} />
+                </View>
+                <Text style={styles.cardTitle}>Интересы</Text>
               </View>
 
-              <Text className="text-sm font-medium text-gray-700 mb-3">
-                Что вам интересно?
+              <Text style={{ fontSize: 13, color: COLORS.mutedForeground, marginBottom: 16 }}>
+                Выбери сферы, которые тебе наиболее интересны:
               </Text>
 
-              <View className="flex-row flex-wrap justify-between">
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                 {availableInterests.map((interest) => {
                   const isSelected = interests.includes(interest);
                   return (
                     <TouchableOpacity
                       key={interest}
                       onPress={() => toggleInterest(interest)}
-                      className={`w-[48%] py-3 px-2 rounded-xl border-2 mb-3 items-center ${
-                        isSelected
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-gray-200 bg-gray-50"
-                      }`}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.chip,
+                        isSelected && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }
+                      ]}
                     >
-                      <Text
-                        className={`font-medium ${isSelected ? "text-blue-700" : "text-gray-600"}`}
-                      >
-                        {interest}
-                      </Text>
+                      <Text style={[
+                        styles.chipText,
+                        isSelected && { color: 'white' }
+                      ]}>{interest}</Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-              {/* Custom Interest */}
-              <Text className="text-sm font-medium text-gray-700 mb-2 mt-2">
-                Другое:
-              </Text>
-              <View className="flex-row">
-                <TextInput
-                  value={formData.otherInterest}
-                  onChangeText={(text) =>
-                    setFormData({ ...formData, otherInterest: text })
-                  }
-                  placeholder="Введите свой интерес"
-                  className="flex-1 px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
-                />
-                <TouchableOpacity
-                  onPress={addOtherInterest}
-                  className="ml-3 w-12 h-12 bg-blue-500 rounded-xl items-center justify-center shadow-sm"
-                >
-                  <Feather name="plus" size={24} color="white" />
-                </TouchableOpacity>
+              <View style={{ marginTop: 24 }}>
+                <Text style={styles.inputLabel}>Свой вариант</Text>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TextInput
+                    value={formData.otherInterest}
+                    onChangeText={(text) => setFormData({ ...formData, otherInterest: text })}
+                    placeholder="Напр. Бионика"
+                    placeholderTextColor={COLORS.tertiary}
+                    style={[styles.input, { flex: 1 }]}
+                  />
+                  <TouchableOpacity
+                    onPress={addOtherInterest}
+                    style={{
+                      width: 56,
+                      height: 56,
+                      borderRadius: 18,
+                      backgroundColor: COLORS.foreground,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Feather name="plus" size={24} color="white" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* Selected Custom Interests */}
-              <View className="flex-row flex-wrap mt-3 gap-2">
-                {interests
-                  .filter((i) => !availableInterests.includes(i))
-                  .map((interest) => (
-                    <View
-                      key={interest}
-                      className="flex-row items-center bg-blue-100 rounded-full px-3 py-1 mr-2 mb-2"
-                    >
-                      <Text className="text-blue-800 text-sm mr-2">
-                        {interest}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => toggleInterest(interest)}
-                      >
-                        <Feather name="x" size={14} color="#1E40AF" />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-              </View>
-            </View>
+              {/* Custom Tags */}
+              {interests.filter(i => !availableInterests.includes(i)).length > 0 && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+                  {interests
+                    .filter((i) => !availableInterests.includes(i))
+                    .map((interest) => (
+                      <View key={interest} style={styles.tag}>
+                        <Text style={styles.tagText}>{interest}</Text>
+                        <TouchableOpacity onPress={() => toggleInterest(interest)}>
+                          <Feather name="x" size={14} color={COLORS.primary} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                </View>
+              )}
+            </MotiView>
 
-            {/* Goals */}
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <Feather name="target" size={20} color="#2563EB" />
-                <Text className="text-lg font-semibold text-gray-900 ml-2">
-                  Цели
-                </Text>
+            {/* Goals Card */}
+            <MotiView
+               from={{ opacity: 0, translateY: 20 }}
+               animate={{ opacity: 1, translateY: 0 }}
+               transition={{ delay: 200 }}
+               style={styles.card}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconBox, { backgroundColor: `${COLORS.accent}15` }]}>
+                  <Feather name="target" size={18} color="#FF9500" />
+                </View>
+                <Text style={styles.cardTitle}>Твои цели</Text>
               </View>
-              <Text className="text-sm font-medium text-gray-700 mb-1">
-                Чего вы хотите достичь?
-              </Text>
+              
               <TextInput
                 value={formData.goals}
-                onChangeText={(text) =>
-                  setFormData({ ...formData, goals: text })
-                }
-                placeholder="Опишите свои цели и стремления"
+                onChangeText={(text) => setFormData({ ...formData, goals: text })}
+                placeholder="Расскажи, чего ты хочешь достичь в обучении или карьере..."
+                placeholderTextColor={COLORS.tertiary}
                 multiline
                 numberOfLines={4}
-                className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 h-24"
-                textAlignVertical="top"
+                style={[styles.input, { height: 120, textAlignVertical: 'top', paddingTop: 16 }]}
               />
-            </View>
+            </MotiView>
 
+            {/* Submit Button */}
             <TouchableOpacity
               onPress={() => router.push("/profile/youth/testing")}
-              className="w-full rounded-xl overflow-hidden shadow-md mt-2"
+              activeOpacity={0.8}
+              style={{ marginTop: 12 }}
             >
               <LinearGradient
-                colors={["#3B82F6", "#2563EB"]}
-                className="w-full py-4 items-center justify-center"
+                colors={[COLORS.primary, COLORS.secondary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitBtn}
               >
-                <Text className="text-white font-bold text-lg">
-                  Перейти к тестам
-                </Text>
+                <Text style={styles.submitBtnText}>Перейти к тестам</Text>
+                <Feather name="arrow-right" size={20} color="white" />
               </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.xxl,
+    padding: 24,
+    marginBottom: 24,
+    ...SHADOWS.md,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.foreground,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.mutedForeground,
+    marginBottom: 8,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  input: {
+    backgroundColor: COLORS.muted,
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: COLORS.foreground,
+    fontWeight: '500',
+  },
+  genderContainer: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.muted,
+    borderRadius: 18,
+    padding: 6,
+    height: 56,
+  },
+  genderOption: {
+    flex: 1,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  genderText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.mutedForeground,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    borderWidth: 1.5,
+    borderColor: COLORS.muted,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.mutedForeground,
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${COLORS.primary}08`,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: `${COLORS.primary}20`,
+  },
+  tagText: {
+    fontSize: 13,
+    color: COLORS.primary,
+    fontWeight: '600',
+    marginRight: 6,
+  },
+  submitBtn: {
+    flexDirection: 'row',
+    height: 64,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    ...SHADOWS.md,
+  },
+  submitBtnText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '800',
+  }
+});

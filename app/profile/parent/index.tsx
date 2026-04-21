@@ -138,24 +138,36 @@ export default function ParentProfile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+      <View style={{ zIndex: 10 }}>
         <LinearGradient
           colors={["#6C5CE7", "#8B7FE8"]}
-          style={{ height: 160, position: 'absolute', top: 0, left: 0, right: 0 }}
-        />
-        
-        <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-                <Feather name="arrow-left" size={22} color="white" />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Профиль</Text>
-            <TouchableOpacity onPress={() => setShowEditModal(true)} style={styles.backBtn}>
-                <Feather name="edit-3" size={20} color="white" />
-            </TouchableOpacity>
-        </View>
+          style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, position: 'absolute', top: 0, left: 0, right: 0 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                <Pressable
+                  onPress={() => router.back()}
+                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </Pressable>
+                <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>
+                  Профиль
+                </Text>
+                <TouchableOpacity onPress={() => setShowEditModal(true)}>
+                    <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: "600" }}>
+                      Изм.
+                    </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
  
         <ScrollView
-          contentContainerStyle={{ paddingTop: 20, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingTop: 160, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
           <View style={{ paddingHorizontal: horizontalPadding }}>
@@ -193,9 +205,13 @@ export default function ParentProfile() {
             </View>
 
             {/* Children Selector */}
-            <View style={{ marginTop: 24 }}>
+            <View style={{ marginTop: 32 }}>
                 <Text style={styles.sectionTitle}>Мои дети</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingVertical: 10 }}>
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    contentContainerStyle={{ gap: 12, paddingVertical: 10, paddingHorizontal: 4 }}
+                >
                     {children.map((child) => {
                         const isSelected = selectedChildId === child.id;
                         return (
@@ -223,7 +239,7 @@ export default function ParentProfile() {
             </View>
 
             {/* QR Section */}
-            <View style={styles.qrRow}>
+            <View style={[styles.qrRow, { marginTop: 32 }]}>
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                     <View style={styles.smallAvatar}>
                          <Text style={{ fontSize: 20 }}>{selectedChild?.ageCategory === 'child' ? '👦' : '🧑'}</Text>
@@ -239,7 +255,7 @@ export default function ParentProfile() {
             </View>
 
             {/* Assessment & Reports Section */}
-            <View style={{ marginTop: 24 }}>
+            <View style={{ marginTop: 32 }}>
                 <Text style={styles.sectionTitle}>Отчеты и аналитика ({selectedChild?.name})</Text>
                 <TouchableOpacity 
                    onPress={() => router.push(`/parent/child/${selectedChild?.id}` as any)}
@@ -257,7 +273,7 @@ export default function ParentProfile() {
             </View>
 
             {/* Clubs List */}
-            <View style={{ marginTop: 24 }}>
+            <View style={{ marginTop: 32 }}>
                 <Text style={styles.sectionTitle}>Кружки и секции</Text>
                 {loadingEnrollments ? (
                     <ActivityIndicator size="small" color={COLORS.primary} />
@@ -268,10 +284,12 @@ export default function ParentProfile() {
                                 <Text style={styles.clubName}>{(enr.organizations as any)?.name || "Клуб"}</Text>
                                 <Text style={styles.groupName}>{(enr.groups as any)?.name}</Text>
                                 <View style={styles.scheduleRow}>
-                                    <Feather name="calendar" size={12} color={COLORS.mutedForeground} />
-                                    <Text style={styles.scheduleText}>
-                                        { (enr.groups as any)?.schedule ? (enr.groups as any).schedule : "Расписание уточняется" }
-                                    </Text>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <Feather name="calendar" size={12} color={COLORS.mutedForeground} />
+                                        <Text style={[styles.scheduleText, { marginLeft: 4 }]}>
+                                            {(enr.groups as any)?.schedule || "Расписание уточняется"}
+                                        </Text>
+                                    </View>
                                 </View>
                             </View>
                             <TouchableOpacity style={styles.clubArrow}>
@@ -292,8 +310,7 @@ export default function ParentProfile() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </SafeAreaView>
-
+ 
       {/* Edit Profile Modal */}
       <Modal visible={showEditModal} animationType="slide">
           <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
@@ -383,36 +400,38 @@ function StatItem({ label, value }: { label: string, value: string }) {
 
 const styles = StyleSheet.create({
     headerTitle: {
-        fontSize: 18,
-        fontWeight: '800',
+        fontSize: 20,
+        fontWeight: '900',
         color: 'white'
     },
     backBtn: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: 'rgba(255,255,255,0.2)',
         alignItems: 'center',
         justifyContent: 'center'
     },
     parentCard: {
         backgroundColor: 'white',
-        borderRadius: RADIUS.xxl,
+        borderRadius: 24,
         padding: 20,
-        ...SHADOWS.md
+        ...SHADOWS.sm,
+        borderWidth: 1,
+        borderColor: '#F9FAFB'
     },
     avatarPlaceholder: {
         width: 64,
         height: 64,
-        borderRadius: 32,
+        borderRadius: 22,
         backgroundColor: '#F3F4F6',
         alignItems: 'center',
         justifyContent: 'center'
     },
     parentName: {
         fontSize: 18,
-        fontWeight: '800',
-        color: COLORS.foreground
+        fontWeight: '900',
+        color: '#111827'
     },
     parentEmail: {
         fontSize: 13,
@@ -430,12 +449,13 @@ const styles = StyleSheet.create({
     },
     statLabel: {
         fontSize: 12,
+        fontWeight: '600',
         color: COLORS.mutedForeground
     },
     statValue: {
         fontSize: 15,
-        fontWeight: '700',
-        color: COLORS.foreground
+        fontWeight: '900',
+        color: '#111827'
     },
     statusBadge: {
         backgroundColor: '#F0FDF4',
@@ -450,17 +470,17 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         fontSize: 18,
-        fontWeight: '800',
-        color: COLORS.foreground,
-        marginBottom: 8
+        fontWeight: '900',
+        color: '#111827',
+        marginBottom: 12
     },
     childSelector: {
         width: 100,
         padding: 12,
-        borderRadius: RADIUS.xl,
+        borderRadius: 24,
         backgroundColor: 'white',
-        borderWidth: 2,
-        borderColor: '#F3F4F6',
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
         alignItems: 'center'
     },
     childSelectorActive: {
@@ -469,9 +489,9 @@ const styles = StyleSheet.create({
         ...SHADOWS.md
     },
     childAvatar: {
-        width: 54,
-        height: 54,
-        borderRadius: 27,
+        width: 56,
+        height: 56,
+        borderRadius: 18,
         backgroundColor: '#F3F4F6',
         alignItems: 'center',
         justifyContent: 'center',
@@ -498,11 +518,13 @@ const styles = StyleSheet.create({
     qrRow: {
         marginTop: 20,
         backgroundColor: 'white',
-        borderRadius: RADIUS.xl,
-        padding: 12,
+        borderRadius: 24,
+        padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        ...SHADOWS.sm
+        ...SHADOWS.sm,
+        borderWidth: 1,
+        borderColor: '#F9FAFB'
     },
     smallAvatar: {
         width: 40,
@@ -524,7 +546,7 @@ const styles = StyleSheet.create({
     qrBtn: {
         width: 44,
         height: 44,
-        borderRadius: 12,
+        borderRadius: 16,
         backgroundColor: '#6C5CE7',
         alignItems: 'center',
         justifyContent: 'center'
@@ -544,12 +566,14 @@ const styles = StyleSheet.create({
     },
     clubCard: {
         backgroundColor: 'white',
-        borderRadius: RADIUS.xl,
+        borderRadius: 24,
         padding: 16,
         marginBottom: 12,
         flexDirection: 'row',
         alignItems: 'center',
-        ...SHADOWS.sm
+        ...SHADOWS.sm,
+        borderWidth: 1,
+        borderColor: '#F9FAFB'
     },
     clubName: {
         fontSize: 16,
@@ -600,18 +624,18 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
     editBtnSmall: {
-        width: 32,
-        height: 32,
-        borderRadius: 8,
+        width: 34,
+        height: 34,
+        borderRadius: 10,
         backgroundColor: '#F3F4F6',
         alignItems: 'center',
         justifyContent: 'center'
     },
     tariffBtn: {
         backgroundColor: COLORS.primary,
-        paddingHorizontal: 16,
+        paddingHorizontal: 20,
         paddingVertical: 10,
-        borderRadius: 12,
+        borderRadius: 999,
         ...SHADOWS.sm
     },
     tariffBtnActive: {
@@ -642,13 +666,13 @@ const styles = StyleSheet.create({
     },
     reportCard: {
         backgroundColor: 'white',
-        borderRadius: RADIUS.xl,
+        borderRadius: 24,
         padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
         ...SHADOWS.sm,
         borderWidth: 1,
-        borderColor: '#F3F4F6'
+        borderColor: '#F9FAFB'
     },
     reportIcon: {
         width: 44,
@@ -700,7 +724,7 @@ const styles = StyleSheet.create({
     saveProfileBtn: {
         backgroundColor: COLORS.primary,
         height: 60,
-        borderRadius: 20,
+        borderRadius: 999,
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 12,

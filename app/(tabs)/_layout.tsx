@@ -10,6 +10,7 @@ export default function TabsLayout() {
   const { width } = useWindowDimensions();
 
   const role = useMemo(() => user?.role || "parent", [user?.role]);
+  const isAdmin = role === "admin";
   const hideForMentor = role === "mentor" || role === "org";
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -23,17 +24,25 @@ export default function TabsLayout() {
     >
       <Tabs.Screen name="home/index" options={{ href: "/home" }} />
 
-      {/* ANALYTICS — доступно всем */}
-      <Tabs.Screen name="analytics/index" options={{ href: "/analytics" }} />
+      <Tabs.Screen
+        name="analytics/index"
+        options={{
+          href: isAdmin ? null : "/analytics",
+        }}
+      />
 
-      {/* PROFILE — доступно всем */}
-      <Tabs.Screen name="profile/index" options={{ href: "/profile" }} />
+      <Tabs.Screen
+        name="profile/index"
+        options={{
+          href: isAdmin ? null : "/profile",
+        }}
+      />
 
       <Tabs.Screen
         name="chats/index"
         options={{
           title: "Чаты",
-          href: user?.role === "child" ? null : "/chats",
+          href: (user?.role === "child" || isAdmin) ? null : "/chats",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               icon={focused ? "message-square" : "message-square"}
@@ -89,7 +98,7 @@ export default function TabsLayout() {
   if (isDesktop) {
     return (
       <View style={{ flex: 1, flexDirection: "row" }}>
-        <SideNav role={role} />
+        {!isAdmin && <SideNav role={role} />}
         <View style={{ flex: 1 }}>{screens}</View>
       </View>
     );
@@ -98,7 +107,7 @@ export default function TabsLayout() {
   return (
     <>
       {screens}
-      <CustomTabBar role={role} />
+      {!isAdmin && <CustomTabBar role={role} />}
     </>
   );
 }

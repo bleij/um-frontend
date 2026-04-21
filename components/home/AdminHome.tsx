@@ -67,7 +67,7 @@ export default function AdminHome() {
     : SPACING.xl;
 
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const families = useFamilies();
   const mentorApps = useMentorApps();
@@ -2082,6 +2082,34 @@ export default function AdminHome() {
                 </TouchableOpacity>
               ))}
             </View>
+            
+            <TouchableOpacity
+              onPress={async () => {
+                await logout();
+                router.replace("/intro" as any);
+              }}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                padding: SPACING.md,
+                borderRadius: RADIUS.lg,
+                marginTop: isTablet ? 'auto' : 0,
+              }}
+            >
+              <Feather name="log-out" size={18} color={COLORS.destructive} />
+              {isTablet && (
+                <Text
+                  style={{
+                    fontSize: TYPOGRAPHY.size.sm,
+                    fontWeight: TYPOGRAPHY.weight.medium,
+                    color: COLORS.destructive,
+                  }}
+                >
+                  Выйти
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
 
           {renderContent()}

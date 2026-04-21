@@ -1,19 +1,24 @@
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React from "react";
+import { MotiView } from "moti";
+import React, { useState, useEffect } from "react";
 import {
-   Alert,
-   Platform,
-   Pressable,
-   ScrollView,
-   Text,
-   useWindowDimensions,
-   View,
+    Alert,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    useWindowDimensions,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
+import { useOrgProfile } from "../../../hooks/useOrgData";
+import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
 export default function OrgProfile() {
   const router = useRouter();
@@ -21,13 +26,23 @@ export default function OrgProfile() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : 20;
+    ? LAYOUT.profileHorizontalPaddingDesktop
+    : LAYOUT.profileHorizontalPaddingMobile;
+
+  const { id: orgId, name: orgName, status: orgStatus, bin: currentBin, refresh: refreshProfile } = useOrgProfile();
+  
+  const [bin, setBin] = useState(currentBin || "");
+  const [hasAcceptedOffer, setHasAcceptedOffer] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (currentBin) setBin(currentBin);
+  }, [currentBin]);
 
   const handleLogout = async () => {
     if (Platform.OS === "web") {
       await logout();
-      router.replace("/intro" as any);
+      router.replace("/intro");
     } else {
       Alert.alert("Выход", "Вы действительно хотите выйти?", [
         { text: "Отмена", style: "cancel" },
@@ -36,225 +51,465 @@ export default function OrgProfile() {
           style: "destructive",
           onPress: async () => {
             await logout();
-            router.replace("/intro" as any);
+            router.replace("/intro");
           },
         },
       ]);
     }
   };
 
-  const orgName = "Центр развития «Звёздочка»";
-  const orgType = "Частная школа развития";
+  const handleVerify = async () => {
+    if (bin.length !== 12) {
+      Alert.alert("Ошибка", "БИН должен состоять из 12 цифр");
+      return;
+    }
+    if (!hasAcceptedOffer) {
+      Alert.alert("Внимание", "Необходимо принять условия публичной оферты");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      if (supabase && isSupabaseConfigured) {
+        const { error } = await supabase
+          .from("organizations")
+          .update({
+            bin: bin,
+            status: "pending", // Move to pending for admin review
+            license_url: "uploaded_license_placeholder.pdf", // Mock uploads
+            registration_url: "uploaded_reg_placeholder.pdf",
+          })
+          .eq("id", orgId);
+        
+        if (error) throw error;
+        
+        await refreshProfile();
+        Alert.alert("Успешно", "Данные отправлены на верификацию");
+      }
+    } catch (e: any) {
+      Alert.alert("Ошибка", e.message || "Не удалось отправить данные");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isVerified = orgStatus === 'verified';
+  const isPending = orgStatus === 'pending';
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={["#F89B29", "#FF0F7B"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{
-          paddingBottom: 40,
-          borderBottomLeftRadius: 40,
-          borderBottomRightRadius: 40,
-        }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View
-            style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}
-          >
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 24,
-              }}
-            >
-              <View>
-                <Text className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">
-                  Профиль организации
+      {/* Premium Header */}
+      <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={['#1E3A8A', '#3B82F6']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingBottom: 40 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+                <TouchableOpacity 
+                   onPress={() => router.back()}
+                   style={styles.backButton}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </TouchableOpacity>
+                <Text style={{ fontSize: 13, fontWeight: '800', color: 'white', opacity: 0.8, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Настройки профиля
                 </Text>
-                <Text className="text-white text-2xl font-black">
-                  {orgName}
-                </Text>
+                <TouchableOpacity onPress={handleLogout} style={styles.logoutIconBtn}>
+                  <Feather name="log-out" size={20} color="white" />
+                </TouchableOpacity>
               </View>
-              <Pressable
-                className="w-12 h-12 bg-white/20 rounded-2xl items-center justify-center border border-white/20"
-                onPress={() =>
-                  Alert.alert("Уведомления", "Нет новых уведомлений")
-                }
-              >
-                <Feather name="bell" size={22} color="white" />
-              </Pressable>
-            </View>
 
-            <View className="flex-row items-center gap-5">
-              <View className="w-20 h-20 bg-white/30 rounded-[28px] items-center justify-center border border-white/30">
-                <Text className="text-white text-3xl font-black">
-                  {orgName.charAt(0)}
-                </Text>
-              </View>
-              <View>
-                <Text className="text-white font-bold text-lg mb-1">
-                  {orgType}
-                </Text>
-                <View className="flex-row items-center gap-1.5 bg-white/20 self-start px-3 py-1 rounded-full border border-white/20">
-                  <View className="w-2 h-2 rounded-full bg-green-400" />
-                  <Text className="text-white text-[10px] font-black uppercase tracking-wider">
-                    Верифицирован
-                  </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 20 }}>
+                <View style={styles.avatarBox}>
+                  <Text style={styles.avatarText}>{(orgName || "O").charAt(0)}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.orgNameHeadline} numberOfLines={1}>{orgName || "Моя организация"}</Text>
+                  <View style={[
+                    styles.statusBadge, 
+                    isVerified ? styles.statusBadgeVerified : (isPending ? styles.statusBadgePending : styles.statusBadgeNew)
+                  ]}>
+                    <View style={[styles.statusDot, { backgroundColor: isVerified ? '#34C759' : (isPending ? '#FFCC00' : '#8E8E93') }]} />
+                    <Text style={[styles.statusText, { color: isVerified ? '#34C759' : (isPending ? '#854D0E' : '#8E8E93') }]}>
+                      {isVerified ? "Верифицирован" : (isPending ? "На проверке" : "Новый профиль")}
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: horizontalPadding,
-          paddingTop: 24,
-          paddingBottom: 120,
+          paddingTop: 32,
+          paddingBottom: 100,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Stats Row */}
-        <View className="flex-row gap-3 mb-8">
-          <View
-            style={SHADOWS.md}
-            className="flex-1 bg-white p-5 rounded-[32px] border border-gray-100 items-center"
+        {/* Stage 2: Verification Section (Prompt if not verified) */}
+        {!isVerified && !isPending && (
+          <MotiView
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={styles.verificationCard}
           >
-            <View className="w-12 h-12 bg-orange-50 rounded-2xl items-center justify-center mb-2">
-              <Feather name="book-open" size={20} color="#F59E0B" />
-            </View>
-            <Text className="text-xl font-black text-gray-900">12</Text>
-            <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-              Курсов
-            </Text>
-          </View>
-          <View
-            style={SHADOWS.md}
-            className="flex-1 bg-white p-5 rounded-[32px] border border-gray-100 items-center"
-          >
-            <View className="w-12 h-12 bg-purple-50 rounded-2xl items-center justify-center mb-2">
-              <Feather name="users" size={20} color="#8B5CF6" />
-            </View>
-            <Text className="text-xl font-black text-gray-900">124</Text>
-            <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-              Учеников
-            </Text>
-          </View>
-          <View
-            style={SHADOWS.md}
-            className="flex-1 bg-white p-5 rounded-[32px] border border-gray-100 items-center"
-          >
-            <View className="w-12 h-12 bg-green-50 rounded-2xl items-center justify-center mb-2">
-              <Feather name="star" size={20} color="#10B981" />
-            </View>
-            <Text className="text-xl font-black text-gray-900">4.9</Text>
-            <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">
-              Рейтинг
-            </Text>
-          </View>
-        </View>
-
-        {/* General Info Section */}
-        <View className="mb-6">
-          <Text className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">
-            Настройки
-          </Text>
-          <View className="gap-3">
-            {[
-              {
-                label: "Редактировать профиль",
-                icon: "edit-3",
-                color: "#6C5CE7",
-                route: "/organization/profile/edit",
-              },
-              {
-                label: "Платежные реквизиты",
-                icon: "credit-card",
-                color: "#F59E0B",
-                route: "/organization/finance",
-              },
-              {
-                label: "Документы и лицензии",
-                icon: "file-text",
-                color: "#10B981",
-                route: "/organization/documents",
-              },
-              {
-                label: "Настройки уведомлений",
-                icon: "sliders",
-                color: "#3B82F6",
-                route: "/organization/settings/notifications",
-              },
-            ].map((item, idx) => (
-              <Pressable
-                key={idx}
-                onPress={() =>
-                  Alert.alert("В разработке", "Этот раздел скоро появится.")
-                }
-                style={SHADOWS.sm}
-                className="bg-white p-5 rounded-[24px] flex-row items-center border border-gray-50"
-              >
-                <View
-                  style={{ backgroundColor: `${item.color}15` }}
-                  className="w-11 h-11 rounded-2xl items-center justify-center mr-4"
-                >
-                  <Feather
-                    name={item.icon as any}
-                    size={20}
-                    color={item.color}
-                  />
+             <View style={styles.cardHeader}>
+                <View style={[styles.iconBox, { backgroundColor: 'white' }]}>
+                  <Feather name="shield" size={20} color={COLORS.primary} />
                 </View>
-                <Text className="flex-1 font-bold text-gray-700">
-                  {item.label}
-                </Text>
-                <Feather name="chevron-right" size={20} color="#D1D5DB" />
-              </Pressable>
+                <Text style={[styles.cardTitle, { color: 'white' }]}>Верификация данных</Text>
+             </View>
+             
+             <Text style={styles.verificationSub}>
+               Загрузите документы, чтобы получить статус проверенной организации и начать принимать оплаты.
+             </Text>
+
+             <View style={{ gap: 16 }}>
+                <View>
+                   <Text style={[styles.inputLabel, { color: 'white', opacity: 0.9 }]}>БИН организации (12 цифр)</Text>
+                   <TextInput
+                      value={bin}
+                      onChangeText={(t) => setBin(t.replace(/[^\d]/g, '').slice(0, 12))}
+                      placeholder="123456789012"
+                      placeholderTextColor="rgba(255,255,255,0.4)"
+                      keyboardType="numeric"
+                      style={styles.verificationInput}
+                   />
+                </View>
+
+                {/* Upload Buttons */}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                   <TouchableOpacity style={styles.uploadBtn}>
+                      <Feather name="file-text" size={16} color="white" />
+                      <Text style={styles.uploadBtnText}>Справка гос. рег.</Text>
+                   </TouchableOpacity>
+                   <TouchableOpacity style={styles.uploadBtn}>
+                      <Feather name="award" size={16} color="white" />
+                      <Text style={styles.uploadBtnText}>Лицензия</Text>
+                   </TouchableOpacity>
+                </View>
+
+                {/* Offer Acceptance */}
+                <TouchableOpacity 
+                   onPress={() => setHasAcceptedOffer(!hasAcceptedOffer)}
+                   activeOpacity={0.7}
+                   style={styles.checkboxContainer}
+                >
+                   <View style={[styles.checkbox, hasAcceptedOffer && styles.checkboxActive]}>
+                      {hasAcceptedOffer && <Feather name="check" size={12} color={COLORS.primary} />}
+                   </View>
+                   <Text style={styles.checkboxLabel}>
+                     Я принимаю условия <Text style={{ textDecorationLine: 'underline' }}>публичной оферты</Text>
+                   </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                   onPress={handleVerify}
+                   disabled={submitting}
+                   style={[styles.verifyActionBtn, submitting && { opacity: 0.7 }]}
+                >
+                   <Text style={styles.verifyActionBtnText}>
+                     {submitting ? "Отправка..." : "Отправить на проверку"}
+                   </Text>
+                </TouchableOpacity>
+             </View>
+          </MotiView>
+        )}
+
+        {isPending && (
+          <View style={[styles.card, { backgroundColor: '#FFFBEB', borderColor: '#FEF3C7', borderWidth: 1 }]}>
+             <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+                <View style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: '#FEF3C7', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="clock" size={24} color="#854D0E" />
+                </View>
+                <View style={{ flex: 1 }}>
+                   <Text style={{ fontSize: 16, fontWeight: '800', color: '#854D0E' }}>Документы проверяются</Text>
+                   <Text style={{ fontSize: 13, color: '#92400E', marginTop: 2 }}>Это обычно занимает 1-2 рабочих дня.</Text>
+                </View>
+             </View>
+          </View>
+        )}
+
+        {/* Regular Settings */}
+        <View style={{ marginTop: 8 }}>
+          <Text style={styles.sectionLabel}>Настройки</Text>
+          <View style={{ gap: 12 }}>
+            {[
+              { label: "Редактировать базовый профиль", icon: "edit-3", color: COLORS.primary, route: "/organization/profile/edit" },
+              { label: "Платежные реквизиты", icon: "credit-card", color: "#F59E0B", route: "/organization/finance" },
+              { label: "Управление доступом", icon: "key", color: "#6366F1", route: "/organization/access" },
+              { label: "Уведомления", icon: "bell", color: "#3B82F6", route: "/organization/settings/notifications" },
+            ].map((item, idx) => (
+              <TouchableOpacity
+                key={idx}
+                onPress={() => Alert.alert("В разработке", "Этот раздел скоро появится.")}
+                style={styles.settingItem}
+              >
+                <View style={[styles.settingIconBox, { backgroundColor: `${item.color}10` }]}>
+                  <Feather name={item.icon as any} size={20} color={item.color} />
+                </View>
+                <Text style={styles.settingLabel}>{item.label}</Text>
+                <Feather name="chevron-right" size={20} color={COLORS.tertiary} />
+              </TouchableOpacity>
             ))}
           </View>
         </View>
 
-        {/* Support Section */}
-        <View className="mb-8">
-          <Text className="text-sm font-black text-gray-400 uppercase tracking-widest mb-4 ml-2">
-            Поддержка
-          </Text>
-          <View className="gap-3">
-            <Pressable
-              onPress={() =>
-                Alert.alert(
-                  "Поддержка",
-                  "Свяжитесь с нами в Телеграм: @um_support",
-                )
-              }
-              style={SHADOWS.sm}
-              className="bg-white p-5 rounded-[24px] flex-row items-center border border-gray-50"
-            >
-              <View className="w-11 h-11 bg-blue-50 rounded-2xl items-center justify-center mr-4">
-                <Feather name="help-circle" size={20} color="#3B82F6" />
-              </View>
-              <Text className="flex-1 font-bold text-gray-700">
-                Помощь и база знаний
-              </Text>
-              <Feather name="external-link" size={16} color="#D1D5DB" />
-            </Pressable>
-          </View>
-        </View>
-
-        {/* Logout Button */}
-        <Pressable
+        {/* Logout */}
+        <TouchableOpacity
           onPress={handleLogout}
-          className="bg-red-50 p-6 rounded-[32px] flex-row items-center justify-center gap-3 border border-red-100"
+          style={styles.logoutBtn}
         >
-          <Feather name="log-out" size={20} color="#EF4444" />
-          <Text className="text-[#EF4444] font-black text-lg">
-            Выйти из аккаунта
-          </Text>
-        </Pressable>
+          <Feather name="log-out" size={20} color={COLORS.destructive} />
+          <Text style={styles.logoutBtnText}>Выйти из аккаунта</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarBox: {
+    width: 72,
+    height: 72,
+    borderRadius: RADIUS.xl,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  avatarText: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: 'white',
+  },
+  orgNameHeadline: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: 'white',
+    letterSpacing: -0.5,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  statusBadgeVerified: {
+    backgroundColor: 'rgba(52, 199, 89, 0.15)',
+    borderColor: 'rgba(52, 199, 89, 0.3)',
+  },
+  statusBadgePending: {
+    backgroundColor: 'rgba(255, 204, 0, 0.15)',
+    borderColor: 'rgba(255, 204, 0, 0.3)',
+  },
+  statusBadgeNew: {
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  verificationCard: {
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.xxl,
+    padding: 24,
+    marginBottom: 32,
+    ...SHADOWS.md,
+  },
+  verificationSub: {
+    fontSize: 14,
+    color: 'white',
+    opacity: 0.8,
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  verificationInput: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '600',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  uploadBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+  },
+  uploadBtnText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 12,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxActive: {
+    backgroundColor: 'white',
+    borderColor: 'white',
+  },
+  checkboxLabel: {
+    fontSize: 13,
+    color: 'white',
+    fontWeight: '500',
+  },
+  verifyActionBtn: {
+    backgroundColor: 'white',
+    paddingVertical: 18,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+    ...SHADOWS.sm,
+  },
+  verifyActionBtnText: {
+    color: COLORS.primary,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.xxl,
+    padding: 24,
+    marginBottom: 24,
+    ...SHADOWS.md,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  sectionLabel: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: COLORS.mutedForeground,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 20,
+    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.muted,
+  },
+  settingIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  settingLabel: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.foreground,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: '900',
+    marginBottom: 8,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: `${COLORS.destructive}10`,
+    paddingVertical: 20,
+    borderRadius: 22,
+    marginTop: 24,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: `${COLORS.destructive}20`,
+  },
+  logoutBtnText: {
+    color: COLORS.destructive,
+    fontSize: 16,
+    fontWeight: '800',
+  }
+});

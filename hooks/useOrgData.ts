@@ -244,26 +244,51 @@ export function useOrgTasks() {
 // ─── useOrgProfile ────────────────────────────────────────────
 export function useOrgProfile() {
   const { user } = useAuth();
-  const [orgName, setOrgName] = useState<string>("");
-  const [orgId, setOrgId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<{
+    id: string | null;
+    name: string;
+    status: string;
+    bin: string;
+    license_url: string | null;
+    registration_url: string | null;
+  }>({
+    id: null,
+    name: "",
+    status: "new",
+    bin: "",
+    license_url: null,
+    registration_url: null,
+  });
 
-  useEffect(() => {
+  const refresh = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured || !user?.id) { setLoading(false); return; }
-    supabase
+    setLoading(true);
+    const { data, error } = await supabase
       .from("organizations")
-      .select("id, name")
+      .select("id, name, status, bin, license_url, registration_url")
       .eq("owner_user_id", user.id)
       .limit(1)
-      .maybeSingle()
-      .then((res) => {
-        setOrgName(res.data?.name ?? "");
-        setOrgId(res.data?.id ?? null);
-        setLoading(false);
+      .maybeSingle();
+
+    if (data) {
+      setProfile({
+        id: data.id,
+        name: data.name ?? "",
+        status: data.status || "new",
+        bin: data.bin || "",
+        license_url: data.license_url,
+        registration_url: data.registration_url,
       });
+    }
+    setLoading(false);
   }, [user?.id]);
 
-  return { orgName, orgId, loading };
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { ...profile, loading, refresh };
 }
 
 // ─── useOrgStats ──────────────────────────────────────────────

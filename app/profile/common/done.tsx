@@ -1,171 +1,188 @@
+import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import { MotiView } from "moti";
+import React, { useEffect, useState } from "react";
 import {
-    View,
+    Dimensions,
+    Platform,
+    ScrollView,
+    StyleSheet,
     Text,
     TouchableOpacity,
-    ScrollView,
-    Platform,
-    Image,
-    Dimensions,
+    View,
 } from "react-native";
-import {useRouter} from "expo-router";
-import {MotiView} from "moti";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useEffect, useState} from "react";
-import {LinearGradient} from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
 
-const {width} = Dimensions.get("window");
-const IS_DESKTOP = Platform.OS === "web" && width >= 900;
+const { width } = Dimensions.get("window");
+const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
 
 export default function DoneScreen() {
     const router = useRouter();
+    const { user } = useAuth();
     const [role, setRole] = useState<string | null>(null);
 
-    // читаем сохранённую роль
     useEffect(() => {
-        AsyncStorage.getItem("user_role").then((v) => setRole(v));
-    }, []);
+        if (user?.role) {
+            setRole(user.role);
+        }
+    }, [user]);
 
     const handleStart = () => {
-        if (!role) return;
+        const targetRole = role || user?.role;
+        if (!targetRole) return;
 
-        if (role === "mentor") {
-            router.push("/(tabs)/home");
-            return;
-        }
-
-        if (role === "parent") {
-            router.push("/(tabs)/home");
-            return;
-        }
-
-        if (role === "youth") {
+        if (targetRole === "youth" || targetRole === "child") {
             router.push("/profile/youth/umo-intro");
-            return;
-        }
-
-        if (role === "org") {
+        } else {
             router.push("/(tabs)/home");
-            return;
         }
     };
 
     return (
-        <LinearGradient
-            colors={["#6C5CE7", "#8B7FE8"]}
-            start={{x: 0, y: 0}}
-            end={{x: 0, y: 1}}
-            style={{flex: 1}}
-        >
-            <ScrollView contentContainerStyle={{flexGrow: 1}}>
-                <View
-                    style={{
-                        flex: 1,
-                        alignItems: "center",
-                        paddingTop: 60,
-                        paddingHorizontal: 20,
+        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+            {/* Background blobs for color */}
+            <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+                <View style={{ 
+                    position: 'absolute', 
+                    top: -50, 
+                    right: -50, 
+                    width: 300, 
+                    height: 300, 
+                    borderRadius: 150, 
+                    backgroundColor: `${COLORS.primary}15`,
+                }} />
+                <View style={{ 
+                    position: 'absolute', 
+                    bottom: '10%', 
+                    left: -100, 
+                    width: 400, 
+                    height: 400, 
+                    borderRadius: 200, 
+                    backgroundColor: `${COLORS.secondary}10`,
+                }} />
+            </View>
+
+            <SafeAreaView style={{ flex: 1 }}>
+                <ScrollView 
+                    contentContainerStyle={{ 
+                        flexGrow: 1, 
+                        justifyContent: 'center', 
+                        padding: 24,
+                        paddingBottom: 40
                     }}
                 >
-                    {/* LOGO */}
-                    <MotiView
-                        from={{opacity: 0, translateY: -20}}
-                        animate={{opacity: 1, translateY: 0}}
-                        transition={{duration: 500}}
-                        style={{marginBottom: 30}}
-                    >
-                        <Image
-                            source={require("../../../assets/logo/logo_white.png")}
+                    <View style={{ alignItems: 'center', width: '100%', maxWidth: 500, alignSelf: 'center' }}>
+                        {/* Success Card */}
+                        <MotiView
+                            from={{ opacity: 0, scale: 0.9, translateY: 20 }}
+                            animate={{ opacity: 1, scale: 1, translateY: 0 }}
+                            transition={{ type: 'spring', damping: 15 }}
                             style={{
-                                width: 200,
-                                height: 80,
-                                resizeMode: "contain",
-                            }}
-                        />
-                    </MotiView>
-
-                    {/* CARD */}
-                    <MotiView
-                        from={{opacity: 0, scale: 0.9}}
-                        animate={{opacity: 1, scale: 1}}
-                        transition={{duration: 500}}
-                        style={{
-                            width: IS_DESKTOP ? "50%" : "100%",
-                            backgroundColor: "white",
-                            borderRadius: 36,
-                            paddingVertical: 48,
-                            paddingHorizontal: 28,
-                            alignItems: "center",
-                            shadowColor: "#000",
-                            shadowOpacity: 0.15,
-                            shadowRadius: 18,
-                            shadowOffset: {width: 0, height: 8},
-                        }}
-                    >
-                        {/* CHECK ICON */}
-                        <LinearGradient
-                            colors={["#6C5CE7", "#8B7FE8"]}
-                            style={{
-                                width: 140,
-                                height: 140,
-                                borderRadius: 70,
-                                justifyContent: "center",
-                                alignItems: "center",
-                                marginBottom: 26,
+                                width: '100%',
+                                backgroundColor: 'white',
+                                borderRadius: 40,
+                                padding: 32,
+                                alignItems: 'center',
+                                ...SHADOWS.lg,
                             }}
                         >
-                            <Text style={{fontSize: 72, color: "white"}}>✓</Text>
-                        </LinearGradient>
-
-                        {/* TITLE */}
-                        <Text
-                            style={{
-                                fontSize: 30,
-                                fontWeight: "800",
-                                color: "#6C5CE7",
-                                marginBottom: 12,
-                                textAlign: "center",
-                            }}
-                        >
-                            Всё готово
-                        </Text>
-
-                        {/* SUBTEXT */}
-                        <Text
-                            style={{
-                                fontSize: 16,
-                                color: "#555",
-                                textAlign: "center",
-                                lineHeight: 22,
-                                marginBottom: 36,
-                            }}
-                        >
-                            Профиль успешно создан
-                            {"\n"}можно начинать работу в системе
-                        </Text>
-
-                        {/* BUTTON */}
-                        <TouchableOpacity
-                            onPress={handleStart}
-                            style={{
-                                width: "100%",
-                                backgroundColor: "#3430B5",
-                                paddingVertical: 18,
-                                borderRadius: 999,
-                            }}
-                        >
-                            <Text
-                                style={{
-                                    color: "white",
-                                    fontSize: 18,
-                                    fontWeight: "700",
-                                    textAlign: "center",
-                                }}
+                            {/* Animated Success Icon */}
+                            <MotiView
+                                from={{ scale: 0.5, rotate: '-45deg' }}
+                                animate={{ scale: 1, rotate: '0deg' }}
+                                transition={{ type: 'spring', delay: 200 }}
                             >
-                                начать
+                                <LinearGradient
+                                    colors={[COLORS.primary, COLORS.secondary]}
+                                    style={{
+                                        width: 120,
+                                        height: 120,
+                                        borderRadius: 45,
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        marginBottom: 32,
+                                        transform: [{ rotate: '15deg' }]
+                                    }}
+                                >
+                                    <View style={{ transform: [{ rotate: '-15deg' }] }}>
+                                        <Feather name="check" size={60} color="white" />
+                                    </View>
+                                </LinearGradient>
+                            </MotiView>
+
+                            {/* Text Content */}
+                            <Text style={{ 
+                                fontSize: 32, 
+                                fontWeight: '900', 
+                                color: COLORS.foreground, 
+                                marginBottom: 12, 
+                                textAlign: 'center',
+                                letterSpacing: -0.5
+                            }}>
+                                Ура! Вы в деле
                             </Text>
-                        </TouchableOpacity>
-                    </MotiView>
-                </View>
-            </ScrollView>
-        </LinearGradient>
+                            
+                            <Text style={{ 
+                                fontSize: 16, 
+                                color: COLORS.mutedForeground, 
+                                textAlign: 'center', 
+                                lineHeight: 24,
+                                marginBottom: 40,
+                                paddingHorizontal: 10
+                            }}>
+                                Ваш профиль успешно создан.{'\n'}Теперь вам доступны все возможности платформы.
+                            </Text>
+
+                            {/* Action Button */}
+                            <TouchableOpacity
+                                onPress={handleStart}
+                                activeOpacity={0.8}
+                                style={{ width: '100%' }}
+                            >
+                                <LinearGradient
+                                    colors={[COLORS.primary, COLORS.secondary]}
+                                    start={{ x: 0, y: 0 }}
+                                    end={{ x: 1, y: 0 }}
+                                    style={{
+                                        paddingVertical: 20,
+                                        borderRadius: 24,
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        ...SHADOWS.md,
+                                    }}
+                                >
+                                    <Text style={{ 
+                                        color: 'white', 
+                                        fontSize: 18, 
+                                        fontWeight: '800', 
+                                        textTransform: 'uppercase',
+                                        letterSpacing: 1
+                                    }}>
+                                        Начать работу
+                                    </Text>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </MotiView>
+
+                        {/* Subtle feedback text */}
+                        <MotiView
+                            from={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 600 }}
+                            style={{ marginTop: 24 }}
+                        >
+                            <Text style={{ color: COLORS.mutedForeground, fontSize: 13, fontWeight: '500' }}>
+                                Настройка базовых параметров завершена
+                            </Text>
+                        </MotiView>
+                    </View>
+                </ScrollView>
+            </SafeAreaView>
+        </View>
     );
 }
+
+const styles = StyleSheet.create({});

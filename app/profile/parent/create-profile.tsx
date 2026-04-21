@@ -1,20 +1,22 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import QRCode from "react-native-qrcode-svg";
+import { MotiView } from "moti";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
+import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { LAYOUT } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
 
@@ -36,7 +38,6 @@ type Child = {
 const AGE_OPTIONS: { label: string; value: AgeGroup }[] = [
   { label: "Ребенок (6-11)", value: "6-11" },
   { label: "Подросток (12-17)", value: "12-17" },
-  { label: "Студент (18-20)", value: "18-20" },
 ];
 
 function makeId() {
@@ -123,368 +124,481 @@ export default function CreateProfileParent() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={{ flex: 1 }}
-    >
-      <LinearGradient colors={["#EDE9FE", "#F5F3FF"]} style={{ flex: 1 }}>
-        {/* Header */}
-        <LinearGradient
-          colors={["#8B5CF6", "#7C3AED"]}
-          className="pt-12 pb-4 shadow-sm z-10 rounded-b-3xl"
-        >
-          <SafeAreaView
-            edges={["top"]}
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
-              alignSelf: "center",
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: horizontalPadding,
-            }}
-          >
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      {/* Background Blobs */}
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+        <View style={{
+          position: 'absolute',
+          top: -80,
+          right: -80,
+          width: 300,
+          height: 300,
+          borderRadius: 150,
+          backgroundColor: `${COLORS.primary}08`,
+        }} />
+        <View style={{
+          position: 'absolute',
+          top: '30%',
+          left: -120,
+          width: 320,
+          height: 320,
+          borderRadius: 160,
+          backgroundColor: `${COLORS.secondary}05`,
+        }} />
+      </View>
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={{ flex: 1 }}
+      >
+        <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: horizontalPadding,
+            paddingVertical: 12,
+          }}>
             <TouchableOpacity
               onPress={() => router.back()}
-              className="p-2 mr-2"
+              activeOpacity={0.7}
+              style={styles.backButton}
             >
-              <Feather name="arrow-left" size={24} color="white" />
+              <Feather name="arrow-left" size={20} color={COLORS.foreground} />
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-white">
-              Создать профиль родителя
-            </Text>
-          </SafeAreaView>
-        </LinearGradient>
+            <Text style={styles.headerTitle}>Создание профиля</Text>
+          </View>
+        </SafeAreaView>
 
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: horizontalPadding,
-            paddingTop: 16,
+            paddingTop: 8,
             paddingBottom: 60,
-            alignItems: "center",
           }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
-          <View
-            style={{
-              width: "100%",
-              maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
-            }}
-          >
-            {/* Personal Info */}
-            <View className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-              <View className="flex-row items-center mb-4">
-                <Feather name="user" size={20} color="#7C3AED" />
-                <Text className="text-lg font-semibold text-gray-900 ml-2">
-                  Ваши данные
-                </Text>
-              </View>
+          <View style={{ width: "100%", maxWidth: 600, alignSelf: 'center' }}>
 
-              <View className="flex-row justify-between mb-4">
-                <View className="flex-1 mr-2">
-                  <Text className="text-sm font-medium text-gray-700 mb-1">
-                    Имя
-                  </Text>
-                  <TextInput
-                    value={parentData.firstName}
-                    onChangeText={(text) =>
-                      setParentData({ ...parentData, firstName: text })
-                    }
-                    placeholder="Имя"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
-                  />
-                </View>
-                <View className="flex-1 ml-2">
-                  <Text className="text-sm font-medium text-gray-700 mb-1">
-                    Фамилия
-                  </Text>
-                  <TextInput
-                    value={parentData.lastName}
-                    onChangeText={(text) =>
-                      setParentData({ ...parentData, lastName: text })
-                    }
-                    placeholder="Фамилия"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
-                  />
-                </View>
-              </View>
-
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-1">
-                  Телефон
-                </Text>
-                <TextInput
-                  value={parentData.phone}
-                  onChangeText={(text) =>
-                    setParentData({ ...parentData, phone: text })
-                  }
-                  placeholder="+7 (___) ___-__-__"
-                  keyboardType="phone-pad"
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
-                />
-              </View>
+            {/* Title Section */}
+            <View style={{ marginBottom: 32 }}>
+              <Text style={styles.title}>Родительский{'\n'}аккаунт</Text>
+              <Text style={styles.subtitle}>
+                Заполните информацию о себе и добавьте детей
+              </Text>
             </View>
 
-            {/* Children Section */}
-            <View className="flex-row justify-between items-center mb-4 px-2">
-              <Text className="text-xl font-bold text-gray-900">Дети</Text>
+            {/* Parent Info Card */}
+            <MotiView
+              from={{ opacity: 0, translateY: 20 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              style={styles.card}
+            >
+              <View style={styles.cardHeader}>
+                <View style={[styles.iconBox, { backgroundColor: `${COLORS.primary}10` }]}>
+                  <Feather name="user" size={18} color={COLORS.primary} />
+                </View>
+                <Text style={styles.cardTitle}>Ваши данные</Text>
+              </View>
+
+              <View style={{ gap: 20 }}>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.inputLabel}>Имя</Text>
+                    <TextInput
+                      value={parentData.firstName}
+                      onChangeText={(text) => setParentData({ ...parentData, firstName: text })}
+                      placeholder="Имя"
+                      placeholderTextColor={COLORS.tertiary}
+                      style={styles.input}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.inputLabel}>Фамилия</Text>
+                    <TextInput
+                      value={parentData.lastName}
+                      onChangeText={(text) => setParentData({ ...parentData, lastName: text })}
+                      placeholder="Фамилия"
+                      placeholderTextColor={COLORS.tertiary}
+                      style={styles.input}
+                    />
+                  </View>
+                </View>
+
+                <View>
+                  <Text style={styles.inputLabel}>Телефон</Text>
+                  <TextInput
+                    value={parentData.phone}
+                    onChangeText={(text) => setParentData({ ...parentData, phone: text })}
+                    placeholder="+7 (___) ___-__-__"
+                    placeholderTextColor={COLORS.tertiary}
+                    keyboardType="phone-pad"
+                    style={styles.input}
+                  />
+                </View>
+              </View>
+            </MotiView>
+
+            {/* Children Section Header */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 8 }}>
+              <Text style={{ fontSize: 24, fontWeight: '900', color: COLORS.foreground }}>Дети</Text>
               <TouchableOpacity
                 onPress={addChild}
-                className="bg-[#EDE9FE] px-4 py-2 rounded-xl flex-row items-center"
+                activeOpacity={0.7}
+                style={styles.addButton}
               >
-                <Feather name="plus" size={16} color="#7C3AED" />
-                <Text className="text-[#7C3AED] font-semibold ml-1">
-                  Добавить
-                </Text>
+                <Feather name="plus" size={18} color={COLORS.primary} />
+                <Text style={styles.addButtonText}>Добавить</Text>
               </TouchableOpacity>
             </View>
 
+            {/* Children Cards */}
             {children.map((child, index) => (
-              <View
+              <MotiView
                 key={child.id}
-                className="bg-white rounded-2xl p-6 shadow-sm mb-4 border border-gray-100"
+                from={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={styles.card}
               >
-                <View className="flex-row justify-between items-center mb-4">
-                  <Text className="text-[#7C3AED] font-bold text-base">
-                    Ребенок {index + 1}
-                  </Text>
+                <View style={styles.cardHeader}>
+                  <View style={[styles.iconBox, { backgroundColor: COLORS.muted }]}>
+                    <Text style={{ fontSize: 13, fontWeight: '900', color: COLORS.foreground }}>{index + 1}</Text>
+                  </View>
+                  <Text style={styles.cardTitle}>Ребенок</Text>
                   {children.length > 1 && (
-                    <TouchableOpacity onPress={() => removeChild(child.id)}>
-                      <Feather name="trash-2" size={20} color="#EF4444" />
+                    <TouchableOpacity
+                      onPress={() => removeChild(child.id)}
+                      style={{ marginLeft: 'auto', padding: 4 }}
+                    >
+                      <Feather name="trash-2" size={20} color={COLORS.destructive} />
                     </TouchableOpacity>
                   )}
                 </View>
 
-                <View className="mb-4">
-                  <Text className="text-sm font-medium text-gray-700 mb-1">
-                    Имя ребенка
-                  </Text>
-                  <TextInput
-                    value={child.name}
-                    onChangeText={(text) =>
-                      updateChild(child.id, { name: text })
-                    }
-                    placeholder="Например, Анна"
-                    className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
-                  />
-                </View>
-
-                <Text className="text-sm font-medium text-gray-700 mb-2">
-                  Возрастная категория
-                </Text>
-                <View className="space-y-2">
-                  {AGE_OPTIONS.map((opt) => {
-                    const active = child.ageGroup === opt.value;
-                    return (
-                      <TouchableOpacity
-                        key={opt.value}
-                        onPress={() =>
-                          updateChild(child.id, { ageGroup: opt.value })
-                        }
-                        className={`p-3 rounded-xl border-2 flex-row items-center justify-between mb-2 ${
-                          active
-                            ? "border-purple-500 bg-purple-50"
-                            : "border-gray-200 bg-gray-50"
-                        }`}
-                      >
-                        <Text
-                          className={`font-semibold ${active ? "text-purple-700" : "text-gray-600"}`}
-                        >
-                          {opt.label}
-                        </Text>
-                        {active && (
-                          <Feather
-                            name="check-circle"
-                            size={20}
-                            color="#9333EA"
-                          />
-                        )}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* Phone / QR section */}
-                <View
-                  style={{
-                    marginTop: 16,
-                    borderTopWidth: 1,
-                    borderTopColor: "#E5E7EB",
-                    paddingTop: 16,
-                  }}
-                >
-                  <Text className="text-sm font-medium text-gray-700 mb-3">
-                    Есть ли у ребёнка свой номер телефона?
-                  </Text>
-                  <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
-                    {(["YES", "NO"] as const).map((opt) => {
-                      const active =
-                        opt === "YES" ? child.hasPhone === true : child.hasPhone === false;
-                      return (
-                        <TouchableOpacity
-                          key={opt}
-                          onPress={() =>
-                            updateChild(child.id, {
-                              hasPhone: opt === "YES",
-                              phone: "",
-                              qrToken: null,
-                            })
-                          }
-                          style={{
-                            flex: 1,
-                            paddingVertical: 10,
-                            borderRadius: 12,
-                            borderWidth: 2,
-                            borderColor: active ? "#9333EA" : "#E5E7EB",
-                            backgroundColor: active ? "#F5F3FF" : "#F9FAFB",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Text
-                            style={{
-                              fontWeight: "600",
-                              color: active ? "#7C3AED" : "#6B7280",
-                            }}
-                          >
-                            {opt === "YES" ? "Да" : "Нет"}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
+                <View style={{ gap: 24 }}>
+                  <View>
+                    <Text style={styles.inputLabel}>Имя ребенка</Text>
+                    <TextInput
+                      value={child.name}
+                      onChangeText={(text) => updateChild(child.id, { name: text })}
+                      placeholder="Например, Анна"
+                      placeholderTextColor={COLORS.tertiary}
+                      style={styles.input}
+                    />
                   </View>
 
-                  {child.hasPhone === true && (
-                    <View>
-                      <Text className="text-sm font-medium text-gray-700 mb-1">
-                        Номер телефона ребёнка
-                      </Text>
-                      <TextInput
-                        value={child.phone}
-                        onChangeText={(text) =>
-                          updateChild(child.id, {
-                            phone: text.replace(/[^\d+]/g, ""),
-                          })
-                        }
-                        placeholder="+7 (___) ___-__-__"
-                        keyboardType="phone-pad"
-                        className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
-                      />
-                    </View>
-                  )}
-
-                  {child.hasPhone === false && (
-                    <View style={{ alignItems: "center" }}>
-                      {child.qrToken ? (
-                        <>
-                          <View
-                            style={{
-                              padding: 16,
-                              backgroundColor: "#F9FAFB",
-                              borderRadius: 16,
-                              marginBottom: 12,
-                            }}
-                          >
-                            <QRCode
-                              value={JSON.stringify({
-                                v: 1,
-                                type: "child_link",
-                                childId: child.id,
-                                parentId: user?.id ?? "",
-                                token: child.qrToken,
-                              })}
-                              size={160}
-                            />
-                          </View>
-                          <Text
-                            style={{
-                              fontSize: 12,
-                              color: "#6B7280",
-                              textAlign: "center",
-                              marginBottom: 8,
-                            }}
-                          >
-                            Покажите этот QR-код ребёнку для входа в приложение
-                          </Text>
+                  <View>
+                    <Text style={styles.inputLabel}>Возрастная категория</Text>
+                    <View style={{ gap: 10 }}>
+                      {AGE_OPTIONS.map((opt) => {
+                        const active = child.ageGroup === opt.value;
+                        return (
                           <TouchableOpacity
-                            onPress={() =>
-                              updateChild(child.id, {
-                                qrToken: generateQRToken(),
-                              })
-                            }
-                            style={{
-                              flexDirection: "row",
-                              alignItems: "center",
-                              gap: 6,
-                            }}
+                            key={opt.value}
+                            onPress={() => updateChild(child.id, { ageGroup: opt.value })}
+                            activeOpacity={0.7}
+                            style={[
+                              styles.optionCard,
+                              active && styles.optionCardActive
+                            ]}
                           >
-                            <Feather name="refresh-cw" size={14} color="#9333EA" />
-                            <Text
-                              style={{
-                                fontSize: 13,
-                                color: "#9333EA",
-                                fontWeight: "500",
-                              }}
-                            >
-                              Обновить QR-код
-                            </Text>
+                            <Text style={[
+                              styles.optionText,
+                              active && styles.optionTextActive
+                            ]}>{opt.label}</Text>
+                            {active && <Feather name="check-circle" size={20} color={COLORS.primary} />}
                           </TouchableOpacity>
-                        </>
-                      ) : (
-                        <TouchableOpacity
-                          onPress={() =>
-                            updateChild(child.id, {
-                              qrToken: generateQRToken(),
-                            })
-                          }
-                          style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: 8,
-                            paddingVertical: 12,
-                            paddingHorizontal: 20,
-                            borderRadius: 12,
-                            borderWidth: 2,
-                            borderColor: "#9333EA",
-                            borderStyle: "dashed",
-                            width: "100%",
-                          }}
-                        >
-                          <Feather name="grid" size={18} color="#9333EA" />
-                          <Text
-                            style={{
-                              color: "#7C3AED",
-                              fontWeight: "600",
-                              fontSize: 14,
-                            }}
-                          >
-                            Создать QR-код для входа
-                          </Text>
-                        </TouchableOpacity>
-                      )}
+                        );
+                      })}
                     </View>
-                  )}
+                  </View>
+
+                  <View style={{ borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 24 }}>
+                    <Text style={{ fontSize: 15, fontWeight: '800', color: COLORS.foreground, marginBottom: 16 }}>
+                      Есть ли у ребёнка свой телефон?
+                    </Text>
+                    <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+                      {(["YES", "NO"] as const).map((opt) => {
+                        const active = opt === "YES" ? child.hasPhone === true : child.hasPhone === false;
+                        return (
+                          <TouchableOpacity
+                            key={opt}
+                            onPress={() => updateChild(child.id, { hasPhone: opt === "YES", phone: "", qrToken: null })}
+                            style={[
+                              styles.toggleOption,
+                              active && styles.toggleOptionActive
+                            ]}
+                          >
+                            <Text style={[
+                              styles.toggleText,
+                              active && styles.toggleTextActive
+                            ]}>{opt === "YES" ? "Да" : "Нет"}</Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    {child.hasPhone === true && (
+                      <MotiView from={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+                        <Text style={styles.inputLabel}>Номер телефона</Text>
+                        <TextInput
+                          value={child.phone}
+                          onChangeText={(text) => updateChild(child.id, { phone: text.replace(/[^\d+]/g, "") })}
+                          placeholder="+7 (___) ___-__-__"
+                          placeholderTextColor={COLORS.tertiary}
+                          keyboardType="phone-pad"
+                          style={styles.input}
+                        />
+                      </MotiView>
+                    )}
+
+                    {child.hasPhone === false && (
+                      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ alignItems: 'center' }}>
+                        {child.qrToken ? (
+                          <>
+                            <View style={styles.qrContainer}>
+                              <QRCode
+                                value={JSON.stringify({ v: 1, type: "child_link", childId: child.id, parentId: user?.id ?? "", token: child.qrToken })}
+                                size={160}
+                                color={COLORS.foreground}
+                              />
+                            </View>
+                            <Text style={styles.qrHint}>
+                              Покажите этот QR-код ребёнку для{'\n'}входа в приложение
+                            </Text>
+                            <TouchableOpacity
+                              onPress={() => updateChild(child.id, { qrToken: generateQRToken() })}
+                              style={styles.refreshBtn}
+                            >
+                              <Feather name="refresh-cw" size={14} color={COLORS.primary} />
+                              <Text style={styles.refreshText}>Обновить QR-код</Text>
+                            </TouchableOpacity>
+                          </>
+                        ) : (
+                          <TouchableOpacity
+                            onPress={() => updateChild(child.id, { qrToken: generateQRToken() })}
+                            style={styles.qrPlaceholder}
+                          >
+                            <Feather name="grid" size={20} color={COLORS.primary} />
+                            <Text style={styles.qrPlaceholderText}>Создать QR-код для входа</Text>
+                          </TouchableOpacity>
+                        )}
+                      </MotiView>
+                    )}
+                  </View>
                 </View>
-              </View>
+              </MotiView>
             ))}
 
+            {/* Submit Button */}
             <TouchableOpacity
               onPress={handleMockSubmit}
               disabled={!canContinue}
-              className="w-full rounded-xl overflow-hidden shadow-md mt-4"
+              activeOpacity={0.8}
+              style={{ marginTop: 12 }}
             >
               <LinearGradient
-                colors={
-                  canContinue ? ["#8B5CF6", "#7C3AED"] : ["#D1D5DB", "#9CA3AF"]
-                }
-                className="w-full py-4 items-center justify-center"
+                colors={canContinue ? [COLORS.primary, COLORS.secondary] : [COLORS.tertiary, COLORS.tertiary]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitBtn}
               >
-                <Text className="text-white font-bold text-lg">Продолжить</Text>
+                <Text style={styles.submitBtnText}>Продолжить</Text>
+                {canContinue && <Feather name="arrow-right" size={20} color="white" />}
               </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </LinearGradient>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    ...SHADOWS.sm,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: COLORS.foreground,
+    letterSpacing: -0.5,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: COLORS.foreground,
+    lineHeight: 38,
+    marginBottom: 8,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: COLORS.mutedForeground,
+    lineHeight: 24,
+  },
+  card: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.xxl,
+    padding: 24,
+    marginBottom: 24,
+    ...SHADOWS.md,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  iconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.foreground,
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.mutedForeground,
+    marginBottom: 8,
+    marginLeft: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  input: {
+    backgroundColor: COLORS.muted,
+    borderRadius: 18,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: COLORS.foreground,
+    fontWeight: '500',
+  },
+  addButton: {
+    backgroundColor: `${COLORS.primary}10`,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  addButtonText: {
+    color: COLORS.primary,
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  optionCard: {
+    padding: 18,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: COLORS.muted,
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  optionCardActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: `${COLORS.primary}05`,
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.mutedForeground,
+  },
+  optionTextActive: {
+    color: COLORS.primary,
+  },
+  toggleOption: {
+    flex: 1,
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: COLORS.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toggleOptionActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: `${COLORS.primary}05`,
+  },
+  toggleText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.mutedForeground,
+  },
+  toggleTextActive: {
+    color: COLORS.primary,
+  },
+  qrContainer: {
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 32,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.sm,
+  },
+  qrHint: {
+    fontSize: 13,
+    color: COLORS.mutedForeground,
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  refreshBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  refreshText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  qrPlaceholder: {
+    width: '100%',
+    height: 60,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  qrPlaceholderText: {
+    color: COLORS.primary,
+    fontWeight: '800',
+    fontSize: 14,
+  },
+  submitBtn: {
+    flexDirection: 'row',
+    height: 64,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    ...SHADOWS.md,
+  },
+  submitBtnText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '800',
+  }
+});

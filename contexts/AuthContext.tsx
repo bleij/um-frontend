@@ -25,6 +25,7 @@ export type UserRole =
 export interface AuthUser {
   id: string;
   phone: string;
+  email: string;
   role: UserRole;
   firstName: string;
   lastName: string;
@@ -91,6 +92,7 @@ function normalizePhone(rawPhone: string): string {
 function toAuthUser(input: {
   id: string;
   phone: string;
+  email?: string;
   role: UserRole;
   firstName?: string;
   lastName?: string;
@@ -98,6 +100,7 @@ function toAuthUser(input: {
   return {
     id: input.id,
     phone: input.phone,
+    email: input.email?.trim() || "",
     role: input.role,
     firstName: input.firstName?.trim() || "Пользователь",
     lastName: input.lastName?.trim() || "",
@@ -198,6 +201,7 @@ async function hydrateFromSupabaseUser(
     lastName:
       (remoteProfile?.last_name as string | null) ||
       (metadata.last_name as string | undefined),
+    email: sessionUser.email || (metadata.email as string | undefined) || "",
   });
 }
 
@@ -489,6 +493,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextUser = toAuthUser({
       id: DEV_IDS[role] ?? "d0000000-0000-4000-a000-000000000009",
       phone: "79991234567",
+      email: `${role}@example.com`,
       role: role,
       firstName: "Dev",
       lastName: "User",
