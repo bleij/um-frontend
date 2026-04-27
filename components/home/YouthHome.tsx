@@ -34,6 +34,7 @@ const SKILLS = [
 import { useParentData } from "../../contexts/ParentDataContext";
 import { courseGradient, usePublicCourses } from "../../hooks/usePublicData";
 import { useStudentTasks, useYouthAchievements } from "../../hooks/useStudentData";
+import { useDevSettings } from "../../contexts/DevSettingsContext";
 
 export default function YouthHome() {
   const router = useRouter();
@@ -85,9 +86,10 @@ export default function YouthHome() {
 
   const { tasks, toggleTask } = useStudentTasks();
   const { achievements } = useYouthAchievements();
+  const { devYouthAge } = useDevSettings();
 
   // Mock roles and features
-  const isIndependent = true; // "Подросток сам принимает решения"
+  const isIndependent = devYouthAge >= 14; // "Подросток сам принимает решения"
   const isPro = parentProfile?.tariff === "pro"; // PRO тариф
   const [passVisible, setPassVisible] = useState(false);
 

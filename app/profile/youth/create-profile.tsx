@@ -16,6 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function CreateProfileTeen() {
   const router = useRouter();
@@ -25,9 +26,11 @@ export default function CreateProfileTeen() {
     ? LAYOUT.profileHorizontalPaddingDesktop
     : LAYOUT.profileHorizontalPaddingMobile;
 
+  const { user } = useAuth();
+
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
     age: "",
     gender: "male",
     otherInterest: "",
@@ -193,12 +196,24 @@ export default function CreateProfileTeen() {
                     <Text style={styles.inputLabel}>Возраст</Text>
                     <TextInput
                       value={formData.age}
-                      onChangeText={(text) => setFormData({ ...formData, age: text })}
+                      onChangeText={(text) => setFormData({ ...formData, age: text.replace(/\D/g, "") })}
                       placeholder="16"
+                      maxLength={2}
                       placeholderTextColor={COLORS.tertiary}
                       keyboardType="numeric"
-                      style={[styles.input, { textAlign: 'center' }]}
+                      style={[
+                        styles.input, 
+                        { textAlign: 'center' },
+                        formData.age.length > 0 && (parseInt(formData.age, 10) < 6 || parseInt(formData.age, 10) > 17) 
+                          ? { borderWidth: 1, borderColor: '#EF4444', backgroundColor: '#FEF2F2' } 
+                          : {}
+                      ]}
                     />
+                    {formData.age.length > 0 && (parseInt(formData.age, 10) < 6 || parseInt(formData.age, 10) > 17) && (
+                      <Text style={{ color: '#EF4444', fontSize: 10, marginTop: 4, textAlign: 'center', fontWeight: 'bold' }}>
+                        От 6 до 17 лет
+                      </Text>
+                    )}
                   </View>
                   <View style={{ flex: 2 }}>
                     <Text style={styles.inputLabel}>Пол</Text>
@@ -343,18 +358,23 @@ export default function CreateProfileTeen() {
 
             {/* Submit Button */}
             <TouchableOpacity
+              disabled={!(formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17)}
               onPress={() => router.push("/profile/youth/testing")}
               activeOpacity={0.8}
               style={{ marginTop: 12 }}
             >
               <LinearGradient
-                colors={[COLORS.primary, COLORS.secondary]}
+                colors={
+                  formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17 
+                    ? [COLORS.primary, COLORS.secondary] 
+                    : [COLORS.muted, COLORS.muted]
+                }
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.submitBtn}
               >
-                <Text style={styles.submitBtnText}>Перейти к тестам</Text>
-                <Feather name="arrow-right" size={20} color="white" />
+                <Text style={[styles.submitBtnText, !(formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17) && { color: COLORS.mutedForeground }]}>Перейти к тестам</Text>
+                <Feather name="arrow-right" size={20} color={formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17 ? "white" : COLORS.mutedForeground} />
               </LinearGradient>
             </TouchableOpacity>
           </View>

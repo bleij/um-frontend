@@ -1,3 +1,4 @@
+import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
@@ -10,8 +11,10 @@ import {
   useWindowDimensions,
   View,
   ActivityIndicator,
+  StyleSheet,
 } from "react-native";
-import { LAYOUT } from "../../../constants/theme";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
 import { Diagnostic } from "../../../models/types";
@@ -191,62 +194,71 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
 
   if (isProcessing) {
     return (
-       <LinearGradient colors={["#6A63D8", "#C7C4F2"]} style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <ActivityIndicator size="large" color="white" />
-          <Text style={{ color: "white", marginTop: 20, fontSize: 18, fontWeight: "600" }}>
+       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={{ color: COLORS.foreground, marginTop: 20, fontSize: 18, fontWeight: "600" }}>
             ИИ анализирует ответы...
           </Text>
-       </LinearGradient>
+       </View>
     );
   }
 
   return (
-    <LinearGradient
-      colors={["#6A63D8", "#C7C4F2"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 0, y: 1 }}
-      style={{ flex: 1 }}
-    >
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      {/* Background Blobs */}
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+        <View style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: 200, backgroundColor: `${COLORS.primary}08` }} />
+        <View style={{ position: 'absolute', top: '40%', left: -150, width: 350, height: 350, borderRadius: 175, backgroundColor: `${COLORS.secondary}05` }} />
+        <View style={{ position: 'absolute', bottom: -50, right: -50, width: 300, height: 300, borderRadius: 150, backgroundColor: `${COLORS.accent}05` }} />
+      </View>
+
+      <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
+        <View style={{ 
+          flexDirection: 'row', 
+          justifyContent: 'space-between',
+          alignItems: 'center', 
+          paddingHorizontal: horizontalPadding,
+          paddingVertical: 12,
+        }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+             <TouchableOpacity
+               onPress={() => router.back()}
+               style={{
+                 width: 44,
+                 height: 44,
+                 borderRadius: 22,
+                 backgroundColor: 'white',
+                 alignItems: 'center',
+                 justifyContent: 'center',
+                 marginRight: 16,
+                 ...SHADOWS.sm,
+               }}
+             >
+               <Feather name="arrow-left" size={20} color={COLORS.foreground} />
+             </TouchableOpacity>
+             <Text style={{ fontSize: 22, fontWeight: '900', color: COLORS.foreground, letterSpacing: -0.5 }}>
+               Тестирование
+             </Text>
+          </View>
+          <TouchableOpacity onPress={handleSkip}>
+              <Text style={{ color: COLORS.mutedForeground, fontSize: 15, fontWeight: "600" }}>Пропустить</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: horizontalPadding,
-          paddingTop: isDesktop ? 72 : 60,
+          paddingTop: 8,
           paddingBottom: 120,
           alignItems: "center",
         }}
       >
-        <View
-          style={{
-            width: "100%",
-            maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
-          }}
-        >
-          {/* HEADER ROW WITH SKIP */}
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-             <MotiView
-               from={{ opacity: 0, translateY: -10 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               transition={{ duration: 400 }}
-             >
-               <Text
-                 style={{
-                   fontSize: 28,
-                   fontWeight: "700",
-                   color: "white",
-                 }}
-               >
-                 Тестирование
-               </Text>
-             </MotiView>
-             <TouchableOpacity onPress={handleSkip}>
-                 <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 16, fontWeight: "600" }}>Пропустить</Text>
-             </TouchableOpacity>
-          </View>
-
+        <View style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined }}>
           {/* PROGRESS */}
           <View
             style={{
-              backgroundColor: "rgba(255,255,255,0.25)",
+              backgroundColor: "rgba(0,0,0,0.05)",
               height: 10,
               borderRadius: 10,
               overflow: "hidden",
@@ -257,7 +269,7 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
               style={{
                 width: `${progress}%`,
                 height: "100%",
-                backgroundColor: "white",
+                backgroundColor: COLORS.primary,
               }}
             />
           </View>
@@ -278,24 +290,11 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
               shadowRadius: 10,
             }}
           >
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "700",
-                opacity: 0.6,
-                marginBottom: 10,
-              }}
-            >
+            <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.mutedForeground, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>
               Вопрос {step + 1} из {QUESTIONS.length}
             </Text>
 
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                marginBottom: 20,
-              }}
-            >
+            <Text style={{ fontSize: 20, fontWeight: "800", color: COLORS.foreground, marginBottom: 24 }}>
               {current.question}
             </Text>
 
@@ -307,21 +306,16 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
                   key={i}
                   onPress={() => selectAnswer(i)}
                   style={{
-                    backgroundColor: active ? "#6C5CE7" : "#EFEFFE",
-                    borderRadius: 30,
-                    paddingVertical: 14,
+                    backgroundColor: active ? `${COLORS.primary}15` : COLORS.muted,
+                    borderRadius: RADIUS.lg,
+                    paddingVertical: 16,
                     paddingHorizontal: 20,
-                    marginBottom: 14,
+                    marginBottom: 12,
+                    borderWidth: 2,
+                    borderColor: active ? COLORS.primary : "transparent",
                   }}
                 >
-                  <Text
-                    style={{
-                      textAlign: "center",
-                      fontSize: 16,
-                      color: active ? "white" : "#000",
-                      fontWeight: active ? "700" : "500",
-                    }}
-                  >
+                  <Text style={{ fontSize: 16, color: active ? COLORS.primary : COLORS.foreground, fontWeight: active ? "800" : "500" }}>
                     {text}
                   </Text>
                 </TouchableOpacity>
@@ -329,32 +323,29 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
             })}
           </MotiView>
 
-          {/* BUTTON */}
           <TouchableOpacity
             disabled={answers[step] === undefined}
             onPress={next}
-            style={{
-              backgroundColor: answers[step] === undefined ? "#999" : "#6C5CE7",
-              paddingVertical: 16,
-              borderRadius: 30,
-            }}
+            style={{ marginTop: 8 }}
           >
-            <Text
-              style={{
-                textAlign: "center",
-                color: "white",
-                fontSize: 18,
-                fontWeight: "600",
-              }}
+            <LinearGradient
+                colors={answers[step] === undefined ? [COLORS.muted, COLORS.muted] : [COLORS.primary, COLORS.secondary]}
+                style={{
+                    paddingVertical: 18,
+                    borderRadius: RADIUS.xl,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    ...SHADOWS.md,
+                }}
             >
-              {step === QUESTIONS.length - 1
-                ? "Завершить и анализировать"
-                : "Следующий вопрос"}
-            </Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: answers[step] === undefined ? COLORS.mutedForeground : "white" }}>
+                {step === QUESTIONS.length - 1 ? "Завершить" : "Следующий вопрос"}
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }
 

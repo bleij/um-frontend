@@ -15,7 +15,7 @@ export function DevRoleSwitcher() {
   const [visible, setVisible] = useState(false);
   const { user, setUserRole, devLogin, devMode, setDevMode, devOtpCode } = useAuth();
   const { parentProfile, setParentTariff } = useParentData();
-  const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp } = useDevSettings();
+  const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp, devYouthAge, setDevYouthAge } = useDevSettings();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
 
@@ -109,6 +109,29 @@ export function DevRoleSwitcher() {
                     onValueChange={(val) => setParentTariff(val ? 'pro' : 'basic')}
                     trackColor={{ false: COLORS.muted, true: '#A78BFA' }}
                   />
+                </View>
+              )}
+
+              {/* Dev Youth Age toggle */}
+              {['parent', 'youth', 'child'].includes(user?.role || '') && (
+                <View style={styles.devModeRow}>
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text style={styles.devModeTitle}>
+                      Test Age: {devYouthAge}
+                    </Text>
+                    <Text style={styles.devModeSubtitle}>Set child's mock age for testing</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <TouchableOpacity onPress={() => setDevYouthAge(Math.max(4, devYouthAge - 1))} style={styles.ageButton}>
+                      <Feather name="minus" size={16} color={COLORS.foreground} />
+                    </TouchableOpacity>
+                    <Text style={{ fontSize: 16, fontWeight: '600', width: 24, textAlign: 'center', color: COLORS.foreground }}>
+                      {devYouthAge}
+                    </Text>
+                    <TouchableOpacity onPress={() => setDevYouthAge(Math.min(18, devYouthAge + 1))} style={styles.ageButton}>
+                      <Feather name="plus" size={16} color={COLORS.foreground} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
 
@@ -278,6 +301,14 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
     marginLeft: 12,
+  },
+  ageButton: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   grid: {
     flexDirection: 'row',

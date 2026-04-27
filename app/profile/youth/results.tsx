@@ -9,7 +9,9 @@ import {
     TouchableOpacity,
     useWindowDimensions,
     View,
+    StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
 import { useParentData } from "../../../contexts/ParentDataContext";
 
@@ -47,39 +49,37 @@ export default function YouthResults() {
   ];
 
   return (
-    <LinearGradient colors={["#6C5CE7", "#EDE9FE"]} style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      {/* Background Blobs */}
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
+        <View style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: 200, backgroundColor: `${COLORS.primary}08` }} />
+        <View style={{ position: 'absolute', top: '40%', left: -150, width: 350, height: 350, borderRadius: 175, backgroundColor: `${COLORS.secondary}05` }} />
+        <View style={{ position: 'absolute', bottom: -50, right: -50, width: 300, height: 300, borderRadius: 150, backgroundColor: `${COLORS.accent}05` }} />
+      </View>
+
+      <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
+        <View style={{ 
+          flexDirection: 'row', 
+          justifyContent: 'center',
+          alignItems: 'center', 
+          paddingHorizontal: horizontalPadding,
+          paddingVertical: 12,
+        }}>
+          <Text style={{ fontSize: 22, fontWeight: '900', color: COLORS.foreground, letterSpacing: -0.5 }}>
+            Твои результаты
+          </Text>
+        </View>
+      </SafeAreaView>
+
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: horizontalPadding,
-          paddingTop: isDesktop ? 72 : 60,
+          paddingTop: 8,
           paddingBottom: 120,
           alignItems: "center",
         }}
       >
-        <View
-          style={{
-            width: "100%",
-            maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
-          }}
-        >
-          {/* TITLE */}
-          <MotiView
-            from={{ opacity: 0, translateY: -10 }}
-            animate={{ opacity: 1, translateY: 0 }}
-            transition={{ duration: 400 }}
-            style={{ marginBottom: 30 }}
-          >
-            <Text
-              style={{
-                fontSize: 30,
-                fontWeight: "800",
-                color: "white",
-                textAlign: "center",
-              }}
-            >
-              Твои результаты
-            </Text>
-          </MotiView>
+        <View style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined }}>
 
           {/* EMOJI */}
           <MotiView
@@ -97,12 +97,12 @@ export default function YouthResults() {
                 width: 80,
                 height: 80,
                 borderRadius: 40,
-                backgroundColor: "rgba(255,255,255,0.2)",
+                backgroundColor: `${COLORS.primary}15`,
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              <Feather name="zap" size={40} color="white" />
+              <Feather name="zap" size={40} color={COLORS.primary} />
             </View>
           </MotiView>
 
@@ -213,13 +213,15 @@ export default function YouthResults() {
           {/* RECOMMENDATION */}
           <View
             style={{
-              backgroundColor: "rgba(255,255,255,0.9)",
+              backgroundColor: `${COLORS.secondary}10`,
               padding: 20,
               borderRadius: 20,
               marginBottom: 40,
+              borderWidth: 1,
+              borderColor: `${COLORS.secondary}20`,
             }}
           >
-            <Text style={{ fontSize: 15, lineHeight: 20 }}>
+            <Text style={{ fontSize: 15, lineHeight: 22, color: COLORS.foreground, fontWeight: "500" }}>
               Тебе отлично подойдут направления: программирование, UI/UX,
               робототехника и геймдизайн.
             </Text>
@@ -227,28 +229,25 @@ export default function YouthResults() {
 
           <TouchableOpacity
             onPress={() => router.replace("/(tabs)/home" as any)}
-            style={{
-              borderWidth: 2,
-              borderColor: "white",
-              paddingVertical: 18,
-              borderRadius: 24,
-            }}
+            style={{ marginTop: 8 }}
           >
-            <Text
-              style={{
-                textAlign: "center",
-                color: "white",
-                fontSize: 16,
-                fontWeight: "900",
-                textTransform: "uppercase",
-                letterSpacing: 1
-              }}
+            <LinearGradient
+                colors={[COLORS.primary, COLORS.secondary]}
+                style={{
+                    paddingVertical: 18,
+                    borderRadius: RADIUS.xl,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    ...SHADOWS.md,
+                }}
             >
-              На главную
-            </Text>
+              <Text style={{ fontSize: 18, fontWeight: "800", color: "white" }}>
+                На главную
+              </Text>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 }

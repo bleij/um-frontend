@@ -20,6 +20,8 @@ interface DevSettings {
    *  When true: real Supabase OTP is sent and the actual code is required. */
   useRealOtp: boolean;
   setUseRealOtp: (v: boolean) => Promise<void>;
+  devYouthAge: number;
+  setDevYouthAge: (v: number) => void;
 }
 
 const DevSettingsContext = createContext<DevSettings>({
@@ -29,12 +31,15 @@ const DevSettingsContext = createContext<DevSettings>({
   setOrgVerified: () => {},
   useRealOtp: false,
   setUseRealOtp: async () => {},
+  devYouthAge: 12, // Default age
+  setDevYouthAge: () => {},
 });
 
 export function DevSettingsProvider({ children }: { children: React.ReactNode }) {
   const [mentorApproved, setMentorApproved] = useState(false);
   const [orgVerified, setOrgVerified] = useState(false);
   const [useRealOtp, setUseRealOtpState] = useState(false);
+  const [devYouthAge, setDevYouthAge] = useState(12);
 
   // Hydrate persisted value on mount
   useEffect(() => {
@@ -49,7 +54,7 @@ export function DevSettingsProvider({ children }: { children: React.ReactNode })
   };
 
   return (
-    <DevSettingsContext.Provider value={{ mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp }}>
+    <DevSettingsContext.Provider value={{ mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp, devYouthAge, setDevYouthAge }}>
       {children}
     </DevSettingsContext.Provider>
   );
