@@ -41,10 +41,4 @@ yarn-error.*
 /ios
 /android
 
-um-app/
-um-context
-um-figma
-High-fidelity mobile app design/
-new design/
-Функционал.docx
-new_figma/
+tmp/
