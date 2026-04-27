@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Platform, Pressable, ScrollView, Text, useWindowDimensions, View } from "react-native";
+import { Platform, Pressable, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
 import { useParentData } from "../../../contexts/ParentDataContext";
@@ -14,9 +14,11 @@ export default function ParentReports() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
-  const { childrenProfile } = useParentData();
-  const children = childrenProfile.map((c) => c.name).filter(Boolean);
+  const { childrenProfile, setActiveChildId } = useParentData();
+   const children = childrenProfile.map((c) => c.name).filter(Boolean);
   const [selectedChild, setSelectedChild] = useState(children[0] ?? "");
+
+  const selectedChildProfile = childrenProfile.find(c => c.name === selectedChild);
 
   const { report, loading } = useChildReports(selectedChild || null);
   const maxAttendance = report.attendance.length
@@ -100,7 +102,7 @@ export default function ParentReports() {
                     <Text className="text-sm font-bold text-gray-800">{skill.skill_label}</Text>
                     <Text className="text-sm font-black text-gray-900">{skill.current_value}%</Text>
                   </View>
-                  <View className="h-2 bg-gray-50 rounded-full overflow-hidden">
+                  <View className="h-2 bg-gray-50 rounded-full overflow-hidden flex-row">
                     <View style={{ width: `${skill.current_value}%`, backgroundColor: skill.color }} className="h-full rounded-full" />
                   </View>
                 </View>
@@ -121,6 +123,66 @@ export default function ParentReports() {
                 </View>
               ))}
             </View>
+          </View>
+        )}
+
+        {/* ── Diagnostic Results (If available) ── */}
+        {selectedChildProfile?.talentProfile ? (
+          <View style={SHADOWS.md} className="bg-white rounded-[40px] p-6 mb-8 border border-gray-50">
+             <View className="flex-row items-center gap-3 mb-4">
+                <View className="w-10 h-10 bg-purple-50 rounded-2xl items-center justify-center">
+                   <Feather name="star" size={20} color="#6C5CE7" />
+                </View>
+                <Text style={{ fontSize: 18, fontWeight: "900", color: COLORS.foreground }}>
+                   Диагностика талантов
+                </Text>
+             </View>
+             
+             <View className="bg-purple-50 p-5 rounded-3xl border border-purple-100 mb-5">
+                <Text className="text-purple-900 font-black text-base mb-2">
+                   {selectedChildProfile.talentProfile.recommendedConstellation}
+                </Text>
+                <Text className="text-purple-800 text-xs leading-5">
+                   {selectedChildProfile.talentProfile.summary}
+                </Text>
+             </View>
+
+             <TouchableOpacity 
+               onPress={() => {
+                 setActiveChildId(selectedChildProfile.id);
+                 router.push("/profile/youth/results");
+               }}
+               className="bg-primary/10 py-4 rounded-2xl items-center justify-center"
+             >
+                <Text className="text-primary font-black text-xs uppercase tracking-wide">Посмотреть расширенный отчет</Text>
+             </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 mb-8 overflow-hidden">
+            <LinearGradient
+              colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0)"]}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            />
+            <View className="flex-row items-center gap-3 mb-4">
+              <View className="w-10 h-10 bg-white/20 rounded-2xl items-center justify-center">
+                <Feather name="zap" size={20} color="white" />
+              </View>
+              <Text className="text-white text-lg font-black">AI Диагностика</Text>
+            </View>
+            <Text className="text-white/60 text-sm leading-6 mb-6">
+              У {selectedChild || "этого ребенка"} еще нет результатов диагностики. Пройдите тест, чтобы узнать сильные стороны.
+            </Text>
+            <TouchableOpacity 
+              onPress={() => {
+                if (selectedChildProfile) {
+                   setActiveChildId(selectedChildProfile.id);
+                   router.push("/profile/youth/umo-intro");
+                }
+              }}
+              className="bg-white h-14 rounded-2xl items-center justify-center"
+            >
+              <Text className="text-gray-900 font-black text-xs uppercase tracking-wide">Начать тестирование</Text>
+            </TouchableOpacity>
           </View>
         )}
 

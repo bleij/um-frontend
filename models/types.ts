@@ -18,6 +18,18 @@ export interface Diagnostic {
   summary: string;
   recommendedConstellation: string;
   timestamp?: string;
+
+  // ── Extended PRO report fields (6-8 "Explorers" group) ──────────────
+  // These are populated when `tier === "pro"`. The backend report
+  // generator fills them; the frontend treats them as optional.
+  tier?: "basic" | "pro";
+  ageGroup?: string;
+  intellectType?: string;
+  personalityBehavior?: string;
+  careerArchetypes?: string[];
+  parentAdvice?: string;
+  topStrengths?: string[];
+  developmentAreas?: string[];
 }
 
 export interface Child {

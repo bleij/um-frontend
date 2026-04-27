@@ -1,3 +1,14 @@
+/**
+ * testing.tsx — Age-based router for diagnostic modules.
+ *
+ * Routes:
+ *   6–8 years  → DiagnosticExplorer (new module)
+ *   9–11 years → legacy CHILD_QUESTIONS
+ *   12–17      → legacy YOUTH_QUESTIONS
+ *
+ * The devYouthAge from DevSettingsContext can override the child's real age
+ * for testing purposes.
+ */
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -17,11 +28,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
+import { useDevSettings } from "../../../contexts/DevSettingsContext";
 import { Diagnostic } from "../../../models/types";
+import DiagnosticExplorer from "../../../components/diagnostic/DiagnosticExplorer";
 
-/* ------------------- */
-/* ВОПРОСЫ ПО ВОЗРАСТАМ */
-/* ------------------- */
+/* ─────────────────────────────────────────────────────────────
+   Legacy question sets (9-11 and 12-17 — kept for compatibility)
+   ───────────────────────────────────────────────────────────── */
 
 const CHILD_QUESTIONS = [
   {
@@ -64,6 +77,10 @@ const YOUTH_QUESTIONS = [
   },
 ];
 
+/* ─────────────────────────────────────────────────────────────
+   Main component
+   ───────────────────────────────────────────────────────────── */
+
 export default function YouthTesting() {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -74,13 +91,60 @@ export default function YouthTesting() {
 
   const { user } = useAuth();
   const { childrenProfile, activeChildId, updateChildDiagnostic } = useParentData();
+  const { devYouthAge } = useDevSettings();
 
-  // Determine which questions to show based on age
+  // Determine child's age — devYouthAge overrides in dev mode
   const activeChild = childrenProfile.find((c) => c.id === activeChildId);
-  const isChild = activeChild ? activeChild.age < 12 : false;
-  
+  const childAge = __DEV__ ? devYouthAge : (activeChild?.age ?? 10);
+
+  // ════════════════════════════════════════════════════════════
+  // AGE GROUP: 6–8 → New "Explorers" module
+  // ════════════════════════════════════════════════════════════
+  if (childAge >= 6 && childAge <= 8) {
+    return <DiagnosticExplorer />;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // AGE GROUP: 9+ → Legacy question-based test
+  // ════════════════════════════════════════════════════════════
+  const isChild = childAge < 12;
   const QUESTIONS = isChild ? CHILD_QUESTIONS : YOUTH_QUESTIONS;
 
+  return <LegacyQuestionTest
+    questions={QUESTIONS}
+    isChild={isChild}
+    user={user}
+    activeChildId={activeChildId}
+    updateChildDiagnostic={updateChildDiagnostic}
+    router={router}
+    isDesktop={isDesktop}
+    horizontalPadding={horizontalPadding}
+  />;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Legacy Test Component (9-17, unchanged logic)
+   ───────────────────────────────────────────────────────────── */
+
+function LegacyQuestionTest({
+  questions: QUESTIONS,
+  isChild,
+  user,
+  activeChildId,
+  updateChildDiagnostic,
+  router,
+  isDesktop,
+  horizontalPadding,
+}: {
+  questions: typeof CHILD_QUESTIONS;
+  isChild: boolean;
+  user: any;
+  activeChildId: string | null;
+  updateChildDiagnostic: (id: string, d: Diagnostic) => Promise<void>;
+  router: any;
+  isDesktop: boolean;
+  horizontalPadding: number;
+}) {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -98,12 +162,10 @@ export default function YouthTesting() {
     setIsProcessing(true);
     try {
       const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("Gemini API Key is missing");
-      }
+      if (!apiKey) throw new Error("Gemini API Key is missing");
 
       let prompt = `You are an expert child psychologist and talent scout. Analyze this profile. Category: ${isChild ? "Child (6-11)" : "Teenager (12-17)"}.\n`;
-      
+
       if (!isSkip) {
         prompt += `The user answered the following questions:\n`;
         selectedAnswers.forEach((ansIndex, i) => {
@@ -112,7 +174,7 @@ export default function YouthTesting() {
           }
         });
       } else {
-         prompt += `The user skipped the test. Assign generic but encouraging balanced scores and summary.\n`;
+        prompt += `The user skipped the test. Assign generic but encouraging balanced scores and summary.\n`;
       }
 
       prompt += `
@@ -134,9 +196,7 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-             temperature: 0.7,
-          }
+          generationConfig: { temperature: 0.7 },
         }),
       });
 
@@ -144,10 +204,9 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
       if (!response.ok) throw new Error(data.error?.message || "Failed to fetch from Gemini");
 
       const textOutput = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-      const cleanedJson = textOutput.replace(/```json/g, '').replace(/```/g, '').trim();
-      
+      const cleanedJson = textOutput.replace(/```json/g, "").replace(/```/g, "").trim();
       const diagnosticData = JSON.parse(cleanedJson);
-      
+
       const targetDiagnostic: Diagnostic = {
         childId: activeChildId || user?.id || "unknown",
         scores: diagnosticData.scores || { logical: 50, creative: 50, social: 50, physical: 50, linguistic: 50 },
@@ -159,19 +218,17 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
       if (activeChildId) {
         await updateChildDiagnostic(activeChildId, targetDiagnostic);
       }
-
       router.push("/profile/youth/results");
     } catch (e) {
       console.error("AI processing error:", e);
       alert("Произошла ошибка при анализе. Мы используем запасные результаты.");
-      // Fallback
       if (activeChildId) {
         await updateChildDiagnostic(activeChildId, {
           childId: activeChildId,
           scores: { logical: 70, creative: 80, social: 60, physical: 50, linguistic: 65 },
           summary: "У тебя отличный потенциал! Мы видим сильную творческую жилку.",
           recommendedConstellation: "Творческий новатор",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         });
       }
       router.push("/profile/youth/results");
@@ -194,84 +251,47 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
 
   if (isProcessing) {
     return (
-       <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={{ color: COLORS.foreground, marginTop: 20, fontSize: 18, fontWeight: "600" }}>
-            ИИ анализирует ответы...
-          </Text>
-       </View>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ color: COLORS.foreground, marginTop: 20, fontSize: 18, fontWeight: "600" }}>
+          ИИ анализирует ответы...
+        </Text>
+      </View>
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Background Blobs */}
-      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: 200, backgroundColor: `${COLORS.primary}08` }} />
-        <View style={{ position: 'absolute', top: '40%', left: -150, width: 350, height: 350, borderRadius: 175, backgroundColor: `${COLORS.secondary}05` }} />
-        <View style={{ position: 'absolute', bottom: -50, right: -50, width: 300, height: 300, borderRadius: 150, backgroundColor: `${COLORS.accent}05` }} />
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: "hidden" }}>
+        <View style={{ position: "absolute", top: -100, right: -100, width: 400, height: 400, borderRadius: 200, backgroundColor: `${COLORS.primary}08` }} />
+        <View style={{ position: "absolute", top: "40%", left: -150, width: 350, height: 350, borderRadius: 175, backgroundColor: `${COLORS.secondary}05` }} />
+        <View style={{ position: "absolute", bottom: -50, right: -50, width: 300, height: 300, borderRadius: 150, backgroundColor: `${COLORS.accent}05` }} />
       </View>
 
       <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
-        <View style={{ 
-          flexDirection: 'row', 
-          justifyContent: 'space-between',
-          alignItems: 'center', 
-          paddingHorizontal: horizontalPadding,
-          paddingVertical: 12,
-        }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-             <TouchableOpacity
-               onPress={() => router.back()}
-               style={{
-                 width: 44,
-                 height: 44,
-                 borderRadius: 22,
-                 backgroundColor: 'white',
-                 alignItems: 'center',
-                 justifyContent: 'center',
-                 marginRight: 16,
-                 ...SHADOWS.sm,
-               }}
-             >
-               <Feather name="arrow-left" size={20} color={COLORS.foreground} />
-             </TouchableOpacity>
-             <Text style={{ fontSize: 22, fontWeight: '900', color: COLORS.foreground, letterSpacing: -0.5 }}>
-               Тестирование
-             </Text>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: horizontalPadding, paddingVertical: 12 }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <TouchableOpacity onPress={() => router.back()} style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "white", alignItems: "center", justifyContent: "center", marginRight: 16, ...SHADOWS.sm }}>
+              <Feather name="arrow-left" size={20} color={COLORS.foreground} />
+            </TouchableOpacity>
+            <Text style={{ fontSize: 22, fontWeight: "900", color: COLORS.foreground, letterSpacing: -0.5 }}>
+              Тестирование
+            </Text>
           </View>
           <TouchableOpacity onPress={handleSkip}>
-              <Text style={{ color: COLORS.mutedForeground, fontSize: 15, fontWeight: "600" }}>Пропустить</Text>
+            <Text style={{ color: COLORS.mutedForeground, fontSize: 15, fontWeight: "600" }}>Пропустить</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
 
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: horizontalPadding,
-          paddingTop: 8,
-          paddingBottom: 120,
-          alignItems: "center",
-        }}
+        contentContainerStyle={{ paddingHorizontal: horizontalPadding, paddingTop: 8, paddingBottom: 120, alignItems: "center" }}
       >
         <View style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined }}>
           {/* PROGRESS */}
-          <View
-            style={{
-              backgroundColor: "rgba(0,0,0,0.05)",
-              height: 10,
-              borderRadius: 10,
-              overflow: "hidden",
-              marginBottom: 30,
-            }}
-          >
-            <View
-              style={{
-                width: `${progress}%`,
-                height: "100%",
-                backgroundColor: COLORS.primary,
-              }}
-            />
+          <View style={{ backgroundColor: "rgba(0,0,0,0.05)", height: 10, borderRadius: 10, overflow: "hidden", marginBottom: 30 }}>
+            <View style={{ width: `${progress}%`, height: "100%", backgroundColor: COLORS.primary }} />
           </View>
 
           {/* QUESTION CARD */}
@@ -280,40 +300,21 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
             from={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 400 }}
-            style={{
-              backgroundColor: "white",
-              borderRadius: 24,
-              padding: 22,
-              marginBottom: 40,
-              shadowColor: "#000",
-              shadowOpacity: 0.08,
-              shadowRadius: 10,
-            }}
+            style={{ backgroundColor: "white", borderRadius: 24, padding: 22, marginBottom: 40, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 10 }}
           >
-            <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.mutedForeground, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.mutedForeground, marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>
               Вопрос {step + 1} из {QUESTIONS.length}
             </Text>
-
             <Text style={{ fontSize: 20, fontWeight: "800", color: COLORS.foreground, marginBottom: 24 }}>
               {current.question}
             </Text>
-
             {current.answers.map((text, i) => {
               const active = answers[step] === i;
-
               return (
                 <TouchableOpacity
                   key={i}
                   onPress={() => selectAnswer(i)}
-                  style={{
-                    backgroundColor: active ? `${COLORS.primary}15` : COLORS.muted,
-                    borderRadius: RADIUS.lg,
-                    paddingVertical: 16,
-                    paddingHorizontal: 20,
-                    marginBottom: 12,
-                    borderWidth: 2,
-                    borderColor: active ? COLORS.primary : "transparent",
-                  }}
+                  style={{ backgroundColor: active ? `${COLORS.primary}15` : COLORS.muted, borderRadius: RADIUS.lg, paddingVertical: 16, paddingHorizontal: 20, marginBottom: 12, borderWidth: 2, borderColor: active ? COLORS.primary : "transparent" }}
                 >
                   <Text style={{ fontSize: 16, color: active ? COLORS.primary : COLORS.foreground, fontWeight: active ? "800" : "500" }}>
                     {text}
@@ -323,20 +324,10 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
             })}
           </MotiView>
 
-          <TouchableOpacity
-            disabled={answers[step] === undefined}
-            onPress={next}
-            style={{ marginTop: 8 }}
-          >
+          <TouchableOpacity disabled={answers[step] === undefined} onPress={next} style={{ marginTop: 8 }}>
             <LinearGradient
-                colors={answers[step] === undefined ? [COLORS.muted, COLORS.muted] : [COLORS.primary, COLORS.secondary]}
-                style={{
-                    paddingVertical: 18,
-                    borderRadius: RADIUS.xl,
-                    alignItems: "center",
-                    justifyContent: "center",
-                    ...SHADOWS.md,
-                }}
+              colors={answers[step] === undefined ? [COLORS.muted, COLORS.muted] : [COLORS.primary, COLORS.secondary]}
+              style={{ paddingVertical: 18, borderRadius: RADIUS.xl, alignItems: "center", justifyContent: "center", ...SHADOWS.md }}
             >
               <Text style={{ fontSize: 18, fontWeight: "800", color: answers[step] === undefined ? COLORS.mutedForeground : "white" }}>
                 {step === QUESTIONS.length - 1 ? "Завершить" : "Следующий вопрос"}
@@ -348,4 +339,3 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
     </View>
   );
 }
-

@@ -10,7 +10,7 @@ import { useParentData } from "../../../contexts/ParentDataContext";
 export default function ParentChildDetails() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { childrenProfile, parentProfile } = useParentData();
+  const { childrenProfile, parentProfile, setActiveChildId } = useParentData();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
@@ -193,15 +193,28 @@ export default function ParentChildDetails() {
                      {child.talentProfile.recommendedConstellation}
                   </Text>
                </View>
-               <Text className="text-purple-800 text-sm leading-5 font-medium">
+               <Text className="text-purple-800 text-sm leading-5 font-medium mb-5">
                   {child.talentProfile.summary}
                </Text>
+               
+               <TouchableOpacity 
+                 onPress={() => {
+                   setActiveChildId(child.id);
+                   router.push("/profile/youth/results");
+                 }}
+                 className="bg-white py-3.5 rounded-2xl items-center justify-center border border-purple-100"
+               >
+                 <View className="flex-row items-center gap-2">
+                   <Text className="text-primary font-black text-xs uppercase tracking-wide">Открыть полный отчет</Text>
+                   <Feather name="external-link" size={14} color={COLORS.primary} />
+                 </View>
+               </TouchableOpacity>
             </View>
          )}
 
-         {/* Paywall / Test CTA */}
-         {!child.talentProfile ? (
-            <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 overflow-hidden">
+         {/* AI Diagnostic CTA (Shown only if NO talent profile yet) */}
+         {!child.talentProfile && (
+            <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 overflow-hidden mb-8">
                <LinearGradient
                   colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0)']}
                   style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
@@ -222,8 +235,11 @@ export default function ParentChildDetails() {
                   <Text className="text-gray-900 font-black text-sm uppercase">Начать тест</Text>
                </Pressable>
             </View>
-         ) : (
-            <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 overflow-hidden">
+         )}
+
+         {/* PRO Upgrade CTA (Shown if they have a profile but NOT the PRO tariff) */}
+         {child.talentProfile && parentProfile?.tariff !== 'pro' && (
+            <View style={SHADOWS.md} className="bg-gray-900 rounded-[40px] p-8 overflow-hidden mb-8">
                <LinearGradient
                   colors={['#A78BFA', '#6C5CE7']}
                   style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.2 }}
@@ -241,7 +257,7 @@ export default function ParentChildDetails() {
                   onPress={() => router.push("/parent/subscription" as any)}
                   className="bg-purple-500 h-14 rounded-2xl items-center justify-center active:bg-purple-600"
                >
-                  <Text className="text-white font-black text-sm uppercase tracking-wide">🔥 Открыть за 30,000 ₸</Text>
+                  <Text className="text-white font-black text-sm uppercase tracking-wide">🔥 Открыть все данные</Text>
                </Pressable>
             </View>
          )}
