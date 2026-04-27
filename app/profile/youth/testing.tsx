@@ -31,9 +31,13 @@ import { useParentData } from "../../../contexts/ParentDataContext";
 import { useDevSettings } from "../../../contexts/DevSettingsContext";
 import { Diagnostic } from "../../../models/types";
 import DiagnosticExplorer from "../../../components/diagnostic/DiagnosticExplorer";
+import DiagnosticCreators from "../../../components/diagnostic/DiagnosticCreators";
+import DiagnosticRebels from "../../../components/diagnostic/DiagnosticRebels";
+import DiagnosticArchitects from "../../../components/diagnostic/DiagnosticArchitects";
 
 /* ─────────────────────────────────────────────────────────────
-   Legacy question sets (9-11 and 12-17 — kept for compatibility)
+   Legacy question sets (kept for fallback)
+   The 9-17 groups are now handled by their respective modules.
    ───────────────────────────────────────────────────────────── */
 
 const CHILD_QUESTIONS = [
@@ -98,21 +102,41 @@ export default function YouthTesting() {
   const childAge = __DEV__ ? devYouthAge : (activeChild?.age ?? 10);
 
   // ════════════════════════════════════════════════════════════
-  // AGE GROUP: 6–8 → New "Explorers" module
+  // AGE GROUP: 6–8 → "Explorers" module
   // ════════════════════════════════════════════════════════════
   if (childAge >= 6 && childAge <= 8) {
     return <DiagnosticExplorer />;
   }
 
   // ════════════════════════════════════════════════════════════
-  // AGE GROUP: 9+ → Legacy question-based test
+  // AGE GROUP: 9–11 → "Creators" module (WYR + RPG quest)
   // ════════════════════════════════════════════════════════════
-  const isChild = childAge < 12;
-  const QUESTIONS = isChild ? CHILD_QUESTIONS : YOUTH_QUESTIONS;
+  if (childAge >= 9 && childAge <= 11) {
+    return <DiagnosticCreators />;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // AGE GROUP: 12–14 → "Rebels" module (Vibe Check + Hackathon)
+  // ════════════════════════════════════════════════════════════
+  if (childAge >= 12 && childAge <= 14) {
+    return <DiagnosticRebels />;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // AGE GROUP: 15–17 → "Architects" module (Career Match + OS)
+  // ════════════════════════════════════════════════════════════
+  if (childAge >= 15 && childAge <= 17) {
+    return <DiagnosticArchitects />;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  // FALLBACK: 18+ or unknown → Legacy question-based test
+  // ════════════════════════════════════════════════════════════
+  const QUESTIONS = YOUTH_QUESTIONS;
 
   return <LegacyQuestionTest
     questions={QUESTIONS}
-    isChild={isChild}
+    isChild={false}
     user={user}
     activeChildId={activeChildId}
     updateChildDiagnostic={updateChildDiagnostic}
