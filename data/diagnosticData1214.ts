@@ -16,6 +16,7 @@ export interface VibeCard {
   type: RiasecType;
   moodboardDesc: string; // Description for image generation or placeholder
   text: string;
+  imageUrl?: string;
 }
 
 // ─── PRO Types (Hackathon) ───────────────────────────────────────────────────
@@ -65,35 +66,35 @@ export interface StealthEvent1214 {
 // ─── BASIC: 24 Vibe Cards ────────────────────────────────────────────────────
 
 export const VIBE_CARDS: VibeCard[] = [
-  { id: "B01", type: "R", moodboardDesc: "Стол с инструментами, пайка плат, неон", text: "Собирать технику своими руками" },
-  { id: "B02", type: "R", moodboardDesc: "Природа, палатка, горы, походный рюкзак", text: "Выживать в дикой природе, крафтить" },
-  { id: "B03", type: "R", moodboardDesc: "Спортивный зал, кроссовки, фитнес-трекер", text: "Тренировки, спорт, движение" },
-  { id: "B04", type: "R", moodboardDesc: "3D-принтер, робототехника, чертежи", text: "Создавать физические механизмы" },
+  { id: "B01", type: "R", moodboardDesc: "Стол с инструментами, пайка плат, неон", text: "Собирать технику своими руками", imageUrl: "https://loremflickr.com/600/800/engineering,tools/all" },
+  { id: "B02", type: "R", moodboardDesc: "Природа, палатка, горы, походный рюкзак", text: "Выживать в дикой природе, крафтить", imageUrl: "https://loremflickr.com/600/800/camping,mountains/all" },
+  { id: "B03", type: "R", moodboardDesc: "Спортивный зал, кроссовки, фитнес-трекер", text: "Тренировки, спорт, движение", imageUrl: "https://loremflickr.com/600/800/gym,fitness/all" },
+  { id: "B04", type: "R", moodboardDesc: "3D-принтер, робототехника, чертежи", text: "Создавать физические механизмы", imageUrl: "https://loremflickr.com/600/800/robotics,engineering/all" },
   
-  { id: "B05", type: "I", moodboardDesc: "Темная комната, два монитора, строки кода", text: "Кодить" },
-  { id: "B06", type: "I", moodboardDesc: "Микроскоп, светящиеся колбы, лаборатория", text: "Проводить химические эксперименты" },
-  { id: "B07", type: "I", moodboardDesc: "Космос, телескоп, звездные карты", text: "Изучать то, что за пределами Земли" },
-  { id: "B08", type: "I", moodboardDesc: "Сложные графики, статистика, нейросети", text: "Анализировать большие данные (Big Data)" },
+  { id: "B05", type: "I", moodboardDesc: "Темная комната, два монитора, строки кода", text: "Кодить", imageUrl: "https://loremflickr.com/600/800/coding,hacker/all" },
+  { id: "B06", type: "I", moodboardDesc: "Микроскоп, светящиеся колбы, лаборатория", text: "Проводить химические эксперименты", imageUrl: "https://loremflickr.com/600/800/laboratory,science/all" },
+  { id: "B07", type: "I", moodboardDesc: "Космос, телескоп, звездные карты", text: "Изучать то, что за пределами Земли", imageUrl: "https://loremflickr.com/600/800/space,telescope/all" },
+  { id: "B08", type: "I", moodboardDesc: "Сложные графики, статистика, нейросети", text: "Анализировать большие данные (Big Data)", imageUrl: "https://loremflickr.com/600/800/data,analytics/all" },
   
-  { id: "B09", type: "A", moodboardDesc: "Графический планшет, стилус, цифровой арт", text: "Рисовать арты и дизайн" },
-  { id: "B10", type: "A", moodboardDesc: "Неоновая студия звукозаписи, микрофон", text: "Создавать свои треки и биты" },
-  { id: "B11", type: "A", moodboardDesc: "Сцена, софиты, театральные маски", text: "Выступать перед публикой, играть роль" },
-  { id: "B12", type: "A", moodboardDesc: "Камера, эстетичные кадры, пленка", text: "Снимать и монтировать видео" },
+  { id: "B09", type: "A", moodboardDesc: "Графический планшет, стилус, цифровой арт", text: "Рисовать арты и дизайн", imageUrl: "https://loremflickr.com/600/800/digitalart,design/all" },
+  { id: "B10", type: "A", moodboardDesc: "Неоновая студия звукозаписи, микрофон", text: "Создавать свои треки и биты", imageUrl: "https://loremflickr.com/600/800/music,studio/all" },
+  { id: "B11", type: "A", moodboardDesc: "Сцена, софиты, театральные маски", text: "Выступать перед публикой, играть роль", imageUrl: "https://loremflickr.com/600/800/theatre,stage/all" },
+  { id: "B12", type: "A", moodboardDesc: "Камера, эстетичные кадры, пленка", text: "Снимать и монтировать видео", imageUrl: "https://loremflickr.com/600/800/filmmaking,camera/all" },
   
-  { id: "B13", type: "S", moodboardDesc: "Группа людей, смех, уютное кафе", text: "Быть в центре компании, помогать друзьям" },
-  { id: "B14", type: "S", moodboardDesc: "Волонтерская акция, спасение животных", text: "Делать мир добрее, спасать других" },
-  { id: "B15", type: "S", moodboardDesc: "Блогер, записывающий подкаст, вопросы", text: "Общаться с аудиторией, брать интервью" },
-  { id: "B16", type: "S", moodboardDesc: "Школьный класс, объяснение у доски", text: "Учить других тому, что знаешь сам" },
+  { id: "B13", type: "S", moodboardDesc: "Группа людей, смех, уютное кафе", text: "Быть в центре компании, помогать друзьям", imageUrl: "https://loremflickr.com/600/800/friends,cafe/all" },
+  { id: "B14", type: "S", moodboardDesc: "Волонтерская акция, спасение животных", text: "Делать мир добрее, спасать других", imageUrl: "https://loremflickr.com/600/800/volunteer,helping/all" },
+  { id: "B15", type: "S", moodboardDesc: "Блогер, записывающий подкаст, вопросы", text: "Общаться с аудиторией, брать интервью", imageUrl: "https://loremflickr.com/600/800/podcast,interview/all" },
+  { id: "B16", type: "S", moodboardDesc: "Школьный класс, объяснение у доски", text: "Учить других тому, что знаешь сам", imageUrl: "https://loremflickr.com/600/800/classroom,teaching/all" },
   
-  { id: "B17", type: "E", moodboardDesc: "Дорогая машина, костюмы, небоскребы", text: "Строить свой бизнес и зарабатывать" },
-  { id: "B18", type: "E", moodboardDesc: "Презентация стартапа, графики роста", text: "Руководить командой и вести за собой" },
-  { id: "B19", type: "E", moodboardDesc: "Соцсети, миллион подписчиков, реклама", text: "Продвигать проекты, маркетинг" },
-  { id: "B20", type: "E", moodboardDesc: "Суд, адвокаты, дебаты", text: "Защищать интересы и побеждать в спорах" },
+  { id: "B17", type: "E", moodboardDesc: "Дорогая машина, костюмы, небоскребы", text: "Строить свой бизнес и зарабатывать", imageUrl: "https://loremflickr.com/600/800/business,success/all" },
+  { id: "B18", type: "E", moodboardDesc: "Презентация стартапа, графики роста", text: "Руководить командой и вести за собой", imageUrl: "https://loremflickr.com/600/800/startup,presentation/all" },
+  { id: "B19", type: "E", moodboardDesc: "Соцсети, миллион подписчиков, реклама", text: "Продвигать проекты, маркетинг", imageUrl: "https://loremflickr.com/600/800/socialmedia,influencer/all" },
+  { id: "B20", type: "E", moodboardDesc: "Суд, адвокаты, дебаты", text: "Защищать интересы и побеждать в спорах", imageUrl: "https://loremflickr.com/600/800/lawyer,court/all" },
   
-  { id: "B21", type: "C", moodboardDesc: "Идеально убранный стол, планер, эстетика", text: "Планировать жизнь, списки и порядок" },
-  { id: "B22", type: "C", moodboardDesc: "Строки базы данных, таблицы Excel, серверы", text: "Структурировать хаос в систему" },
-  { id: "B23", type: "C", moodboardDesc: "Библиотека, ровные ряды книг, тишина", text: "Работать с текстами и архивами" },
-  { id: "B24", type: "C", moodboardDesc: "Финансы, калькулятор, акции", text: "Управлять бюджетом и инвестициями" },
+  { id: "B21", type: "C", moodboardDesc: "Идеально убранный стол, планер, эстетика", text: "Планировать жизнь, списки и порядок", imageUrl: "https://loremflickr.com/600/800/planner,aesthetic/all" },
+  { id: "B22", type: "C", moodboardDesc: "Строки базы данных, таблицы Excel, серверы", text: "Структурировать хаос в систему", imageUrl: "https://loremflickr.com/600/800/database,servers/all" },
+  { id: "B23", type: "C", moodboardDesc: "Библиотека, ровные ряды книг, тишина", text: "Работать с текстами и архивами", imageUrl: "https://loremflickr.com/600/800/library,books/all" },
+  { id: "B24", type: "C", moodboardDesc: "Финансы, калькулятор, акции", text: "Управлять бюджетом и инвестициями", imageUrl: "https://loremflickr.com/600/800/finance,charts/all" },
 ];
 
 export const RIASEC_MAP: Record<RiasecType, string> = {

@@ -3,7 +3,7 @@
  */
 import { MotiView } from "moti";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 import type { CareerCard } from "../../../data/diagnosticData1517";
 
@@ -29,11 +29,15 @@ export default function CareerSwipeCard({ card, index, total, onSwipe }: Props) 
           <Text style={styles.stepText}>Карьерный Мэтч {index + 1}/{total}</Text>
         </View>
 
-        {/* Pseudo image/visual representation */}
-        <View style={styles.imagePlaceholder}>
-          <Text style={styles.imageEmoji}>💼</Text>
-          <Text style={styles.imageDesc}>{card.visualDesc}</Text>
-        </View>
+        {/* Image or Pseudo visual representation */}
+        {card.imageUrl ? (
+          <Image source={{ uri: card.imageUrl }} style={styles.cardImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.imagePlaceholder}>
+            <Text style={styles.imageEmoji}>💼</Text>
+            <Text style={styles.imageDesc}>{card.visualDesc}</Text>
+          </View>
+        )}
 
         <Text style={styles.cardText}>{card.text}</Text>
 
@@ -68,6 +72,10 @@ const styles = StyleSheet.create({
   },
   imageEmoji: { fontSize: 48, marginBottom: 16 },
   imageDesc: { fontSize: 15, color: COLORS.mutedForeground, textAlign: "center", fontStyle: "italic" },
+  cardImage: {
+    width: "100%", height: 280, borderRadius: RADIUS.xl,
+    marginBottom: 24, backgroundColor: "#F3F4F6"
+  },
   cardText: { fontSize: 20, fontWeight: "800", textAlign: "center", marginBottom: 32, lineHeight: 28, color: COLORS.foreground },
   actions: { flexDirection: "row", gap: 16, width: "100%" },
   btn: { flex: 1, paddingVertical: 18, borderRadius: RADIUS.full, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 },

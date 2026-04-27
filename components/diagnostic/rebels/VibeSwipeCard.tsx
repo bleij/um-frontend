@@ -3,7 +3,7 @@
  */
 import { MotiView } from "moti";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Image } from "react-native";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 import type { VibeCard } from "../../../data/diagnosticData1214";
 
@@ -29,11 +29,15 @@ export default function VibeSwipeCard({ card, index, total, onSwipe }: Props) {
           <Text style={styles.stepText}>Vibe Check {index + 1}/{total}</Text>
         </View>
 
-        {/* Pseudo moodboard representation */}
-        <View style={styles.moodboardPlaceholder}>
-          <Text style={styles.moodboardEmoji}>📸</Text>
-          <Text style={styles.moodboardDesc}>{card.moodboardDesc}</Text>
-        </View>
+        {/* Image or Pseudo moodboard representation */}
+        {card.imageUrl ? (
+          <Image source={{ uri: card.imageUrl }} style={styles.cardImage} resizeMode="cover" />
+        ) : (
+          <View style={styles.moodboardPlaceholder}>
+            <Text style={styles.moodboardEmoji}>📸</Text>
+            <Text style={styles.moodboardDesc}>{card.moodboardDesc}</Text>
+          </View>
+        )}
 
         <Text style={styles.cardText}>{card.text}</Text>
 
@@ -67,6 +71,10 @@ const styles = StyleSheet.create({
   },
   moodboardEmoji: { fontSize: 40, marginBottom: 12 },
   moodboardDesc: { fontSize: 14, color: COLORS.mutedForeground, textAlign: "center", fontStyle: "italic" },
+  cardImage: {
+    width: "100%", height: 240, borderRadius: RADIUS.lg,
+    marginBottom: 24, backgroundColor: COLORS.muted
+  },
   cardText: { fontSize: 22, fontWeight: "900", textAlign: "center", marginBottom: 32 },
   actions: { flexDirection: "row", gap: 16, width: "100%" },
   btn: { flex: 1, paddingVertical: 18, borderRadius: RADIUS.lg, alignItems: "center", flexDirection: "row", justifyContent: "center", gap: 8 },

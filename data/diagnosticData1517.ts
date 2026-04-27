@@ -24,6 +24,7 @@ export interface CareerCard {
   anchor: AnchorType;
   visualDesc: string; // Description for UI placeholder
   text: string;
+  imageUrl?: string;
 }
 
 export const ANCHOR_MAP: Record<AnchorType, string> = {
@@ -75,37 +76,37 @@ export interface StealthEvent1517 {
 // ─── BASIC: 24 Career Cards ──────────────────────────────────────────────────
 
 export const CAREER_CARDS: CareerCard[] = [
-  { id: "B01", anchor: "Autonomy", visualDesc: "Фрилансер с ноутбуком у моря", text: "Работать по своему графику, без начальников над душой" },
-  { id: "B02", anchor: "Autonomy", visualDesc: "Пустой коворкинг / Кафе", text: "Самостоятельно решать, где и как выполнять задачу" },
-  { id: "B03", anchor: "Autonomy", visualDesc: "Дорога, машина, путешествие", text: "Быть независимым подрядчиком (фриланс / свой проект)" },
+  { id: "B01", anchor: "Autonomy", visualDesc: "Фрилансер с ноутбуком у моря", text: "Работать по своему графику, без начальников над душой", imageUrl: "https://loremflickr.com/600/800/freelance,beach/all" },
+  { id: "B02", anchor: "Autonomy", visualDesc: "Пустой коворкинг / Кафе", text: "Самостоятельно решать, где и как выполнять задачу", imageUrl: "https://loremflickr.com/600/800/coworking,cafe/all" },
+  { id: "B03", anchor: "Autonomy", visualDesc: "Дорога, машина, путешествие", text: "Быть независимым подрядчиком (фриланс / свой проект)", imageUrl: "https://loremflickr.com/600/800/roadtrip,car/all" },
   
-  { id: "B04", anchor: "Stability", visualDesc: "Современный офис, бейдж", text: "Работа в крупной корпорации с соцпакетом и гарантией" },
-  { id: "B05", anchor: "Stability", visualDesc: "Растущий график зарплаты", text: "Понятный карьерный рост: знаешь, кем будешь через 5 лет" },
-  { id: "B06", anchor: "Stability", visualDesc: "Государственное учреждение", text: "Госслужба: спокойствие и уверенность в завтрашнем дне" },
+  { id: "B04", anchor: "Stability", visualDesc: "Современный офис, бейдж", text: "Работа в крупной корпорации с соцпакетом и гарантией", imageUrl: "https://loremflickr.com/600/800/office,corporate/all" },
+  { id: "B05", anchor: "Stability", visualDesc: "Растущий график зарплаты", text: "Понятный карьерный рост: знаешь, кем будешь через 5 лет", imageUrl: "https://loremflickr.com/600/800/chart,growth/all" },
+  { id: "B06", anchor: "Stability", visualDesc: "Государственное учреждение", text: "Госслужба: спокойствие и уверенность в завтрашнем дне", imageUrl: "https://loremflickr.com/600/800/government,building/all" },
   
-  { id: "B07", anchor: "Mastery", visualDesc: "Сложный код / Хирургич. стол", text: "Быть узким специалистом-экспертом, лучшим в своем деле" },
-  { id: "B08", anchor: "Mastery", visualDesc: "Лаборатория / Исследования", text: "Глубоко изучать одну тему, делать научные открытия" },
-  { id: "B09", anchor: "Mastery", visualDesc: "Сертификаты, стопки книг", text: "Постоянно учиться сложным техническим вещам" },
+  { id: "B07", anchor: "Mastery", visualDesc: "Сложный код / Хирургич. стол", text: "Быть узким специалистом-экспертом, лучшим в своем деле", imageUrl: "https://loremflickr.com/600/800/expert,skill/all" },
+  { id: "B08", anchor: "Mastery", visualDesc: "Лаборатория / Исследования", text: "Глубоко изучать одну тему, делать научные открытия", imageUrl: "https://loremflickr.com/600/800/research,science/all" },
+  { id: "B09", anchor: "Mastery", visualDesc: "Сертификаты, стопки книг", text: "Постоянно учиться сложным техническим вещам", imageUrl: "https://loremflickr.com/600/800/books,learning/all" },
   
-  { id: "B10", anchor: "Management", visualDesc: "Переговорная, человек во главе", text: "Управлять людьми, распределять задачи и бюджеты" },
-  { id: "B11", anchor: "Management", visualDesc: "Презентация на сцене", text: "Отвечать за финальный результат всей компании" },
-  { id: "B12", anchor: "Management", visualDesc: "Рукопожатие в костюмах", text: "Проводить переговоры и принимать жесткие решения" },
+  { id: "B10", anchor: "Management", visualDesc: "Переговорная, человек во главе", text: "Управлять людьми, распределять задачи и бюджеты", imageUrl: "https://loremflickr.com/600/800/meeting,manager/all" },
+  { id: "B11", anchor: "Management", visualDesc: "Презентация на сцене", text: "Отвечать за финальный результат всей компании", imageUrl: "https://loremflickr.com/600/800/presentation,stage/all" },
+  { id: "B12", anchor: "Management", visualDesc: "Рукопожатие в костюмах", text: "Проводить переговоры и принимать жесткие решения", imageUrl: "https://loremflickr.com/600/800/handshake,business/all" },
   
-  { id: "B13", anchor: "Entrepreneurship", visualDesc: "Стартап-команда, стикеры", text: "Создать бизнес с нуля и стать фаундером" },
-  { id: "B14", anchor: "Entrepreneurship", visualDesc: "Риск, графики акций, крипта", text: "Рисковать деньгами ради сверхприбыли и инноваций" },
-  { id: "B15", anchor: "Entrepreneurship", visualDesc: "Бренд одежды / Приложение", text: "Придумывать продукты, которых еще нет на рынке" },
+  { id: "B13", anchor: "Entrepreneurship", visualDesc: "Стартап-команда, стикеры", text: "Создать бизнес с нуля и стать фаундером", imageUrl: "https://loremflickr.com/600/800/startup,team/all" },
+  { id: "B14", anchor: "Entrepreneurship", visualDesc: "Риск, графики акций, крипта", text: "Рисковать деньгами ради сверхприбыли и инноваций", imageUrl: "https://loremflickr.com/600/800/crypto,trading/all" },
+  { id: "B15", anchor: "Entrepreneurship", visualDesc: "Бренд одежды / Приложение", text: "Придумывать продукты, которых еще нет на рынке", imageUrl: "https://loremflickr.com/600/800/design,innovation/all" },
   
-  { id: "B16", anchor: "Service", visualDesc: "Врач с пациентом / Волонтеры", text: "Делать работу, которая реально спасает жизни людей" },
-  { id: "B17", anchor: "Service", visualDesc: "Экология, зеленые технологии", text: "Решать глобальные проблемы (экология, образование)" },
-  { id: "B18", anchor: "Service", visualDesc: "Психолог / Учитель", text: "Помогать людям развиваться и решать их боли" },
+  { id: "B16", anchor: "Service", visualDesc: "Врач с пациентом / Волонтеры", text: "Делать работу, которая реально спасает жизни людей", imageUrl: "https://loremflickr.com/600/800/doctor,volunteer/all" },
+  { id: "B17", anchor: "Service", visualDesc: "Экология, зеленые технологии", text: "Решать глобальные проблемы (экология, образование)", imageUrl: "https://loremflickr.com/600/800/ecology,green/all" },
+  { id: "B18", anchor: "Service", visualDesc: "Психолог / Учитель", text: "Помогать людям развиваться и решать их боли", imageUrl: "https://loremflickr.com/600/800/psychologist,teacher/all" },
   
-  { id: "B19", anchor: "Challenge", visualDesc: "Трофей, кубок, хакатон", text: "Работать там, где жесткая конкуренция и нужно побеждать" },
-  { id: "B20", anchor: "Challenge", visualDesc: "Альпинист на вершине", text: "Браться за невозможные задачи, от которых все отказались" },
-  { id: "B21", anchor: "Challenge", visualDesc: "Биржа, трейдинг", text: "Обойти конкурентов на рынке любой ценой" },
+  { id: "B19", anchor: "Challenge", visualDesc: "Трофей, кубок, хакатон", text: "Работать там, где жесткая конкуренция и нужно побеждать", imageUrl: "https://loremflickr.com/600/800/trophy,hackathon/all" },
+  { id: "B20", anchor: "Challenge", visualDesc: "Альпинист на вершине", text: "Браться за невозможные задачи, от которых все отказались", imageUrl: "https://loremflickr.com/600/800/climber,mountain/all" },
+  { id: "B21", anchor: "Challenge", visualDesc: "Биржа, трейдинг", text: "Обойти конкурентов на рынке любой ценой", imageUrl: "https://loremflickr.com/600/800/stockmarket,trading/all" },
   
-  { id: "B22", anchor: "Lifestyle", visualDesc: "Семья, пикник, выходной", text: "Работа не должна мешать личной жизни и хобби" },
-  { id: "B23", anchor: "Lifestyle", visualDesc: "Выключенный телефон", text: "В 18:00 закрывать ноутбук и забывать о работе до утра" },
-  { id: "B24", anchor: "Lifestyle", visualDesc: "Йога, здоровье, спорт", text: "Если работа вредит здоровью или нервам — увольняться" },
+  { id: "B22", anchor: "Lifestyle", visualDesc: "Семья, пикник, выходной", text: "Работа не должна мешать личной жизни и хобби", imageUrl: "https://loremflickr.com/600/800/family,picnic/all" },
+  { id: "B23", anchor: "Lifestyle", visualDesc: "Выключенный телефон", text: "В 18:00 закрывать ноутбук и забывать о работе до утра", imageUrl: "https://loremflickr.com/600/800/relax,off/all" },
+  { id: "B24", anchor: "Lifestyle", visualDesc: "Йога, здоровье, спорт", text: "Если работа вредит здоровью или нервам — увольняться", imageUrl: "https://loremflickr.com/600/800/yoga,health/all" },
 ];
 
 // ─── PRO: 30 OS Tasks (Mail, Slack, Trello) ──────────────────────────────────
