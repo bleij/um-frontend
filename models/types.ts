@@ -40,6 +40,7 @@ export interface Child {
   age: number;
   ageCategory?: "child" | "teen" | "young-adult";
   interests: string[];
+  goals?: string;
   talentProfile?: Diagnostic;
   qrPin?: string;
   qrPinExpiresAt?: string | Date;

@@ -326,7 +326,7 @@ const DEFAULT_TABS: TabItem[] = [
 
 function useTabNav(role: Role | string | null) {
   const router = useRouter();
-  const segments = useSegments();
+  const segments = useSegments() as string[];
   const currentSegment = segments[segments.length - 1];
   const currentPath = segments.slice(1).join("/");
   const tabs = role ? TABS_BY_ROLE[role] || DEFAULT_TABS : DEFAULT_TABS;
@@ -720,7 +720,7 @@ export function SideNav({ role }: Props) {
 export default function CustomTabBar({ role }: Props) {
   const { tabs, go, isActive } = useTabNav(role);
   const { width } = useWindowDimensions();
-  const segments = useSegments();
+  const segments = useSegments() as string[];
   
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
 

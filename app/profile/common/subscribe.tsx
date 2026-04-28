@@ -131,6 +131,7 @@ export default function SubscribeScreen() {
 
                     {plans.map((plan, i) => {
                         const isSelected = selected === plan.title;
+                        const isPopular = "popular" in plan && plan.popular === true;
 
                         return (
                             <MotiView
@@ -143,8 +144,8 @@ export default function SubscribeScreen() {
                                     borderRadius: 26,
                                     padding: 22,
                                     marginBottom: 24,
-                                    borderWidth: plan.popular || isSelected ? 2 : 1,
-                                    borderColor: isSelected ? "#6C5CE7" : plan.popular ? "#6C5CE7" : "rgba(15, 23, 42, 0.08)",
+                                    borderWidth: isPopular || isSelected ? 2 : 1,
+                                    borderColor: isSelected ? "#6C5CE7" : isPopular ? "#6C5CE7" : "rgba(15, 23, 42, 0.08)",
                                 }}
                             >
                                 <View style={{
@@ -152,7 +153,7 @@ export default function SubscribeScreen() {
                                     justifyContent: "space-between",
                                     alignItems: "center"
                                 }}>
-                                    {plan.popular ? (
+                                    {isPopular ? (
                                         <View
                                             style={{
                                                 backgroundColor: "#6C5CE7",

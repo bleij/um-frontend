@@ -830,8 +830,10 @@ export default function YouthHome() {
                     }
 
                     try {
-                      // Get parent_id from childrenProfile if available
-                      const parentId = parentProfile?.id || null;
+                      const parentId =
+                        activeChild?.parentId && activeChild.parentId !== "pending"
+                          ? activeChild.parentId
+                          : null;
 
                       const { error } = await supabase
                         .from('student_enrollment_requests')

@@ -34,7 +34,7 @@ export default function OrgVerificationScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
-  const { orgId, orgStatus, refresh: refreshOrgProfile } = useOrgProfile();
+  const { id: orgId, status: orgStatus, refresh: refreshOrgProfile } = useOrgProfile();
 
   const [bin, setBin] = useState("");
   const [docs, setDocs] = useState<DocState>({ bin_doc: false, registration_doc: false, license_doc: false });
