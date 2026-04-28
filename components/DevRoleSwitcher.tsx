@@ -1,24 +1,56 @@
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, TouchableOpacity, Modal, StyleSheet,
   ScrollView, Switch, Platform, useWindowDimensions, Pressable,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { useDevSettings } from '../contexts/DevSettingsContext';
 import { useParentData } from '../contexts/ParentDataContext';
 import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
 import { Feather } from '@expo/vector-icons';
 
+const DEV_TOOLS_KEY = 'um_dev_tools_enabled';
+
 export function DevRoleSwitcher() {
   if (!__DEV__) return null;
 
   const [visible, setVisible] = useState(false);
-  const { user, setUserRole, devLogin, devMode, setDevMode, devOtpCode } = useAuth();
+  const [devToolsEnabled, setDevToolsEnabledState] = useState(false);
+
+  // All hooks up-front so they're in scope for toggleDevTools
+  const { user, setUserRole, devLogin, logout, devMode, setDevMode, devOtpCode } = useAuth();
   const { parentProfile, setParentTariff } = useParentData();
   const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp, devYouthAge, setDevYouthAge } = useDevSettings();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
 
+  // Persist master dev-tools flag; sync dependent settings automatically
+  const toggleDevTools = async (value: boolean) => {
+    setDevToolsEnabledState(value);
+    await AsyncStorage.setItem(DEV_TOOLS_KEY, value ? 'true' : 'false');
+    await setDevMode(value);
+    if (value) {
+      // Enabling → switch to fake OTP
+      if (useRealOtp) await setUseRealOtp(false);
+    } else {
+      // Disabling → restore real OTP, clear user, go to landing
+      if (!useRealOtp) await setUseRealOtp(true);
+      await logout();
+      setVisible(false);
+      router.replace('/intro');
+    }
+  };
+
+  // Restore persisted master state when modal opens
+  const handleOpen = async () => {
+    const stored = await AsyncStorage.getItem(DEV_TOOLS_KEY);
+    if (stored !== null) setDevToolsEnabledState(stored === 'true');
+    setVisible(true);
+  };
+
+  const router = useRouter();
   const roles: UserRole[] = ['parent', 'youth', 'child', 'mentor', 'org', 'teacher', 'admin'];
 
   const handleSwitch = async (role: UserRole) => {
@@ -28,12 +60,13 @@ export function DevRoleSwitcher() {
       await setUserRole(role);
     }
     setVisible(false);
+    router.replace('/(tabs)/home');
   };
 
   return (
     <>
       <TouchableOpacity
-        onPress={() => setVisible(true)}
+        onPress={handleOpen}
         style={styles.floatingButton}
         activeOpacity={0.8}
       >
@@ -65,135 +98,144 @@ export function DevRoleSwitcher() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Dev mode toggle */}
+
+              {/* ── Master toggle ── */}
               <View style={styles.devModeRow}>
                 <View style={{ flex: 1, marginRight: 12 }}>
                   <Text style={styles.devModeTitle}>Dev Mode</Text>
-                  <Text style={styles.devModeSubtitle}>Disable auto-redirect to Home</Text>
+                  <Text style={styles.devModeSubtitle}>Enable developer options below</Text>
                 </View>
                 <Switch
-                  value={devMode}
-                  onValueChange={setDevMode}
+                  value={devToolsEnabled}
+                  onValueChange={toggleDevTools}
                   trackColor={{ false: COLORS.muted, true: COLORS.primary }}
                 />
               </View>
 
-              {/* OTP mode toggle — always visible in dev */}
-              <View style={styles.devModeRow}>
-                <View style={{ flex: 1, marginRight: 12 }}>
-                  <Text style={styles.devModeTitle}>
-                    OTP: {useRealOtp ? "Real SMS ✉️" : `Fake (${devOtpCode ?? "1234"})`}
+              {/* ── All options gated by devToolsEnabled ── */}
+              <View style={{ opacity: devToolsEnabled ? 1 : 0.35 }} pointerEvents={devToolsEnabled ? 'auto' : 'none'}>
+
+                {/* OTP mode toggle */}
+                <View style={styles.devModeRow}>
+                  <View style={{ flex: 1, marginRight: 12 }}>
+                    <Text style={styles.devModeTitle}>
+                      OTP: {useRealOtp ? 'Real SMS ✉️' : `Fake (${devOtpCode ?? '1234'})`}
+                    </Text>
+                    <Text style={styles.devModeSubtitle}>
+                      {useRealOtp ? 'Supabase sends a real SMS code' : 'Any login accepts the dev code above'}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={useRealOtp}
+                    onValueChange={setUseRealOtp}
+                    trackColor={{ false: COLORS.muted, true: '#F59E0B' }}
+                    disabled={!devToolsEnabled}
+                  />
+                </View>
+
+                {/* Tariff toggle (parent/child roles) */}
+                {['parent', 'youth', 'child'].includes(user?.role || '') && (
+                  <View style={styles.devModeRow}>
+                    <View style={{ flex: 1, marginRight: 12 }}>
+                      <Text style={styles.devModeTitle}>
+                        Tariff: {parentProfile?.tariff?.toUpperCase() || 'BASIC'}
+                      </Text>
+                      <Text style={styles.devModeSubtitle}>Toggle PRO features</Text>
+                    </View>
+                    <Switch
+                      value={parentProfile?.tariff === 'pro'}
+                      onValueChange={(val) => setParentTariff(val ? 'pro' : 'basic')}
+                      trackColor={{ false: COLORS.muted, true: '#A78BFA' }}
+                      disabled={!devToolsEnabled}
+                    />
+                  </View>
+                )}
+
+                {/* Mentor approval toggle */}
+                {user?.role === 'mentor' && (
+                  <View style={styles.devModeRow}>
+                    <View style={{ flex: 1, marginRight: 12 }}>
+                      <Text style={styles.devModeTitle}>
+                        Mentor: {mentorApproved ? 'Approved ✓' : 'Pending…'}
+                      </Text>
+                      <Text style={styles.devModeSubtitle}>Simulate admin approval state</Text>
+                    </View>
+                    <Switch
+                      value={mentorApproved}
+                      onValueChange={setMentorApproved}
+                      trackColor={{ false: COLORS.muted, true: COLORS.success }}
+                      disabled={!devToolsEnabled}
+                    />
+                  </View>
+                )}
+
+                {/* Org verification toggle */}
+                {user?.role === 'org' && (
+                  <View style={styles.devModeRow}>
+                    <View style={{ flex: 1, marginRight: 12 }}>
+                      <Text style={styles.devModeTitle}>
+                        Org: {orgVerified ? 'Verified ✓' : 'Pending…'}
+                      </Text>
+                      <Text style={styles.devModeSubtitle}>Simulate admin verification state</Text>
+                    </View>
+                    <Switch
+                      value={orgVerified}
+                      onValueChange={setOrgVerified}
+                      trackColor={{ false: COLORS.muted, true: COLORS.success }}
+                      disabled={!devToolsEnabled}
+                    />
+                  </View>
+                )}
+
+                {/* Current user info */}
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Role</Text>
+                  <Text style={styles.infoValue}>{user?.role || 'none'}</Text>
+                </View>
+                <View style={[styles.infoRow, { marginBottom: 16 }]}>
+                  <Text style={styles.infoLabel}>User ID</Text>
+                  <Text style={[styles.infoValue, { fontSize: 11 }]} numberOfLines={1}>
+                    {user?.id || '—'}
                   </Text>
-                  <Text style={styles.devModeSubtitle}>
-                    {useRealOtp ? "Supabase sends a real SMS code" : "Any login accepts the dev code above"}
-                  </Text>
                 </View>
-                <Switch
-                  value={useRealOtp}
-                  onValueChange={setUseRealOtp}
-                  trackColor={{ false: COLORS.muted, true: '#F59E0B' }}
-                />
-              </View>
 
-              {/* Tariff toggle (parent/child roles) */}
-              {['parent', 'youth', 'child'].includes(user?.role || '') && (
-                <View style={styles.devModeRow}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={styles.devModeTitle}>
-                      Tariff: {parentProfile?.tariff?.toUpperCase() || 'BASIC'}
-                    </Text>
-                    <Text style={styles.devModeSubtitle}>Toggle PRO features</Text>
-                  </View>
-                  <Switch
-                    value={parentProfile?.tariff === 'pro'}
-                    onValueChange={(val) => setParentTariff(val ? 'pro' : 'basic')}
-                    trackColor={{ false: COLORS.muted, true: '#A78BFA' }}
-                  />
-                </View>
-              )}
-
-              {/* Dev Youth Age toggle */}
-              {['parent', 'youth', 'child'].includes(user?.role || '') && (
-                <View style={styles.devModeRow}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={styles.devModeTitle}>
-                      Test Age: {devYouthAge}
-                    </Text>
-                    <Text style={styles.devModeSubtitle}>Set child's mock age for testing</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <TouchableOpacity onPress={() => setDevYouthAge(Math.max(4, devYouthAge - 1))} style={styles.ageButton}>
-                      <Feather name="minus" size={16} color={COLORS.foreground} />
+                <Text style={styles.sectionTitle}>Switch role</Text>
+                <View style={styles.grid}>
+                  {roles.map((role) => (
+                    <TouchableOpacity
+                      key={role}
+                      style={[styles.roleButton, user?.role === role && styles.activeRoleButton]}
+                      onPress={() => handleSwitch(role)}
+                    >
+                      <Text style={[styles.roleButtonText, user?.role === role && styles.activeRoleButtonText]}>
+                        {role}
+                      </Text>
                     </TouchableOpacity>
-                    <Text style={{ fontSize: 16, fontWeight: '600', width: 24, textAlign: 'center', color: COLORS.foreground }}>
-                      {devYouthAge}
-                    </Text>
-                    <TouchableOpacity onPress={() => setDevYouthAge(Math.min(18, devYouthAge + 1))} style={styles.ageButton}>
-                      <Feather name="plus" size={16} color={COLORS.foreground} />
-                    </TouchableOpacity>
-                  </View>
+                  ))}
                 </View>
-              )}
 
-              {/* Mentor approval toggle */}
-              {user?.role === 'mentor' && (
-                <View style={styles.devModeRow}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={styles.devModeTitle}>
-                      Mentor: {mentorApproved ? 'Approved ✓' : 'Pending…'}
-                    </Text>
-                    <Text style={styles.devModeSubtitle}>Simulate admin approval state</Text>
+                {/* Dev Youth Age toggle */}
+                {['parent', 'youth', 'child'].includes(user?.role || '') && (
+                  <View style={styles.devModeRow}>
+                    <View style={{ flex: 1, marginRight: 12 }}>
+                      <Text style={styles.devModeTitle}>
+                        Test Age: {devYouthAge}
+                      </Text>
+                      <Text style={styles.devModeSubtitle}>Set child's mock age for testing</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <TouchableOpacity onPress={() => setDevYouthAge(Math.max(4, devYouthAge - 1))} style={styles.ageButton}>
+                        <Feather name="minus" size={16} color={COLORS.foreground} />
+                      </TouchableOpacity>
+                      <Text style={{ fontSize: 16, fontWeight: '600', width: 24, textAlign: 'center', color: COLORS.foreground }}>
+                        {devYouthAge}
+                      </Text>
+                      <TouchableOpacity onPress={() => setDevYouthAge(Math.min(18, devYouthAge + 1))} style={styles.ageButton}>
+                        <Feather name="plus" size={16} color={COLORS.foreground} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Switch
-                    value={mentorApproved}
-                    onValueChange={setMentorApproved}
-                    trackColor={{ false: COLORS.muted, true: COLORS.success }}
-                  />
-                </View>
-              )}
-
-              {/* Org verification toggle */}
-              {user?.role === 'org' && (
-                <View style={styles.devModeRow}>
-                  <View style={{ flex: 1, marginRight: 12 }}>
-                    <Text style={styles.devModeTitle}>
-                      Org: {orgVerified ? 'Verified ✓' : 'Pending…'}
-                    </Text>
-                    <Text style={styles.devModeSubtitle}>Simulate admin verification state</Text>
-                  </View>
-                  <Switch
-                    value={orgVerified}
-                    onValueChange={setOrgVerified}
-                    trackColor={{ false: COLORS.muted, true: COLORS.success }}
-                  />
-                </View>
-              )}
-
-              {/* Current user info */}
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Role</Text>
-                <Text style={styles.infoValue}>{user?.role || 'none'}</Text>
-              </View>
-              <View style={[styles.infoRow, { marginBottom: 16 }]}>
-                <Text style={styles.infoLabel}>User ID</Text>
-                <Text style={[styles.infoValue, { fontSize: 11 }]} numberOfLines={1}>
-                  {user?.id || '—'}
-                </Text>
-              </View>
-
-              <Text style={styles.sectionTitle}>Switch role</Text>
-              <View style={styles.grid}>
-                {roles.map((role) => (
-                  <TouchableOpacity
-                    key={role}
-                    style={[styles.roleButton, user?.role === role && styles.activeRoleButton]}
-                    onPress={() => handleSwitch(role)}
-                  >
-                    <Text style={[styles.roleButtonText, user?.role === role && styles.activeRoleButtonText]}>
-                      {role}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                )}
               </View>
             </ScrollView>
           </Pressable>

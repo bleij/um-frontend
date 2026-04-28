@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
     createContext,
     useContext,
@@ -24,7 +23,9 @@ interface ChildDraft {
   name: string;
   ageGroup: AgeGroup | null;
   phone?: string;
-  qrToken?: string;
+  qrPin?: string;
+  qrPinExpiresAt?: Date;
+  qrPinOneTimeUse?: boolean;
 }
 
 interface ParentDataContextType {
@@ -53,14 +54,6 @@ interface ParentDataContextType {
 const ParentDataContext = createContext<ParentDataContextType | undefined>(
   undefined,
 );
-
-function getParentProfileKey(userId: string) {
-  return `um_parent_profile_${userId}`;
-}
-
-function getChildrenKey(userId: string) {
-  return `um_children_${userId}`;
-}
 
 function ageGroupToCategory(ageGroup: AgeGroup | null): Child["ageCategory"] {
   if (ageGroup === "6-11") return "child";
@@ -92,6 +85,8 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
   const [childrenProfile, setChildrenProfile] = useState<Child[]>([]);
   const [activeChildId, setActiveChildId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // True only when a real Supabase session exists (not for dev-bypass users).
+  const [hasRealSession, setHasRealSession] = useState(false);
 
   useEffect(() => {
     const loadParentData = async () => {
@@ -99,46 +94,36 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
         setParentProfile(null);
         setChildrenProfile([]);
         setActiveChildId(null);
+        setHasRealSession(false);
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
 
-      const profileKey = getParentProfileKey(user.id);
-      const childrenKey = getChildrenKey(user.id);
-
       let nextProfile: ParentProfileData | null = null;
       let nextChildren: Child[] = [];
 
-      const [cachedProfileRaw, cachedChildrenRaw] = await Promise.all([
-        AsyncStorage.getItem(profileKey),
-        AsyncStorage.getItem(childrenKey),
-      ]);
-
-      if (cachedProfileRaw) {
-        try {
-          nextProfile = JSON.parse(cachedProfileRaw) as ParentProfileData;
-        } catch {
-          nextProfile = null;
-        }
-      }
-
-      if (cachedChildrenRaw) {
-        try {
-          const parsed = JSON.parse(cachedChildrenRaw) as Child[];
-          nextChildren = parsed.map(normalizeChild);
-        } catch {
-          nextChildren = [];
-        }
-      }
-
       if (supabase && isSupabaseConfigured) {
+        // Check for a real auth session — dev-bypass users have none.
+        const { data: sessionData } = await supabase.auth.getSession();
+        const realSession = !!sessionData.session;
+        setHasRealSession(realSession);
+
+        if (!realSession) {
+          // Dev-bypass or unauthenticated: skip DB, hydrate from auth user only.
+          setParentProfile({ firstName: user.firstName, lastName: user.lastName, phone: user.phone });
+          setChildrenProfile([]);
+          setActiveChildId(null);
+          setIsLoading(false);
+          return;
+        }
+
         const [remoteParentResponse, remoteChildrenResponse] =
           await Promise.all([
             supabase
               .from("parent_profiles")
-              .select("first_name, last_name, phone")
+              .select("first_name, last_name, phone, tariff")
               .eq("user_id", user.id)
               .maybeSingle(),
             supabase
@@ -149,10 +134,12 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
           ]);
 
         if (!remoteParentResponse.error && remoteParentResponse.data) {
+          const d = remoteParentResponse.data;
           nextProfile = {
-            firstName: remoteParentResponse.data.first_name || user.firstName,
-            lastName: remoteParentResponse.data.last_name || user.lastName,
-            phone: remoteParentResponse.data.phone || user.phone,
+            firstName: d.first_name || user.firstName,
+            lastName: d.last_name || user.lastName,
+            phone: d.phone || user.phone,
+            tariff: (d as any).tariff || "basic",
           };
         }
 
@@ -184,6 +171,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
         }
       }
 
+      // Fall back to auth user data if no remote profile
       if (!nextProfile) {
         nextProfile = {
           firstName: user.firstName,
@@ -201,32 +189,11 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
         return nextChildren[0]?.id || null;
       });
 
-      await Promise.all([
-        AsyncStorage.setItem(profileKey, JSON.stringify(nextProfile)),
-        AsyncStorage.setItem(childrenKey, JSON.stringify(nextChildren)),
-      ]);
-
       setIsLoading(false);
     };
 
     loadParentData();
   }, [user]);
-
-  const persistChildren = async (nextChildren: Child[]) => {
-    if (!user) return;
-    await AsyncStorage.setItem(
-      getChildrenKey(user.id),
-      JSON.stringify(nextChildren.map(normalizeChild)),
-    );
-  };
-
-  const persistProfile = async (profile: ParentProfileData) => {
-    if (!user) return;
-    await AsyncStorage.setItem(
-      getParentProfileKey(user.id),
-      JSON.stringify(profile),
-    );
-  };
 
   const updateParentProfile = async (
     profile: Partial<ParentProfileData>,
@@ -239,9 +206,8 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     };
 
     setParentProfile(updatedProfile);
-    await persistProfile(updatedProfile);
 
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isSupabaseConfigured && hasRealSession) {
       await supabase.from("parent_profiles").upsert(
         {
           user_id: user.id,
@@ -279,7 +245,9 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
           ageCategory: ageGroupToCategory(entry.ageGroup),
           interests: [],
           phone: entry.phone?.trim() || undefined,
-          qrToken: entry.qrToken || undefined,
+          qrPin: entry.qrPin || undefined,
+          qrPinExpiresAt: entry.qrPinExpiresAt ? entry.qrPinExpiresAt.toISOString() : undefined,
+          qrPinOneTimeUse: entry.qrPinOneTimeUse || false,
         }),
       );
 
@@ -287,12 +255,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     setChildrenProfile(mappedChildren);
     setActiveChildId(mappedChildren[0]?.id || null);
 
-    await Promise.all([
-      persistProfile(normalizedProfile),
-      persistChildren(mappedChildren),
-    ]);
-
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isSupabaseConfigured && hasRealSession) {
       await supabase.from("parent_profiles").upsert(
         {
           user_id: user.id,
@@ -315,7 +278,9 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
             interests: child.interests,
             talent_profile: child.talentProfile || null,
             phone: child.phone || null,
-            qr_token: child.qrToken || null,
+            qr_pin: child.qrPin || null,
+            qr_pin_expires_at: child.qrPinExpiresAt || null,
+            qr_pin_one_time_use: child.qrPinOneTimeUse || false,
             updated_at: new Date().toISOString(),
           },
           { onConflict: "id" },
@@ -336,9 +301,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     setChildrenProfile(nextChildren);
     setActiveChildId(normalizedChild.id);
 
-    await persistChildren(nextChildren);
-
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isSupabaseConfigured && hasRealSession) {
       await supabase.from("child_profiles").upsert(
         {
           id: normalizedChild.id,
@@ -359,8 +322,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     const next = childrenProfile.filter((c) => c.id !== childId);
     setChildrenProfile(next);
     if (activeChildId === childId) setActiveChildId(next[0]?.id ?? null);
-    await persistChildren(next);
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isSupabaseConfigured && hasRealSession) {
       await supabase.from("child_profiles").delete().eq("id", childId);
     }
   };
@@ -370,14 +332,17 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
       c.id === childId ? normalizeChild({ ...c, ...patch }) : c,
     );
     setChildrenProfile(next);
-    await persistChildren(next);
     const updated = next.find((c) => c.id === childId);
-    if (supabase && isSupabaseConfigured && updated) {
+    if (supabase && isSupabaseConfigured && hasRealSession && updated) {
       await supabase.from("child_profiles").update({
         name: updated.name,
         age: updated.age,
         age_category: updated.ageCategory,
         interests: updated.interests,
+        phone: updated.phone || null,
+        qr_pin: updated.qrPin || null,
+        qr_pin_expires_at: updated.qrPinExpiresAt || null,
+        qr_pin_one_time_use: updated.qrPinOneTimeUse || false,
         updated_at: new Date().toISOString(),
       }).eq("id", childId);
     }
@@ -395,9 +360,8 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     });
 
     setChildrenProfile(nextChildren);
-    await persistChildren(nextChildren);
 
-    if (supabase && isSupabaseConfigured) {
+    if (supabase && isSupabaseConfigured && hasRealSession) {
       await supabase
         .from("child_profiles")
         .update({
@@ -410,16 +374,14 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
 
   const setParentTariff = async (tariff: "basic" | "pro") => {
     if (!parentProfile || !user) return;
-    
+
     const updatedProfile = { ...parentProfile, tariff };
     setParentProfile(updatedProfile);
-    await persistProfile(updatedProfile);
-    
-    // Attempt DB sync if supabase exists
-    if (supabase && isSupabaseConfigured) {
-       await supabase.from("parent_profiles").update({
-          tariff: tariff
-       }).eq("user_id", user.id);
+
+    if (supabase && isSupabaseConfigured && hasRealSession) {
+      await supabase.from("parent_profiles").update({
+        tariff,
+      }).eq("user_id", user.id);
     }
   };
 

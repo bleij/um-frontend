@@ -20,8 +20,12 @@ import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
 
-function generateQRToken(): string {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}-${Math.random().toString(36).slice(2, 9)}`;
+const ROLE_COLOR = "#6C5CE7";
+const ROLE_GRADIENT: [string, string] = ["#6C5CE7", "#8B7FE8"];
+
+function generateQRPin(): string {
+  // Generate a 6-digit PIN (100000-999999)
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 type AgeGroup = "6-11" | "12-17" | "18-20";
@@ -32,7 +36,9 @@ type Child = {
   ageGroup: AgeGroup | null;
   hasPhone: boolean | null;
   phone: string;
-  qrToken: string | null;
+  qrPin: string | null;
+  qrPinExpiresAt: Date | null;
+  qrPinOneTimeUse: boolean;
 };
 
 const AGE_OPTIONS: { label: string; value: AgeGroup }[] = [
@@ -46,13 +52,13 @@ function makeId() {
 
 export default function CreateProfileParent() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, finalizeRegistration } = useAuth();
   const { saveParentProfile } = useParentData();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
-    ? LAYOUT.profileHorizontalPaddingDesktop
-    : LAYOUT.profileHorizontalPaddingMobile;
+    ? LAYOUT.authHorizontalPaddingDesktop
+    : LAYOUT.authHorizontalPaddingMobile;
 
   const [parentData, setParentData] = useState({
     firstName: "",
@@ -72,7 +78,7 @@ export default function CreateProfileParent() {
   }, [user]);
 
   const [children, setChildren] = useState<Child[]>([
-    { id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrToken: null },
+    { id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrPin: null, qrPinExpiresAt: null, qrPinOneTimeUse: false },
   ]);
 
   const canContinue = useMemo(() => {
@@ -81,7 +87,7 @@ export default function CreateProfileParent() {
       if (!c.name.trim() || !c.ageGroup) return false;
       if (c.hasPhone === null) return false;
       if (c.hasPhone && !c.phone.trim()) return false;
-      if (!c.hasPhone && !c.qrToken) return false;
+      if (!c.hasPhone && !c.qrPin) return false;
       return true;
     });
     return hasParent && hasValidChild;
@@ -90,7 +96,7 @@ export default function CreateProfileParent() {
   function addChild() {
     setChildren((prev) => [
       ...prev,
-      { id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrToken: null },
+      { id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrPin: null, qrPinExpiresAt: null, qrPinOneTimeUse: false },
     ]);
   }
 
@@ -98,7 +104,7 @@ export default function CreateProfileParent() {
     setChildren((prev) => {
       const next = prev.filter((c) => c.id !== id);
       return next.length === 0
-        ? [{ id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrToken: null }]
+        ? [{ id: makeId(), name: "", ageGroup: null, hasPhone: null, phone: "", qrPin: null, qrPinExpiresAt: null, qrPinOneTimeUse: false }]
         : next;
     });
   }
@@ -117,488 +123,411 @@ export default function CreateProfileParent() {
         name: c.name,
         ageGroup: c.ageGroup,
         phone: c.hasPhone ? c.phone : undefined,
-        qrToken: !c.hasPhone ? (c.qrToken ?? undefined) : undefined,
+        qrPin: !c.hasPhone ? (c.qrPin ?? undefined) : undefined,
+        qrPinExpiresAt: !c.hasPhone ? (c.qrPinExpiresAt ?? undefined) : undefined,
+        qrPinOneTimeUse: !c.hasPhone ? c.qrPinOneTimeUse : undefined,
       })),
     );
+    await finalizeRegistration();
     router.push("/profile/common/done");
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Background Blobs */}
-      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-        <View style={{
-          position: 'absolute',
-          top: -80,
-          right: -80,
-          width: 300,
-          height: 300,
-          borderRadius: 150,
-          backgroundColor: `${COLORS.primary}08`,
-        }} />
-        <View style={{
-          position: 'absolute',
-          top: '30%',
-          left: -120,
-          width: 320,
-          height: 320,
-          borderRadius: 160,
-          backgroundColor: `${COLORS.secondary}05`,
-        }} />
-      </View>
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: COLORS.background }}
+    >
+      <View style={{ flex: 1 }}>
+        {/* Background blobs */}
+        <View style={{ ...StyleSheet.absoluteFillObject, overflow: "hidden" }}>
           <View style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingHorizontal: horizontalPadding,
-            paddingVertical: 12,
-          }}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              activeOpacity={0.7}
-              style={styles.backButton}
+            position: "absolute",
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: 100,
+            backgroundColor: `${ROLE_COLOR}10`,
+          }} />
+          <View style={{
+            position: "absolute",
+            bottom: "20%",
+            left: -80,
+            width: 250,
+            height: 250,
+            borderRadius: 125,
+            backgroundColor: `${ROLE_COLOR}05`,
+          }} />
+        </View>
+
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              alignItems: "center",
+              paddingVertical: isDesktop ? 24 : 12,
+            }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View
+              style={{
+                flex: 1,
+                width: "100%",
+                maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+                paddingHorizontal: horizontalPadding,
+                paddingTop: 8,
+              }}
             >
-              <Feather name="arrow-left" size={20} color={COLORS.foreground} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Создание профиля</Text>
-          </View>
-        </SafeAreaView>
+              {/* Header Nav */}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{ flexDirection: "row", alignItems: "center" }}
+                >
+                  <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
+                  <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: "500" }}>
+                    Назад
+                  </Text>
+                </TouchableOpacity>
 
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: horizontalPadding,
-            paddingTop: 8,
-            paddingBottom: 60,
-          }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={{ width: "100%", maxWidth: 600, alignSelf: 'center' }}>
-
-            {/* Title Section */}
-            <View style={{ marginBottom: 32 }}>
-              <Text style={styles.title}>Родительский{'\n'}аккаунт</Text>
-              <Text style={styles.subtitle}>
-                Заполните информацию о себе и добавьте детей
-              </Text>
-            </View>
-
-            {/* Parent Info Card */}
-            <MotiView
-              from={{ opacity: 0, translateY: 20 }}
-              animate={{ opacity: 1, translateY: 0 }}
-              style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, { backgroundColor: `${COLORS.primary}10` }]}>
-                  <Feather name="user" size={18} color={COLORS.primary} />
+                {/* Step dots: 1 step, last dot is active wide */}
+                <View style={{ flexDirection: "row", gap: 6 }}>
+                  {[0, 1, 2, 3].map((i) => (
+                    <View key={i} style={{
+                      width: i === 3 ? 24 : 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: i === 3 ? ROLE_COLOR : COLORS.border,
+                    }} />
+                  ))}
                 </View>
-                <Text style={styles.cardTitle}>Ваши данные</Text>
               </View>
 
-              <View style={{ gap: 20 }}>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.inputLabel}>Имя</Text>
+              {/* Title Section */}
+              <View style={{ marginBottom: 32 }}>
+                <Text style={{ fontSize: 32, fontWeight: "900", color: COLORS.foreground, marginBottom: 8, letterSpacing: -0.5 }}>
+                  Профиль родителя
+                </Text>
+                <Text style={{ color: COLORS.mutedForeground, fontSize: 16, lineHeight: 24 }}>
+                  Расскажите о себе и добавьте информацию о детях
+                </Text>
+              </View>
+
+              {/* Personal Info Card */}
+              <View style={{ backgroundColor: "white", borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md, marginBottom: 20 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                  <Feather name="user" size={20} color={ROLE_COLOR} />
+                  <Text style={{ fontSize: 17, fontWeight: "700", color: COLORS.foreground, marginLeft: 10 }}>
+                    Ваши данные
+                  </Text>
+                </View>
+
+                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={styles.fieldLabel}>Имя</Text>
                     <TextInput
                       value={parentData.firstName}
                       onChangeText={(text) => setParentData({ ...parentData, firstName: text })}
                       placeholder="Имя"
-                      placeholderTextColor={COLORS.tertiary}
+                      placeholderTextColor={COLORS.mutedForeground}
                       style={styles.input}
                     />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.inputLabel}>Фамилия</Text>
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={styles.fieldLabel}>Фамилия</Text>
                     <TextInput
                       value={parentData.lastName}
                       onChangeText={(text) => setParentData({ ...parentData, lastName: text })}
                       placeholder="Фамилия"
-                      placeholderTextColor={COLORS.tertiary}
+                      placeholderTextColor={COLORS.mutedForeground}
                       style={styles.input}
                     />
                   </View>
                 </View>
 
                 <View>
-                  <Text style={styles.inputLabel}>Телефон</Text>
+                  <Text style={styles.fieldLabel}>Телефон</Text>
                   <TextInput
                     value={parentData.phone}
                     onChangeText={(text) => setParentData({ ...parentData, phone: text })}
                     placeholder="+7 (___) ___-__-__"
-                    placeholderTextColor={COLORS.tertiary}
+                    placeholderTextColor={COLORS.mutedForeground}
                     keyboardType="phone-pad"
                     style={styles.input}
                   />
                 </View>
               </View>
-            </MotiView>
 
-            {/* Children Section Header */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, marginTop: 8 }}>
-              <Text style={{ fontSize: 24, fontWeight: '900', color: COLORS.foreground }}>Дети</Text>
-              <TouchableOpacity
-                onPress={addChild}
-                activeOpacity={0.7}
-                style={styles.addButton}
-              >
-                <Feather name="plus" size={18} color={COLORS.primary} />
-                <Text style={styles.addButtonText}>Добавить</Text>
-              </TouchableOpacity>
-            </View>
+              {/* Children Section Header */}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingHorizontal: 4 }}>
+                <Text style={{ fontSize: 20, fontWeight: "800", color: COLORS.foreground }}>Дети</Text>
+                <TouchableOpacity
+                  onPress={addChild}
+                  style={{ flexDirection: "row", alignItems: "center", backgroundColor: `${ROLE_COLOR}15`, paddingHorizontal: 16, paddingVertical: 8, borderRadius: RADIUS.xl }}
+                >
+                  <Feather name="plus" size={16} color={ROLE_COLOR} />
+                  <Text style={{ color: ROLE_COLOR, fontWeight: "700", marginLeft: 6 }}>Добавить</Text>
+                </TouchableOpacity>
+              </View>
 
-            {/* Children Cards */}
-            {children.map((child, index) => (
-              <MotiView
-                key={child.id}
-                from={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                style={styles.card}
-              >
-                <View style={styles.cardHeader}>
-                  <View style={[styles.iconBox, { backgroundColor: COLORS.muted }]}>
-                    <Text style={{ fontSize: 13, fontWeight: '900', color: COLORS.foreground }}>{index + 1}</Text>
+              {children.map((child, index) => (
+                <View
+                  key={child.id}
+                  style={{ backgroundColor: "white", borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md, marginBottom: 16 }}
+                >
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                    <Text style={{ color: ROLE_COLOR, fontWeight: "800", fontSize: 16 }}>
+                      Ребенок {index + 1}
+                    </Text>
+                    {children.length > 1 && (
+                      <TouchableOpacity onPress={() => removeChild(child.id)}>
+                        <Feather name="trash-2" size={20} color={COLORS.destructive} />
+                      </TouchableOpacity>
+                    )}
                   </View>
-                  <Text style={styles.cardTitle}>Ребенок</Text>
-                  {children.length > 1 && (
-                    <TouchableOpacity
-                      onPress={() => removeChild(child.id)}
-                      style={{ marginLeft: 'auto', padding: 4 }}
-                    >
-                      <Feather name="trash-2" size={20} color={COLORS.destructive} />
-                    </TouchableOpacity>
-                  )}
-                </View>
 
-                <View style={{ gap: 24 }}>
-                  <View>
-                    <Text style={styles.inputLabel}>Имя ребенка</Text>
+                  <View style={{ marginBottom: 16 }}>
+                    <Text style={styles.fieldLabel}>Имя ребенка</Text>
                     <TextInput
                       value={child.name}
                       onChangeText={(text) => updateChild(child.id, { name: text })}
                       placeholder="Например, Анна"
-                      placeholderTextColor={COLORS.tertiary}
+                      placeholderTextColor={COLORS.mutedForeground}
                       style={styles.input}
                     />
                   </View>
 
-                  <View>
-                    <Text style={styles.inputLabel}>Возрастная категория</Text>
-                    <View style={{ gap: 10 }}>
-                      {AGE_OPTIONS.map((opt) => {
-                        const active = child.ageGroup === opt.value;
-                        return (
-                          <TouchableOpacity
-                            key={opt.value}
-                            onPress={() => updateChild(child.id, { ageGroup: opt.value })}
-                            activeOpacity={0.7}
-                            style={[
-                              styles.optionCard,
-                              active && styles.optionCardActive
-                            ]}
-                          >
-                            <Text style={[
-                              styles.optionText,
-                              active && styles.optionTextActive
-                            ]}>{opt.label}</Text>
-                            {active && <Feather name="check-circle" size={20} color={COLORS.primary} />}
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
+                  <Text style={styles.fieldLabel}>Возрастная категория</Text>
+                  <View style={{ gap: 8, marginBottom: 16 }}>
+                    {AGE_OPTIONS.map((opt) => {
+                      const active = child.ageGroup === opt.value;
+                      return (
+                        <TouchableOpacity
+                          key={opt.value}
+                          onPress={() => updateChild(child.id, { ageGroup: opt.value })}
+                          style={{
+                            padding: 14,
+                            borderRadius: RADIUS.md,
+                            borderWidth: 2,
+                            borderColor: active ? ROLE_COLOR : COLORS.border,
+                            backgroundColor: active ? `${ROLE_COLOR}08` : COLORS.muted,
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <Text style={{ fontWeight: "600", color: active ? ROLE_COLOR : COLORS.mutedForeground }}>
+                            {opt.label}
+                          </Text>
+                          {active && <Feather name="check-circle" size={20} color={ROLE_COLOR} />}
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
 
-                  <View style={{ borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 24 }}>
-                    <Text style={{ fontSize: 15, fontWeight: '800', color: COLORS.foreground, marginBottom: 16 }}>
-                      Есть ли у ребёнка свой телефон?
+                  {/* Phone / QR section */}
+                  <View style={{ borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 16 }}>
+                    <Text style={[styles.fieldLabel, { marginBottom: 12 }]}>
+                      Есть ли у ребёнка свой номер телефона?
                     </Text>
-                    <View style={{ flexDirection: "row", gap: 12, marginBottom: 16 }}>
+                    <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>
                       {(["YES", "NO"] as const).map((opt) => {
                         const active = opt === "YES" ? child.hasPhone === true : child.hasPhone === false;
                         return (
                           <TouchableOpacity
                             key={opt}
-                            onPress={() => updateChild(child.id, { hasPhone: opt === "YES", phone: "", qrToken: null })}
-                            style={[
-                              styles.toggleOption,
-                              active && styles.toggleOptionActive
-                            ]}
+                            onPress={() =>
+                              updateChild(child.id, {
+                                hasPhone: opt === "YES",
+                                phone: "",
+                                qrPin: null,
+                              })
+                            }
+                            style={{
+                              flex: 1,
+                              paddingVertical: 12,
+                              borderRadius: RADIUS.md,
+                              borderWidth: 2,
+                              borderColor: active ? ROLE_COLOR : COLORS.border,
+                              backgroundColor: active ? `${ROLE_COLOR}08` : COLORS.muted,
+                              alignItems: "center",
+                            }}
                           >
-                            <Text style={[
-                              styles.toggleText,
-                              active && styles.toggleTextActive
-                            ]}>{opt === "YES" ? "Да" : "Нет"}</Text>
+                            <Text style={{ fontWeight: "600", color: active ? ROLE_COLOR : COLORS.mutedForeground }}>
+                              {opt === "YES" ? "Да" : "Нет"}
+                            </Text>
                           </TouchableOpacity>
                         );
                       })}
                     </View>
 
                     {child.hasPhone === true && (
-                      <MotiView from={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-                        <Text style={styles.inputLabel}>Номер телефона</Text>
+                      <View>
+                        <Text style={styles.fieldLabel}>Номер телефона ребёнка</Text>
                         <TextInput
                           value={child.phone}
-                          onChangeText={(text) => updateChild(child.id, { phone: text.replace(/[^\d+]/g, "") })}
+                          onChangeText={(text) =>
+                            updateChild(child.id, { phone: text.replace(/[^\d+]/g, "") })
+                          }
                           placeholder="+7 (___) ___-__-__"
-                          placeholderTextColor={COLORS.tertiary}
+                          placeholderTextColor={COLORS.mutedForeground}
                           keyboardType="phone-pad"
                           style={styles.input}
                         />
-                      </MotiView>
+                      </View>
                     )}
 
                     {child.hasPhone === false && (
-                      <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ alignItems: 'center' }}>
-                        {child.qrToken ? (
+                      <View style={{ alignItems: "center" }}>
+                        {child.qrPin ? (
                           <>
-                            <View style={styles.qrContainer}>
+                            <View style={{ padding: 20, backgroundColor: COLORS.muted, borderRadius: RADIUS.lg, marginBottom: 12, alignItems: "center" }}>
                               <QRCode
-                                value={JSON.stringify({ v: 1, type: "child_link", childId: child.id, parentId: user?.id ?? "", token: child.qrToken })}
-                                size={160}
-                                color={COLORS.foreground}
+                                value={child.qrPin}
+                                size={140}
                               />
+                              <Text style={{ fontSize: 32, fontWeight: "700", color: COLORS.foreground, marginTop: 16, letterSpacing: 4 }}>
+                                {child.qrPin}
+                              </Text>
+                              {child.qrPinExpiresAt && (
+                                <Text style={{ fontSize: 11, color: COLORS.mutedForeground, marginTop: 8 }}>
+                                  Действителен {Math.round((child.qrPinExpiresAt.getTime() - Date.now()) / (1000 * 60))} мин
+                                  {child.qrPinOneTimeUse && " • Одноразовый"}
+                                </Text>
+                              )}
                             </View>
-                            <Text style={styles.qrHint}>
-                              Покажите этот QR-код ребёнку для{'\n'}входа в приложение
+                            <Text style={{ fontSize: 12, color: COLORS.mutedForeground, textAlign: "center", marginBottom: 10 }}>
+                              Покажите этот код ребёнку для входа в приложение
                             </Text>
+
+                            {/* One-time use toggle */}
                             <TouchableOpacity
-                              onPress={() => updateChild(child.id, { qrToken: generateQRToken() })}
-                              style={styles.refreshBtn}
+                              onPress={() => updateChild(child.id, { qrPinOneTimeUse: !child.qrPinOneTimeUse })}
+                              style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                gap: 8,
+                                paddingVertical: 8,
+                                paddingHorizontal: 12,
+                                backgroundColor: COLORS.background,
+                                borderRadius: RADIUS.md,
+                                marginBottom: 10,
+                              }}
                             >
-                              <Feather name="refresh-cw" size={14} color={COLORS.primary} />
-                              <Text style={styles.refreshText}>Обновить QR-код</Text>
+                              <View style={{
+                                width: 20,
+                                height: 20,
+                                borderRadius: 4,
+                                borderWidth: 2,
+                                borderColor: child.qrPinOneTimeUse ? ROLE_COLOR : COLORS.border,
+                                backgroundColor: child.qrPinOneTimeUse ? ROLE_COLOR : "transparent",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}>
+                                {child.qrPinOneTimeUse && (
+                                  <Feather name="check" size={14} color="white" />
+                                )}
+                              </View>
+                              <Text style={{ fontSize: 13, color: COLORS.foreground }}>
+                                Одноразовый код
+                              </Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              onPress={() => {
+                                const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+                                updateChild(child.id, { qrPin: generateQRPin(), qrPinExpiresAt: expiresAt });
+                              }}
+                              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+                            >
+                              <Feather name="refresh-cw" size={14} color={ROLE_COLOR} />
+                              <Text style={{ fontSize: 13, color: ROLE_COLOR, fontWeight: "600" }}>
+                                Обновить код
+                              </Text>
                             </TouchableOpacity>
                           </>
                         ) : (
                           <TouchableOpacity
-                            onPress={() => updateChild(child.id, { qrToken: generateQRToken() })}
-                            style={styles.qrPlaceholder}
+                            onPress={() => {
+                              const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+                              updateChild(child.id, { qrPin: generateQRPin(), qrPinExpiresAt: expiresAt });
+                            }}
+                            style={{
+                              flexDirection: "row",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 8,
+                              paddingVertical: 14,
+                              paddingHorizontal: 20,
+                              borderRadius: RADIUS.md,
+                              borderWidth: 2,
+                              borderColor: ROLE_COLOR,
+                              borderStyle: "dashed",
+                              width: "100%",
+                            }}
                           >
-                            <Feather name="grid" size={20} color={COLORS.primary} />
-                            <Text style={styles.qrPlaceholderText}>Создать QR-код для входа</Text>
+                            <Feather name="grid" size={18} color={ROLE_COLOR} />
+                            <Text style={{ color: ROLE_COLOR, fontWeight: "700", fontSize: 14 }}>
+                              Создать код для входа
+                            </Text>
                           </TouchableOpacity>
                         )}
-                      </MotiView>
+                      </View>
                     )}
                   </View>
                 </View>
-              </MotiView>
-            ))}
+              ))}
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              onPress={handleMockSubmit}
-              disabled={!canContinue}
-              activeOpacity={0.8}
-              style={{ marginTop: 12 }}
-            >
-              <LinearGradient
-                colors={canContinue ? [COLORS.primary, COLORS.secondary] : [COLORS.tertiary, COLORS.tertiary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitBtn}
+              {/* Submit Button */}
+              <TouchableOpacity
+                onPress={handleMockSubmit}
+                disabled={!canContinue}
+                style={{ marginTop: 8, marginBottom: 40 }}
+                activeOpacity={0.8}
               >
-                <Text style={styles.submitBtnText}>Продолжить</Text>
-                {canContinue && <Feather name="arrow-right" size={20} color="white" />}
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+                <LinearGradient
+                  colors={canContinue ? ROLE_GRADIENT : [COLORS.muted, COLORS.muted]}
+                  style={{
+                    paddingVertical: 18,
+                    borderRadius: RADIUS.xl,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    ...SHADOWS.md,
+                  }}
+                >
+                  <Text style={{ fontSize: 18, fontWeight: "800", color: canContinue ? "white" : COLORS.mutedForeground }}>
+                    Продолжить
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    ...SHADOWS.sm,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "700",
     color: COLORS.foreground,
-    letterSpacing: -0.5,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: COLORS.foreground,
-    lineHeight: 38,
     marginBottom: 8,
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.mutedForeground,
-    lineHeight: 24,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: RADIUS.xxl,
-    padding: 24,
-    marginBottom: 24,
-    ...SHADOWS.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.foreground,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.mutedForeground,
-    marginBottom: 8,
-    marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    opacity: 0.7,
   },
   input: {
     backgroundColor: COLORS.muted,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: COLORS.foreground,
-    fontWeight: '500',
-  },
-  addButton: {
-    backgroundColor: `${COLORS.primary}10`,
+    borderRadius: RADIUS.md,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  addButtonText: {
-    color: COLORS.primary,
-    fontWeight: '800',
-    fontSize: 14,
-  },
-  optionCard: {
-    padding: 18,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    borderColor: COLORS.muted,
-    backgroundColor: 'white',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  optionCardActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: `${COLORS.primary}05`,
-  },
-  optionText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.mutedForeground,
-  },
-  optionTextActive: {
-    color: COLORS.primary,
-  },
-  toggleOption: {
-    flex: 1,
-    height: 54,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: COLORS.muted,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleOptionActive: {
-    borderColor: COLORS.primary,
-    backgroundColor: `${COLORS.primary}05`,
-  },
-  toggleText: {
+    paddingVertical: 14,
     fontSize: 15,
-    fontWeight: '800',
-    color: COLORS.mutedForeground,
-  },
-  toggleTextActive: {
-    color: COLORS.primary,
-  },
-  qrContainer: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderRadius: 32,
-    marginBottom: 16,
+    fontWeight: "500",
+    color: COLORS.foreground,
     borderWidth: 1,
     borderColor: COLORS.border,
-    ...SHADOWS.sm,
   },
-  qrHint: {
-    fontSize: 13,
-    color: COLORS.mutedForeground,
-    textAlign: 'center',
-    lineHeight: 18,
-    marginBottom: 16,
-  },
-  refreshBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  refreshText: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  qrPlaceholder: {
-    width: '100%',
-    height: 60,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    borderStyle: 'dashed',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  qrPlaceholderText: {
-    color: COLORS.primary,
-    fontWeight: '800',
-    fontSize: 14,
-  },
-  submitBtn: {
-    flexDirection: 'row',
-    height: 64,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    ...SHADOWS.md,
-  },
-  submitBtnText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '800',
-  }
 });

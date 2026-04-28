@@ -4,27 +4,30 @@ import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
+
+const ROLE_COLOR = "#3B82F6";
+const ROLE_GRADIENT: [string, string] = ["#3B82F6", "#60A5FA"];
 
 export default function CreateProfileTeen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
-    ? LAYOUT.profileHorizontalPaddingDesktop
-    : LAYOUT.profileHorizontalPaddingMobile;
+    ? LAYOUT.authHorizontalPaddingDesktop
+    : LAYOUT.authHorizontalPaddingMobile;
 
   const { user } = useAuth();
 
@@ -66,427 +69,350 @@ export default function CreateProfileTeen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Background Blobs */}
-      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-        <View style={{ 
-          position: 'absolute', 
-          top: -100, 
-          right: -100, 
-          width: 400, 
-          height: 400, 
-          borderRadius: 200, 
-          backgroundColor: `${COLORS.primary}08`,
-        }} />
-        <View style={{ 
-          position: 'absolute', 
-          top: '40%', 
-          left: -150, 
-          width: 350, 
-          height: 350, 
-          borderRadius: 175, 
-          backgroundColor: `${COLORS.secondary}05`,
-        }} />
-        <View style={{ 
-          position: 'absolute', 
-          bottom: -50, 
-          right: -50, 
-          width: 300, 
-          height: 300, 
-          borderRadius: 150, 
-          backgroundColor: `${COLORS.accent}05`,
-        }} />
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: COLORS.background }}
+    >
+      <View style={{ flex: 1 }}>
+        {/* Background blobs */}
+        <View style={{ ...StyleSheet.absoluteFillObject, overflow: "hidden" }}>
+          <View style={{
+            position: "absolute",
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: 100,
+            backgroundColor: `${ROLE_COLOR}10`,
+          }} />
+          <View style={{
+            position: "absolute",
+            bottom: "20%",
+            left: -80,
+            width: 250,
+            height: 250,
+            borderRadius: 125,
+            backgroundColor: `${ROLE_COLOR}05`,
+          }} />
+        </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
-          <View style={{ 
-            flexDirection: 'row', 
-            alignItems: 'center', 
-            paddingHorizontal: horizontalPadding,
-            paddingVertical: 12,
-          }}>
-            <TouchableOpacity
-              onPress={() => router.back()}
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              alignItems: "center",
+              paddingVertical: isDesktop ? 24 : 12,
+            }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View
               style={{
-                width: 44,
-                height: 44,
-                borderRadius: 22,
-                backgroundColor: 'white',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginRight: 16,
-                ...SHADOWS.sm,
+                flex: 1,
+                width: "100%",
+                maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+                paddingHorizontal: horizontalPadding,
+                paddingTop: 8,
               }}
             >
-              <Feather name="arrow-left" size={20} color={COLORS.foreground} />
-            </TouchableOpacity>
-            <Text style={{ 
-              fontSize: 22, 
-              fontWeight: '900', 
-              color: COLORS.foreground,
-              letterSpacing: -0.5
-            }}>
-              Мой профиль
-            </Text>
-          </View>
-        </SafeAreaView>
+              {/* Header Nav */}
+              <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{ flexDirection: "row", alignItems: "center" }}
+                >
+                  <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
+                  <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: "500" }}>
+                    Назад
+                  </Text>
+                </TouchableOpacity>
 
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: horizontalPadding,
-            paddingTop: 8,
-            paddingBottom: 60,
-          }}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={{ width: "100%", maxWidth: 600, alignSelf: 'center' }}>
-            
-            {/* Header Text */}
-            <View style={{ marginBottom: 32 }}>
-               <Text style={{ fontSize: 32, fontWeight: '900', color: COLORS.foreground, letterSpacing: -1 }}>
-                 Привет! 👋
-               </Text>
-               <Text style={{ fontSize: 16, color: COLORS.mutedForeground, marginTop: 4 }}>
-                 Давай познакомимся поближе
-               </Text>
-            </View>
-
-            {/* Personal Info Card */}
-            <MotiView
-               from={{ opacity: 0, translateY: 20 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, { backgroundColor: `${COLORS.primary}10` }]}>
-                  <Feather name="user" size={18} color={COLORS.primary} />
+                {/* Step dots */}
+                <View style={{ flexDirection: "row", gap: 6 }}>
+                  {[0, 1, 2, 3].map((i) => (
+                    <View key={i} style={{
+                      width: i === 3 ? 24 : 8,
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: i === 3 ? ROLE_COLOR : COLORS.border,
+                    }} />
+                  ))}
                 </View>
-                <Text style={styles.cardTitle}>Личные данные</Text>
               </View>
 
-              <View style={{ gap: 20 }}>
-                <View>
-                  <Text style={styles.inputLabel}>Имя</Text>
+              {/* Title Section */}
+              <View style={{ marginBottom: 32 }}>
+                <Text style={{ fontSize: 32, fontWeight: "900", color: COLORS.foreground, marginBottom: 8, letterSpacing: -0.5 }}>
+                  Твой профиль
+                </Text>
+                <Text style={{ color: COLORS.mutedForeground, fontSize: 16, lineHeight: 24 }}>
+                  Расскажи о себе — это поможет найти подходящие кружки и цели
+                </Text>
+              </View>
+
+              {/* Personal Info Card */}
+              <View style={{ backgroundColor: "white", borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md, marginBottom: 20 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                  <Feather name="user" size={20} color={ROLE_COLOR} />
+                  <Text style={{ fontSize: 17, fontWeight: "700", color: COLORS.foreground, marginLeft: 10 }}>
+                    Личная информация
+                  </Text>
+                </View>
+
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={styles.fieldLabel}>Имя</Text>
                   <TextInput
                     value={formData.firstName}
                     onChangeText={(text) => setFormData({ ...formData, firstName: text })}
-                    placeholder="Твое имя"
-                    placeholderTextColor={COLORS.tertiary}
-                    style={styles.input}
-                  />
-                </View>
-                
-                <View>
-                  <Text style={styles.inputLabel}>Фамилия</Text>
-                  <TextInput
-                    value={formData.lastName}
-                    onChangeText={(text) => setFormData({ ...formData, lastName: text })}
-                    placeholder="Твоя фамилия"
-                    placeholderTextColor={COLORS.tertiary}
+                    placeholder="Введите имя"
+                    placeholderTextColor={COLORS.mutedForeground}
                     style={styles.input}
                   />
                 </View>
 
-                <View style={{ flexDirection: 'row', gap: 16 }}>
-                  <View style={{ flex: 1.2 }}>
-                    <Text style={styles.inputLabel}>Возраст</Text>
+                <View style={{ marginBottom: 16 }}>
+                  <Text style={styles.fieldLabel}>Фамилия</Text>
+                  <TextInput
+                    value={formData.lastName}
+                    onChangeText={(text) => setFormData({ ...formData, lastName: text })}
+                    placeholder="Введите фамилию"
+                    placeholderTextColor={COLORS.mutedForeground}
+                    style={styles.input}
+                  />
+                </View>
+
+                <View style={{ flexDirection: "row", gap: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>Возраст</Text>
                     <TextInput
                       value={formData.age}
                       onChangeText={(text) => setFormData({ ...formData, age: text.replace(/\D/g, "") })}
-                      placeholder="16"
+                      placeholder="14"
                       maxLength={2}
-                      placeholderTextColor={COLORS.tertiary}
+                      placeholderTextColor={COLORS.mutedForeground}
                       keyboardType="numeric"
                       style={[
-                        styles.input, 
-                        { textAlign: 'center' },
-                        formData.age.length > 0 && (parseInt(formData.age, 10) < 6 || parseInt(formData.age, 10) > 17) 
-                          ? { borderWidth: 1, borderColor: '#EF4444', backgroundColor: '#FEF2F2' } 
-                          : {}
+                        styles.input,
+                        { textAlign: "center" },
+                        formData.age.length > 0 &&
+                        (parseInt(formData.age, 10) < 6 || parseInt(formData.age, 10) > 17)
+                          ? { borderColor: "#EF4444", backgroundColor: "#FEF2F2" }
+                          : {},
                       ]}
                     />
                     {formData.age.length > 0 && (parseInt(formData.age, 10) < 6 || parseInt(formData.age, 10) > 17) && (
-                      <Text style={{ color: '#EF4444', fontSize: 10, marginTop: 4, textAlign: 'center', fontWeight: 'bold' }}>
+                      <Text style={{ color: "#EF4444", fontSize: 10, marginTop: 4, textAlign: "center", fontWeight: "bold" }}>
                         От 6 до 17 лет
                       </Text>
                     )}
                   </View>
-                  <View style={{ flex: 2 }}>
-                    <Text style={styles.inputLabel}>Пол</Text>
-                    <View style={styles.genderContainer}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.fieldLabel}>Пол</Text>
+                    <View style={{ flexDirection: "row", borderRadius: RADIUS.md, overflow: "hidden", borderWidth: 1, borderColor: COLORS.border, height: 50 }}>
                       <TouchableOpacity
                         onPress={() => setFormData({ ...formData, gender: "male" })}
-                        style={[
-                          styles.genderOption, 
-                          formData.gender === "male" && { backgroundColor: COLORS.info }
-                        ]}
+                        style={{
+                          flex: 1,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          backgroundColor: formData.gender === "male" ? ROLE_COLOR : COLORS.muted,
+                        }}
                       >
-                        <Text style={[
-                          styles.genderText, 
-                          formData.gender === "male" && { color: 'white' }
-                        ]}>М</Text>
+                        <Text style={{ fontWeight: "600", color: formData.gender === "male" ? "white" : COLORS.mutedForeground }}>
+                          М
+                        </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => setFormData({ ...formData, gender: "female" })}
-                        style={[
-                          styles.genderOption, 
-                          formData.gender === "female" && { backgroundColor: '#FF2D55' }
-                        ]}
+                        style={{
+                          flex: 1,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          backgroundColor: formData.gender === "female" ? "#EC4899" : COLORS.muted,
+                        }}
                       >
-                        <Text style={[
-                          styles.genderText, 
-                          formData.gender === "female" && { color: 'white' }
-                        ]}>Ж</Text>
+                        <Text style={{ fontWeight: "600", color: formData.gender === "female" ? "white" : COLORS.mutedForeground }}>
+                          Ж
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   </View>
                 </View>
               </View>
-            </MotiView>
 
-            {/* Interests Card */}
-            <MotiView
-               from={{ opacity: 0, translateY: 20 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               transition={{ delay: 100 }}
-               style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, { backgroundColor: `${COLORS.secondary}10` }]}>
-                  <MaterialCommunityIcons name="star-four-points-outline" size={18} color={COLORS.secondary} />
+              {/* Interests Card */}
+              <View style={{ backgroundColor: "white", borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md, marginBottom: 20 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                  <MaterialCommunityIcons name="star-four-points-outline" size={20} color={ROLE_COLOR} />
+                  <Text style={{ fontSize: 17, fontWeight: "700", color: COLORS.foreground, marginLeft: 10 }}>
+                    Интересы
+                  </Text>
                 </View>
-                <Text style={styles.cardTitle}>Интересы</Text>
-              </View>
 
-              <Text style={{ fontSize: 13, color: COLORS.mutedForeground, marginBottom: 16 }}>
-                Выбери сферы, которые тебе наиболее интересны:
-              </Text>
+                <Text style={[styles.fieldLabel, { marginBottom: 12 }]}>Что тебе интересно?</Text>
 
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                {availableInterests.map((interest) => {
-                  const isSelected = interests.includes(interest);
-                  return (
-                    <TouchableOpacity
-                      key={interest}
-                      onPress={() => toggleInterest(interest)}
-                      activeOpacity={0.7}
-                      style={[
-                        styles.chip,
-                        isSelected && { backgroundColor: COLORS.primary, borderColor: COLORS.primary }
-                      ]}
-                    >
-                      <Text style={[
-                        styles.chipText,
-                        isSelected && { color: 'white' }
-                      ]}>{interest}</Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+                  {availableInterests.map((interest) => {
+                    const isSelected = interests.includes(interest);
+                    return (
+                      <TouchableOpacity
+                        key={interest}
+                        onPress={() => toggleInterest(interest)}
+                        style={{
+                          paddingHorizontal: 16,
+                          paddingVertical: 10,
+                          borderRadius: RADIUS.xl,
+                          borderWidth: 2,
+                          borderColor: isSelected ? ROLE_COLOR : COLORS.border,
+                          backgroundColor: isSelected ? `${ROLE_COLOR}10` : COLORS.muted,
+                        }}
+                      >
+                        <Text style={{ fontWeight: "600", color: isSelected ? ROLE_COLOR : COLORS.mutedForeground }}>
+                          {interest}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
 
-              <View style={{ marginTop: 24 }}>
-                <Text style={styles.inputLabel}>Свой вариант</Text>
-                <View style={{ flexDirection: 'row', gap: 12 }}>
+                <Text style={[styles.fieldLabel, { marginBottom: 8 }]}>Другое:</Text>
+                <View style={{ flexDirection: "row", gap: 10 }}>
                   <TextInput
                     value={formData.otherInterest}
                     onChangeText={(text) => setFormData({ ...formData, otherInterest: text })}
-                    placeholder="Напр. Бионика"
-                    placeholderTextColor={COLORS.tertiary}
+                    placeholder="Введите свой интерес"
+                    placeholderTextColor={COLORS.mutedForeground}
                     style={[styles.input, { flex: 1 }]}
                   />
                   <TouchableOpacity
                     onPress={addOtherInterest}
                     style={{
-                      width: 56,
-                      height: 56,
-                      borderRadius: 18,
-                      backgroundColor: COLORS.foreground,
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      width: 50,
+                      height: 50,
+                      backgroundColor: ROLE_COLOR,
+                      borderRadius: RADIUS.md,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      ...SHADOWS.sm,
                     }}
                   >
-                    <Feather name="plus" size={24} color="white" />
+                    <Feather name="plus" size={22} color="white" />
                   </TouchableOpacity>
                 </View>
+
+                {/* Selected custom interests */}
+                {interests.filter((i) => !availableInterests.includes(i)).length > 0 && (
+                  <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                    {interests
+                      .filter((i) => !availableInterests.includes(i))
+                      .map((interest) => (
+                        <View
+                          key={interest}
+                          style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            backgroundColor: `${ROLE_COLOR}15`,
+                            borderRadius: RADIUS.full,
+                            paddingHorizontal: 12,
+                            paddingVertical: 6,
+                          }}
+                        >
+                          <Text style={{ color: ROLE_COLOR, fontSize: 13, fontWeight: "600", marginRight: 6 }}>
+                            {interest}
+                          </Text>
+                          <TouchableOpacity onPress={() => toggleInterest(interest)}>
+                            <Feather name="x" size={13} color={ROLE_COLOR} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                  </View>
+                )}
               </View>
 
-              {/* Custom Tags */}
-              {interests.filter(i => !availableInterests.includes(i)).length > 0 && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
-                  {interests
-                    .filter((i) => !availableInterests.includes(i))
-                    .map((interest) => (
-                      <View key={interest} style={styles.tag}>
-                        <Text style={styles.tagText}>{interest}</Text>
-                        <TouchableOpacity onPress={() => toggleInterest(interest)}>
-                          <Feather name="x" size={14} color={COLORS.primary} />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+              {/* Goals Card */}
+              <View style={{ backgroundColor: "white", borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md, marginBottom: 20 }}>
+                <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                  <Feather name="target" size={20} color={ROLE_COLOR} />
+                  <Text style={{ fontSize: 17, fontWeight: "700", color: COLORS.foreground, marginLeft: 10 }}>
+                    Цели
+                  </Text>
                 </View>
-              )}
-            </MotiView>
-
-            {/* Goals Card */}
-            <MotiView
-               from={{ opacity: 0, translateY: 20 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               transition={{ delay: 200 }}
-               style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, { backgroundColor: `${COLORS.accent}15` }]}>
-                  <Feather name="target" size={18} color="#FF9500" />
-                </View>
-                <Text style={styles.cardTitle}>Твои цели</Text>
+                <Text style={[styles.fieldLabel, { marginBottom: 8 }]}>Чего ты хочешь достичь?</Text>
+                <TextInput
+                  value={formData.goals}
+                  onChangeText={(text) => setFormData({ ...formData, goals: text })}
+                  placeholder="Опишите свои цели и стремления"
+                  placeholderTextColor={COLORS.mutedForeground}
+                  multiline
+                  numberOfLines={4}
+                  style={[styles.input, { height: 100, textAlignVertical: "top", paddingTop: 14 }]}
+                />
               </View>
-              
-              <TextInput
-                value={formData.goals}
-                onChangeText={(text) => setFormData({ ...formData, goals: text })}
-                placeholder="Расскажи, чего ты хочешь достичь в обучении или карьере..."
-                placeholderTextColor={COLORS.tertiary}
-                multiline
-                numberOfLines={4}
-                style={[styles.input, { height: 120, textAlignVertical: 'top', paddingTop: 16 }]}
-              />
-            </MotiView>
 
-            {/* Submit Button */}
-            <TouchableOpacity
-              disabled={!(formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17)}
-              onPress={() => router.push("/profile/youth/testing")}
-              activeOpacity={0.8}
-              style={{ marginTop: 12 }}
-            >
-              <LinearGradient
-                colors={
-                  formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17 
-                    ? [COLORS.primary, COLORS.secondary] 
-                    : [COLORS.muted, COLORS.muted]
-                }
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitBtn}
+              {/* Submit Button */}
+              <TouchableOpacity
+                disabled={!(formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17)}
+                onPress={() => router.push("/profile/youth/testing")}
+                style={{ marginTop: 8, marginBottom: 40 }}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.submitBtnText, !(formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17) && { color: COLORS.mutedForeground }]}>Перейти к тестам</Text>
-                <Feather name="arrow-right" size={20} color={formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17 ? "white" : COLORS.mutedForeground} />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+                <LinearGradient
+                  colors={
+                    formData.firstName.trim().length > 0 && parseInt(formData.age, 10) >= 6 && parseInt(formData.age, 10) <= 17
+                      ? ROLE_GRADIENT
+                      : [COLORS.muted, COLORS.muted]
+                  }
+                  style={{
+                    paddingVertical: 18,
+                    borderRadius: RADIUS.xl,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    ...SHADOWS.md,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 18,
+                      fontWeight: "800",
+                      color:
+                        formData.firstName.trim().length > 0 &&
+                        parseInt(formData.age, 10) >= 6 &&
+                        parseInt(formData.age, 10) <= 17
+                          ? "white"
+                          : COLORS.mutedForeground,
+                    }}
+                  >
+                    Перейти к тестам
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: 'white',
-    borderRadius: RADIUS.xxl,
-    padding: 24,
-    marginBottom: 24,
-    ...SHADOWS.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "700",
     color: COLORS.foreground,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.mutedForeground,
     marginBottom: 8,
-    marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    opacity: 0.7,
   },
   input: {
     backgroundColor: COLORS.muted,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: COLORS.foreground,
-    fontWeight: '500',
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.muted,
-    borderRadius: 18,
-    padding: 6,
-    height: 56,
-  },
-  genderOption: {
-    flex: 1,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  genderText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.mutedForeground,
-  },
-  chip: {
+    borderRadius: RADIUS.md,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: 'white',
-    borderWidth: 1.5,
-    borderColor: COLORS.muted,
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.mutedForeground,
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: `${COLORS.primary}08`,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingVertical: 14,
+    fontSize: 15,
+    fontWeight: "500",
+    color: COLORS.foreground,
     borderWidth: 1,
-    borderColor: `${COLORS.primary}20`,
+    borderColor: COLORS.border,
   },
-  tagText: {
-    fontSize: 13,
-    color: COLORS.primary,
-    fontWeight: '600',
-    marginRight: 6,
-  },
-  submitBtn: {
-    flexDirection: 'row',
-    height: 64,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    ...SHADOWS.md,
-  },
-  submitBtnText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '800',
-  }
 });

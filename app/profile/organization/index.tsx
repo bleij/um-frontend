@@ -109,7 +109,7 @@ export default function OrgProfile() {
           <SafeAreaView edges={["top"]}>
             <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-                <TouchableOpacity 
+                <TouchableOpacity
                    onPress={() => router.back()}
                    style={styles.backButton}
                 >

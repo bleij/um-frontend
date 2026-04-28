@@ -31,7 +31,21 @@ export default function MentorStudentsScreen() {
     s.student_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const renderStudent = ({ item: student, index }: any) => (
+  // Get status indicator for each student (green/yellow/red)
+  const getStudentStatus = (studentId: string): { color: string; label: string; icon: string } => {
+    // Mock logic - in real app would be based on actual attendance/progress data
+    const mockStatuses = ['green', 'green', 'yellow', 'green', 'red'];
+    const idx = parseInt(studentId.slice(-1)) % mockStatuses.length;
+    const status = mockStatuses[idx];
+    
+    if (status === 'green') return { color: '#10B981', label: 'Всё ок', icon: 'check-circle' };
+    if (status === 'yellow') return { color: '#F59E0B', label: 'Пропустил 2 занятия', icon: 'alert-circle' };
+    return { color: '#EF4444', label: 'Требует внимания', icon: 'alert-triangle' };
+  };
+
+  const renderStudent = ({ item: student, index }: any) => {
+    const status = getStudentStatus(student.id);
+    return (
     <MotiView
       from={{ opacity: 0, translateY: 20 }}
       animate={{ opacity: 1, translateY: 0 }}
@@ -44,17 +58,34 @@ export default function MentorStudentsScreen() {
         onPress={() => router.push(`/(tabs)/mentor/student/${student.id}`)}
         style={styles.cardHeader}
       >
-        <View style={styles.avatarContainer}>
+        <View style={[styles.avatarContainer, { borderColor: status.color }]}>
           <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={styles.avatarGradient}>
             <Text style={styles.avatarText}>{student.student_name.charAt(0)}</Text>
           </LinearGradient>
+          {/* Status indicator dot */}
+          <View style={{
+            position: 'absolute',
+            bottom: -2,
+            right: -2,
+            width: 16,
+            height: 16,
+            borderRadius: 8,
+            backgroundColor: status.color,
+            borderWidth: 2,
+            borderColor: 'white',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Feather name={status.icon as any} size={8} color="white" />
+          </View>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.studentName}>{student.student_name}</Text>
           <Text style={styles.studentAge}>{student.student_age} лет</Text>
-          <View style={styles.nextSessionRow}>
-             <Feather name="clock" size={14} color={COLORS.mutedForeground} />
-             <Text style={styles.nextSessionText}>След. сессия: 15 апр, 14:00</Text>
+          {/* Status label */}
+          <View style={[styles.nextSessionRow, { marginTop: 6 }]}>
+             <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: status.color, marginRight: 6 }} />
+             <Text style={[styles.nextSessionText, { color: status.color, fontWeight: '600' }]}>{status.label}</Text>
           </View>
         </View>
         <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
@@ -87,6 +118,7 @@ export default function MentorStudentsScreen() {
       </TouchableOpacity>
     </MotiView>
   );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>

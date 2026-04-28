@@ -24,11 +24,24 @@ export default function MentorGroupDetail() {
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const { members, loading } = useGroupMembers(id as string);
-  const [attendanceMap, setAttendanceMap] = useState<Record<string, boolean>>({});
-
-  const getAttendance = (memberId: string) => attendanceMap[memberId] ?? true;
-  const toggleAttendance = (memberId: string) => {
-    setAttendanceMap(prev => ({ ...prev, [memberId]: !getAttendance(memberId) }));
+  
+  // Mock attendance data (in real app, fetched from database)
+  // Mentors can only VIEW attendance, not mark it
+  const attendanceData: Record<string, { present: boolean; missedCount: number }> = {
+    // These would come from the database
+  };
+  
+  // Get status indicator color based on attendance/progress
+  const getStatusColor = (memberId: string): { color: string; label: string } => {
+    const data = attendanceData[memberId];
+    // Mock logic - in real app would be based on actual data
+    const mockStatuses = ['green', 'green', 'yellow', 'green', 'red'];
+    const idx = parseInt(memberId.slice(-1)) % mockStatuses.length;
+    const status = mockStatuses[idx];
+    
+    if (status === 'green') return { color: '#10B981', label: 'Всё ок' };
+    if (status === 'yellow') return { color: '#F59E0B', label: '2 пропуска' };
+    return { color: '#EF4444', label: 'Требует внимания' };
   };
 
   return (
@@ -92,11 +105,11 @@ export default function MentorGroupDetail() {
            )}
            <View style={{ gap: SPACING.md }}>
               {members.map(s => {
-                const att = getAttendance(s.id);
+                const status = getStatusColor(s.id);
                 return (
                 <TouchableOpacity
                   key={s.id}
-                  onPress={() => toggleAttendance(s.id)}
+                  onPress={() => router.push(`/(tabs)/mentor/student/${s.id}` as any)}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',
@@ -116,52 +129,56 @@ export default function MentorGroupDetail() {
                        borderRadius: RADIUS.full,
                        alignItems: 'center',
                        justifyContent: 'center',
-                       borderWidth: 1,
-                       borderColor: COLORS.border,
+                       borderWidth: 2,
+                       borderColor: status.color,
                        ...SHADOWS.sm
                      }}>
                         <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary }}>{s.student_name.charAt(0)}</Text>
                      </View>
-                     <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{s.student_name}</Text>
+                     <View>
+                        <Text style={{ fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{s.student_name}</Text>
+                        <Text style={{ fontSize: 11, color: status.color, fontWeight: TYPOGRAPHY.weight.medium, marginTop: 2 }}>{status.label}</Text>
+                     </View>
                   </View>
+                  {/* Status indicator dot */}
                   <View style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: RADIUS.md,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: att ? COLORS.success : COLORS.white,
-                    borderWidth: att ? 0 : 2,
-                    borderColor: COLORS.muted,
-                    ...(att ? SHADOWS.md : {})
-                  }}>
-                     {att && <Feather name="check" size={20} color="white" />}
-                  </View>
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                    backgroundColor: status.color,
+                    ...SHADOWS.sm
+                  }} />
                 </TouchableOpacity>
                 );
               })}
            </View>
         </View>
 
-        {/* Lesson Summary / XP */}
+        {/* Attendance Summary - View Only */}
         <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xl, borderWidth: 1, borderColor: COLORS.border }}>
-           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Награды за занятие</Text>
-           <View className="flex-row items-center gap-4 mb-8">
-              <View style={{ width: 56, height: 56, backgroundColor: 'rgba(245, 158, 11, 0.1)', borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}>
-                 <Feather name="award" size={28} color="#F59E0B" />
+           <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground, marginBottom: SPACING.lg }}>Сводка по группе</Text>
+           
+           <View style={{ flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xl }}>
+              <View style={{ flex: 1, backgroundColor: '#F0FDF4', padding: SPACING.lg, borderRadius: RADIUS.lg, alignItems: 'center' }}>
+                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#10B981' }}>3</Text>
+                 <Text style={{ fontSize: 10, color: '#10B981', fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 4 }}>Всё ок</Text>
               </View>
-              <View className="flex-1">
-                 <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Активность +50 XP</Text>
-                 <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 2 }}>Будет начислено всем присутствующим</Text>
+              <View style={{ flex: 1, backgroundColor: '#FEF3C7', padding: SPACING.lg, borderRadius: RADIUS.lg, alignItems: 'center' }}>
+                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#F59E0B' }}>1</Text>
+                 <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 4 }}>Внимание</Text>
+              </View>
+              <View style={{ flex: 1, backgroundColor: '#FEF2F2', padding: SPACING.lg, borderRadius: RADIUS.lg, alignItems: 'center' }}>
+                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#EF4444' }}>1</Text>
+                 <Text style={{ fontSize: 10, color: '#EF4444', fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 4 }}>Пропуски</Text>
               </View>
            </View>
            
-           <TouchableOpacity 
-              style={{ ...SHADOWS.md, height: 64, backgroundColor: COLORS.primary, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center' }}
-              onPress={() => router.back()}
-           >
-              <Text style={{ color: 'white', fontWeight: TYPOGRAPHY.weight.bold, fontSize: TYPOGRAPHY.size.md }}>Завершить и начислить XP</Text>
-           </TouchableOpacity>
+           <View style={{ backgroundColor: COLORS.muted, padding: SPACING.md, borderRadius: RADIUS.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+              <Feather name="info" size={16} color={COLORS.mutedForeground} />
+              <Text style={{ fontSize: 12, color: COLORS.mutedForeground, flex: 1 }}>
+                 Посещаемость отмечается учителем. Вы можете отслеживать статус и получать фидбек.
+              </Text>
+           </View>
         </View>
       </ScrollView>
     </View>

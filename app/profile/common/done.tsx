@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
     Dimensions,
     Platform,
@@ -22,23 +22,14 @@ const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
 export default function DoneScreen() {
     const router = useRouter();
     const { user } = useAuth();
-    const [role, setRole] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (user?.role) {
-            setRole(user.role);
-        }
-    }, [user]);
+    const role = user?.role ?? null;
 
     const handleStart = () => {
-        const targetRole = role || user?.role;
-        if (!targetRole) return;
-
-        if (targetRole === "youth" || targetRole === "child") {
-            router.push("/profile/youth/umo-intro");
-        } else {
-            router.push("/(tabs)/home");
+        if (role === "youth" || role === "child") {
+            router.replace("/profile/youth/umo-intro" as any);
+            return;
         }
+        router.replace("/(tabs)/home");
     };
 
     return (

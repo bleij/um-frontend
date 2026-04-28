@@ -2,19 +2,24 @@ import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS } from "../../../../constants/theme";
 import { useMentorStudents } from "../../../../hooks/useMentorData";
+import { isSupabaseConfigured, supabase } from "../../../../lib/supabase";
+import { useAuth } from "../../../../contexts/AuthContext";
 
 export default function MentorStudentDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -22,9 +27,57 @@ export default function MentorStudentDetailScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? 40 : 20;
+  const { user } = useAuth();
 
   const { students, loading } = useMentorStudents();
   const student = students.find((s) => s.id === (id as string)) || students[0];
+
+  // State for editable notes
+  const [notes, setNotes] = useState('');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [tempNotes, setTempNotes] = useState(notes);
+  const [notesLoading, setNotesLoading] = useState(true);
+  
+  // State for monthly report modal
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportMonth, setReportMonth] = useState('Апрель 2026');
+
+  // Load notes from Supabase
+  useEffect(() => {
+    if (student?.id && user?.id) {
+      loadNotes();
+    }
+  }, [student?.id, user?.id]);
+
+  const loadNotes = async () => {
+    if (!supabase || !isSupabaseConfigured || !student?.id || !user?.id) {
+      setNotesLoading(false);
+      return;
+    }
+
+    setNotesLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('mentor_student_notes')
+        .select('notes')
+        .eq('mentor_id', user.id)
+        .eq('student_id', student.id)
+        .maybeSingle();
+
+      if (!error && data) {
+        setNotes(data.notes || '');
+        setTempNotes(data.notes || '');
+      } else if (!data) {
+        // No notes yet, use default
+        setNotes('');
+        setTempNotes('');
+      }
+    } catch (error) {
+      console.error('Error loading notes:', error);
+    } finally {
+      setNotesLoading(false);
+    }
+  };
 
   if (!student) {
     return (
@@ -33,6 +86,87 @@ export default function MentorStudentDetailScreen() {
       </View>
     );
   }
+
+  const handleSaveNotes = async () => {
+    if (!supabase || !isSupabaseConfigured || !student?.id || !user?.id) {
+      Alert.alert("Ошибка", "Не удалось сохранить заметки");
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('mentor_student_notes')
+        .upsert({
+          mentor_id: user.id,
+          student_id: student.id,
+          notes: tempNotes,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'mentor_id,student_id'
+        });
+
+      if (error) {
+        Alert.alert("Ошибка", error.message);
+        return;
+      }
+
+      setNotes(tempNotes);
+      setIsEditingNotes(false);
+      Alert.alert("Сохранено", "Заметки успешно обновлены");
+    } catch (error: any) {
+      Alert.alert("Ошибка", error?.message || "Не удалось сохранить заметки");
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!supabase || !isSupabaseConfigured || !student?.id || !user?.id) {
+      Alert.alert("Ошибка", "Не удалось создать отчёт");
+      return;
+    }
+
+    try {
+      // Get current month in YYYY-MM format
+      const now = new Date();
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      // Generate report data
+      const reportData = {
+        sessions_count: 8,
+        progress_percentage: student.progress,
+        average_rating: 4.8,
+        skills: studentDetails.skills.map(s => ({ label: s.label, value: s.value })),
+        highlights: `${student.student_name} показывает отличные результаты в этом месяце.`,
+        areas_for_improvement: "Рекомендуется больше практики в командных проектах.",
+      };
+
+      const { error } = await supabase
+        .from('mentor_monthly_reports')
+        .insert({
+          mentor_id: user.id,
+          student_id: student.id,
+          parent_id: null, // TODO: Get parent_id from student profile
+          report_month: monthKey,
+          report_data: reportData,
+          sent_to_parent: true,
+          sent_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        Alert.alert("Ошибка", error.message);
+        return;
+      }
+
+      // TODO: Send push notification to parent
+
+      Alert.alert(
+        "Отчёт создан",
+        `Месячный отчёт за ${reportMonth} отправлен родителю`,
+        [{ text: "OK", onPress: () => setShowReportModal(false) }]
+      );
+    } catch (error: any) {
+      Alert.alert("Ошибка", error?.message || "Не удалось создать отчёт");
+    }
+  };
 
   // Mock data additions for high-fidelity
   const studentDetails = {
@@ -43,7 +177,6 @@ export default function MentorStudentDetailScreen() {
     grade: '7 класс',
     subjects: ['Креативность', 'Коммуникация'],
     goals: 'Развитие творческого мышления и уверенности в публичных выступлениях',
-    notes: 'Активный и любознательный ребенок. Хорошо воспринимает информацию через практические задания.',
     skills: [
         { label: 'Креативность', value: 75, color: '#6C5CE7' },
         { label: 'Коммуникация', value: 60, color: '#A78BFA' },
@@ -191,12 +324,69 @@ export default function MentorStudentDetailScreen() {
                 </View>
             </View>
 
-            {/* Notes */}
+            {/* Notes - Editable */}
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Заметки ментора</Text>
-                <View style={styles.notesCard}>
-                    <Text style={styles.notesText}>{studentDetails.notes}</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <Text style={styles.sectionTitle}>Заметки ментора</Text>
+                    {!isEditingNotes && (
+                        <TouchableOpacity 
+                            onPress={() => { setTempNotes(notes); setIsEditingNotes(true); }}
+                            style={styles.editNotesBtn}
+                        >
+                            <Feather name="edit-2" size={14} color="#6C5CE7" />
+                            <Text style={styles.editNotesBtnText}>Редактировать</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
+                {isEditingNotes ? (
+                    <View style={styles.notesEditCard}>
+                        <TextInput
+                            value={tempNotes}
+                            onChangeText={setTempNotes}
+                            multiline
+                            style={styles.notesInput}
+                            placeholder="Добавьте заметки о ученике..."
+                            placeholderTextColor="#9CA3AF"
+                        />
+                        <View style={styles.notesEditActions}>
+                            <TouchableOpacity 
+                                onPress={() => setIsEditingNotes(false)}
+                                style={styles.notesCancelBtn}
+                            >
+                                <Text style={styles.notesCancelText}>Отмена</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity 
+                                onPress={handleSaveNotes}
+                                style={styles.notesSaveBtn}
+                            >
+                                <Feather name="check" size={16} color="white" />
+                                <Text style={styles.notesSaveText}>Сохранить</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                ) : (
+                    <View style={styles.notesCard}>
+                        <Text style={styles.notesText}>{notes}</Text>
+                    </View>
+                )}
+            </View>
+
+            {/* Monthly Report Button */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Отчётность</Text>
+                <TouchableOpacity 
+                    style={styles.reportBtn}
+                    onPress={() => setShowReportModal(true)}
+                >
+                    <View style={styles.reportBtnIcon}>
+                        <Feather name="file-text" size={22} color="#6C5CE7" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.reportBtnTitle}>Месячный отчёт</Text>
+                        <Text style={styles.reportBtnSubtitle}>Создать и отправить родителю</Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
+                </TouchableOpacity>
             </View>
 
             {/* CTA Button */}
@@ -211,6 +401,66 @@ export default function MentorStudentDetailScreen() {
             </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Monthly Report Modal */}
+      <Modal visible={showReportModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Месячный отчёт</Text>
+              <TouchableOpacity onPress={() => setShowReportModal(false)}>
+                <Feather name="x" size={24} color={COLORS.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.reportPreview}>
+              <View style={styles.reportPreviewHeader}>
+                <Feather name="file-text" size={32} color="#6C5CE7" />
+                <Text style={styles.reportPreviewTitle}>Отчёт: {student.student_name}</Text>
+                <Text style={styles.reportPreviewMonth}>{reportMonth}</Text>
+              </View>
+
+              <View style={styles.reportStats}>
+                <View style={styles.reportStatItem}>
+                  <Text style={styles.reportStatValue}>8</Text>
+                  <Text style={styles.reportStatLabel}>Сессий проведено</Text>
+                </View>
+                <View style={styles.reportStatItem}>
+                  <Text style={styles.reportStatValue}>{student.progress}%</Text>
+                  <Text style={styles.reportStatLabel}>Общий прогресс</Text>
+                </View>
+                <View style={styles.reportStatItem}>
+                  <Text style={styles.reportStatValue}>4.8</Text>
+                  <Text style={styles.reportStatLabel}>Средняя оценка</Text>
+                </View>
+              </View>
+
+              <View style={styles.reportSkillsSummary}>
+                <Text style={styles.reportSkillsTitle}>Развитые навыки:</Text>
+                <View style={styles.reportSkillsList}>
+                  {studentDetails.skills.map(skill => (
+                    <View key={skill.label} style={styles.reportSkillItem}>
+                      <View style={[styles.reportSkillDot, { backgroundColor: skill.color }]} />
+                      <Text style={styles.reportSkillLabel}>{skill.label}: {skill.value}%</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+            <TouchableOpacity style={styles.generateBtn} onPress={handleGenerateReport}>
+              <LinearGradient 
+                colors={["#6C5CE7", "#A78BFA"]} 
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={styles.generateBtnGradient}
+              >
+                <Feather name="send" size={18} color="white" />
+                <Text style={styles.generateBtnText}>Отправить родителю</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -452,6 +702,208 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     color: "#92400E",
+  },
+  editNotesBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#F5F3FF",
+    borderRadius: 12,
+  },
+  editNotesBtnText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#6C5CE7",
+  },
+  notesEditCard: {
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: "#6C5CE7",
+    ...SHADOWS.sm,
+  },
+  notesInput: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.foreground,
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  notesEditActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: 12,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#F3F4F6",
+  },
+  notesCancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+  },
+  notesCancelText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.mutedForeground,
+  },
+  notesSaveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#6C5CE7",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  notesSaveText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "white",
+  },
+  reportBtn: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+  },
+  reportBtnIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#F5F3FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  reportBtnTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: COLORS.foreground,
+  },
+  reportBtnSubtitle: {
+    fontSize: 13,
+    color: COLORS.mutedForeground,
+    marginTop: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: 40,
+    ...SHADOWS.lg,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: COLORS.foreground,
+  },
+  reportPreview: {
+    backgroundColor: "#F8F7FF",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+  },
+  reportPreviewHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  reportPreviewTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: COLORS.foreground,
+    marginTop: 12,
+  },
+  reportPreviewMonth: {
+    fontSize: 14,
+    color: COLORS.mutedForeground,
+    marginTop: 4,
+  },
+  reportStats: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginBottom: 20,
+  },
+  reportStatItem: {
+    alignItems: "center",
+  },
+  reportStatValue: {
+    fontSize: 24,
+    fontWeight: "900",
+    color: "#6C5CE7",
+  },
+  reportStatLabel: {
+    fontSize: 11,
+    color: COLORS.mutedForeground,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  reportSkillsSummary: {
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 16,
+  },
+  reportSkillsTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.foreground,
+    marginBottom: 12,
+  },
+  reportSkillsList: {
+    gap: 8,
+  },
+  reportSkillItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  reportSkillDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  reportSkillLabel: {
+    fontSize: 13,
+    color: COLORS.foreground,
+  },
+  generateBtn: {
+    borderRadius: 20,
+    overflow: "hidden",
+    ...SHADOWS.md,
+  },
+  generateBtnGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 18,
+  },
+  generateBtnText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "800",
   },
   mainActionBtn: {
     marginTop: 8,

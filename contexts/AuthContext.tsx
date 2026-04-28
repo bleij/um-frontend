@@ -60,24 +60,32 @@ interface AuthContextValue {
   devLogin: (role: UserRole) => Promise<void>;
   devMode: boolean;
   setDevMode: (enabled: boolean) => Promise<void>;
+  /** Call this after the role-specific create-profile screen succeeds.
+   *  Persists the in-memory user to localStorage so they survive a refresh. */
+  finalizeRegistration: () => Promise<void>;
 }
 
-interface LocalUserRecord {
-  id: string;
-  phone: string;
-  password: string;
-  role: UserRole;
-  firstName: string;
-  lastName: string;
-}
 
-const AUTH_USER_KEY = "um_auth_user_v1";
-const USER_ROLE_KEY = "user_role";
-const LOCAL_USERS_KEY = "um_local_users_v2";
+// Only dev-switcher users (fake, not in Supabase) are persisted locally.
+// Real users are restored exclusively from supabase.auth.getSession().
+const DEV_USER_KEY = "um_dev_user";
 const DEV_MODE_KEY = "um_dev_mode";
 
 const DEV_OTP = process.env.EXPO_PUBLIC_DEV_OTP?.trim() || null;
 const PLACEHOLDER_VERIFICATION_CODE = DEV_OTP ?? "1234";
+
+// Stable, valid UUIDs for each dev role so FK constraints don't fail.
+// Used by both devLogin() and the fake-OTP bypass in verifyOtpAndRegister().
+const DEV_IDS: Record<UserRole, string> = {
+  parent:         "d0000000-0000-4000-a000-000000000001",
+  youth:          "d0000000-0000-4000-a000-000000000002",
+  child:          "d0000000-0000-4000-a000-000000000003",
+  "young-adult":  "d0000000-0000-4000-a000-000000000004",
+  mentor:         "d0000000-0000-4000-a000-000000000005",
+  org:            "d0000000-0000-4000-a000-000000000006",
+  teacher:        "d0000000-0000-4000-a000-000000000007",
+  admin:          "d0000000-0000-4000-a000-000000000008",
+};
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
@@ -122,31 +130,6 @@ function parseRole(value: string | null | undefined): UserRole {
   return "parent";
 }
 
-async function getLocalUsers(): Promise<LocalUserRecord[]> {
-  const raw = await AsyncStorage.getItem(LOCAL_USERS_KEY);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw) as LocalUserRecord[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveLocalUsers(users: LocalUserRecord[]) {
-  await AsyncStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users));
-}
-
-async function persistAuthUser(user: AuthUser | null) {
-  if (!user) {
-    await AsyncStorage.multiRemove([AUTH_USER_KEY, USER_ROLE_KEY]);
-    return;
-  }
-  await AsyncStorage.multiSet([
-    [AUTH_USER_KEY, JSON.stringify(user)],
-    [USER_ROLE_KEY, user.role],
-  ]);
-}
 
 async function fetchRemoteProfile(userId: string) {
   if (!supabase || !isSupabaseConfigured) return null;
@@ -213,39 +196,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const bootstrap = async () => {
       try {
-        const [rawUser, rawDevMode] = await Promise.all([
-          AsyncStorage.getItem(AUTH_USER_KEY),
-          AsyncStorage.getItem(DEV_MODE_KEY),
-        ]);
+        const rawDevMode = await AsyncStorage.getItem(DEV_MODE_KEY);
+        if (rawDevMode !== null) setDevModeState(rawDevMode === "true");
 
-        if (rawDevMode !== null) {
-          setDevModeState(rawDevMode === "true");
-        }
-
-        if (rawUser) {
-          try {
-            const parsed = JSON.parse(rawUser) as AuthUser;
-            // Reject stale dev users that used non-UUID ids (e.g. "dev_user_...").
-            // They cause 400s on Supabase queries. Force a clean state instead.
-            const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            if (uuidRe.test(parsed.id)) {
-              setUser(parsed);
-            } else {
-              await AsyncStorage.removeItem(AUTH_USER_KEY);
-            }
-          } catch {
-            await AsyncStorage.removeItem(AUTH_USER_KEY);
-          }
-        }
-
+        // 1. Real users: restore from Supabase session (no localStorage needed)
         if (supabase && isSupabaseConfigured) {
           const { data } = await supabase.auth.getSession();
           if (data.session?.user) {
             const hydrated = await hydrateFromSupabaseUser(data.session.user);
             if (hydrated) {
               setUser(hydrated);
-              await persistAuthUser(hydrated);
+              return;
             }
+          }
+        }
+
+        // 2. Dev-switcher users only: restore from local key
+        const rawDevUser = await AsyncStorage.getItem(DEV_USER_KEY);
+        if (rawDevUser) {
+          try {
+            setUser(JSON.parse(rawDevUser) as AuthUser);
+          } catch {
+            await AsyncStorage.removeItem(DEV_USER_KEY);
           }
         }
       } finally {
@@ -299,24 +271,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             lastName: data.user.user_metadata?.last_name as string | undefined,
           });
 
-        await persistAuthUser(nextUser);
         setUser(nextUser);
         return { success: true };
       }
 
-      // Local fallback
-      const users = await getLocalUsers();
-      const localUser = users.find(
-        (u) => u.phone === normalized && u.password === password,
-      );
-      if (!localUser) {
-        return { success: false, error: "Неверный номер телефона или пароль" };
-      }
-
-      const nextUser = toAuthUser(localUser);
-      await persistAuthUser(nextUser);
-      setUser(nextUser);
-      return { success: true };
+      return { success: false, error: "Неверный номер телефона или пароль" };
     },
     [],
   );
@@ -363,57 +322,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         await upsertRemoteProfile(nextUser);
-        await persistAuthUser(nextUser);
         setUser(nextUser);
         return { success: true };
       }
 
-      // Local fallback (also used for dev bypass)
-      const users = await getLocalUsers();
-      if (users.find((u) => u.phone === normalized)) {
-        return {
-          success: false,
-          error: "Пользователь с таким номером уже зарегистрирован",
-        };
-      }
-
-      const localUser: LocalUserRecord = {
-        id: `local_${Date.now()}`,
+      // Dev bypass: synthetic in-memory user, no Supabase session.
+      // Reuse the stable dev UUID for this role so any incidental Supabase
+      // calls at least pass UUID format validation (they'll be silently ignored
+      // by ParentDataContext which skips writes when there's no real session).
+      const nextUser = toAuthUser({
+        id: DEV_IDS[role] ?? "d0000000-0000-4000-a000-000000000009",
         phone: normalized,
-        password,
         role,
         firstName: firstName.trim(),
         lastName: lastName?.trim() || "",
-      };
-
-      await saveLocalUsers([...users, localUser]);
-      const nextUser = toAuthUser(localUser);
-      await persistAuthUser(nextUser);
+      });
       setUser(nextUser);
       return { success: true };
     },
     [],
   );
 
-  const loginWithQR = useCallback(
-    async (payload: {
-      childId: string;
-      parentId: string;
-      token: string;
-    }): Promise<AuthActionResult> => {
-      const { childId, parentId, token } = payload;
+  const finalizeRegistration = useCallback(async () => {
+    // Real Supabase users: their session and um_user_profiles row are already
+    // persisted by verifyOtpAndRegister → upsertRemoteProfile. Nothing to do.
+    // Dev-bypass users: in-memory only — no persistence needed.
+  }, []);
 
+  const loginWithQR = useCallback(
+    async (pin: string): Promise<AuthActionResult> => {
       if (supabase && isSupabaseConfigured) {
         const { data, error } = await supabase
           .from("child_profiles")
-          .select("id, name, age_category, parent_user_id, qr_token")
-          .eq("id", childId)
-          .eq("parent_user_id", parentId)
-          .eq("qr_token", token)
+          .select("id, name, age_category, parent_user_id, qr_pin, qr_pin_expires_at, qr_pin_one_time_use")
+          .eq("qr_pin", pin)
           .maybeSingle();
 
         if (error || !data) {
-          return { success: false, error: "Недействительный QR-код" };
+          return { success: false, error: "Неверный код" };
+        }
+
+        // Check if PIN is expired
+        if (data.qr_pin_expires_at) {
+          const expiresAt = new Date(data.qr_pin_expires_at);
+          if (expiresAt < new Date()) {
+            return { success: false, error: "Код истёк. Попросите родителя создать новый" };
+          }
+        }
+
+        // If one-time use, invalidate the PIN immediately
+        if (data.qr_pin_one_time_use) {
+          await supabase
+            .from("child_profiles")
+            .update({ 
+              qr_pin: null, 
+              qr_pin_expires_at: null 
+            })
+            .eq("id", data.id);
         }
 
         const nextUser = toAuthUser({
@@ -422,38 +387,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: "child",
           firstName: data.name,
         });
-        await persistAuthUser(nextUser);
         setUser(nextUser);
         return { success: true };
       }
 
-      const childrenRaw = await AsyncStorage.getItem(`um_children_${parentId}`);
-      if (!childrenRaw) return { success: false, error: "Недействительный QR-код" };
-
-      try {
-        const children = JSON.parse(childrenRaw) as Array<{
-          id: string;
-          name: string;
-          qrToken?: string;
-          phone?: string;
-        }>;
-        const child = children.find(
-          (c) => c.id === childId && c.qrToken === token,
-        );
-        if (!child) return { success: false, error: "Недействительный QR-код" };
-
-        const nextUser = toAuthUser({
-          id: child.id,
-          phone: child.phone || "",
-          role: "child",
-          firstName: child.name,
-        });
-        await persistAuthUser(nextUser);
-        setUser(nextUser);
-        return { success: true };
-      } catch {
-        return { success: false, error: "Ошибка при входе" };
-      }
+      return { success: false, error: "Неверный код" };
     },
     [],
   );
@@ -463,7 +401,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!user) return;
       const nextUser = { ...user, role };
       setUser(nextUser);
-      await persistAuthUser(nextUser);
+      // Persist for dev-switcher users; real users rely on Supabase session.
+      if (devMode) {
+        await AsyncStorage.setItem(DEV_USER_KEY, JSON.stringify(nextUser));
+      }
       if (supabase && isSupabaseConfigured) {
         // Only touch remote profile when there's a real Supabase auth session.
         // Dev mode uses fake UUIDs with no session — auth.uid() would be null,
@@ -475,21 +416,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [user],
+    [user, devMode],
   );
 
   const devLogin = useCallback(async (role: UserRole) => {
-    // Use a stable, valid UUID per role so Supabase FK references don't 400.
-    const DEV_IDS: Record<UserRole, string> = {
-      parent:      "d0000000-0000-4000-a000-000000000001",
-      youth:       "d0000000-0000-4000-a000-000000000002",
-      child:       "d0000000-0000-4000-a000-000000000003",
-      "young-adult":"d0000000-0000-4000-a000-000000000004",
-      mentor:      "d0000000-0000-4000-a000-000000000005",
-      org:         "d0000000-0000-4000-a000-000000000006",
-      teacher:     "d0000000-0000-4000-a000-000000000007",
-      admin:       "d0000000-0000-4000-a000-000000000008",
-    };
     const nextUser = toAuthUser({
       id: DEV_IDS[role] ?? "d0000000-0000-4000-a000-000000000009",
       phone: "79991234567",
@@ -500,7 +430,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     setUser(nextUser);
-    await persistAuthUser(nextUser);
+    await AsyncStorage.setItem(DEV_USER_KEY, JSON.stringify(nextUser));
   }, []);
 
   const setDevMode = useCallback(async (enabled: boolean) => {
@@ -511,7 +441,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     if (supabase && isSupabaseConfigured) await supabase.auth.signOut();
     setUser(null);
-    await persistAuthUser(null);
+    await AsyncStorage.removeItem(DEV_USER_KEY);
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -528,6 +458,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       devLogin,
       devMode,
       setDevMode,
+      finalizeRegistration,
     }),
     [
       user,
@@ -542,6 +473,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       devLogin,
       devMode,
       setDevMode,
+      finalizeRegistration,
     ],
   );
 

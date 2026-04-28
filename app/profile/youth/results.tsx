@@ -24,9 +24,16 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useParentData } from "../../../contexts/ParentDataContext";
+import { useAuth } from "../../../contexts/AuthContext";
 
 export default function YouthResults() {
   const router = useRouter();
+  const { finalizeRegistration } = useAuth();
+
+  const handleGoHome = async () => {
+    await finalizeRegistration();
+    router.replace("/(tabs)/home");
+  };
   const { width } = useWindowDimensions();
   const { childrenProfile, activeChildId } = useParentData();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -60,7 +67,7 @@ export default function YouthResults() {
           Анализ почти завершен! Пожалуйста, подождите...
         </Text>
         <TouchableOpacity
-          onPress={() => router.replace("/(tabs)/home" as any)}
+          onPress={() => handleGoHome()}
           style={{
             marginTop: 20,
             backgroundColor: "white",
@@ -482,7 +489,7 @@ export default function YouthResults() {
 
           {/* ── CTA ── */}
           <TouchableOpacity
-            onPress={() => router.replace("/(tabs)/home" as any)}
+            onPress={() => handleGoHome()}
             style={{ marginTop: 8 }}
           >
             <LinearGradient

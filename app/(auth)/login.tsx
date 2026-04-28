@@ -37,9 +37,39 @@ export default function LoginScreen() {
     : LAYOUT.authHorizontalPaddingMobile;
 
   const formatPhone = (text: string) => {
+    // Remove all non-digit characters except +
     const cleaned = text.replace(/[^\d+]/g, "");
-    const max = cleaned.startsWith("+") ? 12 : 11;
-    setPhoneNumber(cleaned.slice(0, max));
+    
+    // Check if it starts with +
+    const hasPlus = cleaned.startsWith("+");
+    
+    // Get only digits (no +)
+    const digitsOnly = cleaned.replace(/\D/g, "");
+    
+    // Format based on length
+    let formatted = "";
+    
+    if (digitsOnly.length === 0) {
+      // Allow typing just "+"
+      formatted = hasPlus ? "+" : "";
+    } else if (digitsOnly.length === 1) {
+      // First digit: keep + if user typed it, otherwise just the digit
+      formatted = hasPlus ? `+${digitsOnly}` : digitsOnly;
+    } else if (digitsOnly.length <= 4) {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1)}`;
+    } else if (digitsOnly.length <= 7) {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4)}`;
+    } else if (digitsOnly.length <= 9) {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7)}`;
+    } else {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 9)}-${digitsOnly.slice(9, 11)}`;
+    }
+    
+    setPhoneNumber(formatted);
   };
 
   const canSubmit = phoneNumber.replace(/\D/g, "").length >= 10 && password.length >= 6;
@@ -188,7 +218,7 @@ export default function LoginScreen() {
                   <Text style={{ color: COLORS.primary, fontSize: 13, fontWeight: '700' }}>Забыли пароль?</Text>
                 </TouchableOpacity>
 
-                {error && (
+                {!!error && (
                     <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={styles.errorBox}>
                         <Text style={styles.errorText}>{error}</Text>
                     </MotiView>
@@ -219,27 +249,21 @@ export default function LoginScreen() {
                 </TouchableOpacity>
               </MotiView>
 
-              {/* Login Alternatives */}
+              {/* QR Login Alternative */}
               <View style={{ marginTop: 32 }}>
                 <View style={styles.dividerRow}>
                     <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>или войти через</Text>
+                    <Text style={styles.dividerText}>или</Text>
                     <View style={styles.dividerLine} />
                 </View>
 
-                <View style={styles.socialRow}>
-                    <TouchableOpacity style={styles.socialBtn}>
-                         <Text style={{ fontSize: 20, fontWeight: "900", color: "#ea4335" }}>G</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.socialBtn}>
-                         <Feather name="github" size={22} color={COLORS.foreground} />
-                    </TouchableOpacity>
+                <View style={{ alignItems: 'center', marginTop: 16 }}>
                     <TouchableOpacity 
                         onPress={() => router.push("/(auth)/qr-scan")}
                         style={styles.qrBtn}
                     >
                         <Feather name="grid" size={20} color={COLORS.primary} />
-                        <Text style={styles.qrBtnText}>QR</Text>
+                        <Text style={styles.qrBtnText}>Войти по QR-коду</Text>
                     </TouchableOpacity>
                 </View>
               </View>
@@ -324,27 +348,12 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '500'
     },
-    socialRow: {
-        flexDirection: "row",
-        justifyContent: "center",
-        gap: 12,
-    },
-    socialBtn: {
-        width: 60,
-        height: 60,
-        borderRadius: RADIUS.xl,
-        backgroundColor: 'white',
-        borderWidth: 2,
-        borderColor: COLORS.border,
-        alignItems: "center",
-        justifyContent: "center",
-        ...SHADOWS.sm,
-    },
     qrBtn: {
         flexDirection: "row",
         alignItems: "center",
         gap: 8,
-        paddingHorizontal: 20,
+        paddingHorizontal: 24,
+        paddingVertical: 16,
         borderRadius: RADIUS.xl,
         backgroundColor: 'white',
         borderWidth: 2,

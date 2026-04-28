@@ -29,7 +29,7 @@ export interface Organization {
   id: string;
   name: string;
   category: string | null;
-  status: "pending" | "verified" | "rejected";
+  status: "new" | "pending" | "ready_for_review" | "verified" | "rejected";
   rating: number;
   active_students: number;
   commission_pct: number;

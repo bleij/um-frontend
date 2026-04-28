@@ -3,7 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -72,8 +72,8 @@ export default function RegisterScreen() {
   const { width } = useWindowDimensions();
   const { sendOtp, verifyOtpAndRegister, devOtpCode } = useAuth();
 
-  // step 0 = role, step 1 = phone + name + password, step 2 = OTP
-  const [step, setStep] = useState(0);
+  // step 0 = role, step 1 = phone + password, step 2 = OTP, step 3 = name
+  const [step, setStep] = useState<number>(0);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [selectedRoute, setSelectedRoute] = useState("");
 
@@ -94,9 +94,39 @@ export default function RegisterScreen() {
     : LAYOUT.authHorizontalPaddingMobile;
 
   const formatPhone = (text: string) => {
+    // Remove all non-digit characters except +
     const cleaned = text.replace(/[^\d+]/g, "");
-    const max = cleaned.startsWith("+") ? 12 : 11;
-    setPhoneNumber(cleaned.slice(0, max));
+    
+    // Check if it starts with +
+    const hasPlus = cleaned.startsWith("+");
+    
+    // Get only digits (no +)
+    const digitsOnly = cleaned.replace(/\D/g, "");
+    
+    // Format based on length
+    let formatted = "";
+    
+    if (digitsOnly.length === 0) {
+      // Allow typing just "+"
+      formatted = hasPlus ? "+" : "";
+    } else if (digitsOnly.length === 1) {
+      // First digit: keep + if user typed it, otherwise just the digit
+      formatted = hasPlus ? `+${digitsOnly}` : digitsOnly;
+    } else if (digitsOnly.length <= 4) {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1)}`;
+    } else if (digitsOnly.length <= 7) {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4)}`;
+    } else if (digitsOnly.length <= 9) {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7)}`;
+    } else {
+      const prefix = hasPlus ? `+${digitsOnly[0]}` : digitsOnly[0];
+      formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 9)}-${digitsOnly.slice(9, 11)}`;
+    }
+    
+    setPhoneNumber(formatted);
   };
 
   const handleAction = async () => {
@@ -114,10 +144,6 @@ export default function RegisterScreen() {
     if (step === 1) {
       if (phoneNumber.replace(/\D/g, "").length < 10) {
         setError("Введите корректный номер телефона");
-        return;
-      }
-      if (!firstName.trim()) {
-        setError("Введите имя");
         return;
       }
       if (password.length < 6) {
@@ -143,7 +169,21 @@ export default function RegisterScreen() {
       return;
     }
 
-    // step 2: verify OTP and create account
+    if (step === 2) {
+      if (otp.length < 6) {
+        setError("Введите 6-значный код");
+        return;
+      }
+      setStep(3);
+      return;
+    }
+
+    // step 3: name collected — create account
+    if (!firstName.trim()) {
+      setError("Введите имя");
+      return;
+    }
+
     setIsSubmitting(true);
     const result = await verifyOtpAndRegister(
       phoneNumber,
@@ -164,8 +204,9 @@ export default function RegisterScreen() {
   };
 
   const handleBack = () => {
-    setError("");
+    setError('');
     if (step === 0) router.back();
+    else if (Platform.OS === 'web') window.history.back(); // pops the hash entry → hashchange fires
     else setStep(step - 1);
   };
 
@@ -174,16 +215,17 @@ export default function RegisterScreen() {
     if (step === 1)
       return (
         phoneNumber.replace(/\D/g, "").length >= 10 &&
-        firstName.trim().length > 0 &&
         password.length >= 6 &&
         password === confirmPassword
       );
-    return otp.length === 6;
+    if (step === 2) return otp.length === 6;
+    return firstName.trim().length > 0;
   };
 
   const getButtonLabel = () => {
     if (step === 0) return "Далее";
     if (step === 1) return "Получить код";
+    if (step === 2) return "Подтвердить";
     return "Создать аккаунт";
   };
 
@@ -254,11 +296,11 @@ export default function RegisterScreen() {
 
                 {/* Step Indicator */}
                 <View style={{ flexDirection: 'row', gap: 6 }}>
-                    {[0, 1, 2].map((i) => (
-                        <View key={i} style={{ 
-                            width: step === i ? 24 : 8, 
-                            height: 8, 
-                            borderRadius: 4, 
+                    {[0, 1, 2, 3].map((i) => (
+                        <View key={i} style={{
+                            width: step === i ? 24 : 8,
+                            height: 8,
+                            borderRadius: 4,
                             backgroundColor: step === i ? (selectedRole ? currentRoleInfo?.color : COLORS.primary) : COLORS.border,
                         }} />
                     ))}
@@ -269,109 +311,115 @@ export default function RegisterScreen() {
               <MotiView
                 from={{ opacity: 0, translateY: 10 }}
                 animate={{ opacity: 1, translateY: 0 }}
-                transition={{ duration: 500 }}
+                transition={{ type: 'timing', duration: Platform.OS === 'web' ? 300 : 500 }}
                 style={{ marginBottom: 32 }}
               >
                 <Text style={{ fontSize: 32, fontWeight: "900", color: COLORS.foreground, marginBottom: 8, letterSpacing: -0.5 }}>
-                  {step === 0 ? "Давайте знакомиться" : step === 1 ? "Детали профиля" : "Почти готово"}
+                  {step === 0 ? "Давайте знакомиться" :
+                   step === 1 ? "Создайте аккаунт" :
+                   step === 2 ? "Подтвердите номер" :
+                   "Как вас зовут?"}
                 </Text>
                 <Text style={{ color: COLORS.mutedForeground, fontSize: 16, lineHeight: 24 }}>
-                  {step === 0 ? "Выберите вашу роль, чтобы мы настроили приложение специально под вас" : 
-                   step === 1 ? "Введите контактные данные для создания вашей учетной записи" : 
-                   `Введите 6-значный код, отправленный на ${phoneNumber}`}
+                  {step === 0 ? "Выберите вашу роль, чтобы мы настроили приложение специально под вас" :
+                   step === 1 ? "Введите номер телефона и придумайте пароль" :
+                   step === 2 ? `Введите 6-значный код, отправленный на ${phoneNumber}` :
+                   "Введите ваше имя для профиля"}
                 </Text>
               </MotiView>
 
-              {/* Step 0: Vibrant Role Selection */}
+              {/* Step 0: Role Selection — single MotiView for the whole list */}
               {step === 0 && (
-                <View>
-                  {ROLES.map((item, index) => {
+                <MotiView
+                  from={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'timing', duration: 200, delay: 100 }}
+                >
+                  {ROLES.map((item) => {
                     const isSelected = selectedRole === item.role;
                     return (
-                      <MotiView
+                      <TouchableOpacity
                         key={item.role}
-                        from={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 300, delay: index * 50 }}
+                        onPress={() => {
+                          setSelectedRole(item.role);
+                          setSelectedRoute(item.route);
+                        }}
+                        activeOpacity={0.8}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          padding: 18,
+                          marginBottom: 12,
+                          borderRadius: RADIUS.xl,
+                          backgroundColor: isSelected ? 'white' : COLORS.card,
+                          borderWidth: 2,
+                          borderColor: isSelected ? item.color : 'transparent',
+                          ...SHADOWS.sm,
+                          elevation: isSelected ? 4 : 1,
+                        }}
                       >
-                        <TouchableOpacity
-                          onPress={() => {
-                            setSelectedRole(item.role);
-                            setSelectedRoute(item.route);
-                          }}
-                          activeOpacity={0.8}
+                        <LinearGradient
+                          colors={item.gradient}
                           style={{
-                            flexDirection: "row",
+                            width: 54,
+                            height: 54,
+                            borderRadius: 16,
+                            justifyContent: "center",
                             alignItems: "center",
-                            padding: 18,
-                            marginBottom: 12,
-                            borderRadius: RADIUS.xl,
-                            backgroundColor: isSelected ? 'white' : COLORS.card,
-                            borderWidth: 2,
-                            borderColor: isSelected ? item.color : 'transparent',
-                            ...SHADOWS.sm,
-                            elevation: isSelected ? 4 : 1,
+                            marginRight: 16,
                           }}
                         >
-                          <LinearGradient
-                            colors={item.gradient}
-                            style={{
-                              width: 54,
-                              height: 54,
-                              borderRadius: 16,
-                              justifyContent: "center",
-                              alignItems: "center",
-                              marginRight: 16,
-                            }}
-                          >
-                            <Feather name={item.icon} size={24} color="white" />
-                          </LinearGradient>
-                          
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontWeight: "800", fontSize: 16, color: COLORS.foreground, marginBottom: 4 }}>
-                              {item.title}
-                            </Text>
-                            <Text style={{ fontSize: 13, color: COLORS.mutedForeground, lineHeight: 18 }}>
-                              {item.description}
-                            </Text>
-                          </View>
+                          <Feather name={item.icon} size={24} color="white" />
+                        </LinearGradient>
 
-                          {isSelected && (
-                            <MotiView from={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring' }}>
-                              <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: item.color, alignItems: 'center', justifyContent: 'center' }}>
-                                <Feather name="check" size={14} color="white" />
-                              </View>
-                            </MotiView>
-                          )}
-                        </TouchableOpacity>
-                      </MotiView>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontWeight: "800", fontSize: 16, color: COLORS.foreground, marginBottom: 4 }}>
+                            {item.title}
+                          </Text>
+                          <Text style={{ fontSize: 13, color: COLORS.mutedForeground, lineHeight: 18 }}>
+                            {item.description}
+                          </Text>
+                        </View>
+
+                        {isSelected && (
+                          <MotiView from={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring' }}>
+                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: item.color, alignItems: 'center', justifyContent: 'center' }}>
+                              <Feather name="check" size={14} color="white" />
+                            </View>
+                          </MotiView>
+                        )}
+                      </TouchableOpacity>
                     );
                   })}
-                </View>
+                </MotiView>
               )}
 
-              {/* Step 1 & 2: Form Fields */}
-              {(step === 1 || step === 2) && (
+              {/* Steps 1–3: persistent card — no remount between steps */}
+              {step >= 1 && (
                 <MotiView
-                  from={{ opacity: 0, translateX: 10 }}
-                  animate={{ opacity: 1, translateX: 0 }}
+                  from={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'timing', duration: 200 }}
                   style={{ backgroundColor: 'white', borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md }}
                 >
+                  {/* Inner content fades between steps without remounting the card */}
+
+                  {/* Step 1: Phone + Password */}
                   {step === 1 && (
-                    <>
+                    <MotiView key="s1" from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ type: 'timing', duration: 150 }}>
                       <Field label="Номер телефона" icon="phone" value={phoneNumber} onChange={formatPhone} placeholder="+7 (___) ___-__-__" keyboardType="phone-pad" autoFocus />
-                      <Field label="Имя" icon="user" value={firstName} onChange={setFirstName} placeholder="Как к вам обращаться?" />
-                      <Field label="Фамилия (опционально)" icon="user" value={lastName} onChange={setLastName} placeholder="Ваша фамилия" />
                       <Field label="Пароль" icon="lock" value={password} onChange={setPassword} placeholder="Минимум 6 символов" secure showToggle={() => setShowPassword(!showPassword)} shown={showPassword} />
-                      <Field label="Подтвердите пароль" icon="lock" value={confirmPassword} onChange={setConfirmPassword} placeholder="Тот же пароль" secure showToggle={() => setShowConfirmPassword(!showConfirmPassword)} shown={showConfirmPassword} />
-                    </>
+                      <Field label="Подтвердите пароль" icon="lock" value={confirmPassword} onChange={setConfirmPassword} placeholder="Повторите пароль" secure showToggle={() => setShowConfirmPassword(!showConfirmPassword)} shown={showConfirmPassword} last />
+                    </MotiView>
                   )}
 
+                  {/* Step 2: OTP */}
                   {step === 2 && (
-                    <View style={{ alignItems: 'center' }}>
+                    <MotiView key="s2" from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ type: 'timing', duration: 150 }}>
+                      <View style={{ alignItems: 'center' }}>
                         {!!devOtpCode && (
                           <View style={{ backgroundColor: '#FEF9C3', padding: 8, borderRadius: 8, marginBottom: 20, width: '100%', alignItems: 'center' }}>
-                             <Text style={{ color: '#854D0E', fontSize: 12, fontWeight: 'bold' }}>DEV MODE: {devOtpCode}</Text>
+                            <Text style={{ color: '#854D0E', fontSize: 12, fontWeight: 'bold' }}>DEV MODE: {devOtpCode}</Text>
                           </View>
                         )}
                         <TextInput
@@ -381,26 +429,39 @@ export default function RegisterScreen() {
                           onChangeText={(t) => setOtp(t.replace(/\D/g, "").slice(0, 6))}
                           keyboardType="number-pad"
                           autoFocus
-                          style={{ 
-                            fontSize: 48, 
-                            fontWeight: '900', 
-                            textAlign: 'center', 
+                          style={{
+                            fontSize: 48,
+                            fontWeight: '900',
+                            textAlign: 'center',
                             letterSpacing: 10,
                             color: currentRoleInfo?.color || COLORS.primary,
-                            marginBottom: 20
-                          }}
+                            marginBottom: 20,
+                            outlineWidth: 0,
+                          } as any}
                         />
                         <TouchableOpacity onPress={() => sendOtp(phoneNumber)}>
                           <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
-                            Не получили код? <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: 'bold' }}>Отправить еще раз</Text>
+                            Не получили код?{" "}
+                            <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: 'bold' }}>
+                              Отправить еще раз
+                            </Text>
                           </Text>
                         </TouchableOpacity>
-                    </View>
+                      </View>
+                    </MotiView>
+                  )}
+
+                  {/* Step 3: Name */}
+                  {step === 3 && (
+                    <MotiView key="s3" from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ type: 'timing', duration: 150 }}>
+                      <Field label="Имя" icon="user" value={firstName} onChange={setFirstName} placeholder="Как к вам обращаться?" autoFocus />
+                      <Field label="Фамилия (опционально)" icon="user" value={lastName} onChange={setLastName} placeholder="Ваша фамилия" last />
+                    </MotiView>
                   )}
                 </MotiView>
               )}
 
-              {error && (
+              {!!error && (
                 <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ marginTop: 16, padding: 12, borderRadius: RADIUS.md, backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FCA5A5' }}>
                    <Text style={{ color: '#B91C1C', textAlign: 'center', fontSize: 13, fontWeight: '600' }}>{error}</Text>
                 </MotiView>

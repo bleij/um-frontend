@@ -14,7 +14,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import { MotiView } from "moti";
-import { useDevSettings } from "../../contexts/DevSettingsContext";
 import { useOrgProfile, useOrgStats, useOrgSchedule } from "../../hooks/useOrgData";
 
 const QUICK_ACTIONS = [
@@ -30,8 +29,8 @@ export default function OrgHome() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
   const { status: orgStatus, name: orgName } = useOrgProfile();
-  const isVerified = orgStatus === 'verified';
-  const stats = useOrgStats().stats;
+  const isVerified = orgStatus === "verified";
+  const { stats } = useOrgStats();
   const todayDow = (new Date().getDay() + 6) % 7; // Mon=0
   const { items: todaySchedule } = useOrgSchedule(todayDow);
   const firstClass = todaySchedule[0] ?? null;
@@ -51,10 +50,10 @@ export default function OrgHome() {
           paddingBottom: 110,
         }}
       >
-        {/* Header - Premium Atmos Aesthetic */}
+        {/* Header - Premium Purple Aesthetic */}
         <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
           <LinearGradient
-            colors={['#1E3A8A', '#3B82F6']}
+            colors={['#6C5CE7', '#8B7FE8']}
             style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}
           >
             <SafeAreaView edges={["top"]}>
@@ -69,7 +68,7 @@ export default function OrgHome() {
                     <Text style={{ fontSize: TYPOGRAPHY.size.xxxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white", letterSpacing: -0.5 }}>{orgName || "Моя организация"}</Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => router.push('/profile/organization')}
+                    onPress={() => router.push("/(tabs)/profile" as any)}
                     style={{
                       width: 52,
                       height: 52,
@@ -100,8 +99,49 @@ export default function OrgHome() {
           </LinearGradient>
         </View>
 
-        {/* Pending verification banner */}
-        {!isVerified && (
+        {/* Verification status banner */}
+        {(orgStatus === "new" || orgStatus === null) && (
+          <MotiView
+            from={{ opacity: 0, translateY: -8 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            style={{ paddingHorizontal: horizontalPadding, marginTop: 24, marginBottom: 8 }}
+          >
+            <TouchableOpacity
+              onPress={() => router.push("/organization/verification" as any)}
+              activeOpacity={0.92}
+              style={{
+                backgroundColor: '#6C5CE7',
+                borderRadius: RADIUS.xl,
+                padding: 20,
+                overflow: 'hidden',
+              }}
+            >
+              <LinearGradient
+                colors={['rgba(255,255,255,0.12)', 'rgba(255,255,255,0)']}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+              />
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 14 }}>
+                <View style={{ width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }}>
+                  <Feather name="shield" size={22} color="white" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: 'white', marginBottom: 4 }}>
+                    Пройдите верификацию
+                  </Text>
+                  <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 18 }}>
+                    Чтобы принимать оплаты и появиться в поиске — загрузите документы
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: 'white' }}>Перейти к верификации</Text>
+                    <Feather name="arrow-right" size={14} color="white" />
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          </MotiView>
+        )}
+
+        {orgStatus === "ready_for_review" && (
           <MotiView
             from={{ opacity: 0, translateY: -8 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -126,10 +166,46 @@ export default function OrgHome() {
                 <Feather name="shield" size={24} color="#854D0E" />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: '#1C1C1E' }}>Пройдите верификацию</Text>
-                <Text style={{ fontSize: 13, color: '#71717A', marginTop: 4, lineHeight: 18 }}>Чтобы начать принимать оплаты и появиться в поиске, загрузите документы в профиле.</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#1C1C1E' }}>Документы на проверке</Text>
+                <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                  Администратор проверяет ваши документы. Обычно это занимает до 24 часов.
+                </Text>
               </View>
               <Feather name="chevron-right" size={20} color="#854D0E" />
+            </TouchableOpacity>
+          </MotiView>
+        )}
+
+        {orgStatus === "rejected" && (
+          <MotiView
+            from={{ opacity: 0, translateY: -8 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            style={{ paddingHorizontal: horizontalPadding, marginTop: 24, marginBottom: 8 }}
+          >
+            <TouchableOpacity
+              onPress={() => router.push("/organization/verification" as any)}
+              activeOpacity={0.92}
+              style={{
+                backgroundColor: '#FEE2E2',
+                borderRadius: RADIUS.lg,
+                padding: 16,
+                borderWidth: 1,
+                borderColor: '#FCA5A5',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+              }}
+            >
+              <View style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: '#FCA5A530', alignItems: 'center', justifyContent: 'center' }}>
+                <Feather name="x-circle" size={20} color="#B91C1C" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#B91C1C' }}>Верификация отклонена</Text>
+                <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                  Нажмите, чтобы повторно отправить документы
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={18} color="#B91C1C" />
             </TouchableOpacity>
           </MotiView>
         )}

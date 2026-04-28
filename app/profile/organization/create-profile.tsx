@@ -4,82 +4,72 @@ import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
+// Org brand colour — matches the ROLES entry in register.tsx
+const ORG_COLOR = "#10B981";
+const ORG_GRADIENT: [string, string] = ["#10B981", "#34D399"];
+
 export default function CreateProfileOrganization() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, finalizeRegistration } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
-    ? LAYOUT.profileHorizontalPaddingDesktop
-    : LAYOUT.profileHorizontalPaddingMobile;
-    
-  const [formData, setFormData] = useState({
-    orgName: "",
-    city: "",
-    contactPerson: "",
-    phone: user?.phone || "",
-    email: user?.email || "",
-    password: "",
-  });
+    ? LAYOUT.authHorizontalPaddingDesktop
+    : LAYOUT.authHorizontalPaddingMobile;
+
+  const [orgName, setOrgName] = useState("");
+  const [city, setCity] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [contactPhone, setContactPhone] = useState(user?.phone ?? "");
+  const [contactEmail, setContactEmail] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleMockSubmit = async () => {
+  const canSubmit =
+    orgName.trim().length > 0 &&
+    city.trim().length > 0 &&
+    contactPerson.trim().length > 0;
+
+  const handleSubmit = async () => {
     setError(null);
-    if (!formData.orgName.trim()) { setError("Укажите название организации."); return; }
-    if (!formData.city.trim()) { setError("Укажите город."); return; }
-    if (!formData.contactPerson.trim()) { setError("Укажите ФИО ответственного лица."); return; }
+    if (!orgName.trim()) { setError("Укажите название организации."); return; }
+    if (!city.trim()) { setError("Укажите город."); return; }
+    if (!contactPerson.trim()) { setError("Укажите ФИО ответственного лица."); return; }
 
     setSubmitting(true);
     try {
       if (supabase && isSupabaseConfigured) {
-        // 1. Update Auth if password or email changed (and provided)
-        if (formData.password) {
-           const { error: authErr } = await supabase.auth.updateUser({ 
-             password: formData.password,
-             email: formData.email !== user?.email ? formData.email : undefined
-           });
-           if (authErr) {
-             setError(`Ошибка обновления данных входа: ${authErr.message}`);
-             setSubmitting(false);
-             return;
-           }
-        }
-
-        // 2. Create/Update Organization Record
-        const { error: insertErr } = await supabase.from("organizations").upsert({
+        const { error: insertErr } = await supabase.from("organizations").insert({
           owner_user_id: user?.id ?? null,
-          name: formData.orgName.trim(),
-          contact_person: formData.contactPerson.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          city: formData.city.trim(),
+          name: orgName.trim(),
+          city: city.trim(),
+          contact_person: contactPerson.trim(),
+          phone: contactPhone.trim() || user?.phone || null,
+          email: contactEmail.trim() || null,
           status: "new",
-        }, { onConflict: 'owner_user_id' });
-
-        if (insertErr) {
-          setError(insertErr.message);
-          setSubmitting(false);
-          return;
-        }
+        });
+        if (insertErr) { setError(insertErr.message); setSubmitting(false); return; }
       }
+      await finalizeRegistration();
       setIsSuccess(true);
     } catch (e: any) {
       setError(e.message || "Произошла ошибка");
@@ -93,338 +83,276 @@ export default function CreateProfileOrganization() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Background Blobs */}
-      <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-        <View style={{ 
-          position: 'absolute', 
-          top: -100, 
-          right: -100, 
-          width: 400, 
-          height: 400, 
-          borderRadius: 200, 
-          backgroundColor: `${COLORS.primary}08`,
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: COLORS.background }}
+    >
+      <StatusBar barStyle="dark-content" />
+
+      {/* Background blobs — same as register.tsx */}
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: "hidden" }}>
+        <View style={{
+          position: "absolute", top: -50, right: -50,
+          width: 200, height: 200, borderRadius: 100,
+          backgroundColor: `${ORG_COLOR}10`,
         }} />
-        <View style={{ 
-          position: 'absolute', 
-          top: '40%', 
-          left: -150, 
-          width: 350, 
-          height: 350, 
-          borderRadius: 175, 
-          backgroundColor: `${COLORS.secondary}05`,
+        <View style={{
+          position: "absolute", bottom: "20%", left: -80,
+          width: 250, height: 250, borderRadius: 125,
+          backgroundColor: `${ORG_COLOR}05`,
         }} />
       </View>
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <SafeAreaView edges={["top"]} style={{ zIndex: 20 }}>
-          <View style={{ 
-            flexDirection: 'row', 
-            alignItems: 'center', 
-            paddingHorizontal: horizontalPadding,
-            paddingVertical: 12,
-          }}>
-            <TouchableOpacity
-              onPress={() => router.back()}
-              style={styles.backButton}
-            >
-              <Feather name="arrow-left" size={20} color={COLORS.foreground} />
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Профиль организации</Text>
-          </View>
-        </SafeAreaView>
-
+      <SafeAreaView style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={{
+          contentContainerStyle={{ flexGrow: 1, alignItems: "center", paddingVertical: isDesktop ? 24 : 12 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{
+            flex: 1,
+            width: "100%",
+            maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
             paddingHorizontal: horizontalPadding,
             paddingTop: 8,
-            paddingBottom: 60,
-          }}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={{ width: "100%", maxWidth: 600, alignSelf: 'center' }}>
-            
-            {/* Header Text */}
-            <View style={{ marginBottom: 32 }}>
-               <Text style={styles.title}>Добро пожаловать! 🏫</Text>
-               <Text style={styles.subtitle}>
-                 Заполните базовую информацию, чтобы начать настройку ваших кружков
-               </Text>
+          }}>
+            {/* Header nav — identical structure to register.tsx */}
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{ flexDirection: "row", alignItems: "center" }}
+              >
+                <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
+                <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: "500" }}>
+                  Назад
+                </Text>
+              </TouchableOpacity>
+
+              {/* 4-dot indicator — this is the 4th step after role/phone/otp/name */}
+              <View style={{ flexDirection: "row", gap: 6 }}>
+                {[0, 1, 2, 3].map((i) => (
+                  <View key={i} style={{
+                    width: i === 3 ? 24 : 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: i === 3 ? ORG_COLOR : COLORS.border,
+                  }} />
+                ))}
+              </View>
             </View>
 
-            {/* General Info Card */}
+            {/* Title */}
             <MotiView
-               from={{ opacity: 0, translateY: 20 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               style={styles.card}
+              from={{ opacity: 0, translateY: 10 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ duration: 500 }}
+              style={{ marginBottom: 32 }}
             >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, { backgroundColor: `${COLORS.primary}10` }]}>
-                  <MaterialCommunityIcons name="office-building" size={18} color={COLORS.primary} />
-                </View>
-                <Text style={styles.cardTitle}>Общая информация</Text>
-              </View>
-
-              <View style={{ gap: 20 }}>
-                <View>
-                  <Text style={styles.inputLabel}>Название организации</Text>
-                  <TextInput
-                    value={formData.orgName}
-                    onChangeText={(text) => setFormData({ ...formData, orgName: text })}
-                    placeholder="Напр. RoboTech Academy"
-                    placeholderTextColor={COLORS.tertiary}
-                    style={styles.input}
-                  />
-                </View>
-                
-                <View>
-                  <Text style={styles.inputLabel}>Город</Text>
-                  <TextInput
-                    value={formData.city}
-                    onChangeText={(text) => setFormData({ ...formData, city: text })}
-                    placeholder="Алматы"
-                    placeholderTextColor={COLORS.tertiary}
-                    style={styles.input}
-                  />
-                </View>
-              </View>
+              <Text style={{ fontSize: 32, fontWeight: "900", color: COLORS.foreground, marginBottom: 8, letterSpacing: -0.5 }}>
+                Об организации
+              </Text>
+              <Text style={{ color: COLORS.mutedForeground, fontSize: 16, lineHeight: 24 }}>
+                Минимальные данные — документы можно добавить позже из кабинета
+              </Text>
             </MotiView>
 
-            {/* Contact Person Card */}
+            {/* Form card — same style as register.tsx steps */}
             <MotiView
-               from={{ opacity: 0, translateY: 20 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               transition={{ delay: 100 }}
-               style={styles.card}
+              from={{ opacity: 0, translateX: 10 }}
+              animate={{ opacity: 1, translateX: 0 }}
+              style={{ backgroundColor: "white", borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md }}
             >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, { backgroundColor: `${COLORS.secondary}10` }]}>
-                  <Feather name="user" size={18} color={COLORS.secondary} />
-                </View>
-                <Text style={styles.cardTitle}>Ответственное лицо</Text>
-              </View>
+              <Field
+                label="Название организации"
+                icon="briefcase"
+                value={orgName}
+                onChange={setOrgName}
+                placeholder="Например: RoboTech Academy"
+                autoFocus
+              />
+              <Field
+                label="Город"
+                icon="map-pin"
+                value={city}
+                onChange={setCity}
+                placeholder="Алматы"
+              />
 
-              <View style={{ gap: 20 }}>
-                <View>
-                  <Text style={styles.inputLabel}>ФИО представителя</Text>
-                  <TextInput
-                    value={formData.contactPerson}
-                    onChangeText={(text) => setFormData({ ...formData, contactPerson: text })}
-                    placeholder="Иванов Иван Иванович"
-                    placeholderTextColor={COLORS.tertiary}
-                    style={styles.input}
-                  />
-                </View>
-                
-                <View>
-                  <Text style={styles.inputLabel}>Контактный телефон</Text>
-                  <TextInput
-                    value={formData.phone}
-                    onChangeText={(text) => setFormData({ ...formData, phone: text })}
-                    placeholder="+7 (___) ___-__-__"
-                    placeholderTextColor={COLORS.tertiary}
-                    keyboardType="phone-pad"
-                    style={styles.input}
-                  />
-                </View>
-              </View>
-            </MotiView>
+              {/* Divider */}
+              <View style={{ height: 1, backgroundColor: COLORS.border, marginVertical: 8, marginBottom: 20 }} />
 
-            {/* Auth Card */}
-            <MotiView
-               from={{ opacity: 0, translateY: 20 }}
-               animate={{ opacity: 1, translateY: 0 }}
-               transition={{ delay: 200 }}
-               style={styles.card}
-            >
-              <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, { backgroundColor: `${COLORS.accent}15` }]}>
-                  <Feather name="lock" size={18} color={COLORS.accent} />
-                </View>
-                <Text style={styles.cardTitle}>Данные для входа</Text>
-              </View>
-
-              <View style={{ gap: 20 }}>
-                <View>
-                  <Text style={styles.inputLabel}>Email (логин)</Text>
-                  <TextInput
-                    value={formData.email}
-                    onChangeText={(text) => setFormData({ ...formData, email: text })}
-                    placeholder="org@example.com"
-                    placeholderTextColor={COLORS.tertiary}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.input}
-                  />
-                </View>
-                
-                <View>
-                  <Text style={styles.inputLabel}>Новый пароль (опционально)</Text>
-                  <TextInput
-                    value={formData.password}
-                    onChangeText={(text) => setFormData({ ...formData, password: text })}
-                    placeholder="••••••••"
-                    placeholderTextColor={COLORS.tertiary}
-                    secureTextEntry
-                    style={styles.input}
-                  />
-                  <Text style={{ fontSize: 11, color: COLORS.mutedForeground, marginTop: 8, marginLeft: 4 }}>
-                    Оставьте пустым, если не хотите менять пароль
-                  </Text>
-                </View>
-              </View>
+              <Field
+                label="ФИО ответственного лица"
+                icon="user"
+                value={contactPerson}
+                onChange={setContactPerson}
+                placeholder="Иванов Иван Иванович"
+              />
+              <Field
+                label="Контактный телефон"
+                icon="phone"
+                value={contactPhone}
+                onChange={setContactPhone}
+                placeholder="+7 (___) ___-__-__"
+                keyboardType="phone-pad"
+              />
+              <Field
+                label="Email"
+                icon="mail"
+                value={contactEmail}
+                onChange={setContactEmail}
+                placeholder="org@example.com"
+                keyboardType="email-address"
+                last
+              />
             </MotiView>
 
             {error && (
-              <Text style={{ color: COLORS.destructive, textAlign: 'center', marginBottom: 16, fontWeight: '600' }}>
-                {error}
-              </Text>
+              <MotiView
+                from={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{ marginTop: 16, padding: 12, borderRadius: RADIUS.md, backgroundColor: "#FEE2E2", borderWidth: 1, borderColor: "#FCA5A5" }}
+              >
+                <Text style={{ color: "#B91C1C", textAlign: "center", fontSize: 13, fontWeight: "600" }}>{error}</Text>
+              </MotiView>
             )}
 
+            {/* Button — same shape/structure as register.tsx */}
             <TouchableOpacity
-              onPress={handleMockSubmit}
-              disabled={submitting}
+              onPress={handleSubmit}
+              disabled={!canSubmit || submitting}
+              style={{ marginTop: 32 }}
               activeOpacity={0.8}
-              style={{ marginTop: 12 }}
             >
               <LinearGradient
-                colors={[COLORS.primary, COLORS.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.submitBtn}
+                colors={canSubmit ? ORG_GRADIENT : [COLORS.muted, COLORS.muted]}
+                style={{ paddingVertical: 18, borderRadius: RADIUS.xl, alignItems: "center", justifyContent: "center", ...SHADOWS.md }}
               >
-                <Text style={styles.submitBtnText}>
-                  {submitting ? "Сохранение..." : "Создать профиль"}
-                </Text>
-                {!submitting && <Feather name="arrow-right" size={20} color="white" />}
+                {submitting ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={{ fontSize: 18, fontWeight: "800", color: canSubmit ? "white" : COLORS.mutedForeground }}>
+                    Создать профиль
+                  </Text>
+                )}
               </LinearGradient>
             </TouchableOpacity>
+
+            {/* Login link — same as register.tsx */}
+            <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
+              <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Уже есть аккаунт? </Text>
+              <TouchableOpacity onPress={() => router.push("/login")}>
+                <Text style={{ color: ORG_COLOR, fontWeight: "800", fontSize: 15 }}>Войти</Text>
+              </TouchableOpacity>
+            </View>
+
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
+  );
+}
+
+// Field component — same as the one in register.tsx
+function Field({
+  label, icon, value, onChange, placeholder,
+  keyboardType = "default", autoFocus = false, secure = false,
+  showToggle, shown, last = false,
+}: any) {
+  return (
+    <View style={{ marginBottom: last ? 0 : 20 }}>
+      <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.foreground, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5, opacity: 0.7 }}>
+        {label}
+      </Text>
+      <View style={{ position: "relative", justifyContent: "center" }}>
+        <Feather name={icon} size={18} color={COLORS.mutedForeground} style={{ position: "absolute", left: 16, zIndex: 1 }} />
+        <TextInput
+          value={value}
+          onChangeText={onChange}
+          placeholder={placeholder}
+          placeholderTextColor={COLORS.mutedForeground}
+          keyboardType={keyboardType}
+          secureTextEntry={secure && !shown}
+          autoFocus={autoFocus}
+          className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border border-gray-100"
+          style={{ fontSize: 15, fontWeight: "500" }}
+        />
+        {secure && showToggle && (
+          <TouchableOpacity onPress={showToggle} style={{ position: "absolute", right: 16, zIndex: 1 }}>
+            <Feather name={shown ? "eye-off" : "eye"} size={18} color={COLORS.mutedForeground} />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
 
 function SuccessView({ onHome }: { onHome: () => void }) {
-    return (
-        <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-             <View style={{ ...StyleSheet.absoluteFillObject, overflow: 'hidden' }}>
-                <View style={{ position: 'absolute', top: -100, right: -100, width: 400, height: 400, borderRadius: 200, backgroundColor: `${COLORS.success}08` }} />
-            </View>
-            <SafeAreaView style={{ flex: 1, justifyContent: 'center', padding: 24 }}>
-                <MotiView 
-                    from={{ opacity: 0, scale: 0.9, translateY: 20 }} 
-                    animate={{ opacity: 1, scale: 1, translateY: 0 }} 
-                    style={{ backgroundColor: 'white', borderRadius: 40, padding: 32, alignItems: 'center', ...SHADOWS.lg }}
-                >
-                    <View style={{ width: 80, height: 80, borderRadius: 24, backgroundColor: `${COLORS.success}10`, alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-                        <Feather name="check-circle" size={48} color={COLORS.success} />
-                    </View>
-                    
-                    <Text style={{ fontSize: 24, fontWeight: '900', color: COLORS.foreground, textAlign: 'center', marginBottom: 12 }}>Профиль создан!</Text>
-                    <Text style={{ fontSize: 16, color: COLORS.mutedForeground, textAlign: 'center', lineHeight: 24, marginBottom: 32 }}>Теперь вы можете начать заполнять информацию о кружках, учителях и группах.</Text>
-                    
-                    <TouchableOpacity onPress={onHome} style={{ width: '100%' }} activeOpacity={0.8}>
-                        <LinearGradient colors={[COLORS.primary, COLORS.secondary]} start={{x:0,y:0}} end={{x:1,y:0}} style={{ paddingVertical: 20, borderRadius: 22, alignItems: 'center', ...SHADOWS.md }}>
-                            <Text style={{ color: 'white', fontWeight: '900', fontSize: 17 }}>Перейти в дашборд</Text>
-                        </LinearGradient>
-                    </TouchableOpacity>
-                </MotiView>
-            </SafeAreaView>
-        </View>
-    );
-}
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      {/* Background blobs */}
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: "hidden" }}>
+        <View style={{ position: "absolute", top: -50, right: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: `${ORG_COLOR}10` }} />
+        <View style={{ position: "absolute", bottom: "20%", left: -80, width: 250, height: 250, borderRadius: 125, backgroundColor: `${ORG_COLOR}05` }} />
+      </View>
 
-const styles = StyleSheet.create({
-  backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'white',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    ...SHADOWS.sm,
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: COLORS.foreground,
-    letterSpacing: -0.5,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '900',
-    color: COLORS.foreground,
-    lineHeight: 38,
-    marginBottom: 8,
-    letterSpacing: -1,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: COLORS.mutedForeground,
-    lineHeight: 24,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: RADIUS.xxl,
-    padding: 24,
-    marginBottom: 24,
-    ...SHADOWS.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  iconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.foreground,
-  },
-  inputLabel: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.mutedForeground,
-    marginBottom: 8,
-    marginLeft: 4,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  input: {
-    backgroundColor: COLORS.muted,
-    borderRadius: 18,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    fontSize: 16,
-    color: COLORS.foreground,
-    fontWeight: '500',
-  },
-  submitBtn: {
-    flexDirection: 'row',
-    height: 64,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    ...SHADOWS.md,
-  },
-  submitBtnText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '800',
-  }
-});
+      <SafeAreaView style={{ flex: 1, justifyContent: "center", padding: 24 }}>
+        <MotiView
+          from={{ opacity: 0, scale: 0.9, translateY: 20 }}
+          animate={{ opacity: 1, scale: 1, translateY: 0 }}
+          style={{ backgroundColor: "white", borderRadius: RADIUS.xxl, padding: 32, alignItems: "center", ...SHADOWS.md }}
+        >
+          <MotiView
+            from={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", delay: 200 }}
+            style={{ width: 80, height: 80, borderRadius: 40, backgroundColor: `${ORG_COLOR}15`, alignItems: "center", justifyContent: "center", marginBottom: 24 }}
+          >
+            <Feather name="check-circle" size={40} color={ORG_COLOR} />
+          </MotiView>
+
+          <Text style={{ fontSize: 26, fontWeight: "900", color: COLORS.foreground, textAlign: "center", marginBottom: 12, letterSpacing: -0.5 }}>
+            Данные отправлены!
+          </Text>
+          <Text style={{ fontSize: 15, color: COLORS.mutedForeground, textAlign: "center", lineHeight: 24, marginBottom: 24 }}>
+            Ваш профиль создан. В течение{" "}
+            <Text style={{ color: ORG_COLOR, fontWeight: "700" }}>24 часов</Text>{" "}
+            мы проверим данные и откроем доступ к кабинету.
+          </Text>
+
+          {/* Steps */}
+          <View style={{ width: "100%", gap: 14, marginBottom: 32 }}>
+            {[
+              { label: "Профиль создан", done: true },
+              { label: "Загрузить документы для верификации", done: false },
+              { label: "Модерация администратором", done: false },
+              { label: "Синяя галочка и выход в поиск", done: false },
+            ].map((item, i) => (
+              <View key={i} style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                <View style={{
+                  width: 24, height: 24, borderRadius: 12,
+                  backgroundColor: item.done ? `${ORG_COLOR}20` : COLORS.muted,
+                  alignItems: "center", justifyContent: "center",
+                }}>
+                  <Feather name={item.done ? "check" : "circle"} size={12} color={item.done ? ORG_COLOR : COLORS.mutedForeground} />
+                </View>
+                <Text style={{ fontSize: 14, color: item.done ? COLORS.foreground : COLORS.mutedForeground, fontWeight: item.done ? "700" : "400" }}>
+                  {item.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity onPress={onHome} style={{ width: "100%" }} activeOpacity={0.8}>
+            <LinearGradient
+              colors={ORG_GRADIENT}
+              style={{ paddingVertical: 18, borderRadius: RADIUS.xl, alignItems: "center", ...SHADOWS.md }}
+            >
+              <Text style={{ color: "white", fontWeight: "900", fontSize: 17 }}>Перейти в кабинет</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        </MotiView>
+      </SafeAreaView>
+    </View>
+  );
+}

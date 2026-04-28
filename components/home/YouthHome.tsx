@@ -3,6 +3,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
+   Alert,
    Modal,
    Platform,
    Pressable,
@@ -35,6 +36,7 @@ import { useParentData } from "../../contexts/ParentDataContext";
 import { courseGradient, usePublicCourses } from "../../hooks/usePublicData";
 import { useStudentTasks, useYouthAchievements } from "../../hooks/useStudentData";
 import { useDevSettings } from "../../contexts/DevSettingsContext";
+import { isSupabaseConfigured, supabase } from "../../lib/supabase";
 
 export default function YouthHome() {
   const router = useRouter();
@@ -92,6 +94,40 @@ export default function YouthHome() {
   const isIndependent = devYouthAge >= 14; // "Подросток сам принимает решения"
   const isPro = parentProfile?.tariff === "pro"; // PRO тариф
   const [passVisible, setPassVisible] = useState(false);
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<any>(null);
+  const [enrollmentRequested, setEnrollmentRequested] = useState<string[]>([]);
+  const [loadingEnrollments, setLoadingEnrollments] = useState(true);
+
+  // Load existing enrollment requests
+  React.useEffect(() => {
+    if (user?.id) {
+      loadEnrollmentRequests();
+    }
+  }, [user?.id]);
+
+  const loadEnrollmentRequests = async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setLoadingEnrollments(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('student_enrollment_requests')
+        .select('course_id')
+        .eq('student_id', user.id)
+        .eq('status', 'pending');
+
+      if (!error && data) {
+        setEnrollmentRequested(data.map(r => r.course_id));
+      }
+    } catch (error) {
+      console.error('Error loading enrollment requests:', error);
+    } finally {
+      setLoadingEnrollments(false);
+    }
+  };
 
   // QR payload: stable string per user
   const qrValue = `um:pass:${user?.id ?? "guest"}:${user?.firstName ?? ""}`;
@@ -549,6 +585,66 @@ export default function YouthHome() {
             ))}
           </ScrollView>
         </View>
+
+        {/* Browse Clubs - Student can request enrollment with parent approval */}
+        <View style={{ marginBottom: 32 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16, paddingHorizontal: 4 }}>
+            <Text style={{ fontSize: 18, fontWeight: "800", color: COLORS.foreground }}>
+              Интересные кружки
+            </Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/parent/clubs" as any)}>
+              <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.primary }}>Все →</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
+            {courses.slice(0, 4).map((course, idx) => {
+              const isRequested = enrollmentRequested.includes(course.id);
+              const gradient = courseGradient(idx);
+              return (
+                <TouchableOpacity
+                  key={course.id}
+                  onPress={() => {
+                    setSelectedCourse(course);
+                    setShowEnrollModal(true);
+                  }}
+                  style={{
+                    width: 180,
+                    marginRight: 14,
+                    marginLeft: 4,
+                    ...SHADOWS.sm
+                  }}
+                >
+                  <LinearGradient
+                    colors={gradient}
+                    style={{
+                      borderRadius: 20,
+                      padding: 16,
+                      height: 140,
+                      justifyContent: "space-between"
+                    }}
+                  >
+                    <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.25)", alignItems: "center", justifyContent: "center" }}>
+                      <Feather name={(course.icon as any) || "book-open"} size={20} color="white" />
+                    </View>
+                    <View>
+                      <Text style={{ fontSize: 15, fontWeight: "800", color: "white", marginBottom: 4 }} numberOfLines={1}>
+                        {course.title}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: "rgba(255,255,255,0.8)" }}>
+                        {course.age_min}-{course.age_max} лет
+                      </Text>
+                    </View>
+                  </LinearGradient>
+                  {isRequested && (
+                    <View style={{ position: "absolute", top: 8, right: 8, backgroundColor: "#FEF3C7", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 }}>
+                      <Text style={{ fontSize: 10, fontWeight: "700", color: "#B45309" }}>Запрошен</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
       </ScrollView>
 
       {/* ── Мой пропуск modal ── */}
@@ -654,6 +750,148 @@ export default function YouthHome() {
             </TouchableOpacity>
           </Pressable>
         </Pressable>
+      </Modal>
+
+      {/* Enrollment Request Modal - Asks parent approval */}
+      <Modal
+        visible={showEnrollModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowEnrollModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" }}>
+          <View style={{ backgroundColor: "white", borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40, ...SHADOWS.lg }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <Text style={{ fontSize: 22, fontWeight: "900", color: COLORS.foreground }}>Записаться в кружок</Text>
+              <TouchableOpacity onPress={() => setShowEnrollModal(false)}>
+                <Feather name="x" size={24} color={COLORS.mutedForeground} />
+              </TouchableOpacity>
+            </View>
+
+            {selectedCourse && (
+              <>
+                {/* Course preview */}
+                <LinearGradient
+                  colors={courseGradient(0)}
+                  style={{ borderRadius: 20, padding: 20, marginBottom: 20 }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+                    <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: "rgba(255,255,255,0.25)", alignItems: "center", justifyContent: "center" }}>
+                      <Feather name={(selectedCourse.icon as any) || "book-open"} size={26} color="white" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 18, fontWeight: "800", color: "white" }}>{selectedCourse.title}</Text>
+                      <Text style={{ fontSize: 13, color: "rgba(255,255,255,0.8)", marginTop: 2 }}>
+                        {selectedCourse.org_name || "Организация"}
+                      </Text>
+                    </View>
+                  </View>
+                </LinearGradient>
+
+                {/* Info about parent approval */}
+                <View style={{ backgroundColor: "#FEF3C7", borderRadius: 16, padding: 16, marginBottom: 20, flexDirection: "row", alignItems: "flex-start", gap: 12 }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#FDE68A", alignItems: "center", justifyContent: "center" }}>
+                    <Feather name="bell" size={18} color="#B45309" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 14, fontWeight: "700", color: "#92400E", marginBottom: 4 }}>
+                      Нужно одобрение родителя
+                    </Text>
+                    <Text style={{ fontSize: 13, color: "#B45309", lineHeight: 18 }}>
+                      Родитель получит push-уведомление и сможет подтвердить или отклонить вашу заявку
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Course details */}
+                <View style={{ backgroundColor: "#F9FAFB", borderRadius: 16, padding: 16, marginBottom: 24, gap: 12 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                    <Text style={{ fontSize: 13, color: COLORS.mutedForeground }}>Возраст</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.foreground }}>
+                      {selectedCourse.age_min}-{selectedCourse.age_max} лет
+                    </Text>
+                  </View>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                    <Text style={{ fontSize: 13, color: COLORS.mutedForeground }}>Стоимость</Text>
+                    <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.foreground }}>
+                      {selectedCourse.price?.toLocaleString() || "—"} ₸/мес
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Request button */}
+                <TouchableOpacity
+                  onPress={async () => {
+                    if (!supabase || !isSupabaseConfigured || !user?.id) {
+                      Alert.alert("Ошибка", "Не удалось отправить запрос");
+                      return;
+                    }
+
+                    try {
+                      // Get parent_id from childrenProfile if available
+                      const parentId = parentProfile?.id || null;
+
+                      const { error } = await supabase
+                        .from('student_enrollment_requests')
+                        .insert({
+                          student_id: user.id,
+                          student_name: user.firstName + (user.lastName ? ` ${user.lastName}` : ''),
+                          parent_id: parentId,
+                          course_id: selectedCourse.id,
+                          course_title: selectedCourse.title,
+                          org_id: selectedCourse.org_id,
+                          org_name: selectedCourse.org_name,
+                          status: 'pending',
+                          notification_sent: false,
+                        });
+
+                      if (error) {
+                        Alert.alert("Ошибка", error.message);
+                        return;
+                      }
+
+                      // TODO: Send push notification to parent
+
+                      setEnrollmentRequested(prev => [...prev, selectedCourse.id]);
+                      setShowEnrollModal(false);
+                      Alert.alert(
+                        "Запрос отправлен!",
+                        "Родитель получит уведомление и сможет подтвердить запись",
+                        [{ text: "OK" }]
+                      );
+                    } catch (error: any) {
+                      Alert.alert("Ошибка", error?.message || "Не удалось отправить запрос");
+                    }
+                  }}
+                  disabled={enrollmentRequested.includes(selectedCourse.id)}
+                  style={{
+                    backgroundColor: enrollmentRequested.includes(selectedCourse.id) ? "#E5E7EB" : COLORS.primary,
+                    paddingVertical: 18,
+                    borderRadius: 20,
+                    alignItems: "center",
+                    flexDirection: "row",
+                    justifyContent: "center",
+                    gap: 8,
+                    ...SHADOWS.md
+                  }}
+                >
+                  <Feather 
+                    name={enrollmentRequested.includes(selectedCourse.id) ? "check" : "send"} 
+                    size={18} 
+                    color={enrollmentRequested.includes(selectedCourse.id) ? "#9CA3AF" : "white"} 
+                  />
+                  <Text style={{ 
+                    color: enrollmentRequested.includes(selectedCourse.id) ? "#9CA3AF" : "white", 
+                    fontSize: 16, 
+                    fontWeight: "800" 
+                  }}>
+                    {enrollmentRequested.includes(selectedCourse.id) ? "Запрос отправлен" : "Отправить запрос родителю"}
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
       </Modal>
     </View>
   );

@@ -23,6 +23,11 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
 import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
+function generateQRPin(): string {
+  // Generate a 6-digit PIN (100000-999999)
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 export default function ParentProfile() {
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -32,7 +37,7 @@ export default function ParentProfile() {
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : LAYOUT.dashboardHorizontalPaddingMobile;
     
-  const { parentProfile, childrenProfile: children, updateParentProfile, setParentTariff } = useParentData();
+  const { parentProfile, childrenProfile: children, updateParentProfile, updateChild, setParentTariff, isLoading } = useParentData();
   const [selectedChildId, setSelectedChildId] = useState<string | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -80,9 +85,14 @@ export default function ParentProfile() {
       
       if (!error && data) {
         setEnrollments(data);
+      } else if (error) {
+        // Table doesn't exist yet - silently fail
+        console.log('Enrollments table not found:', error.message);
+        setEnrollments([]);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Error fetching enrollments:', e);
+      setEnrollments([]);
     } finally {
       setLoadingEnrollments(false);
     }
@@ -92,6 +102,19 @@ export default function ParentProfile() {
       await updateParentProfile(editForm);
       setShowEditModal(false);
       Alert.alert("Успех", "Профиль обновлен");
+  };
+
+  const handleGeneratePin = async () => {
+    if (!selectedChild) return;
+    
+    const newPin = generateQRPin();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    
+    await updateChild(selectedChild.id, {
+      qrPin: newPin,
+      qrPinExpiresAt: expiresAt.toISOString(),
+      qrPinOneTimeUse: false
+    });
   };
 
   const handleToggleTariff = () => {
@@ -128,10 +151,27 @@ export default function ParentProfile() {
     }
   };
 
+  if (isLoading) {
+      return (
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F7FF' }}>
+              <ActivityIndicator size="large" color="#6C5CE7" />
+              <Text style={{ color: COLORS.mutedForeground, marginTop: 16, fontSize: 14 }}>
+                  Загрузка профиля...
+              </Text>
+          </View>
+      );
+  }
+
   if (!selectedChild && children.length === 0) {
       return (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Данные не найдены</Text>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F7FF' }}>
+              <Feather name="users" size={48} color={COLORS.mutedForeground} style={{ marginBottom: 16 }} />
+              <Text style={{ color: COLORS.foreground, fontSize: 18, fontWeight: '600', marginBottom: 8 }}>
+                  Нет детей
+              </Text>
+              <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
+                  Добавьте профиль ребёнка
+              </Text>
           </View>
       );
   }
@@ -238,21 +278,37 @@ export default function ParentProfile() {
                 </ScrollView>
             </View>
 
-            {/* QR Section */}
-            <View style={[styles.qrRow, { marginTop: 32 }]}>
-                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={styles.smallAvatar}>
-                         <Text style={{ fontSize: 20 }}>{selectedChild?.ageCategory === 'child' ? '👦' : '🧑'}</Text>
-                    </View>
-                    <View style={{ marginLeft: 12 }}>
-                        <Text style={styles.qrTitle}>{selectedChild?.name}</Text>
-                        <Text style={styles.qrSubtitle}>QR-код для отметки</Text>
-                    </View>
-                </View>
-                <TouchableOpacity onPress={() => setShowQRModal(true)} style={styles.qrBtn}>
-                    <Feather name="maximize" size={20} color="white" />
-                </TouchableOpacity>
-            </View>
+            {/* QR Section - Only show if child profile exists */}
+            {selectedChild && selectedChild.name ? (
+              <View style={styles.qrRow}>
+                  <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={styles.smallAvatar}>
+                           <Text style={{ fontSize: 20 }}>{selectedChild?.ageCategory === 'child' ? '👦' : '🧑'}</Text>
+                      </View>
+                      <View style={{ marginLeft: 12 }}>
+                          <Text style={styles.qrTitle}>{selectedChild?.name}</Text>
+                          <Text style={styles.qrSubtitle}>QR-код для отметки</Text>
+                      </View>
+                  </View>
+                  <TouchableOpacity onPress={() => setShowQRModal(true)} style={styles.qrBtn}>
+                      <Feather name="maximize" size={20} color="white" />
+                  </TouchableOpacity>
+              </View>
+            ) : (
+              <TouchableOpacity
+                onPress={() => router.push("/profile/parent/create-profile" as any)}
+                style={styles.createChildPrompt}
+              >
+                  <View style={styles.createChildIcon}>
+                      <Feather name="user-plus" size={22} color="#6C5CE7" />
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={styles.createChildTitle}>Добавьте профиль ребёнка</Text>
+                      <Text style={styles.createChildSubtitle}>QR-код для входа будет доступен после создания профиля</Text>
+                  </View>
+                  <Feather name="chevron-right" size={20} color={COLORS.primary} />
+              </TouchableOpacity>
+            )}
 
             {/* Assessment & Reports Section */}
             <View style={{ marginTop: 32 }}>
@@ -362,26 +418,67 @@ export default function ParentProfile() {
       {/* QR Modal */}
       <Modal visible={showQRModal} transparent animationType="fade">
           <View style={styles.modalOverlay}>
-              <View style={styles.qrModalContent}>
+              <View style={[
+                styles.qrModalContent,
+                isDesktop && { maxWidth: 400, alignSelf: 'center' }
+              ]}>
                   <View style={styles.modalHeader}>
-                      <Text style={styles.modalTitle}>QR-код для отметки</Text>
+                      <Text style={styles.modalTitle}>Код для входа</Text>
                       <TouchableOpacity onPress={() => setShowQRModal(false)}>
                           <Feather name="x" size={24} color="#999" />
                       </TouchableOpacity>
                   </View>
                   
-                  <View style={styles.qrOuterWrapper}>
-                      <QRCode 
-                        value={selectedChild?.qrToken || `child_auth_${selectedChild?.id}`} 
-                        size={220} 
-                        color="#1A1A1A"
-                      />
+                  <View style={{ alignItems: 'center', width: '100%' }}>
+                    <Text style={styles.qrModalChildName}>{selectedChild?.name}</Text>
+                    
+                    {selectedChild?.qrPin ? (
+                      <>
+                        <View style={styles.qrOuterWrapper}>
+                            <QRCode 
+                              value={selectedChild.qrPin} 
+                              size={isDesktop ? 160 : 200} 
+                              color="#1A1A1A"
+                            />
+                        </View>
+                        
+                        <View style={styles.pinDisplay}>
+                          <Text style={styles.pinLabel}>Или введите код:</Text>
+                          <Text style={styles.pinNumber}>{selectedChild.qrPin}</Text>
+                        </View>
+                        
+                        <Text style={styles.qrModalHint}>
+                            Покажите этот код ребёнку для входа в приложение
+                        </Text>
+                        
+                        <TouchableOpacity 
+                          onPress={handleGeneratePin}
+                          style={styles.regenerateBtn}
+                        >
+                          <Feather name="refresh-cw" size={16} color="#6C5CE7" />
+                          <Text style={styles.regenerateBtnText}>Обновить код</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <>
+                        <View style={styles.noPinContainer}>
+                          <Feather name="lock" size={40} color={COLORS.mutedForeground} />
+                          <Text style={styles.noPinText}>Код не создан</Text>
+                          <Text style={styles.noPinHint}>
+                            Создайте 6-значный код для входа ребёнка
+                          </Text>
+                        </View>
+                        
+                        <TouchableOpacity 
+                          onPress={handleGeneratePin}
+                          style={styles.generatePinBtn}
+                        >
+                          <Feather name="grid" size={18} color="white" />
+                          <Text style={styles.generatePinBtnText}>Создать код</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
                   </View>
-                  
-                  <Text style={styles.qrModalChildName}>{selectedChild?.name}</Text>
-                  <Text style={styles.qrModalHint}>
-                      Покажите этот QR-код учителю для отметки посещения или входа ученика
-                  </Text>
               </View>
           </View>
       </Modal>
@@ -734,31 +831,126 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.8)',
         justifyContent: 'center',
+        alignItems: 'center',
         padding: 24
     },
     qrModalContent: {
         backgroundColor: 'white',
-        borderRadius: RADIUS.xxl,
-        padding: 24,
-        alignItems: 'center'
+        borderRadius: RADIUS.xl,
+        padding: 20,
+        width: '100%'
     },
     qrOuterWrapper: {
-        padding: 16,
-        backgroundColor: 'white',
-        borderRadius: 24,
-        ...SHADOWS.md
+        padding: 12,
+        backgroundColor: COLORS.muted,
+        borderRadius: RADIUS.lg,
+        marginVertical: 16
     },
     qrModalChildName: {
-        fontSize: 20,
-        fontWeight: '800',
+        fontSize: 18,
+        fontWeight: '700',
         color: COLORS.foreground,
-        marginTop: 20
+        marginBottom: 4
     },
     qrModalHint: {
+        fontSize: 12,
+        color: COLORS.mutedForeground,
+        textAlign: 'center',
+        marginTop: 12,
+        lineHeight: 16
+    },
+    pinDisplay: {
+        alignItems: 'center',
+        marginTop: 16,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        backgroundColor: COLORS.muted,
+        borderRadius: RADIUS.md,
+        width: '100%'
+    },
+    pinLabel: {
+        fontSize: 12,
+        color: COLORS.mutedForeground,
+        marginBottom: 6
+    },
+    pinNumber: {
+        fontSize: 28,
+        fontWeight: '800',
+        color: COLORS.foreground,
+        letterSpacing: 6
+    },
+    noPinContainer: {
+        alignItems: 'center',
+        paddingVertical: 40,
+        width: '100%'
+    },
+    noPinText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: COLORS.foreground,
+        marginTop: 12
+    },
+    noPinHint: {
         fontSize: 13,
         color: COLORS.mutedForeground,
         textAlign: 'center',
-        marginTop: 8,
-        lineHeight: 18
+        marginTop: 6
+    },
+    generatePinBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        backgroundColor: '#6C5CE7',
+        paddingVertical: 14,
+        paddingHorizontal: 24,
+        borderRadius: RADIUS.md,
+        marginTop: 16
+    },
+    generatePinBtnText: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: 'white'
+    },
+    regenerateBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 16,
+        paddingVertical: 8,
+        paddingHorizontal: 16
+    },
+    regenerateBtnText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#6C5CE7'
+    },
+    createChildPrompt: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        borderRadius: RADIUS.lg,
+        padding: 16,
+        borderWidth: 2,
+        borderColor: '#EDE9FE',
+        borderStyle: 'dashed',
+        ...SHADOWS.sm
+    },
+    createChildIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#F5F3FF',
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    createChildTitle: {
+        fontSize: 15,
+        fontWeight: '700',
+        color: COLORS.foreground
+    },
+    createChildSubtitle: {
+        fontSize: 12,
+        color: COLORS.mutedForeground,
+        marginTop: 2
     }
 });

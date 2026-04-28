@@ -175,30 +175,22 @@ export default function StudentDetailScreen() {
              </View>
           </View>
 
-          {/* Parent / Contact Info */}
+          {/* Parent / Contact Info - Phone hidden for privacy */}
           <View style={{ ...SHADOWS.strict, backgroundColor: COLORS.white, borderRadius: RADIUS.xxl, padding: SPACING.xl, marginBottom: SPACING.xxxl, borderWidth: 1, borderColor: COLORS.border }}>
              <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, marginBottom: SPACING.xl }}>Контакт родителя</Text>
              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View>
                    <Text style={{ fontSize: 16, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{student.parent.full_name}</Text>
-                   <Text style={{ fontSize: 14, color: COLORS.mutedForeground }}>{student.parent.phone}</Text>
+                   <Text style={{ fontSize: 14, color: COLORS.mutedForeground }}>Связаться через чат</Text>
                 </View>
                 <TouchableOpacity
                   style={{ width: 48, height: 48, backgroundColor: COLORS.primary, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center', ...SHADOWS.md }}
-                  onPress={() => {}}
+                  onPress={() => router.push("/(tabs)/chats" as any)}
                 >
-                   <Feather name="phone" size={20} color="white" />
+                   <Feather name="message-circle" size={20} color="white" />
                 </TouchableOpacity>
              </View>
           </View>
-
-          {/* Actions */}
-          <TouchableOpacity
-            style={{ height: 60, backgroundColor: COLORS.background, borderRadius: RADIUS.xl, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border }}
-            onPress={() => {}}
-          >
-             <Text style={{ color: COLORS.foreground, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 14 }}>РЕДАКТИРОВАТЬ ПРОФИЛЬ</Text>
-          </TouchableOpacity>
         </MotiView>
       </ScrollView>
     </View>

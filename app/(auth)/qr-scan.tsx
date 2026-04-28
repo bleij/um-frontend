@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Platform,
@@ -15,14 +15,6 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
-
-interface QRPayload {
-  v: number;
-  type: string;
-  childId: string;
-  parentId: string;
-  token: string;
-}
 
 export default function QRScanScreen() {
   const router = useRouter();
@@ -41,7 +33,13 @@ export default function QRScanScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // On web or when user prefers manual entry
-  const [useManual, setUseManual] = useState(Platform.OS === "web");
+  const [useManual, setUseManual] = useState(false);
+  
+  // Web camera states
+  const videoRef = useRef<any>(null);
+  const canvasRef = useRef<any>(null);
+  const [webCameraActive, setWebCameraActive] = useState(false);
+  const [webCameraError, setWebCameraError] = useState("");
 
   const handleQRData = async (data: string) => {
     if (scanned || isSubmitting) return;
@@ -52,30 +50,96 @@ export default function QRScanScreen() {
 
   const processCode = async (raw: string) => {
     setIsSubmitting(true);
-    try {
-      const payload: QRPayload = JSON.parse(raw);
-      if (payload.type !== "child_link" || !payload.childId || !payload.token) {
-        setError("Неверный QR-код. Попросите родителя сгенерировать новый.");
-        setScanned(false);
-        setIsSubmitting(false);
-        return;
-      }
-      const result = await loginWithQR({
-        childId: payload.childId,
-        parentId: payload.parentId,
-        token: payload.token,
-      });
-      if (result.success) {
-        router.replace("/(tabs)/home");
-      } else {
-        setError(result.error ?? "Недействительный QR-код");
-        setScanned(false);
-      }
-    } catch {
-      setError("Неверный формат QR-кода");
+    const token = raw.trim();
+    
+    if (!token) {
+      setError("Неверный QR-код");
+      setScanned(false);
+      setIsSubmitting(false);
+      return;
+    }
+
+    const result = await loginWithQR(token);
+    if (result.success) {
+      router.replace("/(tabs)/home");
+    } else {
+      setError(result.error ?? "Недействительный QR-код");
       setScanned(false);
     }
     setIsSubmitting(false);
+  };
+
+  // Web camera QR scanning
+  useEffect(() => {
+    if (Platform.OS !== "web" || useManual || !webCameraActive) return;
+    if (typeof navigator === "undefined" || !navigator.mediaDevices) return;
+
+    let animationFrameId: number;
+    let stream: any = null;
+
+    const startWebCamera = async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "environment" },
+        });
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+          scanQRCode();
+        }
+      } catch (err) {
+        setWebCameraError("Не удалось получить доступ к камере");
+        setWebCameraActive(false);
+      }
+    };
+
+    const scanQRCode = () => {
+      if (!videoRef.current || !canvasRef.current) return;
+
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+
+      if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        animationFrameId = requestAnimationFrame(scanQRCode);
+        return;
+      }
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+      // Dynamically import jsQR for web only
+      import("jsqr").then(({ default: jsQR }) => {
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        if (code && !scanned) {
+          handleQRData(code.data);
+        }
+      });
+
+      animationFrameId = requestAnimationFrame(scanQRCode);
+    };
+
+    startWebCamera();
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      if (stream) {
+        stream.getTracks().forEach((track: any) => track.stop());
+      }
+    };
+  }, [webCameraActive, useManual, scanned]);
+
+  const startWebScanning = () => {
+    setWebCameraActive(true);
+    setWebCameraError("");
+    setError("");
+    setScanned(false);
   };
 
   return (
@@ -87,7 +151,7 @@ export default function QRScanScreen() {
           alignSelf: "center",
           width: "100%",
           paddingHorizontal: horizontalPadding,
-          paddingTop: 8,
+          paddingTop: isDesktop ? 24 : 20,
         }}
       >
         {/* Back button */}
@@ -96,7 +160,7 @@ export default function QRScanScreen() {
           style={{
             flexDirection: "row",
             alignItems: "center",
-            marginBottom: 24,
+            marginBottom: 32,
           }}
         >
           <Feather name="arrow-left" size={18} color={COLORS.mutedForeground} />
@@ -130,47 +194,177 @@ export default function QRScanScreen() {
         </MotiView>
 
         {/* Camera / manual toggle */}
-        {Platform.OS !== "web" && (
-          <View
-            style={{
-              flexDirection: "row",
-              backgroundColor: COLORS.muted,
-              borderRadius: RADIUS.md,
-              padding: 4,
-              marginBottom: 20,
-            }}
-          >
-            {(["camera", "manual"] as const).map((mode) => {
-              const active = mode === "camera" ? !useManual : useManual;
-              return (
-                <TouchableOpacity
-                  key={mode}
-                  onPress={() => {
-                    setUseManual(mode === "manual");
-                    setError("");
-                    setScanned(false);
-                  }}
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: COLORS.muted,
+            borderRadius: RADIUS.md,
+            padding: 4,
+            marginBottom: 20,
+          }}
+        >
+          {(["camera", "manual"] as const).map((mode) => {
+            const active = mode === "camera" ? !useManual : useManual;
+            return (
+              <TouchableOpacity
+                key={mode}
+                onPress={() => {
+                  setUseManual(mode === "manual");
+                  setError("");
+                  setScanned(false);
+                  setWebCameraActive(false);
+                }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 10,
+                  borderRadius: RADIUS.md - 2,
+                  alignItems: "center",
+                  backgroundColor: active ? COLORS.card : "transparent",
+                }}
+              >
+                <Text
                   style={{
-                    flex: 1,
-                    paddingVertical: 10,
-                    borderRadius: RADIUS.md - 2,
-                    alignItems: "center",
-                    backgroundColor: active ? COLORS.card : "transparent",
+                    fontWeight: "600",
+                    fontSize: 13,
+                    color: active ? COLORS.foreground : COLORS.mutedForeground,
                   }}
                 >
-                  <Text
-                    style={{
-                      fontWeight: "600",
-                      fontSize: 13,
-                      color: active ? COLORS.foreground : COLORS.mutedForeground,
-                    }}
-                  >
-                    {mode === "camera" ? "Сканировать" : "Ввести код"}
+                  {mode === "camera" ? "Сканировать" : "Ввести код"}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Web Camera view */}
+        {!useManual && Platform.OS === "web" && (
+          <MotiView
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 400 }}
+          >
+            {!webCameraActive ? (
+              <View
+                style={{
+                  alignItems: "center",
+                  paddingVertical: 40,
+                  backgroundColor: COLORS.muted,
+                  borderRadius: RADIUS.lg,
+                  marginBottom: 16,
+                }}
+              >
+                <Feather name="camera" size={40} color={COLORS.mutedForeground} />
+                <Text
+                  style={{
+                    color: COLORS.foreground,
+                    fontWeight: "600",
+                    fontSize: 15,
+                    marginTop: 12,
+                    marginBottom: 8,
+                    textAlign: "center",
+                  }}
+                >
+                  Сканировать QR-код
+                </Text>
+                <Text
+                  style={{
+                    color: COLORS.mutedForeground,
+                    fontSize: 13,
+                    textAlign: "center",
+                    marginBottom: 20,
+                    paddingHorizontal: 16,
+                  }}
+                >
+                  Нажмите, чтобы включить камеру
+                </Text>
+                <TouchableOpacity
+                  onPress={startWebScanning}
+                  style={{
+                    paddingVertical: 12,
+                    paddingHorizontal: 24,
+                    backgroundColor: COLORS.primary,
+                    borderRadius: RADIUS.md,
+                  }}
+                >
+                  <Text style={{ color: "white", fontWeight: "600" }}>
+                    Включить камеру
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
+                {webCameraError && (
+                  <Text
+                    style={{
+                      color: "#B91C1C",
+                      fontSize: 13,
+                      marginTop: 12,
+                      textAlign: "center",
+                    }}
+                  >
+                    {webCameraError}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <View
+                style={{
+                  borderRadius: RADIUS.lg,
+                  overflow: "hidden",
+                  aspectRatio: 1,
+                  marginBottom: 16,
+                  position: "relative",
+                  backgroundColor: COLORS.muted,
+                }}
+              >
+                <video
+                  ref={videoRef}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                  playsInline
+                />
+                <canvas ref={canvasRef} style={{ display: "none" }} />
+                {/* Corner guides */}
+                {(
+                  [
+                    { top: 20, left: 20, borderTopWidth: 3, borderLeftWidth: 3 },
+                    { top: 20, right: 20, borderTopWidth: 3, borderRightWidth: 3 },
+                    { bottom: 20, left: 20, borderBottomWidth: 3, borderLeftWidth: 3 },
+                    { bottom: 20, right: 20, borderBottomWidth: 3, borderRightWidth: 3 },
+                  ] as const
+                ).map((style, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      {
+                        position: "absolute",
+                        width: 28,
+                        height: 28,
+                        borderColor: "white",
+                      },
+                      style,
+                    ]}
+                  />
+                ))}
+                {isSubmitting && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: "rgba(0,0,0,0.5)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <ActivityIndicator size="large" color="white" />
+                  </View>
+                )}
+              </View>
+            )}
+          </MotiView>
         )}
 
         {/* Camera view */}
@@ -308,9 +502,7 @@ export default function QRScanScreen() {
                   textAlign: "center",
                 }}
               >
-                {Platform.OS === "web"
-                  ? "Введите код из QR-кода вручную"
-                  : "Введите код из QR-кода"}
+                Введите 6-значный код
               </Text>
             </View>
 
@@ -322,14 +514,19 @@ export default function QRScanScreen() {
                 marginBottom: 8,
               }}
             >
-              Код из QR
+              6-значный код
             </Text>
             <TextInput
               value={manualCode}
-              onChangeText={setManualCode}
-              placeholder='{"v":1,"type":"child_link",...}'
+              onChangeText={(text) => {
+                // Only allow digits and max 6 characters
+                const filtered = text.replace(/[^0-9]/g, '').slice(0, 6);
+                setManualCode(filtered);
+              }}
+              placeholder='000000'
               placeholderTextColor={COLORS.mutedForeground}
-              multiline
+              keyboardType="number-pad"
+              maxLength={6}
               style={{
                 width: "100%",
                 paddingHorizontal: 16,
@@ -338,23 +535,25 @@ export default function QRScanScreen() {
                 borderRadius: RADIUS.md,
                 borderWidth: 2,
                 borderColor: COLORS.border,
-                fontSize: 13,
+                fontSize: 24,
+                fontWeight: "700",
                 color: COLORS.foreground,
-                minHeight: 80,
                 marginBottom: 16,
+                textAlign: "center",
+                letterSpacing: 8,
               }}
             />
 
             <TouchableOpacity
               onPress={() => processCode(manualCode)}
-              disabled={!manualCode.trim() || isSubmitting}
+              disabled={manualCode.length !== 6 || isSubmitting}
               style={{
                 width: "100%",
                 paddingVertical: 16,
                 borderRadius: RADIUS.md,
                 alignItems: "center",
                 backgroundColor:
-                  !manualCode.trim() || isSubmitting
+                  manualCode.length !== 6 || isSubmitting
                     ? COLORS.muted
                     : COLORS.primary,
               }}
@@ -366,7 +565,7 @@ export default function QRScanScreen() {
                   style={{
                     fontSize: 16,
                     fontWeight: "600",
-                    color: !manualCode.trim() ? COLORS.mutedForeground : "white",
+                    color: manualCode.length !== 6 ? COLORS.mutedForeground : "white",
                   }}
                 >
                   Войти

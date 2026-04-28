@@ -242,6 +242,8 @@ export function useOrgTasks() {
 }
 
 // ─── useOrgProfile ────────────────────────────────────────────
+export type OrgStatus = "new" | "ready_for_review" | "verified" | "rejected" | "pending";
+
 export function useOrgProfile() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -264,7 +266,7 @@ export function useOrgProfile() {
   const refresh = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured || !user?.id) { setLoading(false); return; }
     setLoading(true);
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("organizations")
       .select("id, name, status, bin, license_url, registration_url")
       .eq("owner_user_id", user.id)

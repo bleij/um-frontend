@@ -114,11 +114,11 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
       ),
     },
     {
-      key: "mentor/wallet",
-      label: "Кошелек",
-      route: "mentor/wallet",
+      key: "mentor/sessions",
+      label: "Пробные",
+      route: "mentor/sessions",
       icon: ({ color, size }) => (
-        <Feather name="credit-card" size={size} color={color} />
+        <Feather name="play-circle" size={size} color={color} />
       ),
     },
     {
@@ -251,10 +251,10 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
     },
     {
       key: "analytics",
-      label: "Прогресс",
+      label: "Календарь",
       route: "analytics",
       icon: ({ color, size }) => (
-        <Feather name="bar-chart-2" size={size} color={color} />
+        <Feather name="calendar" size={size} color={color} />
       ),
     },
     {

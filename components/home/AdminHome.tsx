@@ -138,7 +138,8 @@ export default function AdminHome() {
     router.push({ pathname: "/modal/chat", params: { id: convId, name: orgName } } as any);
   };
 
-  const totalPendingActions = stats.pendingMentors + pendingCourses.length + orgs.data.filter((o) => o.status === "pending").length + pendingEnrollments.length;
+  const orgsNeedingAction = orgs.data.filter((o) => o.status === "pending" || o.status === "ready_for_review");
+  const totalPendingActions = stats.pendingMentors + pendingCourses.length + orgsNeedingAction.length + pendingEnrollments.length;
 
   const NAV_ITEMS = [
     { id: "overview", label: "Обзор платформы", icon: "activity" },
@@ -154,7 +155,7 @@ export default function AdminHome() {
       id: "orgs",
       label: "Организации",
       icon: "briefcase",
-      badge: (orgs.data.filter((o) => o.status === "pending").length + pendingCourses.length + pendingEnrollments.length) || undefined,
+      badge: (orgsNeedingAction.length + pendingCourses.length + pendingEnrollments.length) || undefined,
     },
     { id: "qc", label: "Контроль качества", icon: "shield" },
   ];
@@ -661,7 +662,7 @@ export default function AdminHome() {
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }}>
           <View style={{ flexDirection: "row", gap: SPACING.sm }}>
           {([
-            { key: "orgs", label: `Организации${orgs.data.filter((o) => o.status === "pending").length > 0 ? ` (${orgs.data.filter((o) => o.status === "pending").length})` : ""}` },
+            { key: "orgs", label: `Организации${orgsNeedingAction.length > 0 ? ` (${orgsNeedingAction.length})` : ""}` },
             { key: "courses", label: `Курсы${pendingCourses.length > 0 ? ` (${pendingCourses.length})` : ""}` },
             { key: "enrollments", label: `Записи${pendingEnrollments.length > 0 ? ` (${pendingEnrollments.length})` : ""}` },
           ] as const).map(({ key, label }) => (
@@ -717,13 +718,16 @@ export default function AdminHome() {
                 <Feather name="message-circle" size={16} color={COLORS.primary} />
               </TouchableOpacity>
 
-              {org.status === "pending" ? (
-                <View style={{ flexDirection: "row", gap: SPACING.sm }}>
+              {org.status === "ready_for_review" ? (
+                <View style={{ flexDirection: "row", gap: SPACING.sm, alignItems: "center" }}>
+                  <View style={{ backgroundColor: "#FEF9C3", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full, borderWidth: 1, borderColor: "#FDE047" }}>
+                    <Text style={{ fontSize: 9, fontWeight: "800", color: "#854D0E", textTransform: "uppercase" }}>На проверке</Text>
+                  </View>
                   <TouchableOpacity
                     onPress={() => orgs.verify(org.id)}
                     style={{ backgroundColor: COLORS.success, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md }}
                   >
-                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Верифицировать</Text>
+                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Активировать</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => orgs.reject(org.id)}
@@ -732,10 +736,29 @@ export default function AdminHome() {
                     <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Отклонить</Text>
                   </TouchableOpacity>
                 </View>
+              ) : org.status === "pending" ? (
+                <View style={{ flexDirection: "row", gap: SPACING.sm }}>
+                  <TouchableOpacity
+                    onPress={() => orgs.verify(org.id)}
+                    style={{ backgroundColor: COLORS.success, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md }}
+                  >
+                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Активировать</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => orgs.reject(org.id)}
+                    style={{ backgroundColor: COLORS.destructive, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md }}
+                  >
+                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Отклонить</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : org.status === "new" ? (
+                <View style={{ backgroundColor: "#EDE9FE", paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full }}>
+                  <Text style={{ fontSize: 10, fontWeight: "bold", color: "#6C5CE7", textTransform: "uppercase" }}>Новая</Text>
+                </View>
               ) : (
                 <View style={{ backgroundColor: (org.status === "verified" ? COLORS.success : COLORS.destructive) + "20", paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full }}>
                   <Text style={{ fontSize: 10, fontWeight: "bold", color: org.status === "verified" ? COLORS.success : COLORS.destructive, textTransform: "uppercase" }}>
-                    {org.status === "verified" ? "Проверено" : "Отклонено"}
+                    {org.status === "verified" ? "✓ Активна" : "Отклонена"}
                   </Text>
                 </View>
               )}
@@ -1832,7 +1855,7 @@ export default function AdminHome() {
     const activeCourses = adminCourses.data.filter((c) => c.status === "active").length;
     const draftCourses = adminCourses.data.filter((c) => c.status === "draft").length;
     const verifiedOrgs = orgs.data.filter((o) => o.status === "verified").length;
-    const pendingOrgsCount = orgs.data.filter((o) => o.status === "pending").length;
+    const pendingOrgsCount = orgsNeedingAction.length;
     const activeEnrollments = enrollments.data.filter((e) => e.status === "activated").length;
     const pendingEnrollmentsCount = enrollments.data.filter((e) => e.status === "awaiting_payment").length;
 

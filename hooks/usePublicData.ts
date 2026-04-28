@@ -140,3 +140,54 @@ export async function applyToCourse(params: {
   });
   return { error: res.error?.message ?? null };
 }
+
+// ── checkEnrollment ───────────────────────────────────────────────────────────
+
+export async function checkEnrollment(params: {
+  childName: string;
+  courseTitle: string;
+}): Promise<{ enrolled: boolean }> {
+  if (!supabase || !isSupabaseConfigured) return { enrolled: false };
+  
+  const res = await supabase
+    .from("org_applications")
+    .select("id")
+    .eq("child_name", params.childName)
+    .eq("club", params.courseTitle)
+    .limit(1);
+  
+  return { enrolled: (res.data?.length ?? 0) > 0 };
+}
+
+// ── applyToTrialLesson ────────────────────────────────────────────────────────
+
+export async function applyToTrialLesson(params: {
+  childId?: string;
+  childName: string;
+  childAge?: number | null;
+  parentId?: string;
+  parentName?: string;
+  orgId: string;
+  courseId: string;
+  courseTitle: string;
+  requestedSlots: Array<{ day: string; time: string }>;
+  selectedSlot: { day: string; time: string };
+}): Promise<{ error: string | null }> {
+  if (!supabase || !isSupabaseConfigured) return { error: "Not configured" };
+  
+  const res = await supabase.from("trial_lesson_requests").insert({
+    child_id: params.childId ?? null,
+    child_name: params.childName,
+    child_age: params.childAge ?? null,
+    parent_id: params.parentId ?? null,
+    parent_name: params.parentName ?? null,
+    org_id: params.orgId,
+    course_id: params.courseId,
+    course_title: params.courseTitle,
+    requested_slots: params.requestedSlots,
+    confirmed_slot: params.selectedSlot,
+    status: 'pending',
+  });
+  
+  return { error: res.error?.message ?? null };
+}
