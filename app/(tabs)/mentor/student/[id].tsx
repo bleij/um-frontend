@@ -194,7 +194,7 @@ export default function MentorStudentDetailScreen() {
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header Section */}
-        <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={styles.header}>
+        <LinearGradient colors={COLORS.gradients.header as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
             <SafeAreaView edges={["top"]}>
                 <View style={[styles.headerTop, { paddingHorizontal: paddingX }]}>
                     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>

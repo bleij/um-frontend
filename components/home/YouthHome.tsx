@@ -148,6 +148,8 @@ export default function YouthHome() {
       <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
         >
           <SafeAreaView edges={["top"]}>

@@ -41,7 +41,7 @@ export const COLORS = {
     primary: ["#5856D6", "#AF52DE"] as const,
     success: ["#34C759", "#32D74B"] as const,
     surface: ["#FFFFFF", "#F2F2F7"] as const,
-    header: ["#6C5CE7", "#AF52DE"] as const, // Premium violet header
+    header: ["#4F46E5", "#7C3AED", "#C026D3"] as const, // Matches intro page gradient
   }
 };
 

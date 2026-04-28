@@ -1,0 +1,611 @@
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { MotiView } from "moti";
+import React, { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
+import { useAuth } from "../../../contexts/AuthContext";
+
+type TabType = "requests" | "archive";
+
+interface TrialRequest {
+  id: string;
+  child_name: string;
+  child_age?: number;
+  parent_name?: string;
+  course_title: string;
+  requested_slots: Array<{ day: string; time: string }>;
+  confirmed_slot?: { day: string; time: string };
+  status: string;
+  outcome?: string;
+  created_at: string;
+}
+
+export default function MentorSessionsScreen() {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+  const paddingX = isDesktop ? 40 : 20;
+  const { user } = useAuth();
+
+  const [activeTab, setActiveTab] = useState<TabType>("requests");
+  const [requests, setRequests] = useState<TrialRequest[]>([]);
+  const [archivedRequests, setArchivedRequests] = useState<TrialRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedSlots, setSelectedSlots] = useState<Record<string, string>>({});
+
+  // Fetch trial lesson requests from Supabase
+  useEffect(() => {
+    fetchRequests();
+  }, [user?.id]);
+
+  const fetchRequests = async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Fetch pending requests
+      const { data: pendingData, error: pendingError } = await supabase
+        .from('trial_lesson_requests')
+        .select('*')
+        .eq('mentor_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (!pendingError && pendingData) {
+        setRequests(pendingData as TrialRequest[]);
+      }
+
+      // Fetch archived (completed/declined) requests
+      const { data: archivedData, error: archivedError } = await supabase
+        .from('trial_lesson_requests')
+        .select('*')
+        .eq('mentor_id', user.id)
+        .in('status', ['confirmed', 'completed', 'declined'])
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (!archivedError && archivedData) {
+        setArchivedRequests(archivedData as TrialRequest[]);
+      }
+    } catch (error) {
+      console.error('Error fetching trial requests:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSelectSlot = (requestId: string, slotKey: string) => {
+    setSelectedSlots((prev) => ({
+      ...prev,
+      [requestId]: prev[requestId] === slotKey ? "" : slotKey,
+    }));
+  };
+
+  const handleConfirm = async (requestId: string) => {
+    const slot = selectedSlots[requestId];
+    if (!slot) {
+      Alert.alert("Выберите время", "Пожалуйста, выберите удобное время для пробного урока");
+      return;
+    }
+    
+    const [day, time] = slot.split('-');
+    
+    Alert.alert(
+      "Подтвердить пробный урок?",
+      `Время: ${day} в ${time}`,
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Подтвердить",
+          onPress: async () => {
+            if (!supabase || !isSupabaseConfigured) return;
+            
+            const { error } = await supabase
+              .from('trial_lesson_requests')
+              .update({
+                status: 'confirmed',
+                confirmed_slot: { day, time },
+                confirmed_at: new Date().toISOString(),
+              })
+              .eq('id', requestId);
+            
+            if (error) {
+              Alert.alert("Ошибка", error.message);
+              return;
+            }
+            
+            // TODO: Send push notification to parent
+            
+            setRequests((prev) => prev.filter((r) => r.id !== requestId));
+            Alert.alert("Успешно!", "Пробный урок подтверждён. Родитель получит уведомление.");
+            fetchRequests(); // Refresh lists
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDecline = async (requestId: string) => {
+    Alert.alert(
+      "Отклонить заявку?",
+      "Родитель получит уведомление об отказе",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Отклонить",
+          style: "destructive",
+          onPress: async () => {
+            if (!supabase || !isSupabaseConfigured) return;
+            
+            const { error } = await supabase
+              .from('trial_lesson_requests')
+              .update({
+                status: 'declined',
+              })
+              .eq('id', requestId);
+            
+            if (error) {
+              Alert.alert("Ошибка", error.message);
+              return;
+            }
+            
+            // TODO: Send push notification to parent
+            
+            setRequests((prev) => prev.filter((r) => r.id !== requestId));
+            fetchRequests(); // Refresh lists
+          },
+        },
+      ]
+    );
+  };
+
+  const renderRequest = ({ item, index }: { item: TrialRequest; index: number }) => {
+    const selectedSlot = selectedSlots[item.id] || "";
+    return (
+      <MotiView
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ delay: index * 80 }}
+        style={styles.card}
+      >
+        {/* Header with child info */}
+        <View style={styles.cardHeader}>
+          <LinearGradient colors={["#10B981", "#34D399"]} style={styles.avatar}>
+            <Text style={styles.avatarText}>{item.child_name.charAt(0)}</Text>
+          </LinearGradient>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.childName}>{item.child_name}</Text>
+            {item.child_age && <Text style={styles.childAge}>{item.child_age} лет</Text>}
+          </View>
+          <View style={styles.newBadge}>
+            <Feather name="clock" size={12} color="#10B981" />
+            <Text style={styles.newBadgeText}>Новая заявка</Text>
+          </View>
+        </View>
+
+        {/* Course & Parent info */}
+        <View style={styles.infoRow}>
+          <View style={styles.infoItem}>
+            <Feather name="book-open" size={14} color={COLORS.mutedForeground} />
+            <Text style={styles.infoText}>{item.course_title}</Text>
+          </View>
+          {item.parent_name && (
+            <View style={styles.infoItem}>
+              <Feather name="user" size={14} color={COLORS.mutedForeground} />
+              <Text style={styles.infoText}>{item.parent_name}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Time slots selection */}
+        <Text style={styles.slotsLabel}>Выберите удобное время:</Text>
+        <View style={styles.slotsContainer}>
+          {item.requested_slots.map((slot, idx) => {
+            const slotKey = `${slot.day}-${slot.time}`;
+            const isSelected = selectedSlot === slotKey;
+            return (
+              <Pressable
+                key={idx}
+                onPress={() => handleSelectSlot(item.id, slotKey)}
+                style={[
+                  styles.slotChip,
+                  isSelected && styles.slotChipSelected,
+                ]}
+              >
+                <Text style={[styles.slotDay, isSelected && styles.slotTextSelected]}>
+                  {slot.day}
+                </Text>
+                <Text style={[styles.slotTime, isSelected && styles.slotTextSelected]}>
+                  {slot.time}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Action buttons */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={styles.declineBtn}
+            onPress={() => handleDecline(item.id)}
+          >
+            <Feather name="x" size={18} color="#EF4444" />
+            <Text style={styles.declineBtnText}>Отклонить</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.confirmBtn, !selectedSlot && styles.confirmBtnDisabled]}
+            onPress={() => handleConfirm(item.id)}
+            disabled={!selectedSlot}
+          >
+            <Feather name="check" size={18} color="white" />
+            <Text style={styles.confirmBtnText}>Подтвердить</Text>
+          </TouchableOpacity>
+        </View>
+      </MotiView>
+    );
+  };
+
+  const renderArchived = ({ item, index }: { item: TrialRequest; index: number }) => {
+    const outcomeConfig = {
+      enrolled: { color: "#10B981", label: "Записался", icon: "user-check" },
+      declined_by_parent: { color: "#F59E0B", label: "Отказался", icon: "user-x" },
+      no_show: { color: "#EF4444", label: "Не пришёл", icon: "user-minus" },
+    };
+    const outcome = item.outcome ? outcomeConfig[item.outcome as keyof typeof outcomeConfig] : null;
+
+    return (
+      <MotiView
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ delay: index * 80 }}
+        style={[styles.card, { opacity: 0.85 }]}
+      >
+        <View style={styles.cardHeader}>
+          <View style={[styles.avatar, { backgroundColor: "#E5E7EB" }]}>
+            <Text style={[styles.avatarText, { color: "#9CA3AF" }]}>
+              {item.child_name.charAt(0)}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.childName}>{item.child_name}</Text>
+            {item.confirmed_slot && (
+              <Text style={styles.childAge}>
+                {item.confirmed_slot.day} в {item.confirmed_slot.time}
+              </Text>
+            )}
+          </View>
+          {outcome && (
+            <View style={[styles.outcomeBadge, { backgroundColor: outcome.color + "15" }]}>
+              <Feather name={outcome.icon as any} size={14} color={outcome.color} />
+              <Text style={[styles.outcomeBadgeText, { color: outcome.color }]}>
+                {outcome.label}
+              </Text>
+            </View>
+          )}
+        </View>
+        <View style={styles.infoRow}>
+          <View style={styles.infoItem}>
+            <Feather name="book-open" size={14} color={COLORS.mutedForeground} />
+            <Text style={styles.infoText}>{item.course_title}</Text>
+          </View>
+        </View>
+      </MotiView>
+    );
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#F8F7FF" }}>
+      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
+        <View style={{ paddingHorizontal: paddingX, paddingTop: 20, paddingBottom: 10 }}>
+          <View style={{ marginBottom: 20 }}>
+            <Text style={styles.mainTitle}>Пробные уроки</Text>
+            <Text style={styles.subtitle}>Заявки от родителей</Text>
+          </View>
+
+          {/* Tabs */}
+          <View style={styles.tabsContainer}>
+            <Pressable
+              onPress={() => setActiveTab("requests")}
+              style={[styles.tab, activeTab === "requests" && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, activeTab === "requests" && styles.tabTextActive]}>
+                Заявки
+              </Text>
+              {requests.length > 0 && (
+                <View style={styles.tabBadge}>
+                  <Text style={styles.tabBadgeText}>{requests.length}</Text>
+                </View>
+              )}
+            </Pressable>
+            <Pressable
+              onPress={() => setActiveTab("archive")}
+              style={[styles.tab, activeTab === "archive" && styles.tabActive]}
+            >
+              <Text style={[styles.tabText, activeTab === "archive" && styles.tabTextActive]}>
+                Архив
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {loading ? (
+          <View style={{ paddingVertical: 60, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        ) : activeTab === "requests" ? (
+          <FlatList
+            data={requests}
+            renderItem={renderRequest}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: paddingX, paddingBottom: 100, paddingTop: 10 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons name="calendar-check" size={64} color="#E5E7EB" />
+                <Text style={styles.emptyTitle}>Нет новых заявок</Text>
+                <Text style={styles.emptySubtitle}>
+                  Заявки на пробные уроки появятся здесь
+                </Text>
+              </View>
+            }
+          />
+        ) : (
+          <FlatList
+            data={archivedRequests}
+            renderItem={renderArchived}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ paddingHorizontal: paddingX, paddingBottom: 100, paddingTop: 10 }}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.emptyState}>
+                <MaterialCommunityIcons name="archive-outline" size={64} color="#E5E7EB" />
+                <Text style={styles.emptyTitle}>Архив пуст</Text>
+                <Text style={styles.emptySubtitle}>
+                  Завершённые пробные уроки появятся здесь
+                </Text>
+              </View>
+            }
+          />
+        )}
+      </SafeAreaView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: "900",
+    color: COLORS.foreground,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: COLORS.mutedForeground,
+    marginTop: 2,
+  },
+  tabsContainer: {
+    flexDirection: "row",
+    backgroundColor: "white",
+    borderRadius: 16,
+    padding: 4,
+    ...SHADOWS.sm,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 6,
+  },
+  tabActive: {
+    backgroundColor: "#6C5CE7",
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: COLORS.mutedForeground,
+  },
+  tabTextActive: {
+    color: "white",
+  },
+  tabBadge: {
+    backgroundColor: "#EF4444",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  tabBadgeText: {
+    color: "white",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 16,
+    ...SHADOWS.md,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  avatarText: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "white",
+  },
+  childName: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: COLORS.foreground,
+  },
+  childAge: {
+    fontSize: 13,
+    color: COLORS.mutedForeground,
+    marginTop: 2,
+  },
+  newBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ECFDF5",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
+  },
+  newBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#10B981",
+  },
+  outcomeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    gap: 4,
+  },
+  outcomeBadgeText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  infoRow: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  infoText: {
+    fontSize: 13,
+    color: COLORS.mutedForeground,
+    fontWeight: "500",
+  },
+  slotsLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.foreground,
+    marginBottom: 10,
+  },
+  slotsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginBottom: 20,
+  },
+  slotChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
+    backgroundColor: "white",
+    alignItems: "center",
+    minWidth: 70,
+  },
+  slotChipSelected: {
+    borderColor: "#10B981",
+    backgroundColor: "#ECFDF5",
+  },
+  slotDay: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: COLORS.foreground,
+  },
+  slotTime: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: COLORS.mutedForeground,
+    marginTop: 2,
+  },
+  slotTextSelected: {
+    color: "#065F46",
+  },
+  actionsRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  declineBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: "#FEE2E2",
+    backgroundColor: "#FEF2F2",
+    gap: 6,
+  },
+  declineBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#EF4444",
+  },
+  confirmBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: "#10B981",
+    gap: 6,
+  },
+  confirmBtnDisabled: {
+    backgroundColor: "#D1D5DB",
+  },
+  confirmBtnText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "white",
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: COLORS.foreground,
+    marginTop: 16,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: COLORS.mutedForeground,
+    marginTop: 6,
+    textAlign: "center",
+  },
+});

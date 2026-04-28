@@ -25,12 +25,22 @@ function RootNavigator() {
     if (isLoading) return;
 
     const inAuthGroup = segments[0] === "(auth)";
-    const authScreen = segments[1];
+    // The `auth/` directory (no parens) hosts the OAuth callback flow.
+    // Treat it the same as (auth) for guard purposes.
+    const inOAuthFlow = segments[0] === "auth";
+    const authScreen = segments[1] as string;
 
-    if (!user && !inAuthGroup) {
+    // Allow unauthenticated users through both auth groups
+    if (!user && !inAuthGroup && !inOAuthFlow) {
       router.replace("/intro");
       return;
     }
+
+    // Don't bounce the OAuth callback / complete-profile pages even when
+    // the user is technically signed in — they need to finish the flow.
+    const isOAuthCallbackScreen =
+      inOAuthFlow &&
+      (authScreen === "callback" || authScreen === "complete-profile");
 
     // Skip auto-redirect to home if devMode is enabled or user is mid-register
     if (
@@ -40,6 +50,12 @@ function RootNavigator() {
       (authScreen as string) !== "register" &&
       !devMode
     ) {
+      router.replace("/(tabs)/home");
+    }
+
+    // For the `auth/` directory: redirect to home once the flow completes,
+    // but leave callback/complete-profile alone so they can do their work.
+    if (user && inOAuthFlow && !isOAuthCallbackScreen && !devMode) {
       router.replace("/(tabs)/home");
     }
   }, [isLoading, router, segments, user, devMode]);
@@ -56,6 +72,8 @@ function RootNavigator() {
       >
         {/* AUTH + INTRO (показываются первыми) */}
         <Stack.Screen name="(auth)" />
+        {/* OAuth callback flow — lives at /auth/callback and /auth/complete-profile */}
+        <Stack.Screen name="auth" />
 
         {/* PROFILE CREATION (идут после выбора роли) */}
         <Stack.Screen name="profile" />

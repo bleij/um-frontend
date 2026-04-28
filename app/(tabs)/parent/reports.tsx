@@ -28,7 +28,9 @@ export default function ParentReports() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <LinearGradient
-        colors={["#6C5CE7", "#8B7FE8"]}
+        colors={COLORS.gradients.header as any}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
       >
         <SafeAreaView edges={["top"]}>

@@ -1,4 +1,4 @@
-import { Feather } from "@expo/vector-icons";
+import { AntDesign, Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -12,24 +12,25 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
+import { PressableScale } from "../../components/ui/PressableScale";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { loginWithPhone } = useAuth();
+  const { loginWithPhone, loginWithGoogle } = useAuth();
 
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
@@ -73,6 +74,20 @@ export default function LoginScreen() {
   };
 
   const canSubmit = phoneNumber.replace(/\D/g, "").length >= 10 && password.length >= 6;
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setIsGoogleLoading(true);
+    const result = await loginWithGoogle();
+    // On web the page navigates away before this line runs.
+    // On native we get a result back and need to handle it.
+    if (!result.success) {
+      setError(result.error || "Не удалось войти через Google");
+      setIsGoogleLoading(false);
+    }
+    // On success (native) the onAuthStateChange listener in AuthContext
+    // will hydrate the user; the app's root _layout will redirect to /home.
+  };
 
   const handleLogin = async () => {
     setError("");
@@ -135,19 +150,20 @@ export default function LoginScreen() {
               }}
             >
               {/* Back Button */}
-              <TouchableOpacity
+              <PressableScale
                 onPress={() => router.replace("/intro")}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
                   marginBottom: 32,
                 }}
+                scaleTo={0.93}
               >
                 <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
                 <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: '500' }}>
                   Назад
                 </Text>
-              </TouchableOpacity>
+              </PressableScale>
 
               {/* Header */}
               <MotiView
@@ -202,21 +218,23 @@ export default function LoginScreen() {
                             className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border border-gray-100"
                             style={styles.inputText}
                         />
-                        <TouchableOpacity 
-                            onPress={() => setShowPassword(!showPassword)} 
+                        <PressableScale
+                            onPress={() => setShowPassword(!showPassword)}
                             style={styles.eyeIcon}
+                            scaleTo={0.85}
                         >
                             <Feather name={showPassword ? 'eye-off' : 'eye'} size={18} color={COLORS.mutedForeground} />
-                        </TouchableOpacity>
+                        </PressableScale>
                     </View>
                 </View>
 
-                <TouchableOpacity 
+                <PressableScale
                   onPress={() => {/* Forgot password logic */}}
                   style={{ alignSelf: 'flex-end', marginBottom: 24 }}
+                  scaleTo={0.93}
                 >
                   <Text style={{ color: COLORS.primary, fontSize: 13, fontWeight: '700' }}>Забыли пароль?</Text>
-                </TouchableOpacity>
+                </PressableScale>
 
                 {!!error && (
                     <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={styles.errorBox}>
@@ -225,10 +243,9 @@ export default function LoginScreen() {
                 )}
 
                 {/* Submit button inside card for cohesion */}
-                <TouchableOpacity
+                <PressableScale
                     onPress={handleLogin}
                     disabled={isSubmitting || !canSubmit}
-                    activeOpacity={0.8}
                 >
                     <LinearGradient
                         colors={canSubmit ? [COLORS.primary, COLORS.secondary] : [COLORS.muted, COLORS.muted]}
@@ -237,19 +254,19 @@ export default function LoginScreen() {
                         {isSubmitting ? (
                             <ActivityIndicator size="small" color="white" />
                         ) : (
-                            <Text style={{ 
-                                fontSize: 18, 
-                                fontWeight: "800", 
-                                color: canSubmit ? "white" : COLORS.mutedForeground 
+                            <Text style={{
+                                fontSize: 18,
+                                fontWeight: "800",
+                                color: canSubmit ? "white" : COLORS.mutedForeground
                             }}>
                                 Войти
                             </Text>
                         )}
                     </LinearGradient>
-                </TouchableOpacity>
+                </PressableScale>
               </MotiView>
 
-              {/* QR Login Alternative */}
+              {/* Social / alternative login */}
               <View style={{ marginTop: 32 }}>
                 <View style={styles.dividerRow}>
                     <View style={styles.dividerLine} />
@@ -257,23 +274,38 @@ export default function LoginScreen() {
                     <View style={styles.dividerLine} />
                 </View>
 
-                <View style={{ alignItems: 'center', marginTop: 16 }}>
-                    <TouchableOpacity 
+                <View style={{ gap: 12, marginTop: 16 }}>
+                    {/* Google */}
+                    <PressableScale
+                        onPress={handleGoogleLogin}
+                        disabled={isGoogleLoading}
+                        style={styles.socialBtn}
+                    >
+                        {isGoogleLoading ? (
+                            <ActivityIndicator size="small" color={COLORS.mutedForeground} />
+                        ) : (
+                            <AntDesign name="google" size={20} color="#4285F4" />
+                        )}
+                        <Text style={styles.socialBtnText}>Войти через Google</Text>
+                    </PressableScale>
+
+                    {/* QR */}
+                    <PressableScale
                         onPress={() => router.push("/(auth)/qr-scan")}
-                        style={styles.qrBtn}
+                        style={styles.socialBtn}
                     >
                         <Feather name="grid" size={20} color={COLORS.primary} />
-                        <Text style={styles.qrBtnText}>Войти по QR-коду</Text>
-                    </TouchableOpacity>
+                        <Text style={styles.socialBtnText}>Войти по QR-коду</Text>
+                    </PressableScale>
                 </View>
               </View>
 
               {/* Register link */}
               <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
                 <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Нет аккаунта? </Text>
-                <TouchableOpacity onPress={() => router.push("/register")}>
+                <PressableScale onPress={() => router.push("/register")} scaleTo={0.93}>
                   <Text style={{ color: COLORS.primary, fontWeight: "800", fontSize: 15 }}>Зарегистрироваться</Text>
-                </TouchableOpacity>
+                </PressableScale>
               </View>
             </View>
           </ScrollView>
@@ -348,21 +380,22 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '500'
     },
-    qrBtn: {
+    socialBtn: {
         flexDirection: "row",
         alignItems: "center",
-        gap: 8,
+        justifyContent: "center",
+        gap: 10,
         paddingHorizontal: 24,
         paddingVertical: 16,
         borderRadius: RADIUS.xl,
         backgroundColor: 'white',
-        borderWidth: 2,
+        borderWidth: 1.5,
         borderColor: COLORS.border,
         ...SHADOWS.sm,
     },
-    qrBtnText: {
+    socialBtnText: {
         fontSize: 15,
-        fontWeight: "800",
-        color: COLORS.primary
+        fontWeight: "700",
+        color: COLORS.foreground,
     }
 });

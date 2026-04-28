@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LAYOUT } from "../../../constants/theme";
+import { formatPhone } from "../../../lib/formatPhone";
 
 export default function CreateProfileYoungAdult() {
   const router = useRouter();
@@ -215,9 +216,9 @@ export default function CreateProfileYoungAdult() {
                   <TextInput
                     value={formData.phone}
                     onChangeText={(text) =>
-                      setFormData({ ...formData, phone: text })
+                      setFormData({ ...formData, phone: formatPhone(text) })
                     }
-                    placeholder="+7 (___) ___-__-__"
+                    placeholder="+7 777 777 7777"
                     keyboardType="phone-pad"
                     className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
                   />

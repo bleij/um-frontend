@@ -12,13 +12,14 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
+import { PressableScale } from "../../../components/ui/PressableScale";
+import { formatPhone } from "../../../lib/formatPhone";
 import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
 // Org brand colour — matches the ROLES entry in register.tsx
@@ -40,6 +41,8 @@ export default function CreateProfileOrganization() {
   const [contactPhone, setContactPhone] = useState(user?.phone ?? "");
   const [contactEmail, setContactEmail] = useState("");
 
+  const handlePhoneChange = (text: string) => setContactPhone(formatPhone(text));
+
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -47,13 +50,17 @@ export default function CreateProfileOrganization() {
   const canSubmit =
     orgName.trim().length > 0 &&
     city.trim().length > 0 &&
-    contactPerson.trim().length > 0;
+    contactPerson.trim().length > 0 &&
+    contactPhone.replace(/\D/g, "").length >= 10 &&
+    contactEmail.trim().length > 0;
 
   const handleSubmit = async () => {
     setError(null);
     if (!orgName.trim()) { setError("Укажите название организации."); return; }
     if (!city.trim()) { setError("Укажите город."); return; }
     if (!contactPerson.trim()) { setError("Укажите ФИО ответственного лица."); return; }
+    if (contactPhone.replace(/\D/g, "").length < 10) { setError("Укажите контактный телефон."); return; }
+    if (!contactEmail.trim()) { setError("Укажите email."); return; }
 
     setSubmitting(true);
     try {
@@ -118,15 +125,16 @@ export default function CreateProfileOrganization() {
           }}>
             {/* Header nav — identical structure to register.tsx */}
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-              <TouchableOpacity
+              <PressableScale
                 onPress={() => router.back()}
                 style={{ flexDirection: "row", alignItems: "center" }}
+                scaleTo={0.93}
               >
                 <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
                 <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: "500" }}>
                   Назад
                 </Text>
-              </TouchableOpacity>
+              </PressableScale>
 
               {/* 4-dot indicator — this is the 4th step after role/phone/otp/name */}
               <View style={{ flexDirection: "row", gap: 6 }}>
@@ -192,9 +200,10 @@ export default function CreateProfileOrganization() {
                 label="Контактный телефон"
                 icon="phone"
                 value={contactPhone}
-                onChange={setContactPhone}
-                placeholder="+7 (___) ___-__-__"
+                onChange={handlePhoneChange}
+                placeholder="+7 777 777 7777"
                 keyboardType="phone-pad"
+                required
               />
               <Field
                 label="Email"
@@ -203,6 +212,7 @@ export default function CreateProfileOrganization() {
                 onChange={setContactEmail}
                 placeholder="org@example.com"
                 keyboardType="email-address"
+                required
                 last
               />
             </MotiView>
@@ -218,11 +228,10 @@ export default function CreateProfileOrganization() {
             )}
 
             {/* Button — same shape/structure as register.tsx */}
-            <TouchableOpacity
+            <PressableScale
               onPress={handleSubmit}
               disabled={!canSubmit || submitting}
               style={{ marginTop: 32 }}
-              activeOpacity={0.8}
             >
               <LinearGradient
                 colors={canSubmit ? ORG_GRADIENT : [COLORS.muted, COLORS.muted]}
@@ -236,14 +245,14 @@ export default function CreateProfileOrganization() {
                   </Text>
                 )}
               </LinearGradient>
-            </TouchableOpacity>
+            </PressableScale>
 
             {/* Login link — same as register.tsx */}
             <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
               <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Уже есть аккаунт? </Text>
-              <TouchableOpacity onPress={() => router.push("/login")}>
+              <PressableScale onPress={() => router.push("/login")} scaleTo={0.93}>
                 <Text style={{ color: ORG_COLOR, fontWeight: "800", fontSize: 15 }}>Войти</Text>
-              </TouchableOpacity>
+              </PressableScale>
             </View>
 
           </View>
@@ -257,13 +266,18 @@ export default function CreateProfileOrganization() {
 function Field({
   label, icon, value, onChange, placeholder,
   keyboardType = "default", autoFocus = false, secure = false,
-  showToggle, shown, last = false,
+  showToggle, shown, last = false, required = false,
 }: any) {
   return (
     <View style={{ marginBottom: last ? 0 : 20 }}>
-      <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.foreground, marginBottom: 8, textTransform: "uppercase", letterSpacing: 0.5, opacity: 0.7 }}>
-        {label}
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+        <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.foreground, textTransform: "uppercase", letterSpacing: 0.5, opacity: 0.7 }}>
+          {label}
+        </Text>
+        {required && (
+          <Text style={{ fontSize: 13, fontWeight: "700", color: ORG_COLOR, marginLeft: 3, opacity: 1 }}>*</Text>
+        )}
+      </View>
       <View style={{ position: "relative", justifyContent: "center" }}>
         <Feather name={icon} size={18} color={COLORS.mutedForeground} style={{ position: "absolute", left: 16, zIndex: 1 }} />
         <TextInput
@@ -278,9 +292,9 @@ function Field({
           style={{ fontSize: 15, fontWeight: "500" }}
         />
         {secure && showToggle && (
-          <TouchableOpacity onPress={showToggle} style={{ position: "absolute", right: 16, zIndex: 1 }}>
+          <PressableScale onPress={showToggle} style={{ position: "absolute", right: 16, zIndex: 1 }} scaleTo={0.85}>
             <Feather name={shown ? "eye-off" : "eye"} size={18} color={COLORS.mutedForeground} />
-          </TouchableOpacity>
+          </PressableScale>
         )}
       </View>
     </View>
@@ -343,14 +357,14 @@ function SuccessView({ onHome }: { onHome: () => void }) {
             ))}
           </View>
 
-          <TouchableOpacity onPress={onHome} style={{ width: "100%" }} activeOpacity={0.8}>
+          <PressableScale onPress={onHome} style={{ width: "100%" }}>
             <LinearGradient
               colors={ORG_GRADIENT}
               style={{ paddingVertical: 18, borderRadius: RADIUS.xl, alignItems: "center", ...SHADOWS.md }}
             >
               <Text style={{ color: "white", fontWeight: "900", fontSize: 17 }}>Перейти в кабинет</Text>
             </LinearGradient>
-          </TouchableOpacity>
+          </PressableScale>
         </MotiView>
       </SafeAreaView>
     </View>

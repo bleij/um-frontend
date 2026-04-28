@@ -8,9 +8,9 @@ import {
   Dimensions,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
+import { PressableScale } from "../../components/ui/PressableScale";
 import { COLORS, RADIUS, SHADOWS } from "../../constants/theme";
 
 const { width, height } = Dimensions.get("window");
@@ -136,8 +136,7 @@ export default function IntroScreen() {
             transition={{ delay: 500, type: "spring" }}
             style={{ width: "100%", maxWidth: 400 }}
           >
-            <TouchableOpacity
-              activeOpacity={0.9}
+            <PressableScale
               onPress={() => router.push("/register")}
               style={styles.primaryBtn}
             >
@@ -146,17 +145,17 @@ export default function IntroScreen() {
                 style={StyleSheet.absoluteFill}
               />
               <Text style={styles.primaryBtnText}>Начать путь</Text>
-            </TouchableOpacity>
+            </PressableScale>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
+            <PressableScale
               onPress={() => router.push("/login")}
               style={styles.secondaryBtn}
+              scaleTo={0.97}
             >
               <Text style={styles.secondaryBtnText}>
                 У меня уже есть аккаунт
               </Text>
-            </TouchableOpacity>
+            </PressableScale>
           </MotiView>
         </View>
       </View>

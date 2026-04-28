@@ -9,16 +9,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
   useWindowDimensions,
-  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
+import { PressableScale } from "../../components/ui/PressableScale";
 import { useAuth, type UserRole } from "../../contexts/AuthContext";
+import { useDevSettings } from "../../contexts/DevSettingsContext";
 
 const ROLES: {
   title: string;
@@ -71,6 +72,7 @@ export default function RegisterScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const { sendOtp, verifyOtpAndRegister, devOtpCode } = useAuth();
+  const { useRealOtp } = useDevSettings();
 
   // step 0 = role, step 1 = phone + password, step 2 = OTP, step 3 = name
   const [step, setStep] = useState<number>(0);
@@ -281,18 +283,16 @@ export default function RegisterScreen() {
             >
               {/* Header Nav */}
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <TouchableOpacity
+                <PressableScale
                   onPress={handleBack}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                  }}
+                  style={{ flexDirection: "row", alignItems: "center" }}
+                  scaleTo={0.93}
                 >
                   <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
                   <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: '500' }}>
                     Назад
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
 
                 {/* Step Indicator */}
                 <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -338,13 +338,12 @@ export default function RegisterScreen() {
                   {ROLES.map((item) => {
                     const isSelected = selectedRole === item.role;
                     return (
-                      <TouchableOpacity
+                      <PressableScale
                         key={item.role}
                         onPress={() => {
                           setSelectedRole(item.role);
                           setSelectedRoute(item.route);
                         }}
-                        activeOpacity={0.8}
                         style={{
                           flexDirection: "row",
                           alignItems: "center",
@@ -388,7 +387,7 @@ export default function RegisterScreen() {
                             </View>
                           </MotiView>
                         )}
-                      </TouchableOpacity>
+                      </PressableScale>
                     );
                   })}
                 </MotiView>
@@ -417,7 +416,7 @@ export default function RegisterScreen() {
                   {step === 2 && (
                     <MotiView key="s2" from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ type: 'timing', duration: 150 }}>
                       <View style={{ alignItems: 'center' }}>
-                        {!!devOtpCode && (
+                        {!!devOtpCode && !useRealOtp && (
                           <View style={{ backgroundColor: '#FEF9C3', padding: 8, borderRadius: 8, marginBottom: 20, width: '100%', alignItems: 'center' }}>
                             <Text style={{ color: '#854D0E', fontSize: 12, fontWeight: 'bold' }}>DEV MODE: {devOtpCode}</Text>
                           </View>
@@ -439,14 +438,14 @@ export default function RegisterScreen() {
                             outlineWidth: 0,
                           } as any}
                         />
-                        <TouchableOpacity onPress={() => sendOtp(phoneNumber)}>
+                        <PressableScale onPress={() => sendOtp(phoneNumber)} scaleTo={0.93}>
                           <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
                             Не получили код?{" "}
                             <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: 'bold' }}>
                               Отправить еще раз
                             </Text>
                           </Text>
-                        </TouchableOpacity>
+                        </PressableScale>
                       </View>
                     </MotiView>
                   )}
@@ -468,11 +467,10 @@ export default function RegisterScreen() {
               )}
 
               {/* Action Button */}
-              <TouchableOpacity
+              <PressableScale
                 onPress={handleAction}
                 disabled={!isButtonEnabled() || isSubmitting}
                 style={{ marginTop: 32 }}
-                activeOpacity={0.8}
               >
                 <LinearGradient
                     colors={isButtonEnabled() ? (currentRoleInfo?.gradient || [COLORS.primary, COLORS.secondary]) : [COLORS.muted, COLORS.muted]}
@@ -492,14 +490,14 @@ export default function RegisterScreen() {
                     </Text>
                   )}
                 </LinearGradient>
-              </TouchableOpacity>
+              </PressableScale>
 
               {/* Login link */}
               <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
                 <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Уже есть аккаунт? </Text>
-                <TouchableOpacity onPress={() => router.push("/login")}>
+                <PressableScale onPress={() => router.push("/login")} scaleTo={0.93}>
                   <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: "800", fontSize: 15 }}>Войти</Text>
-                </TouchableOpacity>
+                </PressableScale>
               </View>
             </View>
           </ScrollView>
@@ -529,9 +527,9 @@ function Field({ label, icon, value, onChange, placeholder, keyboardType = 'defa
                     style={{ fontSize: 15, fontWeight: '500' }}
                 />
                 {secure && showToggle && (
-                    <TouchableOpacity onPress={showToggle} style={{ position: 'absolute', right: 16, zIndex: 1 }}>
+                    <PressableScale onPress={showToggle} style={{ position: 'absolute', right: 16, zIndex: 1 }} scaleTo={0.85}>
                         <Feather name={shown ? 'eye-off' : 'eye'} size={18} color={COLORS.mutedForeground} />
-                    </TouchableOpacity>
+                    </PressableScale>
                 )}
             </View>
         </View>

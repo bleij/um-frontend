@@ -133,9 +133,11 @@ export default function ParentChildren() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#6C5CE7" }}>
+    <View style={{ flex: 1, backgroundColor: "#4F46E5" }}>
       <LinearGradient
-        colors={["#6C5CE7", "#8B7FE8"]}
+        colors={COLORS.gradients.header as any}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{ position: "absolute", top: 0, left: 0, right: 0, height: "100%" }}
       />
 

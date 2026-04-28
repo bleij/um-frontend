@@ -1,19 +1,23 @@
 import { Feather } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { MotiView } from "moti";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
   useWindowDimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS } from "../../constants/theme";
+import { PressableScale } from "../../components/ui/PressableScale";
 import { useAuth } from "../../contexts/AuthContext";
 
 export default function QRScanScreen() {
@@ -143,33 +147,42 @@ export default function QRScanScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <View
-        style={{
-          flex: 1,
-          maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
-          alignSelf: "center",
-          width: "100%",
-          paddingHorizontal: horizontalPadding,
-          paddingTop: isDesktop ? 24 : 20,
-        }}
-      >
-        {/* Back button */}
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            marginBottom: 32,
-          }}
-        >
-          <Feather name="arrow-left" size={18} color={COLORS.mutedForeground} />
-          <Text
-            style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 14 }}
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      style={{ flex: 1, backgroundColor: COLORS.background }}
+    >
+      <StatusBar style="dark" />
+      <View style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{
+              flexGrow: 1,
+              alignItems: "center",
+              paddingVertical: isDesktop ? 24 : 12,
+            }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
+            <View
+              style={{
+                flex: 1,
+                width: "100%",
+                maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+                paddingHorizontal: horizontalPadding,
+                paddingTop: 8,
+              }}
+            >
+        {/* Back button */}
+        <PressableScale
+          onPress={() => router.back()}
+          style={{ flexDirection: "row", alignItems: "center", marginBottom: 32 }}
+          scaleTo={0.93}
+        >
+          <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
+          <Text style={{ color: COLORS.mutedForeground, marginLeft: 8, fontSize: 15, fontWeight: '500' }}>
             Назад
           </Text>
-        </TouchableOpacity>
+        </PressableScale>
 
         {/* Header */}
         <MotiView
@@ -206,7 +219,7 @@ export default function QRScanScreen() {
           {(["camera", "manual"] as const).map((mode) => {
             const active = mode === "camera" ? !useManual : useManual;
             return (
-              <TouchableOpacity
+              <PressableScale
                 key={mode}
                 onPress={() => {
                   setUseManual(mode === "manual");
@@ -221,6 +234,7 @@ export default function QRScanScreen() {
                   alignItems: "center",
                   backgroundColor: active ? COLORS.card : "transparent",
                 }}
+                scaleTo={0.94}
               >
                 <Text
                   style={{
@@ -231,7 +245,7 @@ export default function QRScanScreen() {
                 >
                   {mode === "camera" ? "Сканировать" : "Ввести код"}
                 </Text>
-              </TouchableOpacity>
+              </PressableScale>
             );
           })}
         </View>
@@ -277,7 +291,7 @@ export default function QRScanScreen() {
                 >
                   Нажмите, чтобы включить камеру
                 </Text>
-                <TouchableOpacity
+                <PressableScale
                   onPress={startWebScanning}
                   style={{
                     paddingVertical: 12,
@@ -289,7 +303,7 @@ export default function QRScanScreen() {
                   <Text style={{ color: "white", fontWeight: "600" }}>
                     Включить камеру
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
                 {webCameraError && (
                   <Text
                     style={{
@@ -408,7 +422,7 @@ export default function QRScanScreen() {
                 >
                   Разрешите доступ, чтобы отсканировать QR-код
                 </Text>
-                <TouchableOpacity
+                <PressableScale
                   onPress={requestPermission}
                   style={{
                     paddingVertical: 12,
@@ -420,7 +434,7 @@ export default function QRScanScreen() {
                   <Text style={{ color: "white", fontWeight: "600" }}>
                     Разрешить камеру
                   </Text>
-                </TouchableOpacity>
+                </PressableScale>
               </View>
             ) : (
               <View
@@ -544,7 +558,7 @@ export default function QRScanScreen() {
               }}
             />
 
-            <TouchableOpacity
+            <PressableScale
               onPress={() => processCode(manualCode)}
               disabled={manualCode.length !== 6 || isSubmitting}
               style={{
@@ -571,7 +585,7 @@ export default function QRScanScreen() {
                   Войти
                 </Text>
               )}
-            </TouchableOpacity>
+            </PressableScale>
           </MotiView>
         )}
 
@@ -590,10 +604,10 @@ export default function QRScanScreen() {
             </Text>
           </View>
         )}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
       </View>
-    </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
-
-// Needed for the overlay style on iOS camera view
-import { StyleSheet } from "react-native";

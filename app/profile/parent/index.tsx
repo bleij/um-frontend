@@ -21,6 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
+import { formatPhone } from "../../../lib/formatPhone";
 import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
 function generateQRPin(): string {
@@ -180,7 +181,9 @@ export default function ParentProfile() {
     <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
       <View style={{ zIndex: 10 }}>
         <LinearGradient
-          colors={["#6C5CE7", "#8B7FE8"]}
+          colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, position: 'absolute', top: 0, left: 0, right: 0 }}
         >
           <SafeAreaView edges={["top"]}>
@@ -402,8 +405,10 @@ export default function ParentProfile() {
                           <TextInput 
                             style={styles.modalInput} 
                             value={editForm.phone} 
-                            onChangeText={v => setEditForm({...editForm, phone: v})}
+                            onChangeText={v => setEditForm({...editForm, phone: formatPhone(v)})}
                             keyboardType="phone-pad"
+                            placeholder="+7 777 777 7777"
+                            placeholderTextColor={COLORS.mutedForeground}
                           />
                       </View>
 

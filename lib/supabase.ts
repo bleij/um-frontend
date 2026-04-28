@@ -23,7 +23,9 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
         storage: authStorage,
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: false,
+        // On web we need this true so OAuth redirects are handled automatically.
+        // On native we handle the callback manually via expo-web-browser.
+        detectSessionInUrl: Platform.OS === "web",
       },
     })
   : null;

@@ -38,7 +38,9 @@ export default function OrgStudents() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <LinearGradient
-        colors={[COLORS.primary, COLORS.secondary]}
+        colors={COLORS.gradients.header as any}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}
       >
         <SafeAreaView edges={["top"]}>

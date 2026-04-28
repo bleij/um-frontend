@@ -57,7 +57,7 @@ export default function OrgCourses() {
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Header */}
       <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: "hidden" }}>
-        <LinearGradient colors={COLORS.gradients.header as any} style={{ paddingBottom: SPACING.xl }}>
+        <LinearGradient colors={COLORS.gradients.header as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingBottom: SPACING.xl }}>
           <SafeAreaView edges={["top"]}>
             <View style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>

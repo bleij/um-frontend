@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
+import { formatPhone } from "../../../lib/formatPhone";
 
 const ROLE_COLOR = "#6C5CE7";
 const ROLE_GRADIENT: [string, string] = ["#6C5CE7", "#8B7FE8"];
@@ -250,8 +251,8 @@ export default function CreateProfileParent() {
                   <Text style={styles.fieldLabel}>Телефон</Text>
                   <TextInput
                     value={parentData.phone}
-                    onChangeText={(text) => setParentData({ ...parentData, phone: text })}
-                    placeholder="+7 (___) ___-__-__"
+                    onChangeText={(text) => setParentData({ ...parentData, phone: formatPhone(text) })}
+                    placeholder="+7 777 777 7777"
                     placeholderTextColor={COLORS.mutedForeground}
                     keyboardType="phone-pad"
                     style={styles.input}
@@ -368,9 +369,9 @@ export default function CreateProfileParent() {
                         <TextInput
                           value={child.phone}
                           onChangeText={(text) =>
-                            updateChild(child.id, { phone: text.replace(/[^\d+]/g, "") })
+                            updateChild(child.id, { phone: formatPhone(text) })
                           }
-                          placeholder="+7 (___) ___-__-__"
+                          placeholder="+7 777 777 7777"
                           placeholderTextColor={COLORS.mutedForeground}
                           keyboardType="phone-pad"
                           style={styles.input}

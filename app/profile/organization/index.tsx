@@ -99,9 +99,9 @@ export default function OrgProfile() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Premium Header */}
-      <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
+      <View style={{ backgroundColor: "#4F46E5", overflow: 'hidden' }}>
         <LinearGradient
-          colors={['#1E3A8A', '#3B82F6']}
+          colors={COLORS.gradients.header as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={{ paddingBottom: 40 }}

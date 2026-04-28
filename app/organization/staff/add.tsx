@@ -10,10 +10,11 @@ import {
   TextInput,
   useWindowDimensions,
   View,
-  TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { PressableScale } from "../../../components/ui/PressableScale";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { formatPhone } from "../../../lib/formatPhone";
 
 export default function StaffAddScreen() {
   const router = useRouter();
@@ -43,12 +44,14 @@ export default function StaffAddScreen() {
       <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={{ paddingBottom: SPACING.xl }}
         >
           <SafeAreaView edges={["top"]}>
             <View style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <TouchableOpacity
+                <PressableScale
                   onPress={() => router.back()}
                   style={{
                     width: 44,
@@ -59,9 +62,10 @@ export default function StaffAddScreen() {
                     justifyContent: "center",
                     marginRight: SPACING.md,
                   }}
+                  scaleTo={0.88}
                 >
                   <Feather name="arrow-left" size={20} color="white" />
-                </TouchableOpacity>
+                </PressableScale>
                 <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>Добавить учителя</Text>
               </View>
             </View>
@@ -109,11 +113,11 @@ export default function StaffAddScreen() {
                 <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>НОМЕР ТЕЛЕФОНА</Text>
                 <TextInput 
                    style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground, borderWidth: 1, borderColor: COLORS.border }}
-                   placeholder="+7 (___) ___ __ __"
+                   placeholder="+7 777 777 7777"
                    placeholderTextColor={COLORS.mutedForeground}
                    keyboardType="phone-pad"
                    value={formData.phone}
-                   onChangeText={v => setFormData({...formData, phone: v})}
+                   onChangeText={v => setFormData({...formData, phone: formatPhone(v)})}
                 />
              </View>
 
@@ -129,13 +133,13 @@ export default function StaffAddScreen() {
              </View>
           </View>
 
-          <TouchableOpacity
+          <PressableScale
             onPress={handleSubmit}
             disabled={loading || !formData.fullName || !formData.phone}
             style={{ ...SHADOWS.md, height: 60, borderRadius: RADIUS.xl, alignItems: 'center', justifyContent: 'center', marginTop: SPACING.xxxl, backgroundColor: loading || !formData.fullName || !formData.phone ? COLORS.border : COLORS.primary }}
           >
              <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: 16 }}>{loading ? "ОТПРАВКА..." : "ПРИГЛАСИТЬ УЧИТЕЛЯ"}</Text>
-          </TouchableOpacity>
+          </PressableScale>
         </MotiView>
       </ScrollView>
 
@@ -165,12 +169,12 @@ export default function StaffAddScreen() {
                </View>
             </View>
             
-            <TouchableOpacity 
+            <PressableScale
               onPress={() => router.back()}
-              className="w-full h-14 bg-gray-900 rounded-2xl items-center justify-center"
+              style={{ width: "100%", height: 56, backgroundColor: "#111827", borderRadius: 16, alignItems: "center", justifyContent: "center" }}
             >
-               <Text className="text-white font-bold uppercase">Готово</Text>
-            </TouchableOpacity>
+               <Text style={{ color: "white", fontWeight: "700" }}>ГОТОВО</Text>
+            </PressableScale>
           </MotiView>
         </View>
       )}

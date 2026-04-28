@@ -32,7 +32,9 @@ export default function TeacherHome() {
       {/* Premium Header */}
       <View style={styles.topHeader}>
         <LinearGradient
-          colors={["#6C5CE7", "#8B7FE8"]}
+          colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={styles.headerGradient}
         >
           <SafeAreaView edges={["top"]}>

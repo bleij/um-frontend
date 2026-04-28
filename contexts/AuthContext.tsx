@@ -1,14 +1,17 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
+import * as WebBrowser from "expo-web-browser";
 import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { Platform } from "react-native";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { getUseRealOtpSetting } from "./DevSettingsContext";
 
@@ -50,11 +53,8 @@ interface AuthContextValue {
     lastName?: string,
   ) => Promise<AuthActionResult>;
   loginWithPhone: (phone: string, password: string) => Promise<AuthActionResult>;
-  loginWithQR: (payload: {
-    childId: string;
-    parentId: string;
-    token: string;
-  }) => Promise<AuthActionResult>;
+  loginWithGoogle: () => Promise<AuthActionResult>;
+  loginWithQR: (pin: string) => Promise<AuthActionResult>;
   setUserRole: (role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   devLogin: (role: UserRole) => Promise<void>;
@@ -169,22 +169,36 @@ async function hydrateFromSupabaseUser(
     (metadata.phone as string | undefined) ||
     "";
 
-  if (!phone) return null;
+  const email =
+    sessionUser.email ||
+    (metadata.email as string | undefined) ||
+    "";
+
+  // Accept users who have either phone OR email (OAuth users have email but no phone)
+  if (!phone && !email) return null;
+
+  // Google/OAuth users have `full_name` or `name` in metadata
+  const fullName = ((metadata.full_name || metadata.name || "") as string).trim();
+  const nameParts = fullName.split(" ").filter(Boolean);
+  const oauthFirstName = nameParts[0] ?? "";
+  const oauthLastName = nameParts.slice(1).join(" ");
 
   return toAuthUser({
     id: sessionUser.id,
     phone,
+    email,
     role: parseRole(
       (remoteProfile?.role as string | null) ||
         (metadata.role as string | undefined),
     ),
     firstName:
       (remoteProfile?.first_name as string | null) ||
-      (metadata.first_name as string | undefined),
+      (metadata.first_name as string | undefined) ||
+      oauthFirstName,
     lastName:
       (remoteProfile?.last_name as string | null) ||
-      (metadata.last_name as string | undefined),
-    email: sessionUser.email || (metadata.email as string | undefined) || "",
+      (metadata.last_name as string | undefined) ||
+      oauthLastName,
   });
 }
 
@@ -192,8 +206,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [devMode, setDevModeState] = useState(false);
+  // Track whether the initial bootstrap has finished so the onAuthStateChange
+  // listener doesn't clobber a dev-switcher user that was just restored.
+  const bootstrapDone = useRef(false);
 
   useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+
     const bootstrap = async () => {
       try {
         const rawDevMode = await AsyncStorage.getItem(DEV_MODE_KEY);
@@ -206,6 +225,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const hydrated = await hydrateFromSupabaseUser(data.session.user);
             if (hydrated) {
               setUser(hydrated);
+              bootstrapDone.current = true;
               return;
             }
           }
@@ -221,11 +241,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
       } finally {
+        bootstrapDone.current = true;
         setIsLoading(false);
       }
     };
 
     bootstrap();
+
+    // Subscribe to auth state changes — critical for OAuth redirects.
+    // When the Google OAuth callback fires, Supabase sets the session and
+    // emits SIGNED_IN here so we hydrate the user without a page reload.
+    if (supabase && isSupabaseConfigured) {
+      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+        // Ignore events that fire before bootstrap finishes to avoid a race
+        // where INITIAL_SESSION clobbers a just-restored dev user.
+        if (!bootstrapDone.current) return;
+
+        if (event === "SIGNED_IN" && session?.user) {
+          const hydrated = await hydrateFromSupabaseUser(session.user);
+          if (hydrated) setUser(hydrated);
+        } else if (event === "SIGNED_OUT") {
+          setUser(null);
+          await AsyncStorage.removeItem(DEV_USER_KEY);
+        } else if (event === "USER_UPDATED" && session?.user) {
+          const hydrated = await hydrateFromSupabaseUser(session.user);
+          if (hydrated) setUser(hydrated);
+        }
+      });
+      unsubscribe = data.subscription.unsubscribe;
+    }
+
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   const sendOtp = useCallback(async (phone: string): Promise<AuthActionResult> => {
@@ -396,6 +444,106 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const loginWithGoogle = useCallback(async (): Promise<AuthActionResult> => {
+    if (!supabase || !isSupabaseConfigured) {
+      return { success: false, error: "Supabase не настроен" };
+    }
+
+    // Build the redirect URL based on platform
+    const redirectTo =
+      Platform.OS === "web" && typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback`
+        : "umapp://auth/callback";
+
+    if (Platform.OS === "web") {
+      // Web: Supabase opens Google OAuth in the same tab and redirects back.
+      // detectSessionInUrl:true handles the token from the URL automatically.
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo },
+      });
+      if (error) return { success: false, error: error.message };
+      // Browser is now navigating to Google — this function won't return
+      // before the page unloads, so the return value is effectively unused.
+      return { success: true };
+    }
+
+    // Native (iOS / Android):
+    //
+    // Strategy: open the OAuth URL in an in-app browser. On iOS,
+    // ASWebAuthenticationSession intercepts the umapp:// redirect and returns
+    // the URL directly via openAuthSessionAsync. On Android, Chrome Custom Tabs
+    // fire a deep-link intent instead — the app opens at /auth/callback, which
+    // calls WebBrowser.maybeCompleteAuthSession() to close the lingering tab,
+    // and then parses the tokens from the Linking URL directly.
+    //
+    // Either way the session ends up set and onAuthStateChange notifies us.
+    try {
+      await WebBrowser.warmUpAsync();
+
+      const { data: urlData, error: urlError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo, skipBrowserRedirect: true },
+      });
+
+      if (urlError || !urlData.url) {
+        await WebBrowser.coolDownAsync();
+        return { success: false, error: urlError?.message ?? "Не удалось получить URL авторизации" };
+      }
+
+      // Open the OAuth flow. On iOS this returns when the redirect fires.
+      // On Android this may return { type: 'cancel' } if the deep-link intent
+      // took over before openAuthSessionAsync could intercept it — that's fine,
+      // the callback screen handles session parsing via Linking in that case.
+      const result = await WebBrowser.openAuthSessionAsync(urlData.url, redirectTo);
+      await WebBrowser.coolDownAsync();
+
+      if (result.type === "success") {
+        // iOS (and some Android) path: tokens are in the returned URL.
+        const raw = result.url;
+        const hashPart = raw.split("#")[1] ?? "";
+        const queryPart = raw.split("?")[1]?.split("#")[0] ?? "";
+        const hashParams = new URLSearchParams(hashPart);
+        const queryParams = new URLSearchParams(queryPart);
+
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        const code = queryParams.get("code");
+
+        if (accessToken && refreshToken) {
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (sessionError || !sessionData.user) {
+            return { success: false, error: sessionError?.message ?? "Ошибка сессии" };
+          }
+          const hydrated = await hydrateFromSupabaseUser(sessionData.user);
+          if (hydrated) setUser(hydrated);
+          return { success: true };
+        }
+
+        if (code) {
+          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError || !exchangeData.user) {
+            return { success: false, error: exchangeError?.message ?? "Ошибка обмена кода" };
+          }
+          const hydrated = await hydrateFromSupabaseUser(exchangeData.user);
+          if (hydrated) setUser(hydrated);
+          return { success: true };
+        }
+      }
+
+      // Android path: the deep-link fired a system intent which opened
+      // /auth/callback. That screen parses the tokens and calls
+      // maybeCompleteAuthSession(). We return success here; onAuthStateChange
+      // will notify us once the session is set by the callback screen.
+      return { success: true };
+    } catch (e: any) {
+      return { success: false, error: e?.message ?? "Неизвестная ошибка" };
+    }
+  }, []);
+
   const setUserRole = useCallback(
     async (role: UserRole) => {
       if (!user) return;
@@ -452,6 +600,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendOtp,
       verifyOtpAndRegister,
       loginWithPhone,
+      loginWithGoogle,
       loginWithQR,
       setUserRole,
       logout,
@@ -467,6 +616,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sendOtp,
       verifyOtpAndRegister,
       loginWithPhone,
+      loginWithGoogle,
       loginWithQR,
       setUserRole,
       logout,

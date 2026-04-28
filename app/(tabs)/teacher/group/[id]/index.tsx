@@ -141,7 +141,7 @@ export default function TeacherGroupDetail() {
             
             {/* Calendar Card */}
             <View style={styles.calendarCard}>
-                <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={styles.calendarHeader}>
+                <LinearGradient colors={COLORS.gradients.header as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.calendarHeader}>
                     <TouchableOpacity onPress={() => changeMonth(-1)}>
                         <Feather name="chevron-left" size={20} color="white" />
                     </TouchableOpacity>
