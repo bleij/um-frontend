@@ -1,8 +1,9 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -12,9 +13,29 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useParentData } from "../../../contexts/ParentDataContext";
+import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
 const MONTHS = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 const WEEKDAYS = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+
+type CalendarEnrollment = {
+  id: string;
+  club: string | null;
+  group_name: string | null;
+  group_schedule: string | null;
+};
+
+const DAY_ALIASES: Record<number, string[]> = {
+  0: ["вс", "воск"],
+  1: ["пн", "пон"],
+  2: ["вт", "втор"],
+  3: ["ср", "сред"],
+  4: ["чт", "чет", "четв"],
+  5: ["пт", "пят"],
+  6: ["сб", "суб"],
+};
 
 function getCalendarDays(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay();
@@ -26,16 +47,74 @@ function getCalendarDays(year: number, month: number) {
   return days;
 }
 
+function scheduleMatchesDate(schedule: string | null, date: Date) {
+  if (!schedule) return false;
+  const normalized = schedule.toLowerCase().replace(/ё/g, "е");
+  const aliases = DAY_ALIASES[date.getDay()] ?? [];
+  return aliases.some((alias) => new RegExp(`(^|[^а-яa-z])${alias}`, "i").test(normalized));
+}
+
+function getScheduleTime(schedule: string | null) {
+  if (!schedule) return "Время уточняется";
+  const match = schedule.match(/\d{1,2}:\d{2}(?:\s*[-–]\s*\d{1,2}:\d{2})?/);
+  return match?.[0]?.replace(/\s+/g, " ") ?? schedule;
+}
+
 export default function ParentCalendar() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { childrenProfile, activeChildId } = useParentData();
   const { width } = useWindowDimensions();
   const now = new Date();
   const [currentDate, setCurrentDate] = useState({ year: now.getFullYear(), month: now.getMonth() });
   const [selectedDay, setSelectedDay] = useState(now.getDate());
+  const [enrollments, setEnrollments] = useState<CalendarEnrollment[]>([]);
+  const [loading, setLoading] = useState(true);
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+  const activeChild =
+    childrenProfile.find((child) => child.id === activeChildId) || childrenProfile[0];
 
   const days = getCalendarDays(currentDate.year, currentDate.month);
+  const selectedDate = useMemo(
+    () => new Date(currentDate.year, currentDate.month, selectedDay),
+    [currentDate.month, currentDate.year, selectedDay],
+  );
+  const selectedEvents = useMemo(
+    () => enrollments.filter((item) => scheduleMatchesDate(item.group_schedule, selectedDate)),
+    [enrollments, selectedDate],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadCalendar = async () => {
+      if (!supabase || !isSupabaseConfigured || !user?.id || !activeChild?.name) {
+        setEnrollments([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("org_applications")
+        .select("id, club, group_name, group_schedule")
+        .eq("parent_user_id", user.id)
+        .eq("child_profile_id", activeChild.id)
+        .in("status", ["activated", "completed"])
+        .order("created_at", { ascending: false });
+
+      if (cancelled) return;
+      setEnrollments(error || !data ? [] : (data as CalendarEnrollment[]));
+      setLoading(false);
+    };
+
+    loadCalendar();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeChild?.id, activeChild?.name, user?.id]);
 
   const shiftMonth = (delta: number) => {
     setCurrentDate(prev => {
@@ -121,7 +200,7 @@ export default function ParentCalendar() {
                           }}
                        >
                           <Text style={{ fontWeight: "700", fontSize: 14, color: day === selectedDay ? "white" : "#111827" }}>{day}</Text>
-                          {day === 15 && day !== selectedDay && (
+                          {enrollments.some((item) => scheduleMatchesDate(item.group_schedule, new Date(currentDate.year, currentDate.month, day))) && day !== selectedDay && (
                              <View style={{ position: "absolute", bottom: 4, width: 4, height: 4, borderRadius: 2, backgroundColor: "#7C3AED" }} />
                           )}
                        </Pressable>
@@ -133,12 +212,36 @@ export default function ParentCalendar() {
 
         <Text className="text-xl font-black text-gray-900 mb-4 px-1">Занятия на {selectedDay} {MONTHS[currentDate.month].toLowerCase()}</Text>
         
-        <View className="bg-gray-50 rounded-[32px] p-10 items-center border border-gray-100">
-           <View className="w-16 h-16 bg-white rounded-3xl items-center justify-center mb-4 border border-gray-100">
-              <Feather name="coffee" size={28} color="#D1D5DB" />
-           </View>
-           <Text className="text-gray-400 font-bold text-center">На этот день ничего не запланировано</Text>
-        </View>
+        {loading ? (
+          <View className="bg-gray-50 rounded-[32px] p-10 items-center border border-gray-100">
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          </View>
+        ) : selectedEvents.length > 0 ? (
+          <View style={{ gap: 12 }}>
+            {selectedEvents.map((item) => (
+              <View key={item.id} style={{ ...SHADOWS.sm, backgroundColor: "white", borderRadius: 24, padding: 16, borderWidth: 1, borderColor: "#F3F4F6" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 16, backgroundColor: COLORS.primary + "12", alignItems: "center", justifyContent: "center" }}>
+                    <Feather name="book-open" size={20} color={COLORS.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 15, fontWeight: "900", color: COLORS.foreground }}>{item.club ?? "Занятие"}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: "700", color: COLORS.mutedForeground, marginTop: 3 }}>
+                      {item.group_name || "Группа"} · {getScheduleTime(item.group_schedule)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View className="bg-gray-50 rounded-[32px] p-10 items-center border border-gray-100">
+             <View className="w-16 h-16 bg-white rounded-3xl items-center justify-center mb-4 border border-gray-100">
+                <Feather name="coffee" size={28} color="#D1D5DB" />
+             </View>
+             <Text className="text-gray-400 font-bold text-center">На этот день ничего не запланировано</Text>
+          </View>
+        )}
       </ScrollView>
     </View>
   );

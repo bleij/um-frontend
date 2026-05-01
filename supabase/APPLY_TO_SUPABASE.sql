@@ -328,10 +328,15 @@ create table if not exists public.org_groups (
 create table if not exists public.org_applications (
   id uuid primary key default gen_random_uuid(),
   org_id uuid references public.organizations(id) on delete cascade,
+  parent_user_id uuid references auth.users(id) on delete set null,
+  child_profile_id uuid,
+  group_id uuid references public.org_groups(id) on delete set null,
   child_name text not null,
   child_age int,
   parent_name text,
   club text,
+  group_name text,
+  group_schedule text,
   applied_date text,
   status text default 'awaiting_payment' check (status in ('paid','awaiting_payment','activated','completed','rejected')),
   created_at timestamptz default now()
@@ -454,6 +459,14 @@ create policy "org_groups_owner" on public.org_groups
 drop policy if exists "org_applications_owner" on public.org_applications;
 create policy "org_applications_owner" on public.org_applications
   for all using (exists (select 1 from public.organizations o where o.id = org_applications.org_id and (o.owner_user_id = auth.uid() or exists (select 1 from public.um_user_profiles p where p.id = auth.uid() and p.role = 'admin'))));
+
+drop policy if exists "parent_read_own_applications" on public.org_applications;
+create policy "parent_read_own_applications" on public.org_applications
+  for select using (parent_user_id = auth.uid());
+
+drop policy if exists "authenticated_insert_applications" on public.org_applications;
+create policy "authenticated_insert_applications" on public.org_applications
+  for insert with check (auth.role() = 'authenticated' and (parent_user_id is null or parent_user_id = auth.uid()));
 
 drop policy if exists "org_tasks_owner" on public.org_tasks;
 create policy "org_tasks_owner" on public.org_tasks

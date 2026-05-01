@@ -124,13 +124,23 @@ export function usePublicCourseById(id: string | undefined) {
 export async function applyToCourse(params: {
   orgId: string;
   courseTitle: string;
+  childProfileId?: string;
   childName: string;
   childAge?: number | null;
+  parentUserId?: string;
   parentName?: string;
+  groupId?: string | null;
+  groupName?: string | null;
+  groupSchedule?: string | null;
 }): Promise<{ error: string | null }> {
   if (!supabase || !isSupabaseConfigured) return { error: "Not configured" };
   const res = await supabase.from("org_applications").insert({
     org_id: params.orgId,
+    parent_user_id: params.parentUserId ?? null,
+    child_profile_id: params.childProfileId ?? null,
+    group_id: params.groupId ?? null,
+    group_name: params.groupName ?? null,
+    group_schedule: params.groupSchedule ?? null,
     club: params.courseTitle,
     child_name: params.childName,
     child_age: params.childAge ?? null,
@@ -144,17 +154,30 @@ export async function applyToCourse(params: {
 // ── checkEnrollment ───────────────────────────────────────────────────────────
 
 export async function checkEnrollment(params: {
+  childProfileId?: string;
   childName: string;
   courseTitle: string;
+  parentUserId?: string;
 }): Promise<{ enrolled: boolean }> {
   if (!supabase || !isSupabaseConfigured) return { enrolled: false };
   
-  const res = await supabase
+  let query = supabase
     .from("org_applications")
     .select("id")
     .eq("child_name", params.childName)
     .eq("club", params.courseTitle)
+    .neq("status", "rejected")
     .limit(1);
+
+  if (params.childProfileId) {
+    query = query.eq("child_profile_id", params.childProfileId);
+  }
+
+  if (params.parentUserId) {
+    query = query.eq("parent_user_id", params.parentUserId);
+  }
+
+  const res = await query;
   
   return { enrolled: (res.data?.length ?? 0) > 0 };
 }

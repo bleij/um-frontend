@@ -5,10 +5,15 @@
 CREATE TABLE IF NOT EXISTS org_applications (
   id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   org_id        uuid        NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  parent_user_id uuid       REFERENCES auth.users(id) ON DELETE SET NULL,
+  child_profile_id uuid,
+  group_id      uuid,
   child_name    text        NOT NULL,
   child_age     integer,
   parent_name   text,
   club          text,                    -- course title (free-text copy at time of booking)
+  group_name    text,                    -- group name copy at time of booking
+  group_schedule text,                   -- recurring schedule copy at time of booking
   applied_date  date,
   status        text        NOT NULL DEFAULT 'awaiting_payment'
                             CHECK (status IN ('awaiting_payment', 'paid', 'activated', 'completed', 'rejected')),
@@ -29,7 +34,16 @@ CREATE POLICY "org_owner_applications" ON org_applications
 DROP POLICY IF EXISTS "authenticated_insert_applications" ON org_applications;
 CREATE POLICY "authenticated_insert_applications" ON org_applications
   FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
+  WITH CHECK (
+    auth.role() = 'authenticated'
+    AND (parent_user_id IS NULL OR parent_user_id = auth.uid())
+  );
+
+-- Parents can read the applications they created, so their calendar can show active classes
+DROP POLICY IF EXISTS "parent_read_own_applications" ON org_applications;
+CREATE POLICY "parent_read_own_applications" ON org_applications
+  FOR SELECT
+  USING (parent_user_id = auth.uid());
 
 -- Admins can read and update all applications
 DROP POLICY IF EXISTS "admin_all_applications" ON org_applications;

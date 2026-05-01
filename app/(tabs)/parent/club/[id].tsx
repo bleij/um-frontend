@@ -75,24 +75,32 @@ export default function ParentClubDetails() {
         return;
       }
       const result = await checkEnrollment({
+        childProfileId: activeChild.id,
         childName: activeChild.name,
         courseTitle: course.title,
+        parentUserId: user?.id,
       });
       setEnrolled(result.enrolled);
       setCheckingEnrollment(false);
     }
     checkStatus();
-  }, [course?.title, activeChild?.name]);
+  }, [course?.title, activeChild?.id, activeChild?.name, user?.id]);
 
   const handleConfirmBooking = async () => {
     if (!course || !activeChild) return;
+    const selectedGroup = groups.find((group) => group.id === selectedGroupId);
     setApplying(true);
     const result = await applyToCourse({
       orgId: course.org_id,
       courseTitle: course.title,
+      childProfileId: activeChild.id,
       childName: activeChild.name,
       childAge: activeChild.age ?? null,
+      parentUserId: user?.id,
       parentName: user ? `${user.firstName} ${user.lastName}`.trim() : undefined,
+      groupId: selectedGroup?.id ?? null,
+      groupName: selectedGroup?.name ?? null,
+      groupSchedule: selectedGroup?.schedule ?? null,
     });
     setApplying(false);
     if (result.error) {
