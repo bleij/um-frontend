@@ -35,7 +35,7 @@ export function useDiagnosticEngine1517(opts: {
   const [results, setResults] = useState<Diagnostic | null>(null);
 
   // Collected data
-  const basicVotes = useRef<{ cardId: string; anchor: AnchorType; liked: boolean }[]>([]);
+  const basicVotes = useRef<{ cardId: string; anchor: AnchorType; liked: boolean; latency: number }[]>([]);
   const stealthEvents = useRef<StealthEvent1517[]>([]);
   const taskEnteredAt = useRef<number>(Date.now());
 
@@ -52,6 +52,7 @@ export function useDiagnosticEngine1517(opts: {
   const startBasic = useCallback(() => {
     setPhase("basic");
     setBasicIndex(0);
+    taskEnteredAt.current = Date.now();
   }, []);
 
   const advanceToPro = useCallback(async () => {
@@ -70,11 +71,13 @@ export function useDiagnosticEngine1517(opts: {
       const card = CAREER_CARDS[basicIndex];
       if (!card) return;
 
-      basicVotes.current.push({ cardId: card.id, anchor: card.anchor, liked });
+      const latency = Date.now() - taskEnteredAt.current;
+      basicVotes.current.push({ cardId: card.id, anchor: card.anchor, liked, latency });
 
       const nextIndex = basicIndex + 1;
       if (nextIndex < CAREER_CARDS.length) {
         setBasicIndex(nextIndex);
+        taskEnteredAt.current = Date.now();
       } else {
         await advanceToPro();
       }
@@ -112,12 +115,19 @@ export function useDiagnosticEngine1517(opts: {
 
   // ── Scoring ──
   const computeResults = useCallback(() => {
-    // 1. Career Anchors from basic
+    // 1. Career Anchors from basic (with Stealth Analytics: Latency Math)
     const anchorCounts: Record<AnchorType, number> = { 
       Autonomy: 0, Stability: 0, Mastery: 0, Management: 0, 
       Entrepreneurship: 0, Service: 0, Challenge: 0, Lifestyle: 0 
     };
-    basicVotes.current.forEach((v) => { if (v.liked) anchorCounts[v.anchor]++; });
+    basicVotes.current.forEach((v) => { 
+      if (v.liked) {
+        let weight = 1.0;
+        if (v.latency < 2000) weight = 1.2; // Быстро и уверенно (K_latency)
+        if (v.latency > 8000) weight = 0.8; // Долго сомневался (K_latency)
+        anchorCounts[v.anchor] += weight;
+      }
+    });
     
     const sortedAnchors = (Object.entries(anchorCounts) as [AnchorType, number][])
       .sort((a, b) => b[1] - a[1]);

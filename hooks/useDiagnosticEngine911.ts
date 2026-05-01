@@ -43,6 +43,7 @@ interface WYRRecord {
   cardId: string;
   chosenSkill: BasicSkill911;
   timestamp: number;
+  latency: number;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -103,10 +104,13 @@ export function useDiagnosticEngine911(opts: {
       const card = WYR_CARDS[basicIndex];
       if (!card) return;
 
+      const latency = Date.now() - taskEnteredAt.current;
+
       wyrChoices.current.push({
         cardId: card.id,
         chosenSkill,
         timestamp: Date.now(),
+        latency,
       });
 
       const nextIndex = basicIndex + 1;
@@ -153,7 +157,7 @@ export function useDiagnosticEngine911(opts: {
   // ── Scoring ──────────────────────────────────────────────────────────────────
 
   const computeResults = useCallback(() => {
-    // 1) Count BASIC skill votes
+    // 1) Count BASIC skill votes (with Stealth Analytics: Latency Math)
     const skillCounts: Record<BasicSkill911, number> = {
       creativity: 0,
       logic: 0,
@@ -165,7 +169,10 @@ export function useDiagnosticEngine911(opts: {
       teamwork: 0,
     };
     for (const r of wyrChoices.current) {
-      skillCounts[r.chosenSkill]++;
+      let weight = 1.0;
+      if (r.latency < 2500) weight = 1.2; // Fast intuitive choice
+      if (r.latency > 8500) weight = 0.8; // Hesitation
+      skillCounts[r.chosenSkill] += weight;
     }
 
     // Top 3 skills
