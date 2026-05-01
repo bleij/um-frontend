@@ -2109,7 +2109,6 @@ export default function AdminHome() {
             <TouchableOpacity
               onPress={async () => {
                 await logout();
-                router.replace("/intro" as any);
               }}
               style={{
                 flexDirection: "row",

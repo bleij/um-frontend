@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ActivityIndicator, Alert, SafeAreaView, Platform } from "react-native";
+import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useParentData } from "../../../contexts/ParentDataContext";
 import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const QUESTIONS = [
   {

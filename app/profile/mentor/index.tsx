@@ -49,7 +49,6 @@ export default function MentorProfile() {
   const handleLogout = async () => {
     if (Platform.OS === "web") {
       await logout();
-      router.replace("/intro" as any);
     } else {
       Alert.alert("Выход", "Вы действительно хотите выйти?", [
         { text: "Отмена", style: "cancel" },
@@ -58,7 +57,6 @@ export default function MentorProfile() {
           style: "destructive",
           onPress: async () => {
             await logout();
-            router.replace("/intro" as any);
           },
         },
       ]);

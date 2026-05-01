@@ -42,7 +42,6 @@ export default function OrgProfile() {
   const handleLogout = async () => {
     if (Platform.OS === "web") {
       await logout();
-      router.replace("/intro");
     } else {
       Alert.alert("Выход", "Вы действительно хотите выйти?", [
         { text: "Отмена", style: "cancel" },
@@ -51,7 +50,6 @@ export default function OrgProfile() {
           style: "destructive",
           onPress: async () => {
             await logout();
-            router.replace("/intro");
           },
         },
       ]);

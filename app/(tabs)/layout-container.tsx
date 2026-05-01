@@ -429,7 +429,6 @@ export function NotificationsModal({
 export function SideNav({ role }: Props) {
   const { tabs, go, isActive } = useTabNav(role);
   const { user, logout } = useAuth();
-  const router = useRouter();
 
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const [dropdownVisible, setDropdownVisible] = useState(false);
@@ -440,7 +439,6 @@ export function SideNav({ role }: Props) {
   const handleLogout = async () => {
     setDropdownVisible(false);
     await logout();
-    router.replace("/intro" as any);
   };
 
   const userInitial = user?.firstName?.charAt(0)?.toUpperCase() ?? "?";

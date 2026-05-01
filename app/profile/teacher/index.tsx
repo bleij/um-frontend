@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React from "react";
 import {
@@ -18,7 +17,6 @@ import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/
 import { useAuth } from "../../../contexts/AuthContext";
 
 export default function TeacherProfile() {
-  const router = useRouter();
   const { logout, user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -27,7 +25,6 @@ export default function TeacherProfile() {
   const handleLogout = async () => {
     if (Platform.OS === "web") {
       await logout();
-      router.replace("/intro" as any);
     } else {
       Alert.alert("Выход", "Вы действительно хотите выйти?", [
         { text: "Отмена", style: "cancel" },
@@ -36,7 +33,6 @@ export default function TeacherProfile() {
           style: "destructive",
           onPress: async () => {
             await logout();
-            router.replace("/intro" as any);
           },
         },
       ]);

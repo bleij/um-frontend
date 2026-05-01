@@ -68,6 +68,15 @@ export default function CreateProfileTeen() {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/register");
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -118,7 +127,7 @@ export default function CreateProfileTeen() {
               {/* Header Nav */}
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <TouchableOpacity
-                  onPress={() => router.back()}
+                  onPress={handleBack}
                   style={{ flexDirection: "row", alignItems: "center" }}
                 >
                   <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, TouchableOpacity, Modal, StyleSheet,
-  ScrollView, Switch, Platform, useWindowDimensions, Pressable,
+  ScrollView, Switch, Platform, useWindowDimensions, Pressable, ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth, UserRole } from '../contexts/AuthContext';
@@ -18,6 +18,8 @@ export function DevRoleSwitcher() {
 
   const [visible, setVisible] = useState(false);
   const [devToolsEnabled, setDevToolsEnabledState] = useState(false);
+  const [switchingRole, setSwitchingRole] = useState<UserRole | null>(null);
+  const [clearingRole, setClearingRole] = useState(false);
 
   // All hooks up-front so they're in scope for toggleDevTools
   const { user, setUserRole, devLogin, logout, devMode, setDevMode, devOtpCode } = useAuth();
@@ -39,7 +41,6 @@ export function DevRoleSwitcher() {
       if (!useRealOtp) await setUseRealOtp(true);
       await logout();
       setVisible(false);
-      router.replace('/intro');
     }
   };
 
@@ -54,13 +55,34 @@ export function DevRoleSwitcher() {
   const roles: UserRole[] = ['parent', 'youth', 'child', 'mentor', 'org', 'teacher', 'admin'];
 
   const handleSwitch = async (role: UserRole) => {
-    if (!user) {
-      await devLogin(role);
-    } else {
-      await setUserRole(role);
+    if (switchingRole || clearingRole) return;
+
+    setSwitchingRole(role);
+    try {
+      if (devToolsEnabled) {
+        await devLogin(role);
+      } else if (user) {
+        await setUserRole(role);
+      } else {
+        await devLogin(role);
+      }
+      setVisible(false);
+      router.replace('/(tabs)/home');
+    } finally {
+      setSwitchingRole(null);
     }
-    setVisible(false);
-    router.replace('/(tabs)/home');
+  };
+
+  const handleClearRole = async () => {
+    if (switchingRole || clearingRole || !user) return;
+
+    setClearingRole(true);
+    try {
+      await logout();
+      setVisible(false);
+    } finally {
+      setClearingRole(false);
+    }
   };
 
   return (
@@ -201,17 +223,63 @@ export function DevRoleSwitcher() {
 
                 <Text style={styles.sectionTitle}>Switch role</Text>
                 <View style={styles.grid}>
-                  {roles.map((role) => (
-                    <TouchableOpacity
-                      key={role}
-                      style={[styles.roleButton, user?.role === role && styles.activeRoleButton]}
-                      onPress={() => handleSwitch(role)}
-                    >
-                      <Text style={[styles.roleButtonText, user?.role === role && styles.activeRoleButtonText]}>
-                        {role}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  {roles.map((role) => {
+                    const isActive = user?.role === role;
+                    const isSwitching = switchingRole === role;
+
+                    return (
+                      <TouchableOpacity
+                        key={role}
+                        style={[
+                          styles.roleButton,
+                          isActive && styles.activeRoleButton,
+                          (clearingRole || (switchingRole && !isSwitching)) && styles.disabledRoleButton,
+                        ]}
+                        onPress={() => handleSwitch(role)}
+                        disabled={Boolean(switchingRole) || clearingRole}
+                        activeOpacity={0.75}
+                      >
+                        {isSwitching && (
+                          <ActivityIndicator
+                            size="small"
+                            color={isActive ? 'white' : COLORS.primary}
+                            style={styles.roleButtonSpinner}
+                          />
+                        )}
+                        <Text style={[styles.roleButtonText, isActive && styles.activeRoleButtonText]}>
+                          {role}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  <TouchableOpacity
+                    style={[
+                      styles.roleButton,
+                      styles.clearRoleButton,
+                      (!user || switchingRole || clearingRole) && styles.disabledRoleButton,
+                    ]}
+                    onPress={handleClearRole}
+                    disabled={!user || Boolean(switchingRole) || clearingRole}
+                    activeOpacity={0.75}
+                  >
+                    {clearingRole ? (
+                      <ActivityIndicator
+                        size="small"
+                        color={COLORS.destructive}
+                        style={styles.roleButtonSpinner}
+                      />
+                    ) : (
+                      <Feather
+                        name="user-x"
+                        size={14}
+                        color={COLORS.destructive}
+                        style={styles.roleButtonSpinner}
+                      />
+                    )}
+                    <Text style={[styles.roleButtonText, styles.clearRoleButtonText]}>
+                      clear role
+                    </Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Dev Youth Age toggle */}
@@ -365,10 +433,24 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.muted,
     borderWidth: 1,
     borderColor: COLORS.border,
+    minHeight: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activeRoleButton: {
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
+  },
+  clearRoleButton: {
+    backgroundColor: COLORS.background,
+    borderColor: COLORS.destructive,
+  },
+  disabledRoleButton: {
+    opacity: 0.5,
+  },
+  roleButtonSpinner: {
+    marginRight: 6,
   },
   roleButtonText: {
     color: COLORS.foreground,
@@ -377,5 +459,8 @@ const styles = StyleSheet.create({
   },
   activeRoleButtonText: {
     color: 'white',
+  },
+  clearRoleButtonText: {
+    color: COLORS.destructive,
   },
 });

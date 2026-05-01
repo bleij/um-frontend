@@ -101,6 +101,15 @@ export default function CreateProfileChild() {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/register");
+  };
+
   const pageContent = (
     <LinearGradient colors={["#FDF2F8", "#FAF5FF"]} style={{ flex: 1 }}>
       <LinearGradient
@@ -120,7 +129,7 @@ export default function CreateProfileChild() {
             paddingHorizontal: horizontalPadding,
           }}
         >
-          <TouchableOpacity onPress={() => router.back()} className="p-2 mr-2">
+          <TouchableOpacity onPress={handleBack} className="p-2 mr-2">
             <Feather name="arrow-left" size={24} color="white" />
           </TouchableOpacity>
           <Text className="text-xl font-bold text-white">

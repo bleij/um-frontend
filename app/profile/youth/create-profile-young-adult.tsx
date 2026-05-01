@@ -40,6 +40,15 @@ export default function CreateProfileYoungAdult() {
     router.push("/profile/youth/testing");
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/register");
+  };
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -63,7 +72,7 @@ export default function CreateProfileYoungAdult() {
             }}
           >
             <TouchableOpacity
-              onPress={() => router.back()}
+              onPress={handleBack}
               className="p-2 mr-2"
             >
               <Feather name="arrow-left" size={24} color="white" />

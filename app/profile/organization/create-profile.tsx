@@ -85,6 +85,15 @@ export default function CreateProfileOrganization() {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/register");
+  };
+
   if (isSuccess) {
     return <SuccessView onHome={() => router.replace("/(tabs)/home")} />;
   }
@@ -126,7 +135,7 @@ export default function CreateProfileOrganization() {
             {/* Header nav — identical structure to register.tsx */}
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
               <PressableScale
-                onPress={() => router.back()}
+                onPress={handleBack}
                 style={{ flexDirection: "row", alignItems: "center" }}
                 scaleTo={0.93}
               >
@@ -283,14 +292,29 @@ function Field({
         <TextInput
           value={value}
           onChangeText={onChange}
-          placeholder={placeholder}
-          placeholderTextColor={COLORS.mutedForeground}
+          placeholder=""
           keyboardType={keyboardType}
           secureTextEntry={secure && !shown}
           autoFocus={autoFocus}
           className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border border-gray-100"
           style={{ fontSize: 15, fontWeight: "500" }}
         />
+        {!value && !!placeholder && (
+          <Text
+            pointerEvents="none"
+            numberOfLines={1}
+            style={{
+              position: "absolute",
+              left: 48,
+              right: 48,
+              color: COLORS.mutedForeground,
+              fontSize: 15,
+              fontWeight: "500",
+            }}
+          >
+            {placeholder}
+          </Text>
+        )}
         {secure && showToggle && (
           <PressableScale onPress={showToggle} style={{ position: "absolute", right: 16, zIndex: 1 }} scaleTo={0.85}>
             <Feather name={shown ? "eye-off" : "eye"} size={18} color={COLORS.mutedForeground} />

@@ -69,6 +69,10 @@ function ageGroupToAge(ageGroup: AgeGroup | null) {
   return 10;
 }
 
+function buildDevChildId(parentUserId: string) {
+  return `dev_child_${parentUserId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 24)}`;
+}
+
 function normalizeChild(child: Child): Child {
   return {
     ...child,
@@ -417,21 +421,22 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
 /** Helper component to auto-add a child in dev mode if none exist */
 function DevChildInjector({ onAdded }: { onAdded: () => void }) {
   const { addChild, isLoading } = useParentData();
+  const { user } = useAuth();
   const [attempted, setAttempted] = React.useState(false);
 
   React.useEffect(() => {
-    if (!isLoading && !attempted) {
+    if (!isLoading && !attempted && user) {
       setAttempted(true);
       addChild({
-        id: "dev_child_123",
+        id: buildDevChildId(user.id),
         name: "Алексей (Dev)",
         age: 8,
         ageCategory: "child",
         interests: ["Робототехника", "Рисование"],
-        parentId: "dev",
+        parentId: user.id,
       }).then(onAdded);
     }
-  }, [isLoading, attempted]);
+  }, [addChild, isLoading, attempted, onAdded, user]);
 
   return null;
 }

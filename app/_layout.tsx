@@ -14,6 +14,20 @@ import "../global.css";
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { DevRoleSwitcher } from "../components/DevRoleSwitcher";
+import type { UserRole } from "../contexts/AuthContext";
+
+const PROFILE_SETUP_ROUTES: Partial<Record<UserRole, string>> = {
+  parent: "/profile/parent/create-profile",
+  youth: "/profile/youth/create-profile",
+  child: "/profile/youth/create-profile",
+  "young-adult": "/profile/youth/create-profile",
+  mentor: "/profile/mentor/create-profile",
+  org: "/profile/organization/create-profile",
+};
+
+function getProfileSetupRoute(role: UserRole) {
+  return PROFILE_SETUP_ROUTES[role] ?? "/(tabs)/home";
+}
 
 function RootNavigator() {
   const colorScheme = useColorScheme();
@@ -40,7 +54,24 @@ function RootNavigator() {
     // the user is technically signed in — they need to finish the flow.
     const isOAuthCallbackScreen =
       inOAuthFlow &&
-      (authScreen === "callback" || authScreen === "complete-profile");
+      (authScreen === "callback" || authScreen === "complete-profile" || authScreen === "reset-password");
+
+    if (user && !user.profileComplete && !devMode && !isOAuthCallbackScreen) {
+      const setupRoute = getProfileSetupRoute(user.role);
+      const setupRouteParts = setupRoute.split("/").filter(Boolean);
+      const onProfileSetupRoute = setupRouteParts.every(
+        (part, index) => segments[index] === part,
+      );
+      if (!onProfileSetupRoute) {
+        router.replace(setupRoute as any);
+        return;
+      }
+    }
+
+    if (user && inAuthGroup && authScreen === "intro") {
+      router.replace("/(tabs)/home");
+      return;
+    }
 
     // Skip auto-redirect to home if devMode is enabled or user is mid-register
     if (
@@ -59,8 +90,6 @@ function RootNavigator() {
       router.replace("/(tabs)/home");
     }
   }, [isLoading, router, segments, user, devMode]);
-
-  if (isLoading) return null;
 
   return (
     <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>

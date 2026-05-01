@@ -66,29 +66,30 @@ export default function ParentProfile() {
 
   useEffect(() => {
     if (selectedChild) {
-      fetchEnrollments(selectedChild.id);
+      fetchEnrollments();
     }
-  }, [selectedChild?.id]);
+  }, [selectedChild?.id, user?.id]);
 
-  const fetchEnrollments = async (childId: string) => {
-    if (!supabase || !isSupabaseConfigured) return;
+  const fetchEnrollments = async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) return;
     setLoadingEnrollments(true);
     try {
       const { data, error } = await supabase
-        .from('enrollments')
+        .from('student_enrollment_requests')
         .select(`
           id,
+          course_title,
+          org_name,
           status,
-          organizations (name),
-          groups (name, schedule)
+          created_at
         `)
-        .eq('child_id', childId);
+        .eq('parent_id', user.id)
+        .order('created_at', { ascending: false });
       
       if (!error && data) {
         setEnrollments(data);
       } else if (error) {
-        // Table doesn't exist yet - silently fail
-        console.log('Enrollments table not found:', error.message);
+        console.error('Error fetching enrollments:', error.message);
         setEnrollments([]);
       }
     } catch (e) {
@@ -136,7 +137,6 @@ export default function ParentProfile() {
   const handleLogout = async () => {
     if (Platform.OS === "web") {
       await logout();
-      router.replace("/intro" as any);
     } else {
       Alert.alert("Выход", "Вы действительно хотите выйти?", [
         { text: "Отмена", style: "cancel" },
@@ -145,7 +145,6 @@ export default function ParentProfile() {
           style: "destructive",
           onPress: async () => {
             await logout();
-            router.replace("/intro" as any);
           },
         },
       ]);
@@ -340,13 +339,13 @@ export default function ParentProfile() {
                     enrollments.map((enr) => (
                         <View key={enr.id} style={styles.clubCard}>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.clubName}>{(enr.organizations as any)?.name || "Клуб"}</Text>
-                                <Text style={styles.groupName}>{(enr.groups as any)?.name}</Text>
+                                <Text style={styles.clubName}>{enr.org_name || "Клуб"}</Text>
+                                <Text style={styles.groupName}>{enr.course_title || "Курс"}</Text>
                                 <View style={styles.scheduleRow}>
                                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                         <Feather name="calendar" size={12} color={COLORS.mutedForeground} />
                                         <Text style={[styles.scheduleText, { marginLeft: 4 }]}>
-                                            {(enr.groups as any)?.schedule || "Расписание уточняется"}
+                                            {enr.status === "approved" ? "Одобрено" : enr.status === "rejected" ? "Отклонено" : "Ожидает подтверждения"}
                                         </Text>
                                     </View>
                                 </View>

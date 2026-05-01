@@ -20,12 +20,15 @@ import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { PressableScale } from "../../components/ui/PressableScale";
 import { useAuth } from "../../contexts/AuthContext";
 
+type AuthMethod = "phone" | "email";
+
 export default function LoginScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { loginWithPhone, loginWithGoogle } = useAuth();
+  const { loginWithIdentifier, loginWithGoogle } = useAuth();
 
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("phone");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
@@ -70,19 +73,43 @@ export default function LoginScreen() {
       formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 9)}-${digitsOnly.slice(9, 11)}`;
     }
     
-    setPhoneNumber(formatted);
+    setIdentifier(formatted);
   };
 
-  const canSubmit = phoneNumber.replace(/\D/g, "").length >= 10 && password.length >= 6;
+  const isEmail = authMethod === "email";
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.trim());
+  const isValidPhone = identifier.replace(/\D/g, "").length >= 10;
+  const canSubmit = (isEmail ? isValidEmail : isValidPhone) && password.length >= 6;
+
+  const handleIdentifierChange = (text: string) => {
+    if (isEmail) {
+      setIdentifier(text.trim());
+      return;
+    }
+    formatPhone(text);
+  };
+
+  const handleAuthMethodChange = (method: AuthMethod) => {
+    setAuthMethod(method);
+    setIdentifier("");
+    setError("");
+  };
 
   const handleGoogleLogin = async () => {
     setError("");
     setIsGoogleLoading(true);
-    const result = await loginWithGoogle();
-    // On web the page navigates away before this line runs.
-    // On native we get a result back and need to handle it.
-    if (!result.success) {
-      setError(result.error || "Не удалось войти через Google");
+    try {
+      const result = await loginWithGoogle();
+      // On web the page navigates away before this line runs.
+      // On native we get a result back and need to handle it.
+      if (!result.success) {
+        setError(result.error || "Не удалось войти через Google");
+        return;
+      }
+      router.replace("/(tabs)/home");
+    } catch (e: any) {
+      setError(e?.message || "Не удалось войти через Google");
+    } finally {
       setIsGoogleLoading(false);
     }
     // On success (native) the onAuthStateChange listener in AuthContext
@@ -92,13 +119,22 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     setError("");
     setIsSubmitting(true);
-    const result = await loginWithPhone(phoneNumber, password);
+    const result = await loginWithIdentifier(identifier, password);
     setIsSubmitting(false);
     if (!result.success) {
       setError(result.error || "Не удалось войти");
       return;
     }
     router.replace("/(tabs)/home");
+  };
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/intro");
   };
 
   return (
@@ -135,7 +171,8 @@ export default function LoginScreen() {
             contentContainerStyle={{
               flexGrow: 1,
               alignItems: "center",
-              paddingVertical: isDesktop ? 24 : 12,
+              paddingTop: isDesktop ? 24 : 12,
+              paddingBottom: 20,
             }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
@@ -151,7 +188,7 @@ export default function LoginScreen() {
             >
               {/* Back Button */}
               <PressableScale
-                onPress={() => router.replace("/intro")}
+                onPress={handleBack}
                 style={{
                   flexDirection: "row",
                   alignItems: "center",
@@ -187,17 +224,21 @@ export default function LoginScreen() {
                   transition={{ delay: 100 }}
                   style={{ backgroundColor: 'white', borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md }}
               >
-                {/* Phone Field */}
+                <AuthMethodSwitcher value={authMethod} onChange={handleAuthMethodChange} />
+
+                {/* Login Field */}
                 <View style={{ marginBottom: 20 }}>
-                    <Text style={styles.label}>НОМЕР ТЕЛЕФОНА</Text>
+                    <Text style={styles.label}>{isEmail ? "EMAIL" : "НОМЕР ТЕЛЕФОНА"}</Text>
                     <View style={styles.inputWrapper}>
-                        <Feather name="phone" size={18} color={COLORS.mutedForeground} style={styles.inputIcon} />
+                        <Feather name={isEmail ? "mail" : "phone"} size={18} color={COLORS.mutedForeground} style={styles.inputIcon} />
                         <TextInput
-                            placeholder="+7 (___) ___-__-__"
+                            placeholder={isEmail ? "you@example.com" : "+7 (___) ___-__-__"}
                             placeholderTextColor={COLORS.mutedForeground}
-                            value={phoneNumber}
-                            onChangeText={formatPhone}
-                            keyboardType="phone-pad"
+                            value={identifier}
+                            onChangeText={handleIdentifierChange}
+                            keyboardType={isEmail ? "email-address" : "phone-pad"}
+                            autoCapitalize="none"
+                            autoCorrect={false}
                             className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl border border-gray-100"
                             style={styles.inputText}
                         />
@@ -229,7 +270,7 @@ export default function LoginScreen() {
                 </View>
 
                 <PressableScale
-                  onPress={() => {/* Forgot password logic */}}
+                  onPress={() => router.push("/forgot-password")}
                   style={{ alignSelf: 'flex-end', marginBottom: 24 }}
                   scaleTo={0.93}
                 >
@@ -266,46 +307,45 @@ export default function LoginScreen() {
                 </PressableScale>
               </MotiView>
 
+              <View style={styles.accountSwitchRow}>
+                <Text style={styles.accountSwitchText}>Нет аккаунта? </Text>
+                <PressableScale onPress={() => router.push("/register")} scaleTo={0.93}>
+                  <Text style={styles.accountSwitchLink}>Зарегистрироваться</Text>
+                </PressableScale>
+              </View>
+
               {/* Social / alternative login */}
-              <View style={{ marginTop: 32 }}>
+              <View style={{ marginTop: 20 }}>
                 <View style={styles.dividerRow}>
                     <View style={styles.dividerLine} />
                     <Text style={styles.dividerText}>или</Text>
                     <View style={styles.dividerLine} />
                 </View>
 
-                <View style={{ gap: 12, marginTop: 16 }}>
+                <View style={styles.socialChipRow}>
                     {/* Google */}
                     <PressableScale
                         onPress={handleGoogleLogin}
                         disabled={isGoogleLoading}
-                        style={styles.socialBtn}
+                        style={styles.socialChip}
                     >
                         {isGoogleLoading ? (
                             <ActivityIndicator size="small" color={COLORS.mutedForeground} />
                         ) : (
                             <AntDesign name="google" size={20} color="#4285F4" />
                         )}
-                        <Text style={styles.socialBtnText}>Войти через Google</Text>
+                        <Text style={styles.socialChipText}>Google</Text>
                     </PressableScale>
 
                     {/* QR */}
                     <PressableScale
                         onPress={() => router.push("/(auth)/qr-scan")}
-                        style={styles.socialBtn}
+                        style={styles.socialChip}
                     >
                         <Feather name="grid" size={20} color={COLORS.primary} />
-                        <Text style={styles.socialBtnText}>Войти по QR-коду</Text>
+                        <Text style={styles.socialChipText}>QR-код</Text>
                     </PressableScale>
-                </View>
-              </View>
-
-              {/* Register link */}
-              <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
-                <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Нет аккаунта? </Text>
-                <PressableScale onPress={() => router.push("/register")} scaleTo={0.93}>
-                  <Text style={{ color: COLORS.primary, fontWeight: "800", fontSize: 15 }}>Зарегистрироваться</Text>
-                </PressableScale>
+                  </View>
               </View>
             </View>
           </ScrollView>
@@ -315,7 +355,60 @@ export default function LoginScreen() {
   );
 }
 
+function AuthMethodSwitcher({
+  value,
+  onChange,
+}: {
+  value: AuthMethod;
+  onChange: (method: AuthMethod) => void;
+}) {
+  return (
+    <View style={styles.switcher}>
+      {(["phone", "email"] as const).map((method) => {
+        const active = method === value;
+        return (
+          <PressableScale
+            key={method}
+            onPress={() => onChange(method)}
+            style={[styles.switcherItem, active && styles.switcherItemActive]}
+            scaleTo={0.94}
+          >
+            <Text style={[styles.switcherText, active && styles.switcherTextActive]}>
+              {method === "phone" ? "Телефон" : "Email"}
+            </Text>
+          </PressableScale>
+        );
+      })}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+    switcher: {
+        flexDirection: "row",
+        backgroundColor: COLORS.muted,
+        borderRadius: RADIUS.md,
+        padding: 4,
+        marginBottom: 20,
+    },
+    switcherItem: {
+        flex: 1,
+        paddingVertical: 10,
+        borderRadius: RADIUS.md - 2,
+        alignItems: "center",
+        backgroundColor: "transparent",
+    },
+    switcherItemActive: {
+        backgroundColor: COLORS.card,
+    },
+    switcherText: {
+        fontWeight: "600",
+        fontSize: 13,
+        color: COLORS.mutedForeground,
+    },
+    switcherTextActive: {
+        color: COLORS.foreground,
+    },
     label: {
         fontSize: 12,
         fontWeight: '700',
@@ -380,22 +473,45 @@ const styles = StyleSheet.create({
         fontSize: 13,
         fontWeight: '500'
     },
-    socialBtn: {
+    socialChipRow: {
+        flexDirection: "row",
+        gap: 12,
+        marginTop: 12,
+    },
+    socialChip: {
+        flex: 1,
+        minHeight: 48,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center",
-        gap: 10,
-        paddingHorizontal: 24,
-        paddingVertical: 16,
+        gap: 8,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
         borderRadius: RADIUS.xl,
         backgroundColor: 'white',
         borderWidth: 1.5,
         borderColor: COLORS.border,
         ...SHADOWS.sm,
     },
-    socialBtnText: {
-        fontSize: 15,
+    socialChipText: {
+        fontSize: 14,
         fontWeight: "700",
         color: COLORS.foreground,
+    },
+    accountSwitchRow: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: 32,
+        marginTop: 18,
+    },
+    accountSwitchText: {
+        color: COLORS.mutedForeground,
+        fontSize: 15,
+    },
+    accountSwitchLink: {
+        color: COLORS.primary,
+        fontWeight: "800",
+        fontSize: 15,
     }
 });

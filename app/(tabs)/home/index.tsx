@@ -19,6 +19,8 @@ export default function HomeScreenRouter() {
   useEffect(() => {
     if (user?.role) {
       setRole(user.role as Role);
+    } else {
+      setRole(null);
     }
   }, [user]);
 

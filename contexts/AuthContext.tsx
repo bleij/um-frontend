@@ -32,11 +32,13 @@ export interface AuthUser {
   role: UserRole;
   firstName: string;
   lastName: string;
+  profileComplete: boolean;
 }
 
 interface AuthActionResult {
   success: boolean;
   error?: string;
+  requiresEmailConfirmation?: boolean;
 }
 
 interface AuthContextValue {
@@ -44,6 +46,7 @@ interface AuthContextValue {
   isLoading: boolean;
   devOtpCode: string | null;
   sendOtp: (phone: string) => Promise<AuthActionResult>;
+  sendRegistrationCode: (identifier: string) => Promise<AuthActionResult>;
   verifyOtpAndRegister: (
     phone: string,
     otp: string,
@@ -52,9 +55,20 @@ interface AuthContextValue {
     firstName: string,
     lastName?: string,
   ) => Promise<AuthActionResult>;
+  registerWithIdentifier: (
+    identifier: string,
+    otp: string,
+    password: string,
+    role: UserRole,
+    firstName: string,
+    lastName?: string,
+  ) => Promise<AuthActionResult>;
   loginWithPhone: (phone: string, password: string) => Promise<AuthActionResult>;
+  loginWithIdentifier: (identifier: string, password: string) => Promise<AuthActionResult>;
   loginWithGoogle: () => Promise<AuthActionResult>;
   loginWithQR: (pin: string) => Promise<AuthActionResult>;
+  requestPasswordReset: (email: string) => Promise<AuthActionResult>;
+  updatePassword: (password: string) => Promise<AuthActionResult>;
   setUserRole: (role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   devLogin: (role: UserRole) => Promise<void>;
@@ -66,10 +80,11 @@ interface AuthContextValue {
 }
 
 
-// Only dev-switcher users (fake, not in Supabase) are persisted locally.
-// Real users are restored exclusively from supabase.auth.getSession().
+// Fallback dev-switcher users are persisted locally only when Supabase is not
+// configured or anonymous auth is unavailable.
 const DEV_USER_KEY = "um_dev_user";
 const DEV_MODE_KEY = "um_dev_mode";
+const PROFILE_COMPLETE_PREFIX = "um_profile_complete:";
 
 const DEV_OTP = process.env.EXPO_PUBLIC_DEV_OTP?.trim() || null;
 const PLACEHOLDER_VERIFICATION_CODE = DEV_OTP ?? "1234";
@@ -97,6 +112,17 @@ function normalizePhone(rawPhone: string): string {
   return `+7${digits}`;
 }
 
+function isEmailIdentifier(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function getAuthRedirectPath(path: string): string {
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    return `${window.location.origin}${path}`;
+  }
+  return `umapp://${path.replace(/^\//, "")}`;
+}
+
 function toAuthUser(input: {
   id: string;
   phone: string;
@@ -104,6 +130,7 @@ function toAuthUser(input: {
   role: UserRole;
   firstName?: string;
   lastName?: string;
+  profileComplete?: boolean;
 }): AuthUser {
   return {
     id: input.id,
@@ -112,6 +139,7 @@ function toAuthUser(input: {
     role: input.role,
     firstName: input.firstName?.trim() || "Пользователь",
     lastName: input.lastName?.trim() || "",
+    profileComplete: input.profileComplete ?? true,
   };
 }
 
@@ -130,6 +158,25 @@ function parseRole(value: string | null | undefined): UserRole {
   return "parent";
 }
 
+function isAnonymousSupabaseUser(sessionUser: SupabaseUser): boolean {
+  return sessionUser.is_anonymous === true;
+}
+
+function buildDevPhoneFromId(id: string): string {
+  const digits = id.replace(/\D/g, "").slice(-10).padStart(10, "0");
+  return `+7${digits}`;
+}
+
+function buildDevUserFromId(id: string, role: UserRole): AuthUser {
+  return toAuthUser({
+    id,
+    phone: buildDevPhoneFromId(id),
+    email: `${role}@dev.local`,
+    role,
+    firstName: "Dev",
+    lastName: role.charAt(0).toUpperCase() + role.slice(1),
+  });
+}
 
 async function fetchRemoteProfile(userId: string) {
   if (!supabase || !isSupabaseConfigured) return null;
@@ -140,6 +187,65 @@ async function fetchRemoteProfile(userId: string) {
     .maybeSingle();
   if (response.error) return null;
   return response.data;
+}
+
+function profileCompleteKey(userId: string) {
+  return `${PROFILE_COMPLETE_PREFIX}${userId}`;
+}
+
+async function getLocalProfileComplete(userId: string) {
+  return (await AsyncStorage.getItem(profileCompleteKey(userId))) === "true";
+}
+
+async function setLocalProfileComplete(userId: string, complete: boolean) {
+  if (complete) {
+    await AsyncStorage.setItem(profileCompleteKey(userId), "true");
+    return;
+  }
+  await AsyncStorage.removeItem(profileCompleteKey(userId));
+}
+
+async function hasRemoteProfileSetup(userId: string, role: UserRole) {
+  if (!supabase || !isSupabaseConfigured) return false;
+
+  if (role === "mentor") {
+    const { data, error } = await supabase
+      .from("mentor_applications")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    return !error && !!data;
+  }
+
+  if (role === "org") {
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("id")
+      .eq("owner_user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    return !error && !!data;
+  }
+
+  if (role === "parent") {
+    const { data, error } = await supabase
+      .from("parent_profiles")
+      .select("id")
+      .eq("user_id", userId)
+      .limit(1)
+      .maybeSingle();
+    return !error && !!data;
+  }
+
+  // Youth setup currently finishes through local diagnostic/profile flows, not
+  // a single durable Supabase row. Avoid locking existing users out.
+  return true;
+}
+
+async function resolveProfileComplete(userId: string, role: UserRole) {
+  if (await getLocalProfileComplete(userId)) return true;
+  return hasRemoteProfileSetup(userId, role);
 }
 
 async function upsertRemoteProfile(user: AuthUser) {
@@ -174,31 +280,39 @@ async function hydrateFromSupabaseUser(
     (metadata.email as string | undefined) ||
     "";
 
-  // Accept users who have either phone OR email (OAuth users have email but no phone)
-  if (!phone && !email) return null;
+  const metadataRole = parseRole(metadata.role as string | undefined);
+  const isDevAnonymous = isAnonymousSupabaseUser(sessionUser) && metadata.dev_role_switcher === true;
+
+  // Accept users who have either phone OR email. Dev anonymous users are also
+  // valid because they intentionally have no PII attached to the auth identity.
+  if (!phone && !email && !isDevAnonymous) return null;
 
   // Google/OAuth users have `full_name` or `name` in metadata
   const fullName = ((metadata.full_name || metadata.name || "") as string).trim();
   const nameParts = fullName.split(" ").filter(Boolean);
   const oauthFirstName = nameParts[0] ?? "";
   const oauthLastName = nameParts.slice(1).join(" ");
+  const role = parseRole(
+    (remoteProfile?.role as string | null) ||
+      metadataRole,
+  );
 
   return toAuthUser({
     id: sessionUser.id,
     phone,
     email,
-    role: parseRole(
-      (remoteProfile?.role as string | null) ||
-        (metadata.role as string | undefined),
-    ),
+    role,
     firstName:
       (remoteProfile?.first_name as string | null) ||
       (metadata.first_name as string | undefined) ||
-      oauthFirstName,
+      oauthFirstName ||
+      (isDevAnonymous ? "Dev" : ""),
     lastName:
       (remoteProfile?.last_name as string | null) ||
       (metadata.last_name as string | undefined) ||
-      oauthLastName,
+      oauthLastName ||
+      (isDevAnonymous ? metadataRole.charAt(0).toUpperCase() + metadataRole.slice(1) : ""),
+    profileComplete: isDevAnonymous || (await resolveProfileComplete(sessionUser.id, role)),
   });
 }
 
@@ -209,6 +323,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Track whether the initial bootstrap has finished so the onAuthStateChange
   // listener doesn't clobber a dev-switcher user that was just restored.
   const bootstrapDone = useRef(false);
+  const authEventSeq = useRef(0);
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -225,6 +340,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const hydrated = await hydrateFromSupabaseUser(data.session.user);
             if (hydrated) {
               setUser(hydrated);
+              await AsyncStorage.removeItem(DEV_USER_KEY);
               bootstrapDone.current = true;
               return;
             }
@@ -252,20 +368,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // When the Google OAuth callback fires, Supabase sets the session and
     // emits SIGNED_IN here so we hydrate the user without a page reload.
     if (supabase && isSupabaseConfigured) {
-      const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const { data } = supabase.auth.onAuthStateChange((event, session) => {
         // Ignore events that fire before bootstrap finishes to avoid a race
         // where INITIAL_SESSION clobbers a just-restored dev user.
         if (!bootstrapDone.current) return;
 
-        if (event === "SIGNED_IN" && session?.user) {
-          const hydrated = await hydrateFromSupabaseUser(session.user);
-          if (hydrated) setUser(hydrated);
+        if ((event === "SIGNED_IN" || event === "PASSWORD_RECOVERY") && session?.user) {
+          const eventSeq = ++authEventSeq.current;
+          // Supabase auth callbacks run synchronously; defer Supabase queries
+          // from hydration so setSession/exchangeCodeForSession can complete.
+          setTimeout(async () => {
+            const hydrated = await hydrateFromSupabaseUser(session.user);
+            if (eventSeq === authEventSeq.current && hydrated) setUser(hydrated);
+          }, 0);
         } else if (event === "SIGNED_OUT") {
+          authEventSeq.current += 1;
           setUser(null);
-          await AsyncStorage.removeItem(DEV_USER_KEY);
+          setTimeout(() => {
+            AsyncStorage.removeItem(DEV_USER_KEY);
+          }, 0);
         } else if (event === "USER_UPDATED" && session?.user) {
-          const hydrated = await hydrateFromSupabaseUser(session.user);
-          if (hydrated) setUser(hydrated);
+          const eventSeq = ++authEventSeq.current;
+          setTimeout(async () => {
+            const hydrated = await hydrateFromSupabaseUser(session.user);
+            if (eventSeq === authEventSeq.current && hydrated) setUser(hydrated);
+          }, 0);
         }
       });
       unsubscribe = data.subscription.unsubscribe;
@@ -294,6 +421,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return { success: true };
   }, []);
+
+  const sendRegistrationCode = useCallback(async (identifier: string): Promise<AuthActionResult> => {
+    if (isEmailIdentifier(identifier)) return { success: true };
+    return sendOtp(identifier);
+  }, [sendOtp]);
 
   const loginWithPhone = useCallback(
     async (phone: string, password: string): Promise<AuthActionResult> => {
@@ -324,6 +456,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       return { success: false, error: "Неверный номер телефона или пароль" };
+    },
+    [],
+  );
+
+  const loginWithIdentifier = useCallback(
+    async (identifier: string, password: string): Promise<AuthActionResult> => {
+      const trimmed = identifier.trim();
+      const isEmail = isEmailIdentifier(trimmed);
+
+      if (!isEmail && normalizePhone(trimmed).replace(/\D/g, "").length < 11) {
+        return { success: false, error: "Введите корректный телефон или email" };
+      }
+
+      if (supabase && isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          ...(isEmail ? { email: trimmed.toLowerCase() } : { phone: normalizePhone(trimmed) }),
+          password,
+        });
+
+        if (error || !data.user) {
+          return { success: false, error: "Неверный телефон/email или пароль" };
+        }
+
+        const nextUser =
+          (await hydrateFromSupabaseUser(data.user)) ??
+          toAuthUser({
+            id: data.user.id,
+            phone: data.user.phone || (isEmail ? "" : normalizePhone(trimmed)),
+            email: data.user.email || (isEmail ? trimmed.toLowerCase() : ""),
+            role: parseRole(data.user.user_metadata?.role as string | undefined),
+            firstName: data.user.user_metadata?.first_name as string | undefined,
+            lastName: data.user.user_metadata?.last_name as string | undefined,
+          });
+
+        setUser(nextUser);
+        return { success: true };
+      }
+
+      return { success: false, error: "Неверный телефон/email или пароль" };
     },
     [],
   );
@@ -367,6 +538,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role,
           firstName,
           lastName,
+          profileComplete: false,
         });
 
         await upsertRemoteProfile(nextUser);
@@ -384,6 +556,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role,
         firstName: firstName.trim(),
         lastName: lastName?.trim() || "",
+        profileComplete: false,
       });
       setUser(nextUser);
       return { success: true };
@@ -391,11 +564,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const finalizeRegistration = useCallback(async () => {
-    // Real Supabase users: their session and um_user_profiles row are already
-    // persisted by verifyOtpAndRegister → upsertRemoteProfile. Nothing to do.
-    // Dev-bypass users: in-memory only — no persistence needed.
+  const registerWithIdentifier = useCallback(
+    async (
+      identifier: string,
+      otp: string,
+      password: string,
+      role: UserRole,
+      firstName: string,
+      lastName?: string,
+    ): Promise<AuthActionResult> => {
+      const trimmed = identifier.trim();
+
+      if (!isEmailIdentifier(trimmed)) {
+        return verifyOtpAndRegister(trimmed, otp, password, role, firstName, lastName);
+      }
+
+      if (!supabase || !isSupabaseConfigured) {
+        return { success: false, error: "Supabase не настроен" };
+      }
+
+      const email = trimmed.toLowerCase();
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: getAuthRedirectPath("/auth/callback"),
+          data: {
+            role,
+            first_name: firstName.trim(),
+            last_name: lastName?.trim() || "",
+          },
+        },
+      });
+
+      if (error || !data.user) {
+        return { success: false, error: error?.message ?? "Не удалось создать аккаунт" };
+      }
+
+      if (!data.session) {
+        return { success: true, requiresEmailConfirmation: true };
+      }
+
+      const nextUser = toAuthUser({
+        id: data.user.id,
+        phone: "",
+        email,
+        role,
+        firstName,
+        lastName,
+        profileComplete: false,
+      });
+
+      await upsertRemoteProfile(nextUser);
+      setUser(nextUser);
+      return { success: true };
+    },
+    [verifyOtpAndRegister],
+  );
+
+  const requestPasswordReset = useCallback(async (email: string): Promise<AuthActionResult> => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!isEmailIdentifier(normalizedEmail)) {
+      return { success: false, error: "Введите корректный email" };
+    }
+
+    if (!supabase || !isSupabaseConfigured) {
+      return { success: false, error: "Supabase не настроен" };
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo: getAuthRedirectPath("/auth/reset-password"),
+    });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
   }, []);
+
+  const updatePassword = useCallback(async (password: string): Promise<AuthActionResult> => {
+    if (password.length < 6) {
+      return { success: false, error: "Пароль должен содержать минимум 6 символов" };
+    }
+
+    if (!supabase || !isSupabaseConfigured) {
+      return { success: false, error: "Supabase не настроен" };
+    }
+
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  }, []);
+
+  const finalizeRegistration = useCallback(async () => {
+    if (!user) return;
+    await setLocalProfileComplete(user.id, true);
+    setUser({ ...user, profileComplete: true });
+  }, [user]);
 
   const loginWithQR = useCallback(
     async (pin: string): Promise<AuthActionResult> => {
@@ -448,6 +711,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase || !isSupabaseConfigured) {
       return { success: false, error: "Supabase не настроен" };
     }
+    const authClient = supabase;
 
     // Build the redirect URL based on platform
     const redirectTo =
@@ -479,9 +743,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     //
     // Either way the session ends up set and onAuthStateChange notifies us.
     try {
+      const hydrateCurrentSession = async (): Promise<AuthActionResult | null> => {
+        const { data } = await authClient.auth.getSession();
+        if (!data.session?.user) return null;
+
+        const hydrated = await hydrateFromSupabaseUser(data.session.user);
+        if (hydrated) setUser(hydrated);
+        return { success: true };
+      };
+
       await WebBrowser.warmUpAsync();
 
-      const { data: urlData, error: urlError } = await supabase.auth.signInWithOAuth({
+      const { data: urlData, error: urlError } = await authClient.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo, skipBrowserRedirect: true },
       });
@@ -491,10 +764,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: urlError?.message ?? "Не удалось получить URL авторизации" };
       }
 
-      // Open the OAuth flow. On iOS this returns when the redirect fires.
-      // On Android this may return { type: 'cancel' } if the deep-link intent
-      // took over before openAuthSessionAsync could intercept it — that's fine,
-      // the callback screen handles session parsing via Linking in that case.
+      // Open the OAuth flow. The result is "success" only when we receive the
+      // redirect URL; cancel/dismiss means the user closed the auth sheet/tab.
       const result = await WebBrowser.openAuthSessionAsync(urlData.url, redirectTo);
       await WebBrowser.coolDownAsync();
 
@@ -511,7 +782,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const code = queryParams.get("code");
 
         if (accessToken && refreshToken) {
-          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+          const { data: sessionData, error: sessionError } = await authClient.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
@@ -524,7 +795,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (code) {
-          const { data: exchangeData, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { data: exchangeData, error: exchangeError } = await authClient.auth.exchangeCodeForSession(code);
           if (exchangeError || !exchangeData.user) {
             return { success: false, error: exchangeError?.message ?? "Ошибка обмена кода" };
           }
@@ -534,11 +805,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Android path: the deep-link fired a system intent which opened
-      // /auth/callback. That screen parses the tokens and calls
-      // maybeCompleteAuthSession(). We return success here; onAuthStateChange
-      // will notify us once the session is set by the callback screen.
-      return { success: true };
+      // Some native browser sessions close with cancel/dismiss even after the
+      // redirect wrote the Supabase session. Trust storage before showing error.
+      const restoredSession = await hydrateCurrentSession();
+      if (restoredSession) return restoredSession;
+
+      if (result.type === "cancel" || result.type === "dismiss") {
+        return { success: false, error: "Вход через Google отменён" };
+      }
+
+      return { success: false, error: "Не удалось завершить вход через Google" };
     } catch (e: any) {
       return { success: false, error: e?.message ?? "Неизвестная ошибка" };
     }
@@ -547,16 +823,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setUserRole = useCallback(
     async (role: UserRole) => {
       if (!user) return;
-      const nextUser = { ...user, role };
+      const nextUser = { ...user, role, profileComplete: false };
+      await setLocalProfileComplete(user.id, false);
       setUser(nextUser);
       // Persist for dev-switcher users; real users rely on Supabase session.
       if (devMode) {
         await AsyncStorage.setItem(DEV_USER_KEY, JSON.stringify(nextUser));
       }
       if (supabase && isSupabaseConfigured) {
-        // Only touch remote profile when there's a real Supabase auth session.
-        // Dev mode uses fake UUIDs with no session — auth.uid() would be null,
-        // causing any RLS-protected upsert to fail with 401.
+        // Only touch the remote profile when Supabase has an active session.
+        // Dev tools prefer anonymous sessions, so auth.uid() still maps to a
+        // real user; local fallback users simply skip this path.
         const { data: sessionData } = await supabase.auth.getSession();
         if (sessionData.session) {
           await supabase.auth.updateUser({ data: { role } });
@@ -568,6 +845,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const devLogin = useCallback(async (role: UserRole) => {
+    if (supabase && isSupabaseConfigured) {
+      const { data: currentSession } = await supabase.auth.getSession();
+      const currentUser = currentSession.session?.user ?? null;
+      const shouldReuseAnonymousDevUser =
+        currentUser &&
+        isAnonymousSupabaseUser(currentUser) &&
+        currentUser.user_metadata?.dev_role_switcher === true;
+
+      if (currentUser && !shouldReuseAnonymousDevUser) {
+        await supabase.auth.signOut();
+      }
+
+      const sessionUser = shouldReuseAnonymousDevUser
+        ? currentUser
+        : (await supabase.auth.signInAnonymously({
+            options: {
+              data: {
+                dev_role_switcher: true,
+                role,
+                first_name: "Dev",
+                last_name: role.charAt(0).toUpperCase() + role.slice(1),
+              },
+            },
+          })).data.user;
+
+      if (sessionUser) {
+        const nextUser = buildDevUserFromId(sessionUser.id, role);
+        setUser(nextUser);
+        await upsertRemoteProfile(nextUser);
+        await AsyncStorage.removeItem(DEV_USER_KEY);
+        return;
+      }
+    }
+
     const nextUser = toAuthUser({
       id: DEV_IDS[role] ?? "d0000000-0000-4000-a000-000000000009",
       phone: "79991234567",
@@ -598,10 +909,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       devOtpCode: DEV_OTP,
       sendOtp,
+      sendRegistrationCode,
       verifyOtpAndRegister,
+      registerWithIdentifier,
       loginWithPhone,
+      loginWithIdentifier,
       loginWithGoogle,
       loginWithQR,
+      requestPasswordReset,
+      updatePassword,
       setUserRole,
       logout,
       devLogin,
@@ -614,10 +930,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       // devOtpCode is a constant, no need to list as dependency
       sendOtp,
+      sendRegistrationCode,
       verifyOtpAndRegister,
+      registerWithIdentifier,
       loginWithPhone,
+      loginWithIdentifier,
       loginWithGoogle,
       loginWithQR,
+      requestPasswordReset,
+      updatePassword,
       setUserRole,
       logout,
       devLogin,

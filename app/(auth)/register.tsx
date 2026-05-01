@@ -68,18 +68,21 @@ const ROLES: {
   },
 ];
 
+type AuthMethod = "phone" | "email";
+
 export default function RegisterScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const { sendOtp, verifyOtpAndRegister, devOtpCode } = useAuth();
+  const { sendRegistrationCode, registerWithIdentifier, devOtpCode } = useAuth();
   const { useRealOtp } = useDevSettings();
 
-  // step 0 = role, step 1 = phone + password, step 2 = OTP, step 3 = name
+  // step 0 = role, step 1 = phone/email + password, step 2 = OTP for phone, step 3 = name
   const [step, setStep] = useState<number>(0);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [selectedRoute, setSelectedRoute] = useState("");
 
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("phone");
+  const [identifier, setIdentifier] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
@@ -88,6 +91,7 @@ export default function RegisterScreen() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
+  const [confirmationEmail, setConfirmationEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -128,7 +132,25 @@ export default function RegisterScreen() {
       formatted = `${prefix} (${digitsOnly.slice(1, 4)}) ${digitsOnly.slice(4, 7)}-${digitsOnly.slice(7, 9)}-${digitsOnly.slice(9, 11)}`;
     }
     
-    setPhoneNumber(formatted);
+    setIdentifier(formatted);
+  };
+
+  const isEmail = authMethod === "email";
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.trim());
+  const isValidPhone = identifier.replace(/\D/g, "").length >= 10;
+  const handleIdentifierChange = (text: string) => {
+    if (isEmail) {
+      setIdentifier(text.trim());
+      return;
+    }
+    formatPhone(text);
+  };
+
+  const handleAuthMethodChange = (method: AuthMethod) => {
+    setAuthMethod(method);
+    setIdentifier("");
+    setOtp("");
+    setError("");
   };
 
   const handleAction = async () => {
@@ -144,8 +166,8 @@ export default function RegisterScreen() {
     }
 
     if (step === 1) {
-      if (phoneNumber.replace(/\D/g, "").length < 10) {
-        setError("Введите корректный номер телефона");
+      if (isEmail ? !isValidEmail : !isValidPhone) {
+        setError("Введите корректный телефон или email");
         return;
       }
       if (password.length < 6) {
@@ -158,7 +180,7 @@ export default function RegisterScreen() {
       }
 
       setIsSubmitting(true);
-      const result = await sendOtp(phoneNumber);
+      const result = await sendRegistrationCode(identifier);
       setIsSubmitting(false);
 
       if (!result.success) {
@@ -167,7 +189,7 @@ export default function RegisterScreen() {
       }
 
       setOtp("");
-      setStep(2);
+      setStep(isEmail ? 3 : 2);
       return;
     }
 
@@ -187,8 +209,8 @@ export default function RegisterScreen() {
     }
 
     setIsSubmitting(true);
-    const result = await verifyOtpAndRegister(
-      phoneNumber,
+    const result = await registerWithIdentifier(
+      identifier,
       otp,
       password,
       selectedRole!,
@@ -202,13 +224,27 @@ export default function RegisterScreen() {
       return;
     }
 
+    if (result.requiresEmailConfirmation) {
+      setConfirmationEmail(identifier.trim().toLowerCase());
+      return;
+    }
+
     router.replace(selectedRoute as any);
   };
 
   const handleBack = () => {
     setError('');
-    if (step === 0) router.back();
-    else if (Platform.OS === 'web') window.history.back(); // pops the hash entry → hashchange fires
+    if (step === 0) {
+      if (router.canGoBack()) {
+        router.back();
+        return;
+      }
+
+      router.replace("/intro");
+      return;
+    }
+
+    if (step === 3 && isEmail) setStep(1);
     else setStep(step - 1);
   };
 
@@ -216,7 +252,7 @@ export default function RegisterScreen() {
     if (step === 0) return selectedRole !== null;
     if (step === 1)
       return (
-        phoneNumber.replace(/\D/g, "").length >= 10 &&
+        (isEmail ? isValidEmail : isValidPhone) &&
         password.length >= 6 &&
         password === confirmPassword
       );
@@ -226,7 +262,7 @@ export default function RegisterScreen() {
 
   const getButtonLabel = () => {
     if (step === 0) return "Далее";
-    if (step === 1) return "Получить код";
+    if (step === 1) return isEmail ? "Продолжить" : "Получить код";
     if (step === 2) return "Подтвердить";
     return "Создать аккаунт";
   };
@@ -267,7 +303,8 @@ export default function RegisterScreen() {
             contentContainerStyle={{
               flexGrow: 1,
               alignItems: "center",
-              paddingVertical: isDesktop ? 24 : 12,
+              paddingTop: isDesktop ? 24 : 12,
+              paddingBottom: 20,
             }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
@@ -322,8 +359,8 @@ export default function RegisterScreen() {
                 </Text>
                 <Text style={{ color: COLORS.mutedForeground, fontSize: 16, lineHeight: 24 }}>
                   {step === 0 ? "Выберите вашу роль, чтобы мы настроили приложение специально под вас" :
-                   step === 1 ? "Введите номер телефона и придумайте пароль" :
-                   step === 2 ? `Введите 6-значный код, отправленный на ${phoneNumber}` :
+                   step === 1 ? "Введите телефон или email и придумайте пароль" :
+                   step === 2 ? `Введите 6-значный код, отправленный на ${identifier}` :
                    "Введите ваше имя для профиля"}
                 </Text>
               </MotiView>
@@ -371,22 +408,28 @@ export default function RegisterScreen() {
                           <Feather name={item.icon} size={24} color="white" />
                         </LinearGradient>
 
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontWeight: "800", fontSize: 16, color: COLORS.foreground, marginBottom: 4 }}>
-                            {item.title}
-                          </Text>
+                        <View style={{ flex: 1, paddingRight: 12 }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+                            <Text style={{ fontWeight: "800", fontSize: 16, color: COLORS.foreground }}>
+                              {item.title}
+                            </Text>
+                          </View>
                           <Text style={{ fontSize: 13, color: COLORS.mutedForeground, lineHeight: 18 }}>
                             {item.description}
                           </Text>
                         </View>
 
-                        {isSelected && (
-                          <MotiView from={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring' }}>
-                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: item.color, alignItems: 'center', justifyContent: 'center' }}>
-                              <Feather name="check" size={14} color="white" />
+                        <View style={{ width: 18, height: 18, alignItems: "center", justifyContent: "center" }}>
+                          <MotiView
+                            animate={{ opacity: isSelected ? 1 : 0, scale: isSelected ? 1 : 0.7 }}
+                            transition={{ type: 'spring' }}
+                            pointerEvents="none"
+                          >
+                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: item.color, alignItems: 'center', justifyContent: 'center' }}>
+                              <Feather name="check" size={11} color="white" />
                             </View>
                           </MotiView>
-                        )}
+                        </View>
                       </PressableScale>
                     );
                   })}
@@ -394,7 +437,7 @@ export default function RegisterScreen() {
               )}
 
               {/* Steps 1–3: persistent card — no remount between steps */}
-              {step >= 1 && (
+              {step >= 1 && !confirmationEmail && (
                 <MotiView
                   from={{ opacity: 0, scale: 0.97 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -406,7 +449,8 @@ export default function RegisterScreen() {
                   {/* Step 1: Phone + Password */}
                   {step === 1 && (
                     <MotiView key="s1" from={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ type: 'timing', duration: 150 }}>
-                      <Field label="Номер телефона" icon="phone" value={phoneNumber} onChange={formatPhone} placeholder="+7 (___) ___-__-__" keyboardType="phone-pad" autoFocus />
+                      <AuthMethodSwitcher value={authMethod} onChange={handleAuthMethodChange} />
+                      <Field label={isEmail ? "Email" : "Номер телефона"} icon={isEmail ? "mail" : "phone"} value={identifier} onChange={handleIdentifierChange} placeholder={isEmail ? "you@example.com" : "+7 (___) ___-__-__"} keyboardType={isEmail ? "email-address" : "phone-pad"} autoFocus autoCapitalize="none" autoCorrect={false} />
                       <Field label="Пароль" icon="lock" value={password} onChange={setPassword} placeholder="Минимум 6 символов" secure showToggle={() => setShowPassword(!showPassword)} shown={showPassword} />
                       <Field label="Подтвердите пароль" icon="lock" value={confirmPassword} onChange={setConfirmPassword} placeholder="Повторите пароль" secure showToggle={() => setShowConfirmPassword(!showConfirmPassword)} shown={showConfirmPassword} last />
                     </MotiView>
@@ -438,7 +482,7 @@ export default function RegisterScreen() {
                             outlineWidth: 0,
                           } as any}
                         />
-                        <PressableScale onPress={() => sendOtp(phoneNumber)} scaleTo={0.93}>
+                        <PressableScale onPress={() => sendRegistrationCode(identifier)} scaleTo={0.93}>
                           <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
                             Не получили код?{" "}
                             <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: 'bold' }}>
@@ -460,27 +504,49 @@ export default function RegisterScreen() {
                 </MotiView>
               )}
 
+              {!!confirmationEmail && (
+                <MotiView
+                  from={{ opacity: 0, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'timing', duration: 200 }}
+                  style={{ backgroundColor: 'white', borderRadius: RADIUS.xxl, padding: 24, ...SHADOWS.md }}
+                >
+                  <View style={{ alignItems: "center", gap: 14 }}>
+                    <View style={{ width: 54, height: 54, borderRadius: 16, backgroundColor: `${currentRoleInfo?.color || COLORS.primary}15`, alignItems: "center", justifyContent: "center" }}>
+                      <Feather name="mail" size={24} color={currentRoleInfo?.color || COLORS.primary} />
+                    </View>
+                    <Text style={{ fontSize: 20, fontWeight: "900", color: COLORS.foreground, textAlign: "center" }}>
+                      Проверьте почту
+                    </Text>
+                    <Text style={{ fontSize: 15, lineHeight: 22, color: COLORS.mutedForeground, textAlign: "center" }}>
+                      Мы отправили письмо для подтверждения на {confirmationEmail}. После подтверждения вы сможете войти с email и паролем.
+                    </Text>
+                  </View>
+                </MotiView>
+              )}
+
               {!!error && (
                 <MotiView from={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} style={{ marginTop: 16, padding: 12, borderRadius: RADIUS.md, backgroundColor: '#FEE2E2', borderWidth: 1, borderColor: '#FCA5A5' }}>
                    <Text style={{ color: '#B91C1C', textAlign: 'center', fontSize: 13, fontWeight: '600' }}>{error}</Text>
                 </MotiView>
               )}
-
-              {/* Action Button */}
+            </View>
+          </ScrollView>
+          <View style={styles.bottomBar}>
+            <View
+              style={{
+                width: "100%",
+                maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined,
+                paddingHorizontal: horizontalPadding,
+              }}
+            >
               <PressableScale
                 onPress={handleAction}
-                disabled={!isButtonEnabled() || isSubmitting}
-                style={{ marginTop: 32 }}
+                disabled={!!confirmationEmail || !isButtonEnabled() || isSubmitting}
               >
                 <LinearGradient
-                    colors={isButtonEnabled() ? (currentRoleInfo?.gradient || [COLORS.primary, COLORS.secondary]) : [COLORS.muted, COLORS.muted]}
-                    style={{
-                        paddingVertical: 18,
-                        borderRadius: RADIUS.xl,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        ...SHADOWS.md,
-                    }}
+                  colors={isButtonEnabled() ? (currentRoleInfo?.gradient || [COLORS.primary, COLORS.secondary]) : [COLORS.muted, COLORS.muted]}
+                  style={styles.footerActionButton}
                 >
                   {isSubmitting ? (
                     <ActivityIndicator size="small" color="white" />
@@ -492,22 +558,21 @@ export default function RegisterScreen() {
                 </LinearGradient>
               </PressableScale>
 
-              {/* Login link */}
-              <View style={{ flexDirection: "row", justifyContent: "center", marginTop: 24, paddingBottom: 40 }}>
-                <Text style={{ color: COLORS.mutedForeground, fontSize: 15 }}>Уже есть аккаунт? </Text>
+              <View style={styles.accountSwitchRow}>
+                <Text style={styles.accountSwitchText}>Уже есть аккаунт? </Text>
                 <PressableScale onPress={() => router.push("/login")} scaleTo={0.93}>
-                  <Text style={{ color: currentRoleInfo?.color || COLORS.primary, fontWeight: "800", fontSize: 15 }}>Войти</Text>
+                  <Text style={[styles.accountSwitchLink, { color: currentRoleInfo?.color || COLORS.primary }]}>Войти</Text>
                 </PressableScale>
               </View>
             </View>
-          </ScrollView>
+          </View>
         </SafeAreaView>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-function Field({ label, icon, value, onChange, placeholder, keyboardType = 'default', secure = false, autoFocus = false, showToggle, shown }: any) {
+function Field({ label, icon, value, onChange, placeholder, keyboardType = 'default', secure = false, autoFocus = false, showToggle, shown, autoCapitalize, autoCorrect }: any) {
     return (
         <View style={{ marginBottom: 20 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.foreground, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5, opacity: 0.7 }}>
@@ -518,14 +583,32 @@ function Field({ label, icon, value, onChange, placeholder, keyboardType = 'defa
                 <TextInput
                     value={value}
                     onChangeText={onChange}
-                    placeholder={placeholder}
+                    placeholder=""
                     placeholderTextColor={COLORS.mutedForeground}
                     keyboardType={keyboardType as any}
                     secureTextEntry={secure && !shown}
                     autoFocus={autoFocus}
+                    autoCapitalize={autoCapitalize}
+                    autoCorrect={autoCorrect}
                     className="w-full pl-12 pr-12 py-4 bg-gray-50 rounded-2xl border border-gray-100"
                     style={{ fontSize: 15, fontWeight: '500' }}
                 />
+                {!value && (
+                    <Text
+                        pointerEvents="none"
+                        style={{
+                            position: 'absolute',
+                            left: 48,
+                            right: 48,
+                            color: COLORS.mutedForeground,
+                            fontSize: 15,
+                            fontWeight: '500',
+                        }}
+                        numberOfLines={1}
+                    >
+                        {placeholder}
+                    </Text>
+                )}
                 {secure && showToggle && (
                     <PressableScale onPress={showToggle} style={{ position: 'absolute', right: 16, zIndex: 1 }} scaleTo={0.85}>
                         <Feather name={shown ? 'eye-off' : 'eye'} size={18} color={COLORS.mutedForeground} />
@@ -536,6 +619,88 @@ function Field({ label, icon, value, onChange, placeholder, keyboardType = 'defa
     );
 }
 
+function AuthMethodSwitcher({
+  value,
+  onChange,
+}: {
+  value: AuthMethod;
+  onChange: (method: AuthMethod) => void;
+}) {
+    return (
+        <View style={styles.switcher}>
+            {(["phone", "email"] as const).map((method) => {
+                const active = method === value;
+                return (
+                    <PressableScale
+                        key={method}
+                        onPress={() => onChange(method)}
+                        style={[styles.switcherItem, active && styles.switcherItemActive]}
+                        scaleTo={0.94}
+                    >
+                        <Text style={[styles.switcherText, active && styles.switcherTextActive]}>
+                            {method === "phone" ? "Телефон" : "Email"}
+                        </Text>
+                    </PressableScale>
+                );
+            })}
+        </View>
+    );
+}
+
 const styles = StyleSheet.create({
-    // Add any necessary manual styles
+    switcher: {
+        flexDirection: "row",
+        backgroundColor: COLORS.muted,
+        borderRadius: RADIUS.md,
+        padding: 4,
+        marginBottom: 20,
+    },
+    switcherItem: {
+        flex: 1,
+        paddingVertical: 10,
+        borderRadius: RADIUS.md - 2,
+        alignItems: "center",
+        backgroundColor: "transparent",
+    },
+    switcherItemActive: {
+        backgroundColor: COLORS.card,
+    },
+    switcherText: {
+        fontWeight: "600",
+        fontSize: 13,
+        color: COLORS.mutedForeground,
+    },
+    switcherTextActive: {
+        color: COLORS.foreground,
+    },
+    bottomBar: {
+        alignItems: "center",
+        backgroundColor: COLORS.background,
+        paddingTop: 12,
+        paddingBottom: 10,
+        borderTopWidth: 1,
+        borderTopColor: `${COLORS.border}80`,
+    },
+    footerActionButton: {
+        paddingVertical: 18,
+        borderRadius: RADIUS.xl,
+        alignItems: "center",
+        justifyContent: "center",
+        ...SHADOWS.md,
+    },
+    accountSwitchRow: {
+        flexDirection: "row",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: 32,
+        marginTop: 10,
+    },
+    accountSwitchText: {
+        color: COLORS.mutedForeground,
+        fontSize: 15,
+    },
+    accountSwitchLink: {
+        fontWeight: "800",
+        fontSize: 15,
+    },
 });

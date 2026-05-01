@@ -94,6 +94,15 @@ export default function CreateProfileParent() {
     return hasParent && hasValidChild;
   }, [parentData, children]);
 
+  function handleBack() {
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/register");
+  }
+
   function addChild() {
     setChildren((prev) => [
       ...prev,
@@ -183,7 +192,7 @@ export default function CreateProfileParent() {
               {/* Header Nav */}
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <TouchableOpacity
-                  onPress={() => router.back()}
+                  onPress={handleBack}
                   style={{ flexDirection: "row", alignItems: "center" }}
                 >
                   <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
@@ -227,21 +236,19 @@ export default function CreateProfileParent() {
                 <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 16 }}>
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={styles.fieldLabel}>Имя</Text>
-                    <TextInput
+                    <ProfileTextInput
                       value={parentData.firstName}
                       onChangeText={(text) => setParentData({ ...parentData, firstName: text })}
                       placeholder="Имя"
-                      placeholderTextColor={COLORS.mutedForeground}
                       style={styles.input}
                     />
                   </View>
                   <View style={{ flex: 1, marginLeft: 8 }}>
                     <Text style={styles.fieldLabel}>Фамилия</Text>
-                    <TextInput
+                    <ProfileTextInput
                       value={parentData.lastName}
                       onChangeText={(text) => setParentData({ ...parentData, lastName: text })}
                       placeholder="Фамилия"
-                      placeholderTextColor={COLORS.mutedForeground}
                       style={styles.input}
                     />
                   </View>
@@ -249,11 +256,10 @@ export default function CreateProfileParent() {
 
                 <View>
                   <Text style={styles.fieldLabel}>Телефон</Text>
-                  <TextInput
+                  <ProfileTextInput
                     value={parentData.phone}
                     onChangeText={(text) => setParentData({ ...parentData, phone: formatPhone(text) })}
                     placeholder="+7 777 777 7777"
-                    placeholderTextColor={COLORS.mutedForeground}
                     keyboardType="phone-pad"
                     style={styles.input}
                   />
@@ -290,11 +296,10 @@ export default function CreateProfileParent() {
 
                   <View style={{ marginBottom: 16 }}>
                     <Text style={styles.fieldLabel}>Имя ребенка</Text>
-                    <TextInput
+                    <ProfileTextInput
                       value={child.name}
                       onChangeText={(text) => updateChild(child.id, { name: text })}
                       placeholder="Например, Анна"
-                      placeholderTextColor={COLORS.mutedForeground}
                       style={styles.input}
                     />
                   </View>
@@ -366,13 +371,12 @@ export default function CreateProfileParent() {
                     {child.hasPhone === true && (
                       <View>
                         <Text style={styles.fieldLabel}>Номер телефона ребёнка</Text>
-                        <TextInput
+                        <ProfileTextInput
                           value={child.phone}
                           onChangeText={(text) =>
                             updateChild(child.id, { phone: formatPhone(text) })
                           }
                           placeholder="+7 777 777 7777"
-                          placeholderTextColor={COLORS.mutedForeground}
                           keyboardType="phone-pad"
                           style={styles.input}
                         />
@@ -507,6 +511,40 @@ export default function CreateProfileParent() {
         </SafeAreaView>
       </View>
     </KeyboardAvoidingView>
+  );
+}
+
+function ProfileTextInput({
+  value,
+  placeholder,
+  style,
+  ...props
+}: React.ComponentProps<typeof TextInput>) {
+  return (
+    <View style={{ position: "relative", justifyContent: "center" }}>
+      <TextInput
+        {...props}
+        value={value}
+        placeholder=""
+        style={style}
+      />
+      {!value && !!placeholder && (
+        <Text
+          pointerEvents="none"
+          numberOfLines={1}
+          style={{
+            position: "absolute",
+            left: 22,
+            right: 16,
+            color: COLORS.mutedForeground,
+            fontSize: 15,
+            fontWeight: "500",
+          }}
+        >
+          {placeholder}
+        </Text>
+      )}
+    </View>
   );
 }
 

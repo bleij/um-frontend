@@ -157,6 +157,20 @@ export default function MentorCreateProfile() {
     }
   };
 
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep((s) => s - 1);
+      return;
+    }
+
+    if (router.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/register");
+  };
+
   if (isSuccess) {
     return <SuccessView onHome={() => router.replace("/(tabs)/home")} />;
   }
@@ -217,7 +231,7 @@ export default function MentorCreateProfile() {
               {/* Header Nav */}
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
                 <TouchableOpacity
-                  onPress={() => currentStep > 1 ? setCurrentStep((s) => s - 1) : router.back()}
+                  onPress={handleBack}
                   style={{ flexDirection: "row", alignItems: "center" }}
                 >
                   <Feather name="arrow-left" size={20} color={COLORS.mutedForeground} />
@@ -449,13 +463,30 @@ export default function MentorCreateProfile() {
                       </View>
 
                       <View style={{ flexDirection: "row", gap: 8, marginBottom: 20 }}>
-                        <TextInput
-                          style={[styles.input, { flex: 1 }]}
-                          placeholder="Добавить свой навык"
-                          placeholderTextColor={COLORS.mutedForeground}
-                          value={formData.customSkill}
-                          onChangeText={(t) => setFormData({ ...formData, customSkill: t })}
-                        />
+                        <View style={{ flex: 1, position: "relative", justifyContent: "center" }}>
+                          <TextInput
+                            style={styles.input}
+                            placeholder=""
+                            value={formData.customSkill}
+                            onChangeText={(t) => setFormData({ ...formData, customSkill: t })}
+                          />
+                          {!formData.customSkill && (
+                            <Text
+                              pointerEvents="none"
+                              numberOfLines={1}
+                              style={{
+                                position: "absolute",
+                                left: 22,
+                                right: 16,
+                                color: COLORS.mutedForeground,
+                                fontSize: 15,
+                                fontWeight: "500",
+                              }}
+                            >
+                              Добавить свой навык
+                            </Text>
+                          )}
+                        </View>
                         <TouchableOpacity
                           onPress={addCustomSkill}
                           style={{
@@ -579,8 +610,7 @@ function InputField({ label, value, onChange, placeholder, keyboardType = "defau
         <TextInput
           value={value}
           onChangeText={onChange}
-          placeholder={placeholder}
-          placeholderTextColor={COLORS.mutedForeground}
+          placeholder=""
           keyboardType={keyboardType as any}
           multiline={multiline}
           maxLength={maxLength}
@@ -590,6 +620,23 @@ function InputField({ label, value, onChange, placeholder, keyboardType = "defau
             suffix && { paddingRight: 44 },
           ]}
         />
+        {!value && !!placeholder && (
+          <Text
+            pointerEvents="none"
+            numberOfLines={multiline ? undefined : 1}
+            style={{
+              position: "absolute",
+              left: 22,
+              right: suffix ? 44 : 16,
+              top: multiline ? 16 : undefined,
+              color: COLORS.mutedForeground,
+              fontSize: 15,
+              fontWeight: "500",
+            }}
+          >
+            {placeholder}
+          </Text>
+        )}
         {suffix && (
           <Text style={{ position: "absolute", right: 16, fontSize: 17, fontWeight: "700", color: COLORS.mutedForeground }}>
             {suffix}

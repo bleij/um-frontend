@@ -10,6 +10,7 @@ export default function Layout() {
       <Stack.Screen name="intro" />
       <Stack.Screen name="login" />
       <Stack.Screen name="register" />
+      <Stack.Screen name="forgot-password" />
       <Stack.Screen name="qr-scan" />
     </Stack>
   );
