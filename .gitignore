@@ -48,3 +48,5 @@ yarn-error.*
 tmp/
 
 supabase/.temp
+
+skills-lock.json
