@@ -194,19 +194,7 @@ export function useDiagnosticEngine911(opts: {
       }
     }
 
-    // 3) Map to Diagnostic scores (0-100)
-    const maxBasicPerSkill = WYR_CARDS.length / 4; // ~3
-    const b = (skill: BasicSkill911) =>
-      Math.round((skillCounts[skill] / maxBasicPerSkill) * 40);
-
-    const logical = Math.min(100, b("logic") + b("analytics") + (rawScores.logic || 0));
-    const creative = Math.min(100, b("creativity") + (rawScores.creativity || 0));
-    const social = Math.min(
-      100,
-      b("empathy") + b("communication") + b("teamwork") + (rawScores.collab || 0) + (rawScores.communication || 0),
-    );
-    const physical = Math.min(100, b("adaptability") + (rawScores.spatial || 0));
-    const linguistic = Math.min(100, b("communication") + b("leadership") + 20);
+    const scores: Record<string, number> = { ...skillCounts, ...rawScores };
 
     // 4) Stealth personality
     const patternCounts: Record<string, number> = {};
@@ -223,7 +211,7 @@ export function useDiagnosticEngine911(opts: {
       STEALTH_PATTERNS_911.find((p) => p.id === dominantPattern)?.label || "Сбалансированный";
 
     return {
-      scores: { logical, creative, social, physical, linguistic },
+      scores,
       top3,
       weakest,
       rawScores,
@@ -330,6 +318,9 @@ Generate RAW JSON only (no markdown). ${isPro ? "Include ALL fields" : "Include 
       timestamp: new Date().toISOString(),
       tier: isPro ? "pro" : "basic",
       ageGroup: "9-11",
+      rawMetadata: {
+        stealthProfile: computed.stealthProfile,
+      },
       ...(isPro
         ? {
             topStrengths: aiData.topStrengths,

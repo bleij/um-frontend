@@ -165,15 +165,10 @@ export function useDiagnosticEngine1517(opts: {
       fastClicks > 4 ? "Низкое внимание к деталям (Игнорирует длинные тексты)" : 
       "Ответственный Исполнитель (Стрессоустойчив, сбалансирован)";
 
-    // Mapping vectors
-    const logical = Math.min(100, (proScores.ENT_MathPhys || 0) + (proScores.IQ_Analytical || 0));
-    const creative = Math.min(100, (proScores.ENT_Creative || 0) + (anchorCounts.Entrepreneurship * 10));
-    const social = Math.min(100, (proScores.VIA_Teamwork || 0) + (anchorCounts.Service * 10) + (proScores.VIA_Leadership || 0));
-    const physical = Math.min(100, (proScores.ENT_ChemBio || 0) + (anchorCounts.Stability * 10));
-    const linguistic = Math.min(100, (proScores.ENT_Humanities || 0) + (proScores.IQ_Verbal || 0));
+    const scores: Record<string, number> = { ...anchorCounts, ...proScores };
 
     return {
-      scores: { logical, creative, social, physical, linguistic },
+      scores,
       top3Anchors,
       weakestAnchor,
       proScores,
@@ -250,6 +245,11 @@ Generate RAW JSON only. ${isPro ? "Include ALL fields. Write pragmatically for 1
       timestamp: new Date().toISOString(),
       tier: isPro ? "pro" : "basic",
       ageGroup: "15-17",
+      rawMetadata: {
+        fastClicks: computed.fastClicks,
+        franticCount: computed.franticCount,
+        stealthProfile: computed.stealthProfile,
+      },
       ...(isPro ? {
         topStrengths: aiData.topStrengths,
         developmentAreas: aiData.developmentAreas,

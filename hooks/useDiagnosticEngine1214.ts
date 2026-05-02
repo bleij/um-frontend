@@ -144,15 +144,10 @@ export function useDiagnosticEngine1214(opts: {
       fastClicks > 4 ? "Импульсивность (Быстрое прокликивание)" :
       delayedAnswers > 5 ? "Стратегический/Осторожный (Долгая задержка)" : "Сбалансированный";
 
-    // Combine RIASEC + PRO
-    const logical = Math.min(100, (riasecCounts.I * 10) + (riasecCounts.C * 5) + (proScores.Logic || 0) + (proScores.Math_IT || 0));
-    const creative = Math.min(100, (riasecCounts.A * 15) + (proScores.Science || 0)); // Approx mapping
-    const social = Math.min(100, (riasecCounts.S * 15) + (proScores.Empathy || 0) + (proScores.Mediation || 0));
-    const physical = Math.min(100, (riasecCounts.R * 15) + (proScores.Spatial || 0));
-    const linguistic = Math.min(100, (riasecCounts.E * 15) + (proScores.Verbal || 0));
+    const scores: Record<string, number> = { ...riasecCounts, ...proScores };
 
     return {
-      scores: { logical, creative, social, physical, linguistic },
+      scores,
       top2Riasec,
       weakestRiasec,
       proScores,
@@ -229,6 +224,11 @@ Generate RAW JSON only. ${isPro ? "Include ALL fields" : "Include only base fiel
       timestamp: new Date().toISOString(),
       tier: isPro ? "pro" : "basic",
       ageGroup: "12-14",
+      rawMetadata: {
+        fastClicks: computed.fastClicks,
+        erasedCount: computed.erasedCount,
+        stealthProfile: computed.stealthProfile,
+      },
       ...(isPro ? {
         topStrengths: aiData.topStrengths,
         developmentAreas: aiData.developmentAreas,

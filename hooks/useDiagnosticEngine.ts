@@ -213,20 +213,7 @@ export function useDiagnosticEngine(opts: {
     }
 
     // 3) Map to Diagnostic scores (0-100 scale)
-    const maxBasicPerCat = 3; // max 3 cards per category
-    const catToScore = (cat: SkillCategory) =>
-      Math.round((categoryCounts[cat] / maxBasicPerCat) * 50); // up to 50 from basic
-
-    const logical =
-      Math.min(100, catToScore("tech") + (rawScoreMap.logical || 0) + (rawScoreMap.math || 0));
-    const creative = Math.min(100, catToScore("art") + (rawScoreMap.creative || 0));
-    const social =
-      Math.min(100, catToScore("nature") * 0.5 + (rawScoreMap.empathy || 0) + (rawScoreMap.leadership || 0));
-    const physical = Math.min(100, catToScore("sport") + (rawScoreMap.spatial || 0));
-    const linguistic = Math.min(
-      100,
-      catToScore("art") * 0.5 + catToScore("nature") * 0.5 + 20,
-    );
+    const scores: Record<string, number> = { ...categoryCounts, ...rawScoreMap };
 
     // 4) Stealth personality profile
     let patternCounts: Record<string, number> = {};
@@ -243,7 +230,7 @@ export function useDiagnosticEngine(opts: {
       STEALTH_PATTERNS.find((p) => p.id === dominantPattern)?.label || "Сбалансированный";
 
     return {
-      scores: { logical, creative, social, physical, linguistic },
+      scores,
       topCategories,
       stealthProfile: stealthLabel,
       rawScoreMap,
@@ -361,6 +348,9 @@ Generate a JSON object (RAW JSON, no markdown). ${isPro ? "Include ALL fields" :
       timestamp: new Date().toISOString(),
       tier: isPro ? "pro" : "basic",
       ageGroup: "6-8",
+      rawMetadata: {
+        stealthProfile: computed.stealthProfile,
+      },
       ...(isPro
         ? {
             intellectType: aiData.intellectType,

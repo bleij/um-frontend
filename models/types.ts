@@ -8,13 +8,7 @@ export interface User {
 
 export interface Diagnostic {
   childId: string;
-  scores: {
-    logical: number;
-    creative: number;
-    social: number;
-    physical: number;
-    linguistic: number;
-  };
+  scores: Record<string, number>;
   summary: string;
   recommendedConstellation: string;
   timestamp?: string;
@@ -30,6 +24,7 @@ export interface Diagnostic {
   parentAdvice?: string;
   topStrengths?: string[];
   developmentAreas?: string[];
+  rawMetadata?: Record<string, any>;
 }
 
 export interface Child {

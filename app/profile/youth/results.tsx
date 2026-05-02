@@ -85,17 +85,34 @@ export default function YouthResults() {
 
   const isPro = diagnostic.tier === "pro";
 
-  const scores = [
-    { label: "Логика", value: diagnostic.scores.logical, color: "#10B981" },
-    { label: "Креатив", value: diagnostic.scores.creative, color: "#8B5CF6" },
-    { label: "Социум", value: diagnostic.scores.social, color: "#3B82F6" },
-    { label: "Физика", value: diagnostic.scores.physical, color: "#F59E0B" },
-    {
-      label: "Лингвист.",
-      value: diagnostic.scores.linguistic,
-      color: "#EC4899",
-    },
-  ];
+  const colorPalette = ["#10B981", "#8B5CF6", "#3B82F6", "#F59E0B", "#EC4899", "#14B8A6", "#F43F5E"];
+  
+  const sortedScores = Object.entries(diagnostic.scores || {})
+    .filter(([k, v]) => typeof v === "number" && v > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6);
+
+  const chartScores = sortedScores.map(([key, value], idx) => {
+    const labelMap: Record<string, string> = {
+      logic: "Логика", creative: "Креатив", social: "Социум", physical: "Физика", linguistic: "Лингвистика",
+      creativity: "Креативность", empathy: "Эмпатия", leadership: "Лидерство", communication: "Общение",
+      adaptability: "Адаптивность", analytics: "Аналитика", teamwork: "Командная работа",
+      Autonomy: "Независимость", Stability: "Стабильность", Mastery: "Мастерство", Management: "Менеджмент",
+      Entrepreneurship: "Предпринимательство", Service: "Служение", Challenge: "Вызов", Lifestyle: "Стиль жизни",
+      R: "Реалистичный", I: "Интеллектуальный", A: "Артистичный", S: "Социальный", E: "Предприимчивый", C: "Конвенциональный",
+      tech: "Технологии", art: "Искусство", nature: "Природа", sport: "Спорт",
+    };
+    const label = labelMap[key] || key;
+    // Normalize roughly (some test formats output points instead of percentages)
+    // If maximum expected is around 40-50, we can multiply by 2, but for simplicity we just cap at 100 or use raw if > 100
+    const normalizedValue = Math.min(100, Math.max(0, Math.round(value)));
+
+    return {
+      label,
+      value: normalizedValue,
+      color: colorPalette[idx % colorPalette.length],
+    };
+  });
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -231,7 +248,7 @@ export default function YouthResults() {
           >
             <Text style={s.cardTitle}>Карта талантов</Text>
             <View style={{ gap: 16 }}>
-              {scores.map((score, idx) => (
+              {chartScores.map((score, idx) => (
                 <View key={idx}>
                   <View
                     style={{
@@ -473,19 +490,20 @@ export default function YouthResults() {
           )}
 
           {/* ── Recommendation ── */}
-          <View style={s.recommendationBox}>
-            <Text
-              style={{
-                fontSize: 15,
-                lineHeight: 22,
-                color: COLORS.foreground,
-                fontWeight: "500",
-              }}
-            >
-              Тебе отлично подойдут направления: программирование, UI/UX,
-              робототехника и геймдизайн.
-            </Text>
-          </View>
+          {!isPro && chartScores.length > 0 && (
+            <View style={s.recommendationBox}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  lineHeight: 22,
+                  color: COLORS.foreground,
+                  fontWeight: "500",
+                }}
+              >
+                На основе твоих ответов, твои самые сильные стороны — это {chartScores.slice(0, 2).map(s => s.label.toLowerCase()).join(" и ")}. Продолжай развивать их!
+              </Text>
+            </View>
+          )}
 
           {/* ── CTA ── */}
           <TouchableOpacity

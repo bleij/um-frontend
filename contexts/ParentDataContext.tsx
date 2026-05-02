@@ -12,8 +12,7 @@ import { Child, Diagnostic } from "../models/types";
 import { useAuth } from "./AuthContext";
 
 const devTariffKey = (userId: string) => `um_dev_tariff_${userId}`;
-
-type AgeGroup = "6-11" | "12-17" | "18-20";
+type AgeGroup = "6-8" | "9-11" | "12-14" | "15-17";
 
 interface ParentProfileData {
   firstName: string;
@@ -60,16 +59,16 @@ const ParentDataContext = createContext<ParentDataContextType | undefined>(
 );
 
 function ageGroupToCategory(ageGroup: AgeGroup | null): Child["ageCategory"] {
-  if (ageGroup === "6-11") return "child";
-  if (ageGroup === "12-17") return "teen";
-  if (ageGroup === "18-20") return "young-adult";
+  if (ageGroup === "6-8" || ageGroup === "9-11") return "child";
+  if (ageGroup === "12-14" || ageGroup === "15-17") return "teen";
   return "child";
 }
 
 function ageGroupToAge(ageGroup: AgeGroup | null) {
-  if (ageGroup === "6-11") return 9;
-  if (ageGroup === "12-17") return 14;
-  if (ageGroup === "18-20") return 19;
+  if (ageGroup === "6-8") return 7;
+  if (ageGroup === "9-11") return 10;
+  if (ageGroup === "12-14") return 13;
+  if (ageGroup === "15-17") return 16;
   return 10;
 }
 
