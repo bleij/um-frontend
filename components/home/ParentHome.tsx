@@ -1,7 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { MotiView } from "moti";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -9,6 +10,7 @@ import {
   Text,
   useWindowDimensions,
   View,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NotificationsModal } from "../../app/(tabs)/layout-container";
@@ -23,10 +25,112 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useParentData } from "../../contexts/ParentDataContext";
 import { courseGradient, SCORE_TO_SKILLS, usePublicCourses } from "../../hooks/usePublicData";
 
+const AutonomousLogo = React.memo(({ width, height, dark }: any) => {
+  const [visible, setVisible] = useState(false);
+  const [config, setConfig] = useState(() => ({
+    top: Math.random() * (height || 800),
+    left: Math.random() * (width || 400),
+    size: 20 + Math.random() * 70,
+    rotation: `${Math.floor(Math.random() * 80) - 40}deg`,
+    duration: 2500 + Math.random() * 2000,
+  }));
+
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId: any;
+
+    const runCycle = () => {
+      if (!isMounted) return;
+
+      // 1. Показываем
+      setVisible(true);
+
+      // 2. Ждем пока покажется + небольшая пауза в видимом состоянии
+      timeoutId = setTimeout(() => {
+        if (!isMounted) return;
+        
+        // 3. Скрываем
+        setVisible(false);
+
+        // 4. Ждем пока полностью скроется
+        timeoutId = setTimeout(() => {
+          if (!isMounted) return;
+
+          // 5. Меняем координаты только когда полностью невидимы
+          setConfig({
+            top: Math.random() * (height || 800),
+            left: Math.random() * (width || 400),
+            size: 20 + Math.random() * 70,
+            rotation: `${Math.floor(Math.random() * 80) - 40}deg`,
+            duration: 2500 + Math.random() * 2000,
+          });
+
+          // 6. Небольшая пауза перед следующим появлением
+          timeoutId = setTimeout(runCycle, 1000);
+        }, config.duration + 500);
+      }, config.duration + 2000);
+    };
+
+    // Начальная задержка
+    timeoutId = setTimeout(runCycle, Math.random() * 5000);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+    };
+  }, [width, height]);
+
+  return (
+    <MotiView
+      animate={{ 
+        opacity: visible ? (dark ? 0.06 : 0.15) : 0, 
+        scale: visible ? 1.1 : 0.6,
+        rotate: config.rotation 
+      }}
+      transition={{
+        type: 'timing',
+        duration: config.duration,
+      }}
+      style={{ 
+        position: 'absolute', 
+        top: config.top, 
+        left: config.left, 
+        zIndex: 0 
+      }}
+      pointerEvents="none"
+    >
+      <Image
+        source={require("../../assets/logo/Frame 4.svg")}
+        style={{ 
+          width: config.size, 
+          height: config.size, 
+          tintColor: dark ? '#555555' : undefined 
+        }}
+        resizeMode="contain"
+      />
+    </MotiView>
+  );
+});
+
+const FloatingBranding = React.memo(({ count = 15, dark = false, width, height }: any) => {
+  return (
+    <>
+      {Array.from({ length: count }).map((_, i) => (
+        <AutonomousLogo
+          key={i}
+          width={width}
+          height={height}
+          dark={dark}
+        />
+      ))}
+    </>
+  );
+});
+
 export default function ParentHome() {
   const router = useRouter();
   const { user } = useAuth();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const [notificationsVisible, setNotificationsVisible] = useState(false);
   const {
@@ -64,87 +168,15 @@ export default function ParentHome() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      {/* Header */}
-      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
-        <LinearGradient
-          colors={COLORS.gradients.header as any}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
-        >
-          <SafeAreaView edges={["top"]}>
-            <View
-              style={{
-                paddingHorizontal: horizontalPadding,
-                paddingTop: 12,
-                paddingBottom: 32,
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 8,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.xxxl,
-                    fontWeight: TYPOGRAPHY.weight.semibold,
-                    color: COLORS.white,
-                    letterSpacing: TYPOGRAPHY.letterSpacing.tight,
-                  }}
-                >
-                  Привет, {user?.firstName || parentProfile?.firstName || "Родитель"}
-                  !
-                </Text>
-                {!isDesktop && (
-                <Pressable
-                  onPress={() => setNotificationsVisible(true)}
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: RADIUS.lg,
-                    backgroundColor: "rgba(255,255,255,0.2)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    borderWidth: 1,
-                    borderColor: "rgba(255,255,255,0.3)",
-                    ...(Platform.OS === "web" &&
-                      ({ cursor: "pointer" } as any)),
-                  }}
-                >
-                  <Feather name="bell" size={20} color="white" />
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: 14,
-                      right: 14,
-                      width: 10,
-                      height: 10,
-                      backgroundColor: COLORS.destructive,
-                      borderRadius: 5,
-                      borderWidth: 1.5,
-                      borderColor: "rgba(255,255,255,0.4)",
-                    }}
-                  />
-                </Pressable>
-                )}
-              </View>
-              <Text
-                style={{
-                  color: "rgba(255,255,255,0.7)",
-                  fontSize: 13,
-                  fontWeight: "500",
-                  marginTop: 4,
-                }}
-              >
-                Узнайте, как развиваются ваши дети сегодня
-              </Text>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
+      {/* Intensive Fixed Background Layer (Branded "Rain") */}
+      <View 
+        style={{ 
+          ...Platform.select({ web: { position: 'fixed' } as any, default: { position: 'absolute' } }), 
+          top: 0, left: 0, right: 0, bottom: 0 
+        }} 
+        pointerEvents="none"
+      >
+        <FloatingBranding count={40} dark={true} width={width} height={height} seed="body" />
       </View>
 
       <ScrollView
@@ -153,6 +185,159 @@ export default function ParentHome() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header with Perimeter Glow */}
+        <View style={{
+          backgroundColor: 'transparent',
+          shadowColor: "#C026D3",
+          shadowOffset: { width: 0, height: 12 },
+          shadowOpacity: 0.4,
+          shadowRadius: 24,
+          elevation: 20,
+          borderBottomLeftRadius: 40,
+          borderBottomRightRadius: 40,
+          zIndex: 10,
+        }}>
+          <LinearGradient
+            colors={COLORS.gradients.header as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ 
+              paddingBottom: 28, 
+              borderBottomLeftRadius: 40, 
+              borderBottomRightRadius: 40,
+              overflow: "hidden",
+            }}
+          >
+            {/* Decorative Animated Blobs */}
+            <MotiView
+              from={{ opacity: 0, scale: 0.6, translateX: 20 }}
+              animate={{ opacity: 0.35, scale: 1.2, translateX: 0 }}
+              transition={{ loop: true, repeatReverse: true, duration: 4000, type: 'timing' }}
+              style={{
+                position: 'absolute',
+                top: -20,
+                right: -20,
+                width: 140,
+                height: 140,
+                borderRadius: 70,
+                backgroundColor: 'rgba(255,255,255,0.25)',
+              }}
+            />
+            <MotiView
+              from={{ opacity: 0, scale: 0.5, translateY: 20 }}
+              animate={{ opacity: 0.25, scale: 1.5, translateY: 0 }}
+              transition={{ loop: true, repeatReverse: true, duration: 6000, type: 'timing', delay: 1000 }}
+              style={{
+                position: 'absolute',
+                bottom: -40,
+                left: -20,
+                width: 120,
+                height: 120,
+                borderRadius: 60,
+                backgroundColor: 'rgba(255,255,255,0.15)',
+              }}
+            />
+
+            <SafeAreaView edges={["top"]}>
+              <View
+                style={{
+                  paddingHorizontal: horizontalPadding,
+                  paddingTop: 24,
+                  paddingBottom: 8,
+                }}
+              >
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
+                  <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingRight: 16 }}>
+                    {!isDesktop && (
+                      <View style={{
+                        width: 54,
+                        height: 54,
+                        backgroundColor: "rgba(255,255,255,0.22)",
+                        borderRadius: 18,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        marginRight: 16,
+                        borderWidth: 1.5,
+                        borderColor: "rgba(255,255,255,0.35)",
+                        ...SHADOWS.md
+                      }}>
+                        <Image
+                          source={require("../../assets/logo/logo_white.png")}
+                          style={{ width: 34, height: 34 }}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 28,
+                          fontWeight: "900",
+                          color: COLORS.white,
+                          letterSpacing: -0.8,
+                          textShadowColor: 'rgba(0, 0, 0, 0.15)',
+                          textShadowOffset: { width: 0, height: 1 },
+                          textShadowRadius: 3,
+                        }}
+                        numberOfLines={1}
+                      >
+                        Привет, {user?.firstName || parentProfile?.firstName || "Родитель"}!
+                      </Text>
+                      <Text
+                        style={{
+                          color: "rgba(255,255,255,0.9)",
+                          fontSize: 15,
+                          fontWeight: "600",
+                          marginTop: 2,
+                        }}
+                      >
+                        Как успехи у детей сегодня?
+                      </Text>
+                    </View>
+                  </View>
+
+                  <Pressable
+                    onPress={() => setNotificationsVisible(true)}
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 20,
+                      backgroundColor: "rgba(255,255,255,0.2)",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderWidth: 1.5,
+                      borderColor: "rgba(255,255,255,0.3)",
+                      ...(Platform.OS === "web" &&
+                        ({ cursor: "pointer" } as any)),
+                    }}
+                  >
+                    <Feather name="bell" size={22} color="white" />
+                    <View
+                      style={{
+                        position: "absolute",
+                        top: 14,
+                        right: 14,
+                        width: 10,
+                        height: 10,
+                        backgroundColor: COLORS.destructive,
+                        borderRadius: 5,
+                        borderWidth: 2,
+                        borderColor: "rgba(255,255,255,0.5)",
+                      }}
+                    />
+                  </Pressable>
+                </View>
+              </View>
+            </SafeAreaView>
+          </LinearGradient>
+        </View>
+
         {/* Children Section */}
         <View style={{ paddingHorizontal: horizontalPadding, marginTop: 24 }}>
           <View className="flex-row justify-between items-center mb-4">
@@ -364,6 +549,7 @@ export default function ParentHome() {
             </Pressable>
           </View>
         </View>
+
       </ScrollView>
 
       <NotificationsModal

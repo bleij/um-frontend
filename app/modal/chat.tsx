@@ -12,7 +12,9 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { useChatMessages } from "../../hooks/useChats";
+import { COLORS, SHADOWS } from "../../constants/theme";
 
 export default function ChatModal() {
   const router = useRouter();
@@ -33,12 +35,7 @@ export default function ChatModal() {
   };
 
   return (
-    <LinearGradient
-      colors={["#6C5CE7", "#FFFFFF", "#6C5CE7"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 0 }}
-      style={{ flex: 1 }}
-    >
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -49,28 +46,33 @@ export default function ChatModal() {
             alignSelf: "center",
             width: IS_DESKTOP ? "50%" : "100%",
             backgroundColor: "white",
+            ...SHADOWS.lg,
           }}
         >
           {/* Header */}
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              paddingHorizontal: 16,
-              paddingVertical: 16,
-              paddingTop: Platform.OS === "ios" ? 54 : 32,
-              borderBottomWidth: 1,
-              borderColor: "#eee",
-              backgroundColor: "white",
-            }}
+          <LinearGradient
+            colors={COLORS.gradients.header as any}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
           >
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={{ fontSize: 18 }}>←</Text>
-            </TouchableOpacity>
-            <Text style={{ fontSize: 18, fontWeight: "700", marginLeft: 12 }}>
-              {name}
-            </Text>
-          </View>
+            <View style={{ paddingTop: Platform.OS === "ios" ? 54 : 32, paddingHorizontal: 20 }}>
+               <View style={{ flexDirection: "row", alignItems: "center" }}>
+                   <TouchableOpacity
+                       onPress={() => router.back()}
+                       style={{
+                           width: 40, height: 40, borderRadius: 20,
+                           backgroundColor: "rgba(255,255,255,0.2)",
+                           alignItems: "center", justifyContent: "center",
+                           marginRight: 12,
+                       }}
+                   >
+                       <Feather name="arrow-left" size={20} color="white" />
+                   </TouchableOpacity>
+                   <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>{name}</Text>
+               </View>
+            </View>
+          </LinearGradient>
 
           {/* Messages */}
           <ScrollView
@@ -96,10 +98,10 @@ export default function ChatModal() {
                 transition={{ duration: 250 }}
                 style={{
                   alignSelf: msg.is_mine ? "flex-end" : "flex-start",
-                  backgroundColor: msg.is_mine ? "#6C5CE7" : "#F1F1F1",
+                  backgroundColor: msg.is_mine ? COLORS.primary : "#F1F1F1",
                   paddingVertical: 10,
                   paddingHorizontal: 14,
-                  borderRadius: 18,
+                  borderRadius: 20,
                   marginBottom: 10,
                   maxWidth: "80%",
                 }}
@@ -120,6 +122,7 @@ export default function ChatModal() {
               borderTopWidth: 1,
               borderColor: "#eee",
               backgroundColor: "white",
+              paddingBottom: Platform.OS === "ios" ? 32 : 12,
             }}
           >
             <TextInput
@@ -128,11 +131,13 @@ export default function ChatModal() {
               placeholder="Введите сообщение..."
               style={{
                 flex: 1,
-                backgroundColor: "#F1F1F1",
+                backgroundColor: "#F3F4F6",
                 borderRadius: 20,
-                paddingHorizontal: 14,
-                paddingVertical: 10,
+                paddingHorizontal: 16,
+                paddingVertical: 12,
                 marginRight: 10,
+                fontSize: 15,
+                color: COLORS.foreground,
               }}
               onSubmitEditing={handleSend}
               returnKeyType="send"
@@ -140,19 +145,19 @@ export default function ChatModal() {
             <TouchableOpacity
               onPress={handleSend}
               style={{
-                backgroundColor: input.trim() ? "#6C5CE7" : "#E5E7EB",
-                paddingHorizontal: 16,
-                paddingVertical: 10,
+                backgroundColor: input.trim() ? COLORS.primary : "#E5E7EB",
+                paddingHorizontal: 18,
+                paddingVertical: 12,
                 borderRadius: 20,
               }}
             >
-              <Text style={{ color: input.trim() ? "white" : "#9CA3AF", fontWeight: "600" }}>
+              <Text style={{ color: input.trim() ? "white" : "#9CA3AF", fontWeight: "700" }}>
                 Отпр.
               </Text>
             </TouchableOpacity>
           </View>
         </View>
       </KeyboardAvoidingView>
-    </LinearGradient>
+    </View>
   );
 }

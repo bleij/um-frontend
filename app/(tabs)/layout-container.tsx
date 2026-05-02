@@ -1,15 +1,19 @@
 import { Feather } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, useSegments } from "expo-router";
+import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
-    Modal,
-    Platform,
-    Pressable,
-    Text,
-    TouchableOpacity,
-    useWindowDimensions,
-    View,
+  Image,
+  Modal,
+  Platform,
+  Pressable,
+  Text,
+  useWindowDimensions,
+  View
 } from "react-native";
+import { Easing } from "react-native-reanimated";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -34,15 +38,15 @@ export function TabIcon({ icon, color, focused }: { icon: any; color: string; fo
     <View style={{ alignItems: 'center', justifyContent: 'center' }}>
       <Feather name={icon} size={22} color={color} />
       {focused && (
-        <View 
-          style={{ 
-            position: 'absolute', 
-            bottom: -8, 
-            width: 4, 
-            height: 4, 
-            borderRadius: 2, 
-            backgroundColor: color 
-          }} 
+        <View
+          style={{
+            position: 'absolute',
+            bottom: -8,
+            width: 4,
+            height: 4,
+            borderRadius: 2,
+            backgroundColor: color
+          }}
         />
       )}
     </View>
@@ -450,7 +454,7 @@ export function SideNav({ role }: Props) {
     <View
       style={{
         width: LAYOUT.sideNavWidth,
-        backgroundColor: COLORS.white, // Forcing explicit white
+        backgroundColor: COLORS.white,
         borderRightWidth: 1,
         borderRightColor: COLORS.border,
         flexDirection: "column",
@@ -460,38 +464,46 @@ export function SideNav({ role }: Props) {
       {/* Brand header */}
       <View
         style={{
-          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "center",
           paddingHorizontal: 20,
-          paddingTop: 24,
-          paddingBottom: 20,
+          paddingTop: 32,
+          paddingBottom: 24,
           borderBottomWidth: 1,
           borderBottomColor: COLORS.border,
         }}
       >
-        <Text
-          style={{
-            color: COLORS.primary,
-            fontSize: 28,
-            fontWeight: "800",
-            letterSpacing: -0.5,
-          }}
-        >
-          UM
-        </Text>
+        <Image
+          source={require("../../assets/logo/logo_blue.png")}
+          style={{ width: 44, height: 44 }}
+          resizeMode="contain"
+        />
         <Pressable
           onPress={() => setNotificationsVisible(true)}
           style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
+            position: 'absolute',
+            top: 12,
+            right: 12,
+            width: 32,
+            height: 32,
+            borderRadius: 16,
             backgroundColor: COLORS.muted,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Feather name="bell" size={18} color={COLORS.mutedForeground} />
+          <Feather name="bell" size={16} color={COLORS.mutedForeground} />
+          <View
+            style={{
+              position: "absolute",
+              top: 6,
+              right: 6,
+              width: 7,
+              height: 7,
+              borderRadius: 4,
+              backgroundColor: COLORS.primary,
+            }}
+          />
         </Pressable>
       </View>
 
@@ -513,10 +525,10 @@ export function SideNav({ role }: Props) {
                 backgroundColor: active
                   ? `${COLORS.primary}12`
                   : pressed
-                  ? `${COLORS.primary}10`
-                  : hovered
-                  ? COLORS.muted
-                  : "transparent",
+                    ? `${COLORS.primary}10`
+                    : hovered
+                      ? COLORS.muted
+                      : "transparent",
               })}
             >
               {item.icon({
@@ -556,8 +568,8 @@ export function SideNav({ role }: Props) {
             backgroundColor: dropdownVisible || pressed
               ? COLORS.muted
               : hovered
-              ? `${COLORS.muted}CC`
-              : "transparent",
+                ? `${COLORS.muted}CC`
+                : "transparent",
           })}
         >
           <View
@@ -596,15 +608,12 @@ export function SideNav({ role }: Props) {
         </Pressable>
       </View>
 
-      {/* Dropdown menu — inline absolute (no Modal = no cooldown on web) */}
       {dropdownVisible && (
         <>
-          {/* Transparent backdrop — catches outside clicks */}
           <Pressable
             onPress={() => setDropdownVisible(false)}
             style={{
               position: "absolute",
-              // cover the full screen from inside the SideNav tree
               top: -9999,
               left: -9999,
               right: -9999,
@@ -666,10 +675,10 @@ export function SideNav({ role }: Props) {
                   backgroundColor: pressed
                     ? COLORS.muted
                     : hovered
-                    ? item.destructive
-                      ? `${COLORS.destructive}08`
-                      : COLORS.muted
-                    : "transparent",
+                      ? item.destructive
+                        ? `${COLORS.destructive}08`
+                        : COLORS.muted
+                      : "transparent",
                 })}
               >
                 <Feather
@@ -693,7 +702,6 @@ export function SideNav({ role }: Props) {
         </>
       )}
 
-      {/* Notifications modal */}
       <NotificationsModal
         visible={notificationsVisible}
         onClose={() => setNotificationsVisible(false)}
@@ -708,13 +716,22 @@ export default function CustomTabBar({ role }: Props) {
   const { tabs, go, isActive } = useTabNav(role);
   const { width } = useWindowDimensions();
   const segments = useSegments() as string[];
-  
+
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
 
-  // Скрываем табар на деталях кружка
   const isClubDetail = segments.includes('club') && segments.some(s => s === '[id]' || s.startsWith('club-'));
-  
+
   if (isClubDetail && !isDesktop) return null;
+
+  const numTabs = tabs.length;
+  const padding = 12;
+  const safeAreaBottom = Platform.OS === "ios" ? 24 : 12;
+
+  const containerWidth = isDesktop ? Math.min(width, LAYOUT.dashboardMaxWidth) : width;
+  const usableWidth = containerWidth - (padding * 2);
+  const tabWidth = usableWidth / numTabs;
+
+  const activeIndex = tabs.findIndex(t => isActive(t.route));
 
   return (
     <View
@@ -728,50 +745,119 @@ export default function CustomTabBar({ role }: Props) {
     >
       <View
         style={{
-          width: isDesktop ? Math.min(width, LAYOUT.dashboardMaxWidth) : "100%",
-          backgroundColor: "rgba(255,255,255,0.95)",
-          borderTopWidth: 1,
-          borderTopColor: COLORS.border,
-          flexDirection: "row",
-          justifyContent: "space-around",
-          alignItems: "center",
-          paddingTop: 8,
-          paddingBottom: Platform.OS === "ios" ? 28 : 12,
-          paddingHorizontal: 8,
-          borderTopLeftRadius: isDesktop ? 18 : 0,
-          borderTopRightRadius: isDesktop ? 18 : 0,
+          ...SHADOWS.lg,
+          width: containerWidth,
+          borderTopLeftRadius: 40,
+          borderTopRightRadius: 40,
+          backgroundColor: 'transparent'
         }}
       >
-        {tabs.map((item) => {
-          const active = isActive(item.route);
-          return (
-            <TouchableOpacity
-              key={item.key}
-              onPress={() => go(item.route)}
+        <BlurView
+          intensity={90}
+          tint="light"
+          style={{
+            width: "100%",
+            height: 76 + safeAreaBottom,
+            flexDirection: "row",
+            alignItems: "flex-start",
+            paddingTop: 12,
+            paddingHorizontal: padding,
+            borderTopLeftRadius: 40,
+            borderTopRightRadius: 40,
+            borderWidth: 1,
+            borderColor: "rgba(255, 255, 255, 0.8)",
+            borderBottomWidth: 0,
+            overflow: "hidden",
+            backgroundColor: "rgba(0, 0, 0, 0.08)",
+          }}
+        >
+          {activeIndex >= 0 && !isDesktop && (
+            <MotiView
+              animate={{
+                translateX: activeIndex * tabWidth,
+              }}
+              transition={{
+                type: "spring",
+                damping: 26,
+                stiffness: 350,
+                mass: 0.8,
+              }}
               style={{
-                flex: 1,
-                justifyContent: "center",
-                alignItems: "center",
-                paddingVertical: 4,
+                position: "absolute",
+                left: padding,
+                top: 12,
+                height: 54,
+                width: tabWidth,
+                borderRadius: 27,
+                overflow: "hidden",
+                shadowColor: COLORS.primary,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.4,
+                shadowRadius: 12,
+                elevation: 8,
               }}
             >
-              {item.icon({
-                color: active ? COLORS.primary : COLORS.mutedForeground,
-                size: 22,
-              })}
-              <Text
+              <MotiView
+                animate={{
+                  translateX: (-activeIndex * tabWidth) - 20,
+                }}
+                transition={{
+                  type: "spring",
+                  damping: 26,
+                  stiffness: 350,
+                  mass: 0.8,
+                }}
                 style={{
-                  fontSize: 10,
-                  color: active ? COLORS.primary : COLORS.mutedForeground,
-                  marginTop: 4,
-                  fontWeight: active ? "600" : "400",
+                  width: usableWidth + 40,
+                  height: "120%",
+                  top: "-10%",
                 }}
               >
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+                <LinearGradient
+                  colors={["#4F46E5", "#7C3AED", "#C026D3"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{ flex: 1 }}
+                />
+              </MotiView>
+            </MotiView>
+          )}
+
+          {tabs.map((item, index) => {
+            const active = isActive(item.route);
+            return (
+              <Pressable
+                key={item.key}
+                onPress={() => go(item.route)}
+                style={{
+                  width: isDesktop ? "auto" : tabWidth,
+                  flex: isDesktop ? 1 : undefined,
+                  height: 54,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 1,
+                }}
+              >
+                {item.icon({
+                  color: active ? COLORS.white : COLORS.mutedForeground,
+                  size: active ? 28 : 24,
+                })}
+                {isDesktop && (
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      color: active ? COLORS.primary : COLORS.mutedForeground,
+                      marginTop: 4,
+                      fontWeight: active ? "600" : "400",
+                    }}
+                  >
+                    {item.label}
+                  </Text>
+                )}
+              </Pressable>
+            );
+          })}
+        </BlurView>
       </View>
     </View>
   );
