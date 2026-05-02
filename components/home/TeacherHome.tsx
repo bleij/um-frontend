@@ -1,9 +1,10 @@
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React from "react";
 import {
+  ActivityIndicator,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,13 +14,25 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS } from "../../constants/theme";
+import { useAuth } from "../../contexts/AuthContext";
+import { useTeacherGroups } from "../../hooks/usePlatformData";
+
+function scheduleTimeLabel(schedule: string | null) {
+  const match = schedule?.match(/\b([01]?\d|2[0-3]):[0-5]\d\b/);
+  return match?.[0] ?? "—";
+}
 
 export default function TeacherHome() {
   const { width } = useWindowDimensions();
   const router = useRouter();
+  const { user } = useAuth();
+  const { groups, studentCounts, loading } = useTeacherGroups();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? 40 : 24;
+  const activeGroups = groups.filter((group) => group.active);
+  const nextGroup = activeGroups[0] ?? null;
+  const teacherName = user?.firstName && user.firstName !== "Dev" ? user.firstName : "учитель";
 
   const today = new Date().toLocaleDateString("ru-RU", {
     weekday: "long",
@@ -40,45 +53,59 @@ export default function TeacherHome() {
           <SafeAreaView edges={["top"]}>
             <View style={[styles.headerContent, { paddingHorizontal: paddingX }]}>
               <View>
-                <Text style={styles.greeting}>Добрый день, Учитель!</Text>
+                <Text style={styles.greeting}>Добрый день, {teacherName}!</Text>
                 <Text style={styles.dateText}>{today}</Text>
               </View>
-              <TouchableOpacity style={styles.notificationBtn}>
+              <View style={styles.notificationBtn}>
                 <Feather name="bell" size={20} color="white" />
-                <View style={styles.notificationBadge} />
-              </TouchableOpacity>
+              </View>
             </View>
 
-            {/* Next Lesson High-Fidelity Widget */}
             <MotiView 
                 from={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 style={[styles.nextLessonCard, { marginHorizontal: paddingX }]}
             >
+              {loading ? (
+                <View style={styles.loadingBlock}>
+                  <ActivityIndicator size="small" color="white" />
+                </View>
+              ) : nextGroup ? (
                 <TouchableOpacity 
                     activeOpacity={0.9}
-                    onPress={() => router.push("/teacher/group/group-001/journal" as any)}
+                    onPress={() => router.push(`/teacher/group/${nextGroup.id}/journal` as any)}
                 >
                     <View style={styles.nextLessonHeader}>
                         <View style={styles.nextTag}>
-                            <Text style={styles.nextTagText}>СЛЕДУЮЩИЙ УРОК</Text>
+                            <Text style={styles.nextTagText}>БЛИЖАЙШАЯ ГРУППА</Text>
                         </View>
-                        <Text style={styles.timerText}>через 45 мин</Text>
+                        <Text style={styles.timerText}>{scheduleTimeLabel(nextGroup.schedule)}</Text>
                     </View>
                     
-                    <Text style={styles.lessonTitle}>Основы программирования</Text>
-                    <Text style={styles.groupSubtitle}>Группа Python-1 • Ауд. 12</Text>
+                    <Text style={styles.lessonTitle}>{nextGroup.course_title || nextGroup.name}</Text>
+                    <Text style={styles.groupSubtitle}>
+                      {nextGroup.name}
+                      {nextGroup.schedule ? ` • ${nextGroup.schedule}` : ""}
+                    </Text>
 
                     <View style={styles.lessonFooter}>
                         <View style={styles.timeInfo}>
-                            <Feather name="clock" size={16} color="white" />
-                            <Text style={styles.timeText}>14:00 - 15:30</Text>
+                            <Feather name="users" size={16} color="white" />
+                            <Text style={styles.timeText}>
+                              {studentCounts[nextGroup.id] ?? 0} / {nextGroup.capacity}
+                            </Text>
                         </View>
                         <View style={styles.startButton}>
-                            <Text style={styles.startButtonText}>Начать</Text>
+                            <Text style={styles.startButtonText}>Журнал</Text>
                         </View>
                     </View>
                 </TouchableOpacity>
+              ) : (
+                <View>
+                  <Text style={styles.lessonTitle}>Групп пока нет</Text>
+                  <Text style={styles.groupSubtitle}>Когда группы появятся в базе, они отобразятся здесь.</Text>
+                </View>
+              )}
             </MotiView>
           </SafeAreaView>
         </LinearGradient>
@@ -100,35 +127,31 @@ export default function TeacherHome() {
                 <Text style={styles.actionLabel}>Мои группы</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.actionCard}>
-                <View style={[styles.actionIcon, { backgroundColor: '#FFF7ED' }]}>
-                    <Feather name="maximize" size={24} color="#EA580C" />
-                </View>
-                <Text style={styles.actionLabel}>Сканер QR</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.actionCard}>
-                <View style={[styles.actionIcon, { backgroundColor: '#ECFDF5' }]}>
-                    <Feather name="book-open" size={24} color="#059669" />
-                </View>
-                <Text style={styles.actionLabel}>Материалы</Text>
-            </TouchableOpacity>
         </View>
 
-        {/* Schedule List */}
         <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Расписание на сегодня</Text>
-            <TouchableOpacity>
+            <Text style={styles.sectionTitle}>Расписание групп</Text>
+            <TouchableOpacity onPress={() => router.push("/teacher/groups" as any)}>
                 <Text style={styles.seeAll}>Весь план</Text>
             </TouchableOpacity>
         </View>
 
         <View style={styles.lessonList}>
-            {[
-                { id: 1, groupId: 'group-001', time: '14:00', title: 'Основы программирования', group: 'Группа Python-1', status: 'upcoming' },
-                { id: 2, groupId: 'group-002', time: '16:00', title: 'Web-разработка', group: 'Группа Frontend-2', status: 'upcoming' },
-                { id: 3, groupId: 'group-003', time: '18:00', title: 'Робототехника', group: 'Младшая группа', status: 'upcoming' },
-            ].map((item, idx) => (
+            {loading && (
+              <View style={styles.emptyState}>
+                <ActivityIndicator size="small" color={COLORS.primary} />
+              </View>
+            )}
+
+            {!loading && activeGroups.length === 0 && (
+              <View style={styles.emptyState}>
+                <Feather name="users" size={22} color={COLORS.mutedForeground} />
+                <Text style={styles.emptyTitle}>Нет активных групп</Text>
+                <Text style={styles.emptyText}>Группы появятся здесь после добавления в Supabase.</Text>
+              </View>
+            )}
+
+            {!loading && activeGroups.map((item, idx) => (
                 <MotiView
                     key={item.id}
                     from={{ opacity: 0, translateX: -20 }}
@@ -137,16 +160,19 @@ export default function TeacherHome() {
                     style={styles.scheduleItem}
                 >
                     <View style={styles.timeColumn}>
-                        <Text style={styles.scheduleTime}>{item.time}</Text>
+                        <Text style={styles.scheduleTime}>{scheduleTimeLabel(item.schedule)}</Text>
                         <View style={styles.timeDot} />
                     </View>
                     <TouchableOpacity 
                         style={styles.scheduleCard}
-                        onPress={() => router.push(`/teacher/group/${item.groupId}/journal` as any)}
+                        onPress={() => router.push(`/teacher/group/${item.id}/journal` as any)}
                     >
                         <View style={styles.scheduleCardContent}>
-                            <Text style={styles.scheduleTitle}>{item.title}</Text>
-                            <Text style={styles.scheduleGroup}>{item.group}</Text>
+                            <Text style={styles.scheduleTitle}>{item.course_title || item.name}</Text>
+                            <Text style={styles.scheduleGroup}>
+                              {item.name}
+                              {item.schedule ? ` • ${item.schedule}` : ""}
+                            </Text>
                         </View>
                         <Feather name="chevron-right" size={18} color="#C7C7CC" />
                     </TouchableOpacity>
@@ -209,23 +235,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  notificationBadge: {
-    position: "absolute",
-    top: 12,
-    right: 12,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#FF3B30",
-    borderWidth: 2,
-    borderColor: "#6C5CE7",
-  },
   nextLessonCard: {
     backgroundColor: "rgba(255,255,255,0.15)",
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.2)",
+  },
+  loadingBlock: {
+    minHeight: 104,
+    alignItems: "center",
+    justifyContent: "center",
   },
   nextLessonHeader: {
     flexDirection: "row",
@@ -293,7 +313,7 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     marginBottom: 32,
   },
   actionCard: {
@@ -331,6 +351,29 @@ const styles = StyleSheet.create({
   },
   lessonList: {
     gap: 0,
+  },
+  emptyState: {
+    minHeight: 120,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
+    backgroundColor: "white",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+    ...SHADOWS.sm,
+  },
+  emptyTitle: {
+    marginTop: 10,
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.foreground,
+  },
+  emptyText: {
+    marginTop: 4,
+    textAlign: "center",
+    fontSize: 13,
+    color: COLORS.mutedForeground,
   },
   scheduleItem: {
     flexDirection: 'row',

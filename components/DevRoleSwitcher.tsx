@@ -2,22 +2,26 @@ import React, { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View, Text, TouchableOpacity, Modal, StyleSheet,
-  ScrollView, Switch, Platform, useWindowDimensions, Pressable, ActivityIndicator,
+  ScrollView, Switch, Platform, useWindowDimensions, Pressable, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { useDevSettings } from '../contexts/DevSettingsContext';
 import { useParentData } from '../contexts/ParentDataContext';
+import { clearDevData, getDevDataSeeded, seedDevData } from '../lib/devSeedData';
 import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
 import { Feather } from '@expo/vector-icons';
 
 const DEV_TOOLS_KEY = 'um_dev_tools_enabled';
+const DEV_DATA_KEY = 'um_dev_seed_data_enabled';
 
 export function DevRoleSwitcher() {
   if (!__DEV__) return null;
 
   const [visible, setVisible] = useState(false);
   const [devToolsEnabled, setDevToolsEnabledState] = useState(false);
+  const [devDataEnabled, setDevDataEnabled] = useState(false);
+  const [syncingDevData, setSyncingDevData] = useState(false);
   const [switchingRole, setSwitchingRole] = useState<UserRole | null>(null);
   const [clearingRole, setClearingRole] = useState(false);
 
@@ -27,6 +31,11 @@ export function DevRoleSwitcher() {
   const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp, devYouthAge, setDevYouthAge } = useDevSettings();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
+  const canManageDevData = devToolsEnabled && user?.role === 'admin' && !syncingDevData;
+
+  const notifyDevDataError = (message: string) => {
+    Alert.alert('Dev data sync failed', message);
+  };
 
   // Persist master dev-tools flag; sync dependent settings automatically
   const toggleDevTools = async (value: boolean) => {
@@ -44,10 +53,43 @@ export function DevRoleSwitcher() {
     }
   };
 
+  const toggleDevData = async (value: boolean) => {
+    if (!canManageDevData) return;
+
+    setSyncingDevData(true);
+    try {
+      if (value) {
+        await seedDevData();
+      } else {
+        await clearDevData();
+      }
+
+      setDevDataEnabled(value);
+      await AsyncStorage.setItem(DEV_DATA_KEY, value ? 'true' : 'false');
+    } catch (error) {
+      notifyDevDataError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncingDevData(false);
+    }
+  };
+
   // Restore persisted master state when modal opens
   const handleOpen = async () => {
     const stored = await AsyncStorage.getItem(DEV_TOOLS_KEY);
     if (stored !== null) setDevToolsEnabledState(stored === 'true');
+
+    const storedDevData = await AsyncStorage.getItem(DEV_DATA_KEY);
+    if (storedDevData !== null) setDevDataEnabled(storedDevData === 'true');
+
+    try {
+      const remoteSeeded = await getDevDataSeeded();
+      setDevDataEnabled(remoteSeeded);
+      await AsyncStorage.setItem(DEV_DATA_KEY, remoteSeeded ? 'true' : 'false');
+    } catch {
+      // Keep the local switch state when Supabase is unavailable or the
+      // migration has not been pushed yet.
+    }
+
     setVisible(true);
   };
 
@@ -132,6 +174,27 @@ export function DevRoleSwitcher() {
                   onValueChange={toggleDevTools}
                   trackColor={{ false: COLORS.muted, true: COLORS.primary }}
                 />
+              </View>
+
+              <View style={[styles.devModeRow, !devToolsEnabled && styles.optionMuted]}>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={styles.devModeTitle}>Populated Dev Data</Text>
+                  <Text style={styles.devModeSubtitle}>
+                    {user?.role === 'admin'
+                      ? 'Seed or clear deterministic Supabase demo records'
+                      : 'Switch to admin to seed or clear database records'}
+                  </Text>
+                </View>
+                {syncingDevData ? (
+                  <ActivityIndicator size="small" color={COLORS.primary} />
+                ) : (
+                  <Switch
+                    value={devDataEnabled}
+                    onValueChange={toggleDevData}
+                    trackColor={{ false: COLORS.muted, true: COLORS.success }}
+                    disabled={!canManageDevData}
+                  />
+                )}
               </View>
 
               {/* ── All options gated by devToolsEnabled ── */}
@@ -362,6 +425,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+  },
+  optionMuted: {
+    opacity: 0.35,
   },
   devModeTitle: {
     fontSize: 15,
