@@ -5,7 +5,6 @@ import { useRouter, useSegments } from "expo-router";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
-  Image,
   Modal,
   Platform,
   Pressable,
@@ -464,46 +463,38 @@ export function SideNav({ role }: Props) {
       {/* Brand header */}
       <View
         style={{
+          flexDirection: "row",
           alignItems: "center",
-          justifyContent: "center",
+          justifyContent: "space-between",
           paddingHorizontal: 20,
-          paddingTop: 32,
-          paddingBottom: 24,
+          paddingTop: 24,
+          paddingBottom: 20,
           borderBottomWidth: 1,
           borderBottomColor: COLORS.border,
         }}
       >
-        <Image
-          source={require("../../assets/logo/logo_blue.png")}
-          style={{ width: 44, height: 44 }}
-          resizeMode="contain"
-        />
+        <Text
+          style={{
+            color: COLORS.primary,
+            fontSize: 28,
+            fontWeight: "800",
+            letterSpacing: -0.5,
+          }}
+        >
+          UM
+        </Text>
         <Pressable
           onPress={() => setNotificationsVisible(true)}
           style={{
-            position: 'absolute',
-            top: 12,
-            right: 12,
-            width: 32,
-            height: 32,
-            borderRadius: 16,
+            width: 36,
+            height: 36,
+            borderRadius: 18,
             backgroundColor: COLORS.muted,
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Feather name="bell" size={16} color={COLORS.mutedForeground} />
-          <View
-            style={{
-              position: "absolute",
-              top: 6,
-              right: 6,
-              width: 7,
-              height: 7,
-              borderRadius: 4,
-              backgroundColor: COLORS.primary,
-            }}
-          />
+          <Feather name="bell" size={18} color={COLORS.mutedForeground} />
         </Pressable>
       </View>
 
