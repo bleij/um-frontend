@@ -185,65 +185,20 @@ export default function ParentHome() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with Perimeter Glow */}
-        <View style={{
-          backgroundColor: 'transparent',
-          shadowColor: "#C026D3",
-          shadowOffset: { width: 0, height: 12 },
-          shadowOpacity: 0.4,
-          shadowRadius: 24,
-          elevation: 20,
-          borderBottomLeftRadius: 40,
-          borderBottomRightRadius: 40,
-          zIndex: 10,
-        }}>
+        {/* Header */}
+        <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
           <LinearGradient
             colors={COLORS.gradients.header as any}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ 
-              paddingBottom: 28, 
-              borderBottomLeftRadius: 40, 
-              borderBottomRightRadius: 40,
-              overflow: "hidden",
-            }}
+            style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
           >
-            {/* Decorative Animated Blobs */}
-            <MotiView
-              from={{ opacity: 0, scale: 0.6, translateX: 20 }}
-              animate={{ opacity: 0.35, scale: 1.2, translateX: 0 }}
-              transition={{ loop: true, repeatReverse: true, duration: 4000, type: 'timing' }}
-              style={{
-                position: 'absolute',
-                top: -20,
-                right: -20,
-                width: 140,
-                height: 140,
-                borderRadius: 70,
-                backgroundColor: 'rgba(255,255,255,0.25)',
-              }}
-            />
-            <MotiView
-              from={{ opacity: 0, scale: 0.5, translateY: 20 }}
-              animate={{ opacity: 0.25, scale: 1.5, translateY: 0 }}
-              transition={{ loop: true, repeatReverse: true, duration: 6000, type: 'timing', delay: 1000 }}
-              style={{
-                position: 'absolute',
-                bottom: -40,
-                left: -20,
-                width: 120,
-                height: 120,
-                borderRadius: 60,
-                backgroundColor: 'rgba(255,255,255,0.15)',
-              }}
-            />
-
             <SafeAreaView edges={["top"]}>
               <View
                 style={{
                   paddingHorizontal: horizontalPadding,
-                  paddingTop: 24,
-                  paddingBottom: 8,
+                  paddingTop: 12,
+                  paddingBottom: 32,
                 }}
               >
                 <View
@@ -251,73 +206,37 @@ export default function ParentHome() {
                     flexDirection: "row",
                     alignItems: "center",
                     justifyContent: "space-between",
+                    marginBottom: 8,
                   }}
                 >
-                  <View style={{ flex: 1, flexDirection: "row", alignItems: "center", paddingRight: 16 }}>
-                    {!isDesktop && (
-                      <View style={{
-                        width: 54,
-                        height: 54,
-                        backgroundColor: "rgba(255,255,255,0.22)",
-                        borderRadius: 18,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        marginRight: 16,
-                        borderWidth: 1.5,
-                        borderColor: "rgba(255,255,255,0.35)",
-                        ...SHADOWS.md
-                      }}>
-                        <Image
-                          source={require("../../assets/logo/logo_white.png")}
-                          style={{ width: 34, height: 34 }}
-                          resizeMode="contain"
-                        />
-                      </View>
-                    )}
-                    <View style={{ flex: 1 }}>
-                      <Text
-                        style={{
-                          fontSize: 28,
-                          fontWeight: "900",
-                          color: COLORS.white,
-                          letterSpacing: -0.8,
-                          textShadowColor: 'rgba(0, 0, 0, 0.15)',
-                          textShadowOffset: { width: 0, height: 1 },
-                          textShadowRadius: 3,
-                        }}
-                        numberOfLines={1}
-                      >
-                        Привет, {user?.firstName || parentProfile?.firstName || "Родитель"}!
-                      </Text>
-                      <Text
-                        style={{
-                          color: "rgba(255,255,255,0.9)",
-                          fontSize: 15,
-                          fontWeight: "600",
-                          marginTop: 2,
-                        }}
-                      >
-                        Как успехи у детей сегодня?
-                      </Text>
-                    </View>
-                  </View>
-
+                  <Text
+                    style={{
+                      fontSize: TYPOGRAPHY.size.xxxl,
+                      fontWeight: TYPOGRAPHY.weight.semibold,
+                      color: COLORS.white,
+                      letterSpacing: TYPOGRAPHY.letterSpacing.tight,
+                    }}
+                  >
+                    Привет, {user?.firstName || parentProfile?.firstName || "Родитель"}
+                    !
+                  </Text>
+                  {!isDesktop && (
                   <Pressable
                     onPress={() => setNotificationsVisible(true)}
                     style={{
                       width: 52,
                       height: 52,
-                      borderRadius: 20,
+                      borderRadius: RADIUS.lg,
                       backgroundColor: "rgba(255,255,255,0.2)",
                       alignItems: "center",
                       justifyContent: "center",
-                      borderWidth: 1.5,
+                      borderWidth: 1,
                       borderColor: "rgba(255,255,255,0.3)",
                       ...(Platform.OS === "web" &&
                         ({ cursor: "pointer" } as any)),
                     }}
                   >
-                    <Feather name="bell" size={22} color="white" />
+                    <Feather name="bell" size={20} color="white" />
                     <View
                       style={{
                         position: "absolute",
@@ -327,17 +246,27 @@ export default function ParentHome() {
                         height: 10,
                         backgroundColor: COLORS.destructive,
                         borderRadius: 5,
-                        borderWidth: 2,
-                        borderColor: "rgba(255,255,255,0.5)",
+                        borderWidth: 1.5,
+                        borderColor: "rgba(255,255,255,0.4)",
                       }}
                     />
                   </Pressable>
+                  )}
                 </View>
+                <Text
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: 13,
+                    fontWeight: "500",
+                    marginTop: 4,
+                  }}
+                >
+                  Узнайте, как развиваются ваши дети сегодня
+                </Text>
               </View>
             </SafeAreaView>
           </LinearGradient>
         </View>
-
         {/* Children Section */}
         <View style={{ paddingHorizontal: horizontalPadding, marginTop: 24 }}>
           <View className="flex-row justify-between items-center mb-4">
