@@ -33,6 +33,8 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   profileComplete: boolean;
+  /** False for new OAuth users who haven't selected a role yet. */
+  hasSelectedRole: boolean;
 }
 
 interface AuthActionResult {
@@ -131,6 +133,7 @@ function toAuthUser(input: {
   firstName?: string;
   lastName?: string;
   profileComplete?: boolean;
+  hasSelectedRole?: boolean;
 }): AuthUser {
   return {
     id: input.id,
@@ -140,6 +143,7 @@ function toAuthUser(input: {
     firstName: input.firstName?.trim() || "Пользователь",
     lastName: input.lastName?.trim() || "",
     profileComplete: input.profileComplete ?? true,
+    hasSelectedRole: input.hasSelectedRole ?? true,
   };
 }
 
@@ -280,7 +284,12 @@ async function hydrateFromSupabaseUser(
     (metadata.email as string | undefined) ||
     "";
 
-  const metadataRole = parseRole(metadata.role as string | undefined);
+  const rawMetaRole = metadata.role as string | undefined;
+  const rawRemoteRole = remoteProfile?.role as string | null;
+  // Only treat the role as "selected" when it came from real stored data, not
+  // from the default fallback inside parseRole.
+  const hasSelectedRole = !!(rawRemoteRole || rawMetaRole);
+  const metadataRole = parseRole(rawMetaRole);
   const isDevAnonymous = isAnonymousSupabaseUser(sessionUser) && metadata.dev_role_switcher === true;
 
   // Accept users who have either phone OR email. Dev anonymous users are also
@@ -292,10 +301,7 @@ async function hydrateFromSupabaseUser(
   const nameParts = fullName.split(" ").filter(Boolean);
   const oauthFirstName = nameParts[0] ?? "";
   const oauthLastName = nameParts.slice(1).join(" ");
-  const role = parseRole(
-    (remoteProfile?.role as string | null) ||
-      metadataRole,
-  );
+  const role = parseRole(rawRemoteRole || rawMetaRole);
 
   return toAuthUser({
     id: sessionUser.id,
@@ -313,6 +319,7 @@ async function hydrateFromSupabaseUser(
       oauthLastName ||
       (isDevAnonymous ? metadataRole.charAt(0).toUpperCase() + metadataRole.slice(1) : ""),
     profileComplete: isDevAnonymous || (await resolveProfileComplete(sessionUser.id, role)),
+    hasSelectedRole: isDevAnonymous || hasSelectedRole,
   });
 }
 
@@ -823,7 +830,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const setUserRole = useCallback(
     async (role: UserRole) => {
       if (!user) return;
-      const nextUser = { ...user, role, profileComplete: false };
+      const nextUser = { ...user, role, profileComplete: false, hasSelectedRole: true };
       await setLocalProfileComplete(user.id, false);
       setUser(nextUser);
       // Persist for dev-switcher users; real users rely on Supabase session.

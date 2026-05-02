@@ -1,39 +1,24 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import React from "react";
+import { Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SideNav } from "@/app/(tabs)/layout-container";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
-
-const FEATURES = [
-  { icon: "check-circle", title: "Запись в любые кружки", desc: "Без ограничений и скрытых комиссий" },
-  { icon: "star", title: "Личный ментор", desc: "Корректировка трека после каждого занятия" },
-  { icon: "activity", title: "Глубокая аналитика", desc: "Контроль успеваемости и новых навыков" },
-  { icon: "shield", title: "Высокое качество", desc: "Сплит-платежи: мы платим учителям только за результат" },
-];
+import { useSubscriptionPlans } from "../../hooks/usePlatformData";
 
 export default function SubscriptionPaywall() {
   const router = useRouter();
   const { user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-
-  const [isLoading, setIsLoading] = useState(false);
+  const { plans } = useSubscriptionPlans("parent");
+  const plan = plans.find((item) => item.popular) ?? plans[0] ?? null;
 
   const handleSubscribe = () => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      if (Platform.OS === "web") {
-        window.alert("Оплата успешно прошла! Вы получили статус PRO.");
-      } else {
-        Alert.alert("Успешно", "Оплата успешно прошла! Вы получили статус PRO.");
-      }
-      router.push("/home");
-    }, 1500);
+    router.push("/profile/common/subscribe" as any);
   };
 
   const content = (
@@ -68,17 +53,19 @@ export default function SubscriptionPaywall() {
 
             {/* Feature list */}
             <View style={styles.featureCard}>
-              {FEATURES.map((f, idx) => (
-                <View key={idx} style={[styles.featureRow, idx < FEATURES.length - 1 && { marginBottom: 20 }]}>
+              {(plan?.features ?? []).map((feature, idx, features) => (
+                <View key={feature} style={[styles.featureRow, idx < features.length - 1 && { marginBottom: 20 }]}>
                   <View style={styles.featureIcon}>
-                    <Feather name={f.icon as any} size={20} color="#A78BFA" />
+                    <Feather name="check-circle" size={20} color="#A78BFA" />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.featureTitle}>{f.title}</Text>
-                    <Text style={styles.featureDesc}>{f.desc}</Text>
+                    <Text style={styles.featureTitle}>{feature}</Text>
                   </View>
                 </View>
               ))}
+              {!plan && (
+                <Text style={styles.featureDesc}>Активных тарифов пока нет.</Text>
+              )}
             </View>
 
             {/* Pricing card */}
@@ -93,19 +80,19 @@ export default function SubscriptionPaywall() {
                   colors={["rgba(255,255,255,0.15)", "transparent"]}
                   style={StyleSheet.absoluteFillObject}
                 />
-                <Text style={styles.pricingLabel}>Месячный тариф</Text>
+                <Text style={styles.pricingLabel}>{plan?.title ?? "Тариф"}</Text>
                 <View style={styles.priceRow}>
-                  <Text style={styles.priceAmount}>30,000</Text>
+                  <Text style={styles.priceAmount}>{plan ? plan.price_kzt.toLocaleString() : "—"}</Text>
                   <Text style={styles.priceUnit}> ₸ / мес</Text>
                 </View>
 
                 <Pressable
-                  disabled={isLoading}
+                  disabled={!plan}
                   onPress={handleSubscribe}
                   style={({ pressed }) => [styles.kaspiBtn, pressed && { opacity: 0.9 }]}
                 >
                   <Text style={styles.kaspiText}>
-                    {isLoading ? "Обработка..." : "Оплатить через Kaspi"}
+                    Выбрать тариф
                   </Text>
                 </Pressable>
 

@@ -90,6 +90,8 @@ export function usePublicCourses() {
 export function usePublicCourseById(id: string | undefined) {
   const [course, setCourse] = useState<PublicCourse | null>(null);
   const [groups, setGroups] = useState<OrgGroup[]>([]);
+  const [reviews, setReviews] = useState<CourseReview[]>([]);
+  const [trialSlots, setTrialSlots] = useState<TrialLessonSlot[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -109,14 +111,45 @@ export function usePublicCourseById(id: string | undefined) {
         .select("*")
         .eq("course_id", id)
         .eq("active", true),
-    ]).then(([courseRes, groupsRes]) => {
+      supabase
+        .from("course_reviews")
+        .select("id, course_id, author_display_name, rating, body, created_at")
+        .eq("course_id", id)
+        .eq("status", "published")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("trial_lesson_slots")
+        .select("id, course_id, day_label, time_label, display_order")
+        .eq("course_id", id)
+        .eq("active", true)
+        .order("display_order", { ascending: true }),
+    ]).then(([courseRes, groupsRes, reviewsRes, slotsRes]) => {
       setCourse(courseRes.data ? mapRow(courseRes.data) : null);
       setGroups((groupsRes.data ?? []) as OrgGroup[]);
+      setReviews((reviewsRes.data ?? []) as CourseReview[]);
+      setTrialSlots((slotsRes.data ?? []) as TrialLessonSlot[]);
       setLoading(false);
     });
   }, [id]);
 
-  return { course, groups, loading };
+  return { course, groups, reviews, trialSlots, loading };
+}
+
+export interface CourseReview {
+  id: string;
+  course_id: string;
+  author_display_name: string | null;
+  rating: number;
+  body: string;
+  created_at: string;
+}
+
+export interface TrialLessonSlot {
+  id: string;
+  course_id: string;
+  day_label: string;
+  time_label: string;
+  display_order: number;
 }
 
 // ── applyToCourse ─────────────────────────────────────────────────────────────

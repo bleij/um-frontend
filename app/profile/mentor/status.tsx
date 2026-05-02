@@ -69,7 +69,7 @@ export default function MentorStatusPage() {
                 }}
              >
                 <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: TYPOGRAPHY.size.md }}>
-                   Перейти на дашборд ментора (Mock)
+                   Перейти на дашборд ментора
                 </Text>
              </TouchableOpacity>
 

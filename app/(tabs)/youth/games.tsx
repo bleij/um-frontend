@@ -116,27 +116,10 @@ export default function GamesLobby() {
                 <View style={{ marginTop: 40, backgroundColor: 'white', padding: 24, borderRadius: 32, ...SHADOWS.sm }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                         <Text style={{ fontSize: 18, fontWeight: '900', color: COLORS.foreground }}>Зал славы</Text>
-                        <TouchableOpacity>
-                            <Text style={{ color: COLORS.primary, fontWeight: '700' }}>Весь рейтинг</Text>
-                        </TouchableOpacity>
                     </View>
-                    {[
-                        { name: 'Алина Каримова', score: 25400, rank: 1, avatar: '👧' },
-                        { name: 'Игорь Смирнов', score: 21200, rank: 2, avatar: '👦' },
-                        { name: 'Мария Пак', score: 18900, rank: 3, avatar: '👩' },
-                    ].map((user) => (
-                        <View key={user.rank} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-                            <Text style={{ width: 24, fontWeight: '900', color: COLORS.mutedForeground }}>{user.rank}</Text>
-                            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.muted, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                                <Text style={{ fontSize: 20 }}>{user.avatar}</Text>
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={{ fontWeight: '700', color: COLORS.foreground }}>{user.name}</Text>
-                                <Text style={{ fontSize: 11, color: COLORS.mutedForeground }}>{user.score} IQ</Text>
-                            </View>
-                            {user.rank === 1 && <Feather name="star" size={16} color="#F59E0B" />}
-                        </View>
-                    ))}
+                    <Text style={{ color: COLORS.mutedForeground, fontWeight: '600' }}>
+                        Рейтинг появится после публикации результатов игроков.
+                    </Text>
                 </View>
             </ScrollView>
 

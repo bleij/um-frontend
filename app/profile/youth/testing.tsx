@@ -30,56 +30,11 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useParentData } from "../../../contexts/ParentDataContext";
 import { useDevSettings } from "../../../contexts/DevSettingsContext";
 import { Diagnostic } from "../../../models/types";
+import { useOnboardingQuestions, type OnboardingQuestion } from "../../../hooks/usePlatformData";
 import DiagnosticExplorer from "../../../components/diagnostic/DiagnosticExplorer";
 import DiagnosticCreators from "../../../components/diagnostic/DiagnosticCreators";
 import DiagnosticRebels from "../../../components/diagnostic/DiagnosticRebels";
 import DiagnosticArchitects from "../../../components/diagnostic/DiagnosticArchitects";
-
-/* ─────────────────────────────────────────────────────────────
-   Legacy question sets (kept for fallback)
-   The 9-17 groups are now handled by their respective modules.
-   ───────────────────────────────────────────────────────────── */
-
-const CHILD_QUESTIONS = [
-  {
-    id: 1,
-    question: "Какая твоя любимая игра?",
-    answers: ["Собери конструктор", "Рисование", "Догонялки", "Головоломки"],
-  },
-  {
-    id: 2,
-    question: "Что тебе нравится делать в свободное время?",
-    answers: ["Смотреть мультики", "Гулять с друзьями", "Читать сказки", "Строить базы"],
-  },
-  {
-    id: 3,
-    question: "Представь, что у тебя есть суперсила. Какая она?",
-    answers: ["Летать", "Читать мысли", "Создавать предметы", "Становиться невидимым"],
-  },
-];
-
-const YOUTH_QUESTIONS = [
-  {
-    id: 1,
-    question: "Что тебе сейчас интереснее всего изучать?",
-    answers: ["Программирование", "Дизайн", "Бизнес/Управление", "Наука/Исследования"],
-  },
-  {
-    id: 2,
-    question: "Как ты предпочитаешь работать над проектами?",
-    answers: ["Полностью самостоятельно", "С наставником 1 на 1", "В небольшой команде", "В большой группе"],
-  },
-  {
-    id: 3,
-    question: "Кем ты видишь себя через 5 лет?",
-    answers: ["Специалистом (IT/Дизайн)", "Предпринимателем", "Лидером команды", "Свободным фрилансером"],
-  },
-  {
-    id: 4,
-    question: "Где ты черпаешь вдохновение или информацию?",
-    answers: ["YouTube/Курсы", "Книги/Статьи", "Общение с людьми", "Практика методом ошибок"],
-  },
-];
 
 /* ─────────────────────────────────────────────────────────────
    Main component
@@ -96,47 +51,27 @@ export default function YouthTesting() {
   const { user } = useAuth();
   const { childrenProfile, activeChildId, updateChildDiagnostic } = useParentData();
   const { devYouthAge } = useDevSettings();
+  const { questions: fallbackQuestions, loading: fallbackLoading } = useOnboardingQuestions("youth");
 
-  // Determine child's age — devYouthAge overrides in dev mode
   const activeChild = childrenProfile.find((c) => c.id === activeChildId);
   const childAge = __DEV__ ? devYouthAge : (activeChild?.age ?? 10);
 
-  // ════════════════════════════════════════════════════════════
-  // AGE GROUP: 6–8 → "Explorers" module
-  // ════════════════════════════════════════════════════════════
-  if (childAge >= 6 && childAge <= 8) {
-    return <DiagnosticExplorer />;
-  }
+  if (childAge >= 6 && childAge <= 8) return <DiagnosticExplorer />;
+  if (childAge >= 9 && childAge <= 11) return <DiagnosticCreators />;
+  if (childAge >= 12 && childAge <= 14) return <DiagnosticRebels />;
+  if (childAge >= 15 && childAge <= 17) return <DiagnosticArchitects />;
 
-  // ════════════════════════════════════════════════════════════
-  // AGE GROUP: 9–11 → "Creators" module (WYR + RPG quest)
-  // ════════════════════════════════════════════════════════════
-  if (childAge >= 9 && childAge <= 11) {
-    return <DiagnosticCreators />;
+  // FALLBACK: 18+ or unknown
+  if (fallbackLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
   }
-
-  // ════════════════════════════════════════════════════════════
-  // AGE GROUP: 12–14 → "Rebels" module (Vibe Check + Hackathon)
-  // ════════════════════════════════════════════════════════════
-  if (childAge >= 12 && childAge <= 14) {
-    return <DiagnosticRebels />;
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // AGE GROUP: 15–17 → "Architects" module (Career Match + OS)
-  // ════════════════════════════════════════════════════════════
-  if (childAge >= 15 && childAge <= 17) {
-    return <DiagnosticArchitects />;
-  }
-
-  // ════════════════════════════════════════════════════════════
-  // FALLBACK: 18+ or unknown → Legacy question-based test
-  // ════════════════════════════════════════════════════════════
-  const QUESTIONS = YOUTH_QUESTIONS;
 
   return <LegacyQuestionTest
-    questions={QUESTIONS}
-    isChild={false}
+    questions={fallbackQuestions}
     user={user}
     activeChildId={activeChildId}
     updateChildDiagnostic={updateChildDiagnostic}
@@ -152,7 +87,6 @@ export default function YouthTesting() {
 
 function LegacyQuestionTest({
   questions: QUESTIONS,
-  isChild,
   user,
   activeChildId,
   updateChildDiagnostic,
@@ -160,8 +94,7 @@ function LegacyQuestionTest({
   isDesktop,
   horizontalPadding,
 }: {
-  questions: typeof CHILD_QUESTIONS;
-  isChild: boolean;
+  questions: OnboardingQuestion[];
   user: any;
   activeChildId: string | null;
   updateChildDiagnostic: (id: string, d: Diagnostic) => Promise<void>;
@@ -188,13 +121,13 @@ function LegacyQuestionTest({
       const apiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
       if (!apiKey) throw new Error("Gemini API Key is missing");
 
-      let prompt = `You are an expert child psychologist and talent scout. Analyze this profile. Category: ${isChild ? "Child (6-11)" : "Teenager (12-17)"}.\n`;
+      let prompt = `You are an expert child psychologist and talent scout. Analyze this profile.\n`;
 
       if (!isSkip) {
         prompt += `The user answered the following questions:\n`;
         selectedAnswers.forEach((ansIndex, i) => {
           if (ansIndex !== undefined) {
-            prompt += `Q: ${QUESTIONS[i].question}\nA: ${QUESTIONS[i].answers[ansIndex]}\n`;
+            prompt += `Q: ${QUESTIONS[i].question_text}\nA: ${QUESTIONS[i].answers[ansIndex]}\n`;
           }
         });
       } else {
@@ -330,7 +263,7 @@ Based on these answers, generate a JSON object matching this Diagnostic interfac
               Вопрос {step + 1} из {QUESTIONS.length}
             </Text>
             <Text style={{ fontSize: 20, fontWeight: "800", color: COLORS.foreground, marginBottom: 24 }}>
-              {current.question}
+              {current.question_text}
             </Text>
             {current.answers.map((text, i) => {
               const active = answers[step] === i;

@@ -17,6 +17,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
+import { useWalletData } from "../../../hooks/usePlatformData";
 
 export default function OrgWalletScreen() {
   const router = useRouter();
@@ -32,24 +33,14 @@ export default function OrgWalletScreen() {
     recipientName: "",
   });
 
-  const balance = 405000; // Organization's share (90%)
-  const totalRevenue = 450000;
-  const commission = 45000; // 10%
-  
-  const transactions = [
-    { id: '1', date: '14 апр', description: 'Оплата курса "Робототехника"', student: 'Алихан С.', amount: 30000, status: 'completed' },
-    { id: '2', date: '13 апр', description: 'Оплата курса "Рисование"', student: 'Мария И.', amount: 25000, status: 'completed' },
-    { id: '3', date: '12 апр', description: 'Оплата курса "Английский"', student: 'Тимур А.', amount: 35000, status: 'completed' },
-    { id: '4', date: '10 апр', amount: -150000, status: 'withdrawal', method: 'Kaspi Business' },
-    { id: '5', date: '09 апр', description: 'Оплата курса "Шахматы"', student: 'Елена П.', amount: 20000, status: 'completed' },
-  ];
+  const { transactions, summary, requestWithdrawal } = useWalletData("org");
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
       Alert.alert("Ошибка", "Введите сумму для вывода");
       return;
     }
-    if (parseFloat(withdrawAmount) > balance) {
+    if (parseFloat(withdrawAmount) > summary.availableBalance) {
       Alert.alert("Ошибка", "Недостаточно средств");
       return;
     }
@@ -57,7 +48,16 @@ export default function OrgWalletScreen() {
       Alert.alert("Ошибка", "Заполните все банковские реквизиты");
       return;
     }
-    
+    const result = await requestWithdrawal({
+      amountKzt: parseFloat(withdrawAmount),
+      iban: bankDetails.iban,
+      bankName: bankDetails.bankName,
+      recipientName: bankDetails.recipientName,
+    });
+    if (result.error) {
+      Alert.alert("Ошибка", result.error);
+      return;
+    }
     Alert.alert(
       "Заявка отправлена",
       `Вывод ${parseFloat(withdrawAmount).toLocaleString()} ₸ будет обработан в течение 1-3 рабочих дней`,
@@ -85,11 +85,12 @@ export default function OrgWalletScreen() {
           {tx.status === 'withdrawal' ? 'Вывод средств' : tx.description}
         </Text>
         <Text style={styles.txSub}>
-          {tx.date}{tx.student ? ` • ${tx.student}` : ''}{tx.method ? ` • ${tx.method}` : ''}
+          {new Date(tx.transaction_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}
+          {tx.student_name ? ` • ${tx.student_name}` : ''}{tx.method ? ` • ${tx.method}` : ''}
         </Text>
       </View>
-      <Text style={[styles.txAmount, { color: tx.amount > 0 ? '#16A34A' : '#EF4444' }]}>
-        {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} ₸
+      <Text style={[styles.txAmount, { color: tx.amount_kzt > 0 ? '#16A34A' : '#EF4444' }]}>
+        {tx.amount_kzt > 0 ? '+' : ''}{tx.amount_kzt.toLocaleString()} ₸
       </Text>
     </MotiView>
   );
@@ -117,19 +118,19 @@ export default function OrgWalletScreen() {
                 style={styles.balanceCard}
               >
                 <Text style={styles.balanceLabel}>Доступно к выводу</Text>
-                <Text style={styles.balanceVal}>{balance.toLocaleString()} ₸</Text>
+                <Text style={styles.balanceVal}>{summary.availableBalance.toLocaleString()} ₸</Text>
                 
                 {/* Revenue breakdown */}
                 <View style={styles.breakdownBox}>
                   <View style={styles.breakdownRow}>
                     <View style={styles.breakdownDot} />
                     <Text style={styles.breakdownLabel}>Общий доход</Text>
-                    <Text style={styles.breakdownVal}>{totalRevenue.toLocaleString()} ₸</Text>
+                    <Text style={styles.breakdownVal}>{summary.totalRevenue.toLocaleString()} ₸</Text>
                   </View>
                   <View style={[styles.breakdownRow, { opacity: 0.6 }]}>
                     <View style={[styles.breakdownDot, { backgroundColor: 'rgba(255,255,255,0.5)' }]} />
                     <Text style={styles.breakdownLabel}>Комиссия UM (10%)</Text>
-                    <Text style={styles.breakdownVal}>-{commission.toLocaleString()} ₸</Text>
+                    <Text style={styles.breakdownVal}>-{summary.commission.toLocaleString()} ₸</Text>
                   </View>
                 </View>
 
@@ -155,8 +156,8 @@ export default function OrgWalletScreen() {
                     <Feather name="trending-up" size={18} color="#16A34A" />
                   </View>
                   <View>
-                    <Text style={styles.statVal}>{totalRevenue.toLocaleString()} ₸</Text>
-                    <Text style={styles.statLabel}>За апрель</Text>
+                    <Text style={styles.statVal}>{summary.periodRevenue.toLocaleString()} ₸</Text>
+                    <Text style={styles.statLabel}>За {summary.periodLabel}</Text>
                   </View>
                 </View>
                 <View style={styles.statBox}>
@@ -164,7 +165,7 @@ export default function OrgWalletScreen() {
                     <Feather name="users" size={18} color={COLORS.primary} />
                   </View>
                   <View>
-                    <Text style={styles.statVal}>24</Text>
+                    <Text style={styles.statVal}>{summary.periodCount}</Text>
                     <Text style={styles.statLabel}>Оплат</Text>
                   </View>
                 </View>
@@ -201,7 +202,7 @@ export default function OrgWalletScreen() {
                   value={withdrawAmount}
                   onChangeText={setWithdrawAmount}
                 />
-                <Text style={styles.inputHint}>Доступно: {balance.toLocaleString()} ₸</Text>
+                <Text style={styles.inputHint}>Доступно: {summary.availableBalance.toLocaleString()} ₸</Text>
               </View>
 
               <View style={styles.inputGroup}>

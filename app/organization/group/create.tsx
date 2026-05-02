@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
+  Alert,
   Platform,
   ScrollView,
   Text,
@@ -14,29 +15,62 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { useAuth } from "../../../contexts/AuthContext";
+import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
+
+async function resolveOrgId(userId: string): Promise<string | null> {
+  if (!supabase) return null;
+  const res = await supabase
+    .from("organizations")
+    .select("id")
+    .eq("owner_user_id", userId)
+    .limit(1)
+    .maybeSingle();
+  return res.data?.id ?? null;
+}
 
 export default function GroupCreateScreen() {
   const router = useRouter();
   const { courseId } = useLocalSearchParams();
+  const { user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const [formData, setFormData] = useState({
     name: "",
-    teacherId: "",
     maxStudents: "12",
     schedule: "",
   });
 
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      Alert.alert("Ошибка", "Supabase не настроен");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
+    const orgId = await resolveOrgId(user.id);
+    if (!orgId) {
       setLoading(false);
+      Alert.alert("Ошибка", "Организация не найдена");
+      return;
+    }
+    const res = await supabase.from("org_groups").insert({
+      org_id: orgId,
+      name: formData.name,
+      course_id: typeof courseId === "string" ? courseId : null,
+      schedule: formData.schedule || null,
+      capacity: parseInt(formData.maxStudents, 10) || 0,
+      active: true,
+    });
+    setLoading(false);
+    if (res.error) {
+      Alert.alert("Ошибка", res.error.message);
+      return;
+    }
       router.back();
-    }, 1000);
   };
 
   return (
@@ -94,14 +128,6 @@ export default function GroupCreateScreen() {
                       value={formData.name}
                       onChangeText={(val) => setFormData({...formData, name: val})}
                    />
-                </View>
-
-                <View>
-                   <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Выбрать учителя</Text>
-                   <TouchableOpacity style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: COLORS.border }}>
-                      <Text style={{ fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: formData.teacherId ? COLORS.foreground : COLORS.mutedForeground }}>{formData.teacherId ? "Игорь Соколов" : "Не выбран"}</Text>
-                      <Feather name="chevron-down" size={18} color={COLORS.mutedForeground} />
-                   </TouchableOpacity>
                 </View>
 
                 <View>

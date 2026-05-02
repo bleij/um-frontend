@@ -13,17 +13,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../../../constants/theme";
+import { useTeacherGroup } from "../../../../../hooks/usePlatformData";
 
-const MOCK_GROUPS: Record<string, any> = {
-  'group-001': { id: 'group-001', name: 'Группа А', course: 'Робототехника' },
-};
-
-const MOCK_STUDENTS = [
-  { id: '1', name: 'Саша Иванов', age: 12, status: 'Active Pro' },
-  { id: '2', name: 'Маша Петрова', age: 11, status: 'Active Pro' },
-  { id: '3', name: 'Алёша Сидоров', age: 13, status: 'Active Base' },
-  { id: '4', name: 'Витя Морозов', age: 12, status: 'Active Pro' },
-];
+function formatDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
 export default function TeacherGroupJournal() {
   const { id } = useLocalSearchParams();
@@ -31,15 +28,29 @@ export default function TeacherGroupJournal() {
   const { width } = useWindowDimensions();
   const paddingX = width >= LAYOUT.desktopBreakpoint ? 40 : 24;
 
-  const group = MOCK_GROUPS[id as string] || MOCK_GROUPS['group-001'];
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const selectedDateKey = formatDateKey(selectedDate);
+  const { group, students, attendance: savedAttendance, saveAttendance } = useTeacherGroup(id as string, selectedDateKey);
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | null>>({});
+
+  React.useEffect(() => {
+    const next: Record<string, 'present' | 'absent' | null> = {};
+    for (const entry of savedAttendance) next[entry.student_id] = entry.status;
+    setAttendance(next);
+  }, [savedAttendance]);
 
   const toggleAttendance = (studentId: string, status: 'present' | 'absent') => {
     setAttendance(prev => ({
         ...prev,
         [studentId]: prev[studentId] === status ? null : status
     }));
+  };
+
+  const submitAttendance = async () => {
+    const entries = Object.entries(attendance)
+      .filter((entry): entry is [string, 'present' | 'absent'] => entry[1] !== null)
+      .map(([studentId, status]) => ({ studentId, status }));
+    await saveAttendance(entries);
   };
 
   return (
@@ -52,8 +63,8 @@ export default function TeacherGroupJournal() {
                 <Feather name="arrow-left" size={20} color={COLORS.foreground} />
             </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={styles.headerTitle}>{group.course}</Text>
-                <Text style={styles.headerSubtitle}>{group.name}</Text>
+                <Text style={styles.headerTitle}>{group?.course_title || "Группа"}</Text>
+                <Text style={styles.headerSubtitle}>{group?.name || "—"}</Text>
             </View>
         </View>
 
@@ -75,11 +86,16 @@ export default function TeacherGroupJournal() {
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: paddingX, paddingBottom: 100 }}>
              <View style={{ marginBottom: 16 }}>
-                <Text style={styles.listLabel}>Учеников в списке: <Text style={{ color: COLORS.foreground }}>{MOCK_STUDENTS.length}</Text></Text>
+                <Text style={styles.listLabel}>Учеников в списке: <Text style={{ color: COLORS.foreground }}>{students.length}</Text></Text>
              </View>
 
              <View style={{ gap: 12 }}>
-                {MOCK_STUDENTS.map((student, idx) => {
+                {students.length === 0 && (
+                    <Text style={{ color: COLORS.mutedForeground, textAlign: "center", paddingVertical: 24 }}>
+                        В этой группе пока нет учеников.
+                    </Text>
+                )}
+                {students.map((student, idx) => {
                     const isPresent = attendance[student.id] === 'present';
                     const isAbsent = attendance[student.id] === 'absent';
 
@@ -93,11 +109,14 @@ export default function TeacherGroupJournal() {
                         >
                             <View style={styles.studentMain}>
                                 <View style={styles.avatarCircle}>
-                                    <Text style={styles.avatarText}>{student.name.charAt(0)}</Text>
+                                    <Text style={styles.avatarText}>{student.student_name.charAt(0)}</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.studentName}>{student.name}</Text>
-                                    <Text style={styles.studentDetails}>{student.age} лет • {student.status}</Text>
+                                    <Text style={styles.studentName}>{student.student_name}</Text>
+                                    <Text style={styles.studentDetails}>
+                                        {student.student_age ? `${student.student_age} лет` : "Возраст не указан"}
+                                        {student.status_label ? ` • ${student.status_label}` : ""}
+                                    </Text>
                                 </View>
                             </View>
 
@@ -123,7 +142,7 @@ export default function TeacherGroupJournal() {
                 })}
              </View>
 
-             <TouchableOpacity style={styles.submitBtn}>
+             <TouchableOpacity style={styles.submitBtn} onPress={submitAttendance}>
                 <Feather name="send" size={20} color="white" />
                 <Text style={styles.submitText}>Отправить отчет родителям</Text>
              </TouchableOpacity>

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
+import { useWalletData } from "../../../hooks/usePlatformData";
 
 export default function MentorWalletScreen() {
   const router = useRouter();
@@ -21,15 +22,7 @@ export default function MentorWalletScreen() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? 40 : 20;
 
-  const balance = 125000;
-  
-  const transactions = [
-    { id: '1', date: '14 апр', student: 'Алишер Н.', amount: 12000, status: 'completed' },
-    { id: '2', date: '13 апр', student: 'Мирас К.', amount: 12000, status: 'completed' },
-    { id: '3', date: '12 апр', student: 'София П.', amount: 10000, status: 'completed' },
-    { id: '4', date: '10 апр', amount: -50000, status: 'withdrawal', method: 'Kaspi Gold' },
-    { id: '5', date: '09 апр', student: 'Арман Т.', amount: 15000, status: 'completed' },
-  ];
+  const { transactions, summary } = useWalletData("mentor");
 
   const renderTransaction = ({ item: tx, index }: any) => (
     <MotiView
@@ -47,14 +40,15 @@ export default function MentorWalletScreen() {
       </View>
       <View style={{ flex: 1 }}>
           <Text style={styles.txTitle}>
-              {tx.status === 'withdrawal' ? 'Вывод средств' : tx.student}
+              {tx.status === 'withdrawal' ? 'Вывод средств' : tx.student_name}
           </Text>
           <Text style={styles.txSub}>
-              {tx.date}{tx.method ? ` • ${tx.method}` : ''}
+              {new Date(tx.transaction_at).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}
+              {tx.method ? ` • ${tx.method}` : ''}
           </Text>
       </View>
-      <Text style={[styles.txAmount, { color: tx.amount > 0 ? '#16A34A' : '#EF4444' }]}>
-          {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} ₸
+      <Text style={[styles.txAmount, { color: tx.amount_kzt > 0 ? '#16A34A' : '#EF4444' }]}>
+          {tx.amount_kzt > 0 ? '+' : ''}{tx.amount_kzt.toLocaleString()} ₸
       </Text>
     </MotiView>
   );
@@ -79,7 +73,7 @@ export default function MentorWalletScreen() {
                         style={styles.balanceCard}
                     >
                         <Text style={styles.balanceLabel}>Доступно к выводу</Text>
-                        <Text style={styles.balanceVal}>{balance.toLocaleString()} ₸</Text>
+                        <Text style={styles.balanceVal}>{summary.availableBalance.toLocaleString()} ₸</Text>
                         <View style={styles.balanceActions}>
                             <TouchableOpacity style={styles.actionBtn}>
                                 <Feather name="download" size={18} color={COLORS.primary} />
@@ -99,8 +93,8 @@ export default function MentorWalletScreen() {
                                 <Feather name="trending-up" size={18} color="#16A34A" />
                             </View>
                             <View>
-                                <Text style={styles.statVal}>87 000 ₸</Text>
-                                <Text style={styles.statLabel}>За апрель</Text>
+                                <Text style={styles.statVal}>{summary.periodRevenue.toLocaleString()} ₸</Text>
+                                <Text style={styles.statLabel}>За {summary.periodLabel}</Text>
                             </View>
                         </View>
                         <View style={styles.statBox}>
@@ -108,7 +102,7 @@ export default function MentorWalletScreen() {
                                 <Feather name="calendar" size={18} color={COLORS.primary} />
                             </View>
                             <View>
-                                <Text style={styles.statVal}>12</Text>
+                                <Text style={styles.statVal}>{summary.periodCount}</Text>
                                 <Text style={styles.statLabel}>Сессий</Text>
                             </View>
                         </View>

@@ -30,12 +30,7 @@ export default function ParentChildDetails() {
         { label: "Лингвистика", value: s.linguistic, color: "#EC4899" },
       ].sort((a, b) => b.value - a.value);
     }
-    return [
-      { label: "Коммуникация", value: 10, color: "#6C5CE7" },
-      { label: "Лидерство", value: 10, color: "#3B82F6" },
-      { label: "Креативность", value: 10, color: "#A78BFA" },
-      { label: "Логика", value: 10, color: "#10B981" },
-    ];
+    return [];
   };
 
   const currentSkills = getDynamicSkills();
@@ -87,18 +82,18 @@ export default function ParentChildDetails() {
 
               <View className="flex-row gap-10 mt-8">
                  <View className="items-center">
-                    <Text className="text-white text-xl font-black">1.2k</Text>
-                    <Text className="text-white/60 text-[10px] font-bold uppercase mt-1">XP</Text>
+                    <Text className="text-white text-xl font-black">{child.talentProfile ? "Готов" : "Нет"}</Text>
+                    <Text className="text-white/60 text-[10px] font-bold uppercase mt-1">ПРОФИЛЬ</Text>
                  </View>
                  <View className="w-px h-8 bg-white/20" />
                  <View className="items-center">
-                    <Text className="text-white text-xl font-black">5</Text>
-                    <Text className="text-white/60 text-[10px] font-bold uppercase mt-1">LEVEL</Text>
+                    <Text className="text-white text-xl font-black">{child.talentProfile?.recommendedConstellation || "—"}</Text>
+                    <Text className="text-white/60 text-[10px] font-bold uppercase mt-1">ТИП</Text>
                  </View>
                  <View className="w-px h-8 bg-white/20" />
                  <View className="items-center">
-                    <Text className="text-white text-xl font-black">12</Text>
-                    <Text className="text-white/60 text-[10px] font-bold uppercase mt-1">BADGES</Text>
+                    <Text className="text-white text-xl font-black">{currentSkills.length}</Text>
+                    <Text className="text-white/60 text-[10px] font-bold uppercase mt-1">НАВЫКИ</Text>
                  </View>
               </View>
             </View>
@@ -136,9 +131,6 @@ export default function ParentChildDetails() {
                  <View className="flex-1 pr-4">
                     <Text className="font-bold text-gray-900 text-lg mb-1">Сессия с ментором</Text>
                     <Text className="text-sm font-medium text-gray-500 mb-4 leading-5">Выберите 3 варианта времени для созвона-синхронизации с ментором.</Text>
-                    <TouchableOpacity className="bg-primary/10 py-3 px-5 rounded-2xl self-start">
-                        <Text className="text-primary font-black text-xs uppercase tracking-wide">Назначить сессию</Text>
-                    </TouchableOpacity>
                  </View>
                  <View className="w-16 h-16 bg-purple-50 rounded-[20px] items-center justify-center border border-purple-100">
                      <Feather name="video" size={24} color={COLORS.primary} />
@@ -149,7 +141,7 @@ export default function ParentChildDetails() {
                  <View className="flex-1 pr-4">
                     <Text className="font-bold text-gray-900 text-lg mb-1">Большое тестирование</Text>
                     <Text className="text-sm font-medium text-gray-500 mb-4 leading-5">Прохождение 1 раз в месяц для детальной корректировки профиля (навыки, архетип).</Text>
-                    <TouchableOpacity className="bg-blue-50 py-3 px-5 rounded-2xl self-start">
+                    <TouchableOpacity onPress={() => router.push("/profile/youth/testing" as any)} className="bg-blue-50 py-3 px-5 rounded-2xl self-start">
                         <Text className="text-blue-600 font-black text-xs uppercase tracking-wide">Начать тест</Text>
                     </TouchableOpacity>
                  </View>
@@ -170,6 +162,11 @@ export default function ParentChildDetails() {
            </View>
 
             <View className="gap-6">
+              {currentSkills.length === 0 && (
+                 <Text className="text-sm font-semibold text-gray-500">
+                    Результаты появятся после диагностики.
+                 </Text>
+              )}
               {currentSkills.map((skill, idx) => (
                  <View key={idx}>
                     <View className="flex-row justify-between mb-2">
@@ -271,25 +268,9 @@ export default function ParentChildDetails() {
                <Text className="text-lg font-black text-gray-900">Записан в кружки</Text>
             </View>
             <View style={SHADOWS.sm} className="bg-white rounded-[32px] p-6 border border-gray-100">
-                <View className="flex-row items-center justify-between mb-4">
-                    <View className="flex-1">
-                        <Text className="font-bold text-gray-900">Робототехника (Продвинутый)</Text>
-                        <Text className="text-xs text-gray-500 mt-1">Школа программирования UM</Text>
-                    </View>
-                    <View className="bg-green-50 px-3 py-1 rounded-full">
-                        <Text className="text-green-600 font-bold text-[10px]">ОПЛАЧЕНО</Text>
-                    </View>
-                </View>
-                <View className="flex-row gap-3">
-                   <View className="bg-gray-50 px-3 py-2 rounded-xl flex-row items-center gap-2">
-                       <Feather name="calendar" size={12} color={COLORS.mutedForeground} />
-                       <Text className="text-xs text-gray-600 font-medium">Пн, Ср, Пт</Text>
-                   </View>
-                   <View className="bg-gray-50 px-3 py-2 rounded-xl flex-row items-center gap-2">
-                       <Feather name="clock" size={12} color={COLORS.mutedForeground} />
-                       <Text className="text-xs text-gray-600 font-medium">16:00</Text>
-                   </View>
-                </View>
+                <Text className="text-sm font-semibold text-gray-500">
+                  Активные кружки появятся после записи ребенка на курс.
+                </Text>
             </View>
          </View>
 
@@ -299,26 +280,14 @@ export default function ParentChildDetails() {
                <Feather name="user-check" size={20} color="#10B981" />
                <Text className="text-lg font-black text-gray-900">Персональный ментор</Text>
             </View>
-            <TouchableOpacity 
-               onPress={() => router.push("/chats" as any)}
+            <View 
                style={SHADOWS.sm} 
-               className="bg-white rounded-[32px] p-4 border border-gray-100 flex-row items-center gap-4"
+               className="bg-white rounded-[32px] p-4 border border-gray-100"
             >
-               <View className="w-16 h-16 bg-purple-50 rounded-2xl items-center justify-center border border-purple-100">
-                  <Text className="text-2xl">👩‍🏫</Text>
-               </View>
-               <View className="flex-1">
-                  <Text className="font-black text-gray-900 text-lg">Алия Маратова</Text>
-                  <Text className="text-xs font-bold text-primary mt-0.5">Психолог-профориентолог</Text>
-                  <View className="flex-row items-center gap-1 mt-2">
-                     <View className="w-2 h-2 rounded-full bg-green-500" />
-                     <Text className="text-[10px] font-bold text-gray-400 uppercase">В сети</Text>
-                  </View>
-               </View>
-               <TouchableOpacity className="w-12 h-12 bg-purple-50 rounded-2xl items-center justify-center">
-                  <Feather name="message-circle" size={20} color={COLORS.primary} />
-               </TouchableOpacity>
-            </TouchableOpacity>
+               <Text className="text-sm font-semibold text-gray-500">
+                  Персональный ментор появится после подтверждения заявки на сопровождение.
+               </Text>
+            </View>
          </View>
 
          {/* QR Code Login Stub */}

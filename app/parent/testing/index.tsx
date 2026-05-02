@@ -4,51 +4,20 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { useParentData } from "../../../contexts/ParentDataContext";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useOnboardingQuestions } from "../../../hooks/usePlatformData";
 
-const QUESTIONS = [
-  {
-    id: 1,
-    text: "Что ребенку нравится делать больше всего в свободное время?",
-    options: [
-      { id: "a", text: "Рисовать, лепить, создавать что-то руками.", value: "creative" },
-      { id: "b", text: "Играть в подвижные игры, бегать, танцевать.", value: "physical" },
-      { id: "c", text: "Собирать конструкторы по схемам, решать задачки.", value: "logical" },
-      { id: "d", text: "Общаться с друзьями, придумывать совместные игры.", value: "social" },
-      { id: "e", text: "Слушать сказки, сочинять истории, много болтать.", value: "linguistic" },
-    ]
-  },
-  {
-    id: 2,
-    text: "Как ребенок относится к новым правилам или сложным задачам?",
-    options: [
-      { id: "a", text: "Часто находит нестандартное решение в обход правил.", value: "creative" },
-      { id: "b", text: "Любит соревновательный элемент, старается сделать физически быстрее.", value: "physical" },
-      { id: "c", text: "Пытается понять систему, почему правило именно такое.", value: "logical" },
-      { id: "d", text: "Просит помощи или договаривается с другими.", value: "social" },
-      { id: "e", text: "Пытается обсудить или переубедить вас словами.", value: "linguistic" },
-    ]
-  },
-  {
-    id: 3,
-    text: "Какая любимая игрушка или игра?",
-    options: [
-      { id: "a", text: "Краски, пластилин, наборы для творчества.", value: "creative" },
-      { id: "b", text: "Мяч, велосипед, спортивный инвентарь.", value: "physical" },
-      { id: "c", text: "Головоломки, шашки, кубики с цифрами.", value: "logical" },
-      { id: "d", text: "Настольные игры для компании, ролевые игры.", value: "social" },
-      { id: "e", text: "Книжки, аудиосказки, карточки со словами.", value: "linguistic" },
-    ]
-  }
-];
+// Answer order matches the DB seed: creative, physical, logical, social, linguistic
+const ANSWER_VALUES = ["creative", "physical", "logical", "social", "linguistic"] as const;
 
 export default function DiagnosticTest() {
   const router = useRouter();
   const { childId } = useLocalSearchParams();
   const { childrenProfile, updateChildDiagnostic, activeChildId } = useParentData();
-  
+  const { questions: QUESTIONS, loading: questionsLoading } = useOnboardingQuestions("parent_diagnostic");
+
   const targetId = childId || activeChildId;
   const child = childrenProfile.find(c => c.id === targetId) || childrenProfile[0];
-  
+
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -61,9 +30,10 @@ export default function DiagnosticTest() {
     );
   }
 
-  const handleSelectOption = (value: string) => {
+  const handleSelectOption = (answerIndex: number) => {
+    const value = ANSWER_VALUES[answerIndex] ?? ANSWER_VALUES[0];
     const newAnswers = [...answers, value];
-    
+
     if (currentQ < QUESTIONS.length - 1) {
       setAnswers(newAnswers);
       setCurrentQ(prev => prev + 1);
@@ -146,6 +116,16 @@ export default function DiagnosticTest() {
     }
   };
 
+  if (questionsLoading) {
+    return (
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#6C5CE7" }}>
+        <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <ActivityIndicator size="large" color="#FFFFFF" />
+        </LinearGradient>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#6C5CE7" }}>
       <LinearGradient colors={["#6C5CE7", "#8B7FE8"]} style={{ flex: 1, padding: 20 }}>
@@ -173,13 +153,13 @@ export default function DiagnosticTest() {
               ВОПРОС {currentQ + 1} ИЗ {QUESTIONS.length}
             </Text>
             <Text style={{ color: "white", fontSize: 24, fontWeight: "900", marginBottom: 32 }}>
-              {QUESTIONS[currentQ].text}
+              {QUESTIONS[currentQ].question_text}
             </Text>
-            
-            {QUESTIONS[currentQ].options.map((opt) => (
+
+            {QUESTIONS[currentQ].answers.map((optText, idx) => (
               <Pressable
-                key={opt.id}
-                onPress={() => handleSelectOption(opt.value)}
+                key={idx}
+                onPress={() => handleSelectOption(idx)}
                 style={({ pressed }) => ({
                   backgroundColor: "rgba(255, 255, 255, 0.15)",
                   padding: 20,
@@ -190,7 +170,7 @@ export default function DiagnosticTest() {
                   opacity: pressed ? 0.7 : 1
                 })}
               >
-                <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>{opt.text}</Text>
+                <Text style={{ color: "white", fontSize: 16, fontWeight: "600" }}>{optText}</Text>
               </Pressable>
             ))}
           </View>

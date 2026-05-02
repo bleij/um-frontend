@@ -38,6 +38,19 @@ export default function AuthCallback() {
   const sessionReady = useRef(false);
   const [status, setStatus] = useState("Выполняется вход...");
 
+  // ── Web only: bail out immediately if the URL contains an OAuth error ──
+  // This happens when the user navigates back to the Google OAuth page after
+  // a session was already consumed — Google rejects it and redirects back to
+  // /auth/callback with error params instead of tokens.
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const errorCode = params.get("error_code") ?? params.get("error");
+    if (errorCode) {
+      router.replace("/login" as any);
+    }
+  }, []);
+
   // ── Native only: parse tokens from the deep-link URL ──────────────────
   // On Android/iOS the OAuth tokens arrive as URL hash fragments on the
   // umapp://auth/callback URL that opened this screen.  Supabase's

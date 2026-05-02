@@ -49,26 +49,8 @@ export default function DiagnosticRebels() {
   }, [engine.phase]);
 
   const handleSkip = useCallback(async () => {
-    const mockDiagnostic: any = {
-      childId: activeChildId || user?.id || "unknown",
-      scores: { logical: 80, creative: 60, social: 70, physical: 40, linguistic: 65 },
-      summary: "Демо-отчет: Подросток обладает отличными аналитическими способностями.",
-      recommendedConstellation: "Творческий аналитик",
-      timestamp: new Date().toISOString(),
-      tier: isPro ? "pro" : "basic",
-      ageGroup: "12-14",
-      ...(isPro ? {
-        topStrengths: ["Аналитическое мышление", "Креативность", "Лидерство"],
-        developmentAreas: ["Организованность"],
-        intellectType: "Аналитико-технический (ЕНТ: Физмат / Информатика)",
-        personalityBehavior: "Стратегический Лидер (Тип E/I). Обдумывает решения в стрессовых ситуациях.",
-        careerArchetypes: ["IT Product Manager", "Системный аналитик", "Предприниматель (Стартапы)"],
-        parentAdvice: "Поддерживайте его инициативы в технологической сфере и помогайте с тайм-менеджментом.",
-      } : {})
-    };
-    if (activeChildId) await updateChildDiagnostic(activeChildId, mockDiagnostic);
-    router.push("/profile/youth/results");
-  }, [activeChildId, user?.id, isPro]);
+    router.back();
+  }, [router]);
 
   if (engine.isProcessing || engine.phase === "processing") {
     return (

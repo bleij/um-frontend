@@ -100,13 +100,15 @@ export default function LoginScreen() {
     setIsGoogleLoading(true);
     try {
       const result = await loginWithGoogle();
-      // On web the page navigates away before this line runs.
-      // On native we get a result back and need to handle it.
       if (!result.success) {
         setError(result.error || "Не удалось войти через Google");
         return;
       }
-      router.replace("/(tabs)/home");
+      // On web the browser navigates to Google before this runs — don't push a
+      // route with no authenticated user or the root guard bounces to /intro.
+      if (Platform.OS !== "web") {
+        router.replace("/(tabs)/home");
+      }
     } catch (e: any) {
       setError(e?.message || "Не удалось войти через Google");
     } finally {

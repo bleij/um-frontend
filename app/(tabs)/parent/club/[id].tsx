@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, SHADOWS } from "../../../../constants/theme";
+import { LEVEL_LABELS } from "../../../../constants/courseOptions";
 import { useAuth } from "../../../../contexts/AuthContext";
 import { useParentData } from "../../../../contexts/ParentDataContext";
 import {
@@ -25,18 +26,6 @@ import {
   usePublicCourseById,
 } from "../../../../hooks/usePublicData";
 
-const LEVEL_LABELS: Record<string, string> = {
-  beginner: "Начальный",
-  intermediate: "Средний",
-  advanced: "Продвинутый",
-};
-
-// Hardcoded mock reviews — real reviews table is a future feature
-const REVIEWS = [
-  { id: 1, author: "Елена К.", rating: 5, text: "Отличная студия! Дочка с удовольствием ходит на занятия." },
-  { id: 2, author: "Андрей М.", rating: 5, text: "Профессиональный подход, видны результаты." },
-];
-
 export default function ParentClubDetails() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -45,7 +34,7 @@ export default function ParentClubDetails() {
   const activeChild =
     childrenProfile.find((c) => c.id === activeChildId) || childrenProfile[0];
 
-  const { course, groups, loading } = usePublicCourseById(id);
+  const { course, groups, reviews, trialSlots, loading } = usePublicCourseById(id);
   const [gradient] = useState<[string, string]>(courseGradient(0));
 
   const [enrolled, setEnrolled] = useState(false);
@@ -56,16 +45,6 @@ export default function ParentClubDetails() {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
-
-  // Mock available trial time slots
-  const TRIAL_TIME_SLOTS = [
-    { day: 'Пн', time: '11:00' },
-    { day: 'Пн', time: '14:00' },
-    { day: 'Вт', time: '10:00' },
-    { day: 'Вт', time: '16:00' },
-    { day: 'Ср', time: '11:00' },
-    { day: 'Сб', time: '12:00' },
-  ];
 
   // Check if already enrolled when course and child are loaded
   React.useEffect(() => {
@@ -233,17 +212,22 @@ export default function ParentClubDetails() {
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
               <Text style={{ fontSize: 17, fontWeight: "900", color: "#1F2937" }}>Отзывы</Text>
             </View>
-            {REVIEWS.map((item) => (
+            {reviews.length === 0 && (
+              <Text style={{ fontSize: 13, color: "#9CA3AF", backgroundColor: "white", borderRadius: 20, padding: 16 }}>
+                Отзывов пока нет.
+              </Text>
+            )}
+            {reviews.map((item) => (
               <View key={item.id} style={{ backgroundColor: "white", borderRadius: 20, padding: 16, marginBottom: 10, ...SHADOWS.sm }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <Text style={{ fontWeight: "800", color: "#1F2937" }}>{item.author}</Text>
+                  <Text style={{ fontWeight: "800", color: "#1F2937" }}>{item.author_display_name || "Пользователь"}</Text>
                   <View style={{ flexDirection: "row", gap: 2 }}>
                     {[1, 2, 3, 4, 5].map((s) => (
                       <Feather key={s} name="star" size={11} color={s <= item.rating ? "#F59E0B" : "#E5E7EB"} />
                     ))}
                   </View>
                 </View>
-                <Text style={{ fontSize: 13, color: "#6B7280", lineHeight: 20 }}>{item.text}</Text>
+                <Text style={{ fontSize: 13, color: "#6B7280", lineHeight: 20 }}>{item.body}</Text>
               </View>
             ))}
           </View>
@@ -368,12 +352,17 @@ export default function ParentClubDetails() {
 
                 <ScrollView style={{ maxHeight: 240 }} showsVerticalScrollIndicator={false}>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-                    {TRIAL_TIME_SLOTS.map((slot, idx) => {
-                      const slotKey = `${slot.day}-${slot.time}`;
+                    {trialSlots.length === 0 && (
+                      <Text style={{ color: COLORS.mutedForeground, paddingVertical: 16 }}>
+                        Организация пока не добавила слоты для пробного урока.
+                      </Text>
+                    )}
+                    {trialSlots.map((slot) => {
+                      const slotKey = slot.id;
                       const isSelected = selectedTimeSlot === slotKey;
                       return (
                         <Pressable
-                          key={idx}
+                          key={slot.id}
                           onPress={() => setSelectedTimeSlot(slotKey)}
                           style={{
                             paddingHorizontal: 18, paddingVertical: 14, borderRadius: 16,
@@ -382,8 +371,8 @@ export default function ParentClubDetails() {
                             minWidth: 90, alignItems: "center",
                           }}
                         >
-                          <Text style={{ fontSize: 14, fontWeight: "800", color: isSelected ? "#065F46" : COLORS.foreground }}>{slot.day}</Text>
-                          <Text style={{ fontSize: 13, fontWeight: "600", color: isSelected ? "#059669" : COLORS.mutedForeground, marginTop: 2 }}>{slot.time}</Text>
+                          <Text style={{ fontSize: 14, fontWeight: "800", color: isSelected ? "#065F46" : COLORS.foreground }}>{slot.day_label}</Text>
+                          <Text style={{ fontSize: 13, fontWeight: "600", color: isSelected ? "#059669" : COLORS.mutedForeground, marginTop: 2 }}>{slot.time_label}</Text>
                         </Pressable>
                       );
                     })}
@@ -397,7 +386,10 @@ export default function ParentClubDetails() {
                     setApplying(true);
                     
                     // Parse selected slot
-                    const [day, time] = selectedTimeSlot.split('-');
+                    const selectedSlot = trialSlots.find((slot) => slot.id === selectedTimeSlot);
+                    if (!selectedSlot) return;
+                    const day = selectedSlot.day_label;
+                    const time = selectedSlot.time_label;
                     
                     const result = await applyToTrialLesson({
                       childId: activeChild.id,
@@ -408,7 +400,7 @@ export default function ParentClubDetails() {
                       orgId: course.org_id,
                       courseId: course.id,
                       courseTitle: course.title,
-                      requestedSlots: TRIAL_TIME_SLOTS,
+                      requestedSlots: trialSlots.map((slot) => ({ day: slot.day_label, time: slot.time_label })),
                       selectedSlot: { day, time },
                     });
                     

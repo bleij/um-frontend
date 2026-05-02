@@ -19,14 +19,25 @@ import { useParentData } from "../../../contexts/ParentDataContext";
 
 export default function YouthProfile() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.dashboardHorizontalPaddingDesktop
     : LAYOUT.dashboardHorizontalPaddingMobile;
-  const { parentProfile } = useParentData();
+  const { parentProfile, childrenProfile, activeChildId } = useParentData();
+  const activeChild = childrenProfile.find((child) => child.id === activeChildId) || childrenProfile[0];
+  const diagnostic = activeChild?.talentProfile;
   const isPro = parentProfile?.tariff === "pro";
+  const displayName = activeChild?.name || user?.firstName || "Пользователь";
+  const profileSubtitle = activeChild?.age ? `${activeChild.age} лет` : "Возраст не указан";
+  const skillRows = diagnostic
+    ? [
+        { label: 'Креативность', val: diagnostic.scores.creative, col: '#A78BFA' },
+        { label: 'Логика', val: diagnostic.scores.logical, col: '#3B82F6' },
+        { label: 'Коммуникация', val: diagnostic.scores.social, col: '#10B981' },
+      ]
+    : [];
 
   const handleLogout = async () => {
     if (Platform.OS === "web") {
@@ -44,24 +55,6 @@ export default function YouthProfile() {
       ]);
     }
   };
-
-  const menuItems = [
-    {
-      icon: "award" as const,
-      label: "Мои достижения",
-      action: () => Alert.alert("В разработке"),
-    },
-    {
-      icon: "heart" as const,
-      label: "Интересы",
-      action: () => Alert.alert("В разработке"),
-    },
-    {
-      icon: "settings" as const,
-      label: "Настройки",
-      action: () => Alert.alert("В разработке"),
-    },
-  ];
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -124,10 +117,10 @@ export default function YouthProfile() {
                   marginBottom: 4,
                 }}
               >
-                Максим
+                {displayName}
               </Text>
               <Text style={{ color: COLORS.mutedForeground, fontWeight: '700', marginBottom: 12 }}>
-                 Средняя группа • 12 лет
+                 {profileSubtitle}
               </Text>
               
               <View style={{ 
@@ -158,13 +151,13 @@ export default function YouthProfile() {
                 }}
               >
                 <View style={{ alignItems: "center" }}>
-                   <Text style={{ fontSize: 20, fontWeight: "900", color: COLORS.foreground }}>2450</Text>
-                   <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: "800", textTransform: 'uppercase', marginTop: 2 }}>XP</Text>
+                   <Text style={{ fontSize: 20, fontWeight: "900", color: COLORS.foreground }}>{diagnostic ? "Готов" : "Нет"}</Text>
+                   <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: "800", textTransform: 'uppercase', marginTop: 2 }}>Профиль</Text>
                 </View>
                 <View style={{ width: 1, height: 30, backgroundColor: COLORS.border }} />
                 <View style={{ alignItems: "center" }}>
-                   <Text style={{ fontSize: 20, fontWeight: "900", color: COLORS.foreground }}>Level 8</Text>
-                   <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: "800", textTransform: 'uppercase', marginTop: 2 }}>Rank</Text>
+                   <Text style={{ fontSize: 20, fontWeight: "900", color: COLORS.foreground }}>{diagnostic?.recommendedConstellation || "—"}</Text>
+                   <Text style={{ fontSize: 10, color: COLORS.mutedForeground, fontWeight: "800", textTransform: 'uppercase', marginTop: 2 }}>Тип</Text>
                 </View>
               </View>
             </View>
@@ -179,11 +172,12 @@ export default function YouthProfile() {
                 </View>
                 <View style={{ backgroundColor: COLORS.card, padding: 20, borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm }}>
                     <View style={{ gap: 12 }}>
-                        {[
-                            { label: 'Креативность', val: 85, col: '#A78BFA' },
-                            { label: 'Логика', val: 70, col: '#3B82F6' },
-                            { label: 'Лидерство', val: 62, col: '#10B981' }
-                        ].map((s, i) => (
+                        {skillRows.length === 0 && (
+                            <Text style={{ color: COLORS.mutedForeground, fontSize: 13 }}>
+                                Результаты появятся после диагностики.
+                            </Text>
+                        )}
+                        {skillRows.map((s, i) => (
                             <View key={i}>
                                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 5 }}>
                                     <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.mutedForeground }}>{s.label}</Text>
@@ -201,30 +195,20 @@ export default function YouthProfile() {
             {/* My Mentor */}
             <View style={{ marginBottom: 24 }}>
                 <Text style={{ fontSize: 18, fontWeight: '900', color: COLORS.foreground, marginBottom: 12 }}>Мой Ментор</Text>
-                <View style={{ backgroundColor: '#F5F3FF', padding: 16, borderRadius: RADIUS.xl, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#DDD6FE' }}>
-                    <View style={{ width: 48, height: 48, borderRadius: 14, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 24 }}>👩‍🏫</Text>
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                        <Text style={{ fontSize: 16, fontWeight: '900', color: COLORS.foreground }}>Алия Маратова</Text>
-                        <Text style={{ fontSize: 12, color: COLORS.primary, fontWeight: '600' }}>Психолог-профориентолог</Text>
-                    </View>
-                    <Feather name="message-circle" size={20} color={COLORS.primary} />
+                <View style={{ backgroundColor: '#F5F3FF', padding: 16, borderRadius: RADIUS.xl, borderWidth: 1, borderColor: '#DDD6FE' }}>
+                    <Text style={{ fontSize: 13, color: COLORS.primary, fontWeight: '700' }}>
+                        Ментор будет отображаться после подтверждения заявки.
+                    </Text>
                 </View>
             </View>
 
             {/* My Clubs */}
             <View style={{ marginBottom: 24, width: '100%' }}>
                 <Text style={{ fontSize: 18, fontWeight: '900', color: COLORS.foreground, marginBottom: 12, textAlign: 'left' }}>Мои кружки</Text>
-                <View style={{ backgroundColor: COLORS.card, padding: 16, borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center' }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#F0FDF4', alignItems: 'center', justifyContent: 'center' }}>
-                        <Feather name="code" size={20} color="#16A34A" />
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 16 }}>
-                        <Text style={{ fontSize: 15, fontWeight: '800', color: COLORS.foreground }}>Робототехника</Text>
-                        <Text style={{ fontSize: 12, color: COLORS.mutedForeground }}>Пн, Ср • 16:00</Text>
-                    </View>
-                    <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
+                <View style={{ backgroundColor: COLORS.card, padding: 16, borderRadius: RADIUS.xl, borderWidth: 1, borderColor: COLORS.border }}>
+                    <Text style={{ fontSize: 13, color: COLORS.mutedForeground, fontWeight: '700' }}>
+                        Активные кружки появятся после записи на курс.
+                    </Text>
                 </View>
             </View>
 

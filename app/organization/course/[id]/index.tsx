@@ -14,13 +14,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
+import { LEVEL_LABELS } from "../../../../constants/courseOptions";
 import { useOrgCourseById, useOrgGroups } from "../../../../hooks/useOrgData";
-
-const LEVEL_LABELS: Record<string, string> = {
-  beginner: "Начальный",
-  intermediate: "Средний",
-  advanced: "Продвинутый",
-};
 
 export default function CourseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

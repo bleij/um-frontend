@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-import { useGroupMembers } from "../../../hooks/useMentorData";
+import { useGroupMembers, useMentorGroups, useMentorStudentAttendanceSummary } from "../../../hooks/useMentorData";
 
 export default function MentorGroupDetail() {
   const { id } = useLocalSearchParams();
@@ -24,25 +24,34 @@ export default function MentorGroupDetail() {
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
 
   const { members, loading } = useGroupMembers(id as string);
+  const { groups } = useMentorGroups();
+  const { summary } = useMentorStudentAttendanceSummary();
+  const group = groups.find((item) => item.id === id);
   
-  // Mock attendance data (in real app, fetched from database)
-  // Mentors can only VIEW attendance, not mark it
-  const attendanceData: Record<string, { present: boolean; missedCount: number }> = {
-    // These would come from the database
-  };
-  
-  // Get status indicator color based on attendance/progress
   const getStatusColor = (memberId: string): { color: string; label: string } => {
-    const data = attendanceData[memberId];
-    // Mock logic - in real app would be based on actual data
-    const mockStatuses = ['green', 'green', 'yellow', 'green', 'red'];
-    const idx = parseInt(memberId.slice(-1)) % mockStatuses.length;
-    const status = mockStatuses[idx];
-    
-    if (status === 'green') return { color: '#10B981', label: 'Всё ок' };
-    if (status === 'yellow') return { color: '#F59E0B', label: '2 пропуска' };
+    const data = summary[memberId];
+    if (!data || data.total === 0) return { color: '#9CA3AF', label: 'Нет отметок' };
+    if (data.missed === 0) return { color: '#10B981', label: 'Всё ок' };
+    if (data.missed <= 2) return { color: '#F59E0B', label: `${data.missed} пропуска` };
     return { color: '#EF4444', label: 'Требует внимания' };
   };
+
+  const statusCounts = members.reduce(
+    (acc, member) => {
+      const data = summary[member.id];
+      if (!data || data.total === 0) {
+        acc.none += 1;
+      } else if (data.missed === 0) {
+        acc.ok += 1;
+      } else if (data.missed <= 2) {
+        acc.warning += 1;
+      } else {
+        acc.risk += 1;
+      }
+      return acc;
+    },
+    { ok: 0, warning: 0, risk: 0, none: 0 },
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -74,8 +83,8 @@ export default function MentorGroupDetail() {
                   <Feather name="arrow-left" size={20} color="white" />
                 </TouchableOpacity>
                 <View>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>Старшая группа A</Text>
-                  <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>Сегодня, 15:00-16:30</Text>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white" }}>{group?.name || "Группа"}</Text>
+                  <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>{group?.schedule || "Расписание не указано"}</Text>
                 </View>
               </View>
             </MotiView>
@@ -96,7 +105,9 @@ export default function MentorGroupDetail() {
            <View className="flex-row justify-between items-center mb-6">
               <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>Посещаемость</Text>
               <View style={{ backgroundColor: COLORS.muted, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border }}>
-                 <Text style={{ fontSize: 9, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textAlign: 'center' }}>ФЕВРАЛЬ 24, 2026</Text>
+                 <Text style={{ fontSize: 9, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textAlign: 'center' }}>
+                   {new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }).toUpperCase()}
+                 </Text>
               </View>
            </View>
 
@@ -160,15 +171,15 @@ export default function MentorGroupDetail() {
            
            <View style={{ flexDirection: 'row', gap: SPACING.md, marginBottom: SPACING.xl }}>
               <View style={{ flex: 1, backgroundColor: '#F0FDF4', padding: SPACING.lg, borderRadius: RADIUS.lg, alignItems: 'center' }}>
-                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#10B981' }}>3</Text>
+                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#10B981' }}>{statusCounts.ok}</Text>
                  <Text style={{ fontSize: 10, color: '#10B981', fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 4 }}>Всё ок</Text>
               </View>
               <View style={{ flex: 1, backgroundColor: '#FEF3C7', padding: SPACING.lg, borderRadius: RADIUS.lg, alignItems: 'center' }}>
-                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#F59E0B' }}>1</Text>
+                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#F59E0B' }}>{statusCounts.warning}</Text>
                  <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 4 }}>Внимание</Text>
               </View>
               <View style={{ flex: 1, backgroundColor: '#FEF2F2', padding: SPACING.lg, borderRadius: RADIUS.lg, alignItems: 'center' }}>
-                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#EF4444' }}>1</Text>
+                 <Text style={{ fontSize: 24, fontWeight: TYPOGRAPHY.weight.bold, color: '#EF4444' }}>{statusCounts.risk}</Text>
                  <Text style={{ fontSize: 10, color: '#EF4444', fontWeight: TYPOGRAPHY.weight.bold, textTransform: 'uppercase', marginTop: 4 }}>Пропуски</Text>
               </View>
            </View>

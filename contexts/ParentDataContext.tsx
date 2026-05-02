@@ -406,39 +406,9 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
         setParentTariff,
       }}
     >
-      {/* 
-        Inject a mock child in DEV mode if list is empty 
-        to help the user test parent screens immediately.
-      */}
-      {__DEV__ && childrenProfile.length === 0 && !isLoading ? (
-        <DevChildInjector onAdded={() => {}} />
-      ) : null}
       {children}
     </ParentDataContext.Provider>
   );
-}
-
-/** Helper component to auto-add a child in dev mode if none exist */
-function DevChildInjector({ onAdded }: { onAdded: () => void }) {
-  const { addChild, isLoading } = useParentData();
-  const { user } = useAuth();
-  const [attempted, setAttempted] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!isLoading && !attempted && user) {
-      setAttempted(true);
-      addChild({
-        id: buildDevChildId(user.id),
-        name: "Алексей (Dev)",
-        age: 8,
-        ageCategory: "child",
-        interests: ["Робототехника", "Рисование"],
-        parentId: user.id,
-      }).then(onAdded);
-    }
-  }, [addChild, isLoading, attempted, onAdded, user]);
-
-  return null;
 }
 
 export function useParentData() {

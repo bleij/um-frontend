@@ -16,25 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { LEVEL_OPTIONS, ICON_OPTIONS, SKILL_OPTIONS, type CourseLevel as Level } from "../../../constants/courseOptions";
 import { useOrgCourses } from "../../../hooks/useOrgData";
-
-type Level = "beginner" | "intermediate" | "advanced";
-
-const LEVEL_OPTIONS: { value: Level; label: string }[] = [
-  { value: "beginner", label: "Начальный" },
-  { value: "intermediate", label: "Средний" },
-  { value: "advanced", label: "Продвинутый" },
-];
-
-const ICON_OPTIONS = [
-  "book", "cpu", "code", "target", "music", "activity",
-  "globe", "star", "pen-tool", "zap",
-] as const;
-
-const SKILL_OPTIONS = [
-  "Логика", "Креативность", "Команда", "Лидерство", "Крит. мышление",
-  "Коммуникация", "Код", "Дизайн", "Математика", "Языки",
-];
 
 export default function CreateCourseScreen() {
   const router = useRouter();

@@ -24,14 +24,6 @@ import {
 } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 
-const SKILLS = [
-  { label: "Коммуникация", value: 78, color: "#6C5CE7" },
-  { label: "Креативность", value: 85, color: "#A78BFA" },
-  { label: "Логика", value: 80, color: "#3B82F6" },
-  { label: "Дисциплина", value: 72, color: "#10B981" },
-];
-
-
 import { useParentData } from "../../contexts/ParentDataContext";
 import { courseGradient, usePublicCourses } from "../../hooks/usePublicData";
 import { useStudentTasks, useYouthAchievements } from "../../hooks/useStudentData";
@@ -52,7 +44,7 @@ export default function YouthHome() {
   // Find active child data (relevant for all roles: parent, youth, etc.)
   const activeChild =
     childrenProfile.find((c) => c.id === activeChildId) || childrenProfile[0];
-  const firstName = activeChild?.name || user?.firstName || "Максим";
+  const firstName = activeChild?.name || user?.firstName || "Пользователь";
   const diagnostic = activeChild?.talentProfile;
 
   const currentSkills = diagnostic
@@ -79,18 +71,12 @@ export default function YouthHome() {
           color: "#EC4899",
         },
       ]
-    : [
-        { label: "Коммуникация", value: 78, color: "#6C5CE7" },
-        { label: "Креативность", value: 85, color: "#A78BFA" },
-        { label: "Логика", value: 80, color: "#3B82F6" },
-        { label: "Дисциплина", value: 72, color: "#10B981" },
-      ];
+    : [];
 
   const { tasks, toggleTask } = useStudentTasks();
   const { achievements } = useYouthAchievements();
   const { devYouthAge } = useDevSettings();
 
-  // Mock roles and features
   const isIndependent = devYouthAge >= 14; // "Подросток сам принимает решения"
   const isPro = parentProfile?.tariff === "pro"; // PRO тариф
   const [passVisible, setPassVisible] = useState(false);
@@ -141,6 +127,8 @@ export default function YouthHome() {
       route: "/(tabs)/parent/calendar",
     },
   ];
+  const openTasks = tasks.filter((task) => !task.done).length;
+  const learningEnergy = tasks.length ? Math.round(((tasks.length - openTasks) / tasks.length) * 100) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -180,8 +168,8 @@ export default function YouthHome() {
                       marginTop: 2,
                     }}
                   >
-                    {diagnostic?.recommendedConstellation || "Level 8"} •{" "}
-                    {diagnostic ? "Профиль готов" : "2450 XP"}
+                    {diagnostic?.recommendedConstellation || "Профиль"} •{" "}
+                    {diagnostic ? "Профиль готов" : "Диагностика не пройдена"}
                   </Text>
                 </View>
                 <Pressable onPress={() => router.push("/profile" as any)} className="w-12 h-12 rounded-full overflow-hidden border-2 border-white/30">
@@ -197,12 +185,12 @@ export default function YouthHome() {
                     Энергия обучения
                   </Text>
                   <Text className="text-white text-xs font-black">
-                    85%
+                    {learningEnergy}%
                   </Text>
                 </View>
                 <View className="h-2.5 bg-white/20 rounded-full overflow-hidden">
                   <View
-                    style={{ width: "85%" }}
+                    style={{ width: `${learningEnergy}%` }}
                     className="h-full bg-white rounded-full"
                   />
                 </View>
@@ -250,6 +238,7 @@ export default function YouthHome() {
         </View>
 
         {/* AI Assistant Insight */}
+        {diagnostic && currentSkills[0] && (
         <View className="mb-8">
             <View
               style={SHADOWS.sm}
@@ -264,7 +253,7 @@ export default function YouthHome() {
                 </Text>
                 <Text className="text-blue-700 text-xs leading-4">
                   Я проанализировал твой тест. У тебя высокий потенциал в{" "}
-                  {currentSkills[1].label}. Хочешь знать больше?
+                  {currentSkills[0].label}. Хочешь знать больше?
                 </Text>
                 <Pressable
                   onPress={() => router.push("/parent/subscription" as any)}
@@ -277,6 +266,7 @@ export default function YouthHome() {
               </View>
             </View>
         </View>
+        )}
 
         {/* Upcoming tasks hint */}
         {tasks.length > 0 && (
@@ -325,6 +315,11 @@ export default function YouthHome() {
           </View>
 
           <View className="gap-5">
+            {currentSkills.length === 0 && (
+              <Text className="text-sm font-semibold text-gray-500">
+                Результаты появятся после диагностики.
+              </Text>
+            )}
             {currentSkills.map((skill) => (
               <View key={skill.label}>
                 <View className="flex-row justify-between mb-1.5">

@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { useState } from "react";
 import {
+    ActivityIndicator,
     Platform,
     ScrollView,
     Text,
@@ -11,48 +12,7 @@ import {
     View,
 } from "react-native";
 import { LAYOUT } from "../../../constants/theme";
-
-/* ------------------- */
-/* ВОПРОСЫ ДЛЯ КРУЖКОВ */
-/* ------------------- */
-
-const ORG_QUESTIONS = [
-  {
-    id: 1,
-    question: "Какого типа у вас организация?",
-    answers: [
-      "Образовательный центр",
-      "Частная школа",
-      "Кружок/студия",
-      "Онлайн-платформа",
-    ],
-  },
-  {
-    id: 2,
-    question: "Основное направление занятий:",
-    answers: ["IT и технологии", "Творчество", "Спорт", "Точные науки"],
-  },
-  {
-    id: 3,
-    question: "С каким возрастом вы работаете?",
-    answers: ["6–9 лет", "10–13 лет", "14–17 лет", "Все возраста"],
-  },
-  {
-    id: 4,
-    question: "Какой формат занятий у вас основной?",
-    answers: ["Офлайн", "Онлайн", "Смешанный"],
-  },
-  {
-    id: 5,
-    question: "Какая главная цель для вашей организации?",
-    answers: [
-      "Масштабирование",
-      "Привлечение учеников",
-      "Автоматизация процессов",
-      "Повышение качества обучения",
-    ],
-  },
-];
+import { useOnboardingQuestions } from "../../../hooks/usePlatformData";
 
 export default function OrgTesting() {
   const router = useRouter();
@@ -62,11 +22,12 @@ export default function OrgTesting() {
     ? LAYOUT.profileHorizontalPaddingDesktop
     : LAYOUT.profileHorizontalPaddingMobile;
 
+  const { questions, loading } = useOnboardingQuestions("org");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
 
-  const current = ORG_QUESTIONS[step];
-  const progress = ((step + 1) / ORG_QUESTIONS.length) * 100;
+  const current = questions[step];
+  const progress = questions.length > 0 ? ((step + 1) / questions.length) * 100 : 0;
 
   const selectAnswer = (index: number) => {
     const updated = [...answers];
@@ -75,12 +36,20 @@ export default function OrgTesting() {
   };
 
   const next = () => {
-    if (step < ORG_QUESTIONS.length - 1) {
+    if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
       router.push("/profile/organization/results");
     }
   };
+
+  if (loading || !current) {
+    return (
+      <LinearGradient colors={["#6C5CE7", "#C7C4F2"]} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color="white" size="large" />
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -109,14 +78,7 @@ export default function OrgTesting() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ duration: 400 }}
           >
-            <Text
-              style={{
-                fontSize: 28,
-                fontWeight: "700",
-                color: "white",
-                marginBottom: 16,
-              }}
-            >
+            <Text style={{ fontSize: 28, fontWeight: "700", color: "white", marginBottom: 16 }}>
               Тестирование организации
             </Text>
           </MotiView>
@@ -131,13 +93,7 @@ export default function OrgTesting() {
               marginBottom: 30,
             }}
           >
-            <View
-              style={{
-                width: `${progress}%`,
-                height: "100%",
-                backgroundColor: "white",
-              }}
-            />
+            <View style={{ width: `${progress}%`, height: "100%", backgroundColor: "white" }} />
           </View>
 
           {/* QUESTION CARD */}
@@ -156,30 +112,16 @@ export default function OrgTesting() {
               shadowRadius: 10,
             }}
           >
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "700",
-                opacity: 0.6,
-                marginBottom: 10,
-              }}
-            >
-              Вопрос {step + 1} из {ORG_QUESTIONS.length}
+            <Text style={{ fontSize: 14, fontWeight: "700", opacity: 0.6, marginBottom: 10 }}>
+              Вопрос {step + 1} из {questions.length}
             </Text>
 
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                marginBottom: 20,
-              }}
-            >
-              {current.question}
+            <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 20 }}>
+              {current.question_text}
             </Text>
 
             {current.answers.map((text, i) => {
               const active = answers[step] === i;
-
               return (
                 <TouchableOpacity
                   key={i}
@@ -217,17 +159,8 @@ export default function OrgTesting() {
               borderRadius: 30,
             }}
           >
-            <Text
-              style={{
-                textAlign: "center",
-                color: "white",
-                fontSize: 18,
-                fontWeight: "600",
-              }}
-            >
-              {step === ORG_QUESTIONS.length - 1
-                ? "Завершить"
-                : "Следующий вопрос"}
+            <Text style={{ textAlign: "center", color: "white", fontSize: 18, fontWeight: "600" }}>
+              {step === questions.length - 1 ? "Завершить" : "Следующий вопрос"}
             </Text>
           </TouchableOpacity>
         </View>

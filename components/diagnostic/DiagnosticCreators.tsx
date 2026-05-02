@@ -64,36 +64,8 @@ export default function DiagnosticCreators() {
   // ── Skip handler ─────────────────────────────────────────────────────────
 
   const handleSkip = useCallback(async () => {
-    const mockDiagnostic: any = {
-      childId: activeChildId || user?.id || "unknown",
-      scores: { logical: 70, creative: 80, social: 65, physical: 55, linguistic: 60 },
-      summary: "Демо-отчет: У вашего ребёнка яркие творческие и лидерские задатки. Он умеет нестандартно мыслить и вдохновлять других.",
-      recommendedConstellation: "Творец-лидер",
-      timestamp: new Date().toISOString(),
-      tier: isPro ? "pro" : "basic",
-      ageGroup: "9-11",
-      ...(isPro
-        ? {
-            topStrengths: ["Креативность", "Лидерство", "Эмпатия"],
-            developmentAreas: ["Аналитика", "Работа по правилам"],
-            intellectType: "Социально-творческий интеллект",
-            personalityBehavior: "Эмпатичный Медиатор с Мышлением Роста",
-            careerArchetypes: [
-              "Проектный менеджер в IT/Геймдев",
-              "UX-дизайнер / Сценарист",
-              "Психолог / HR-специалист",
-            ],
-            parentAdvice:
-              "Рассмотрите театральные студии, курсы дизайна или журналистики, где поощряется командная работа.",
-          }
-        : {}),
-    };
-
-    if (activeChildId) {
-      await updateChildDiagnostic(activeChildId, mockDiagnostic);
-    }
-    router.push("/profile/youth/results");
-  }, [activeChildId, user?.id, isPro]);
+    router.back();
+  }, [router]);
 
   // ── Render: Processing ───────────────────────────────────────────────────
 

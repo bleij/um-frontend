@@ -74,8 +74,8 @@ export default function OrgProfile() {
           .update({
             bin: bin,
             status: "pending", // Move to pending for admin review
-            license_url: "uploaded_license_placeholder.pdf", // Mock uploads
-            registration_url: "uploaded_reg_placeholder.pdf",
+            license_url: null,
+            registration_url: null,
           })
           .eq("id", orgId);
         
@@ -234,31 +234,6 @@ export default function OrgProfile() {
              </View>
           </View>
         )}
-
-        {/* Regular Settings */}
-        <View style={{ marginTop: 8 }}>
-          <Text style={styles.sectionLabel}>Настройки</Text>
-          <View style={{ gap: 12 }}>
-            {[
-              { label: "Редактировать базовый профиль", icon: "edit-3", color: COLORS.primary, route: "/organization/profile/edit" },
-              { label: "Платежные реквизиты", icon: "credit-card", color: "#F59E0B", route: "/organization/finance" },
-              { label: "Управление доступом", icon: "key", color: "#6366F1", route: "/organization/access" },
-              { label: "Уведомления", icon: "bell", color: "#3B82F6", route: "/organization/settings/notifications" },
-            ].map((item, idx) => (
-              <TouchableOpacity
-                key={idx}
-                onPress={() => Alert.alert("В разработке", "Этот раздел скоро появится.")}
-                style={styles.settingItem}
-              >
-                <View style={[styles.settingIconBox, { backgroundColor: `${item.color}10` }]}>
-                  <Feather name={item.icon as any} size={20} color={item.color} />
-                </View>
-                <Text style={styles.settingLabel}>{item.label}</Text>
-                <Feather name="chevron-right" size={20} color={COLORS.tertiary} />
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
 
         {/* Logout */}
         <TouchableOpacity

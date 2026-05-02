@@ -14,13 +14,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useOrgApplications } from "../../../hooks/useOrgData";
 
-const SESSIONS = [
-  { date: "21 фев", day: "ПН" },
-  { date: "23 фев", day: "СР" },
-  { date: "26 фев", day: "ПН" },
-  { date: "28 фев", day: "СР" },
-];
-
 export default function OrgAttendance() {
   const router = useRouter();
   const { width } = useWindowDimensions();
@@ -45,12 +38,8 @@ export default function OrgAttendance() {
   ).map((a) => ({
     id: a.id,
     name: a.child_name,
-    // Seed random-ish attendance for display purposes
-    attendance: SESSIONS.map((_, i) => (a.id.charCodeAt(i % a.id.length) % 3) !== 0),
+    club: a.club,
   }));
-
-  const getRate = (arr: boolean[]) =>
-    arr.length ? Math.round((arr.filter(Boolean).length / arr.length) * 100) : 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -145,55 +134,49 @@ export default function OrgAttendance() {
             style={SHADOWS.sm}
             className="flex-1 bg-white p-5 rounded-3xl border border-gray-100"
           >
-            <Text className="text-2xl font-black text-green-600">92%</Text>
+            <Text className="text-2xl font-black text-green-600">{activeStudents.length}</Text>
             <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">
-              Ср. посещ.
+              Активных учеников
             </Text>
           </View>
           <View
             style={SHADOWS.sm}
             className="flex-1 bg-white p-5 rounded-3xl border border-gray-100"
           >
-            <Text className="text-2xl font-black text-primary">4</Text>
+            <Text className="text-2xl font-black text-primary">{clubs.length}</Text>
             <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">
-              Занятий
+              Направлений
             </Text>
           </View>
         </View>
 
-        {/* Attendance Table Card */}
+        {/* Attendance Card */}
         <View
           style={SHADOWS.md}
           className="bg-white rounded-3xl border border-gray-100 overflow-hidden"
         >
-          {/* Table Header */}
           <View className="flex-row bg-gray-50/50 border-bottom border-gray-100 p-2">
             <View className="flex-1 justify-center px-2">
               <Text className="text-[10px] font-bold text-gray-400 uppercase">
                 Ученик
               </Text>
             </View>
-            <View className="flex-row">
-              {SESSIONS.map((s, i) => (
-                <View key={i} className="w-11 items-center py-2">
-                  <Text className="text-[9px] font-black text-gray-900">
-                    {s.day}
-                  </Text>
-                  <Text className="text-[8px] text-gray-400 font-bold">
-                    {s.date}
-                  </Text>
-                </View>
-              ))}
-              <View className="w-10 items-center justify-center">
-                <Text className="text-[9px] font-black text-gray-400">%</Text>
-              </View>
-            </View>
+            <Text className="text-[10px] font-bold text-gray-400 uppercase">
+              Курс
+            </Text>
           </View>
 
-          {/* Table Body */}
           {loading && (
             <View style={{ padding: 20, alignItems: "center" }}>
               <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
+            </View>
+          )}
+          {!loading && activeStudents.length === 0 && (
+            <View style={{ padding: 20, alignItems: "center" }}>
+              <Feather name="clipboard" size={28} color="#D1D5DB" />
+              <Text style={{ color: COLORS.mutedForeground, marginTop: 10, textAlign: "center" }}>
+                Активных учеников пока нет. Данные посещаемости появятся после отметок учителя.
+              </Text>
             </View>
           )}
           <View>
@@ -217,52 +200,12 @@ export default function OrgAttendance() {
                     {student.name}
                   </Text>
                 </View>
-                <View className="flex-row">
-                  {student.attendance.map((att, i) => (
-                    <View key={i} className="w-11 items-center justify-center">
-                      <View
-                        className={`w-6 h-6 rounded-lg items-center justify-center ${
-                          att ? "bg-green-50" : "bg-red-50"
-                        }`}
-                      >
-                        <Feather
-                          name={att ? "check" : "x"}
-                          size={12}
-                          color={att ? "#10B981" : "#EF4444"}
-                        />
-                      </View>
-                    </View>
-                  ))}
-                  <View className="w-10 items-center justify-center">
-                    <Text
-                      className={`text-[11px] font-black ${
-                        getRate(student.attendance) > 80
-                          ? "text-green-600"
-                          : "text-primary"
-                      }`}
-                    >
-                      {getRate(student.attendance)}
-                    </Text>
-                  </View>
-                </View>
+                <Text className="text-xs font-bold text-gray-500">{student.club || "—"}</Text>
               </View>
             ))}
           </View>
-        </View>
-
-        {/* Legend */}
-        <View className="mt-8 flex-row justify-center gap-6">
-           <View className="flex-row items-center gap-2">
-              <View className="w-3 h-3 rounded-full bg-green-500" />
-              <Text className="text-[10px] font-bold text-gray-500">ПРИСУТСТВОВАЛ</Text>
-           </View>
-           <View className="flex-row items-center gap-2">
-              <View className="w-3 h-3 rounded-full bg-red-500" />
-              <Text className="text-[10px] font-bold text-gray-500">ПРОПУСКАЛ</Text>
-           </View>
         </View>
       </ScrollView>
     </View>
   );
 }
-

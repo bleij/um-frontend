@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
-import { useMentorStudents } from "../../../hooks/useMentorData";
+import { useMentorStudentAttendanceSummary, useMentorStudents } from "../../../hooks/useMentorData";
 
 export default function MentorStudentsScreen() {
   const router = useRouter();
@@ -25,21 +25,18 @@ export default function MentorStudentsScreen() {
   const paddingX = isDesktop ? 40 : 20;
 
   const { students, loading } = useMentorStudents();
+  const { summary } = useMentorStudentAttendanceSummary();
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredStudents = students.filter(s => 
     s.student_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Get status indicator for each student (green/yellow/red)
   const getStudentStatus = (studentId: string): { color: string; label: string; icon: string } => {
-    // Mock logic - in real app would be based on actual attendance/progress data
-    const mockStatuses = ['green', 'green', 'yellow', 'green', 'red'];
-    const idx = parseInt(studentId.slice(-1)) % mockStatuses.length;
-    const status = mockStatuses[idx];
-    
-    if (status === 'green') return { color: '#10B981', label: 'Всё ок', icon: 'check-circle' };
-    if (status === 'yellow') return { color: '#F59E0B', label: 'Пропустил 2 занятия', icon: 'alert-circle' };
+    const data = summary[studentId];
+    if (!data || data.total === 0) return { color: '#9CA3AF', label: 'Нет отметок', icon: 'minus-circle' };
+    if (data.missed === 0) return { color: '#10B981', label: 'Всё ок', icon: 'check-circle' };
+    if (data.missed <= 2) return { color: '#F59E0B', label: `Пропусков: ${data.missed}`, icon: 'alert-circle' };
     return { color: '#EF4444', label: 'Требует внимания', icon: 'alert-triangle' };
   };
 

@@ -365,6 +365,83 @@ export function useMentorAttendance() {
   return { records, loading, refresh };
 }
 
+export interface MentorStudentAttendanceSummary {
+  total: number;
+  missed: number;
+  latestPresent: boolean | null;
+}
+
+export function useMentorStudentAttendanceSummary() {
+  const { user } = useAuth();
+  const [summary, setSummary] = useState<Record<string, MentorStudentAttendanceSummary>>({});
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setSummary({});
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const groupRes = await supabase
+      .from("mentor_groups")
+      .select("id")
+      .eq("mentor_user_id", user.id);
+    const groupIds = ok<any>(groupRes).map((g: any) => g.id);
+    if (!groupIds.length) {
+      setSummary({});
+      setLoading(false);
+      return;
+    }
+
+    const sessionRes = await supabase
+      .from("attendance_sessions")
+      .select("id, session_date")
+      .in("group_id", groupIds)
+      .order("session_date", { ascending: false });
+    const sessions = ok<any>(sessionRes);
+    const sessionIds = sessions.map((s: any) => s.id);
+    if (!sessionIds.length) {
+      setSummary({});
+      setLoading(false);
+      return;
+    }
+
+    const sessionOrder = new Map<string, number>();
+    sessions.forEach((session: any, index: number) => sessionOrder.set(session.id, index));
+    const recordsRes = await supabase
+      .from("attendance_records")
+      .select("member_id, session_id, present")
+      .in("session_id", sessionIds);
+
+    const next: Record<string, MentorStudentAttendanceSummary> = {};
+    const records = ok<any>(recordsRes).sort(
+      (a: any, b: any) =>
+        (sessionOrder.get(a.session_id) ?? Number.MAX_SAFE_INTEGER) -
+        (sessionOrder.get(b.session_id) ?? Number.MAX_SAFE_INTEGER),
+    );
+    for (const record of records) {
+      const current = next[record.member_id] ?? { total: 0, missed: 0, latestPresent: null };
+      current.total += 1;
+      if (!record.present) current.missed += 1;
+      if (current.latestPresent === null) {
+        current.latestPresent = record.present;
+      }
+      next[record.member_id] = current;
+    }
+
+    setSummary(next);
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { summary, loading, refresh };
+}
+
 // ─── useLearningPath ──────────────────────────────────────────
 export interface LearningPathStep {
   id: string;
@@ -471,6 +548,59 @@ export function useMentorProfileStats() {
   }, [refresh]);
 
   return { stats, loading };
+}
+
+// ─── useMentorOwnProfile ─────────────────────────────────────
+export interface MentorOwnProfile {
+  specialization: string | null;
+  bio: string | null;
+  experience: string | null;
+  education: string | null;
+  photo_emoji: string | null;
+  rating: number | null;
+  sessions: number | null;
+}
+
+export function useMentorOwnProfile() {
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<MentorOwnProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const res = await supabase
+      .from("mentor_applications")
+      .select("specialization, bio, experience, education, photo_emoji, rating, sessions")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    setProfile(res.data ?? null);
+    setLoading(false);
+  }, [user?.id]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const updateProfile = useCallback(
+    async (patch: Partial<MentorOwnProfile>): Promise<{ error: string | null }> => {
+      if (!supabase || !user?.id) return { error: "Not configured" };
+      const res = await supabase
+        .from("mentor_applications")
+        .update(patch)
+        .eq("user_id", user.id);
+      if (res.error) return { error: res.error.message };
+      await refresh();
+      return { error: null };
+    },
+    [refresh, user?.id],
+  );
+
+  return { profile, loading, refresh, updateProfile };
 }
 
 // ─── useMentorRequests ────────────────────────────────────────

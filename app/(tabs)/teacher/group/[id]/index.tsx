@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React, { useState, useEffect } from "react";
 import {
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -15,20 +16,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../../../constants/theme";
+import { useTeacherGroup } from "../../../../../hooks/usePlatformData";
 
-// MOCK DATA for Detail
-const MOCK_GROUPS: Record<string, any> = {
-  'group-001': { id: 'group-001', name: 'Группа А', course: 'Робототехника', schedule: 'Пн/Ср/Пт 15:00', students_count: 8 },
-  'group-002': { id: 'group-002', name: 'Группа Б', course: 'Робототехника', schedule: 'Вт/Чт 16:00', students_count: 7 },
-  'group-003': { id: 'group-003', name: 'Python Junior', course: 'Программирование', schedule: 'Сб 10:00', students_count: 12 },
-};
+function formatDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
 
-const MOCK_STUDENTS = [
-  { id: '1', name: 'Саша Иванов', age: 12, status: 'Active Pro' },
-  { id: '2', name: 'Маша Петрова', age: 11, status: 'Active Pro' },
-  { id: '3', name: 'Алёша Сидоров', age: 13, status: 'Active Base' },
-  { id: '4', name: 'Витя Морозов', age: 12, status: 'Active Pro' },
-  { id: '5', name: 'Лиза Новикова', age: 11, status: 'Active Base' },
+const SCHEDULE_TOKENS = [
+  ["Вс", "Воскресенье"],
+  ["Пн", "Понедельник"],
+  ["Вт", "Вторник"],
+  ["Ср", "Среда"],
+  ["Чт", "Четверг"],
+  ["Пт", "Пятница"],
+  ["Сб", "Суббота"],
 ];
 
 export default function TeacherGroupDetail() {
@@ -38,13 +42,24 @@ export default function TeacherGroupDetail() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? 40 : 20;
 
-  const group = MOCK_GROUPS[id as string] || MOCK_GROUPS['group-001'];
-  
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const selectedDateKey = formatDateKey(selectedDate);
+  const { group, students, attendance: savedAttendance, loading, saveAttendance } = useTeacherGroup(id as string, selectedDateKey);
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | null>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const nextAttendance: Record<string, 'present' | 'absent' | null> = {};
+    const nextComments: Record<string, string> = {};
+    for (const entry of savedAttendance) {
+      nextAttendance[entry.student_id] = entry.status;
+      if (entry.comment) nextComments[entry.student_id] = entry.comment;
+    }
+    setAttendance(nextAttendance);
+    setComments(nextComments);
+  }, [savedAttendance]);
 
   const daysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = (date: Date) => {
@@ -57,10 +72,9 @@ export default function TeacherGroupDetail() {
   };
 
   const isLessonDay = (date: Date) => {
-    const day = date.getDay();
-    if (id === 'group-001') return [1, 3, 5].includes(day);
-    if (id === 'group-002') return [2, 4].includes(day);
-    return [6].includes(day);
+    if (!group?.schedule) return true;
+    const tokens = SCHEDULE_TOKENS[date.getDay()];
+    return tokens.some((token) => group.schedule?.toLowerCase().includes(token.toLowerCase()));
   };
 
   const toggleStatus = (studentId: string, status: 'present' | 'absent') => {
@@ -72,8 +86,20 @@ export default function TeacherGroupDetail() {
 
   const saveReport = async () => {
     setSaving(true);
-    await new Promise(r => setTimeout(r, 1000));
+    const entries = Object.entries(attendance)
+      .filter((entry): entry is [string, 'present' | 'absent'] => entry[1] !== null)
+      .map(([studentId, status]) => ({
+        studentId,
+        status,
+        comment: comments[studentId] ?? null,
+      }));
+    const result = await saveAttendance(entries);
     setSaving(false);
+    if (result.error) {
+      Alert.alert("Ошибка", result.error);
+      return;
+    }
+    Alert.alert("Готово", "Посещаемость сохранена");
   };
 
   const renderCalendar = () => {
@@ -126,8 +152,8 @@ export default function TeacherGroupDetail() {
                 <Feather name="arrow-left" size={20} color={COLORS.foreground} />
             </TouchableOpacity>
             <View style={{ flex: 1, marginLeft: 16 }}>
-                <Text style={styles.headerTitle}>{group.course}</Text>
-                <Text style={styles.headerSubtitle}>{group.name} • {group.schedule}</Text>
+                <Text style={styles.headerTitle}>{group?.course_title || "Группа"}</Text>
+                <Text style={styles.headerSubtitle}>{group?.name || "—"}{group?.schedule ? ` • ${group.schedule}` : ""}</Text>
             </View>
             <TouchableOpacity 
                 onPress={() => router.push(`/teacher/group/${id}/journal` as any)}
@@ -179,15 +205,23 @@ export default function TeacherGroupDetail() {
                 </View>
 
                 <View style={{ gap: 16 }}>
-                    {MOCK_STUDENTS.map(student => (
+                    {!loading && students.length === 0 && (
+                        <Text style={{ color: COLORS.mutedForeground, textAlign: "center", paddingVertical: 24 }}>
+                            В этой группе пока нет учеников.
+                        </Text>
+                    )}
+                    {students.map(student => (
                         <View key={student.id} style={styles.studentCard}>
                             <View style={styles.studentInfo}>
                                 <View style={styles.studentAvatar}>
-                                    <Text style={styles.avatarText}>{student.name.charAt(0)}</Text>
+                                    <Text style={styles.avatarText}>{student.student_name.charAt(0)}</Text>
                                 </View>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.studentName}>{student.name}</Text>
-                                    <Text style={styles.studentSub}>{student.age} лет • {student.status}</Text>
+                                    <Text style={styles.studentName}>{student.student_name}</Text>
+                                    <Text style={styles.studentSub}>
+                                        {student.student_age ? `${student.student_age} лет` : "Возраст не указан"}
+                                        {student.status_label ? ` • ${student.status_label}` : ""}
+                                    </Text>
                                 </View>
                             </View>
 

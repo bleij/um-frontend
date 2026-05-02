@@ -57,6 +57,10 @@ function RootNavigator() {
       (authScreen === "callback" || authScreen === "complete-profile" || authScreen === "reset-password");
 
     if (user && !user.profileComplete && !devMode && !isOAuthCallbackScreen) {
+      if (user.hasSelectedRole === false) {
+        router.replace("/auth/complete-profile" as any);
+        return;
+      }
       const setupRoute = getProfileSetupRoute(user.role);
       const setupRouteParts = setupRoute.split("/").filter(Boolean);
       const onProfileSetupRoute = setupRouteParts.every(

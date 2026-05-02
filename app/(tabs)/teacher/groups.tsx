@@ -5,37 +5,7 @@ import React from "react";
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
-
-// MOCK DATA for Teacher
-const MOCK_TEACHER_GROUPS = [
-  {
-    id: 'group-001',
-    group_name: 'Группа А',
-    course_title: 'Робототехника',
-    schedule: 'Пн/Ср/Пт 15:00',
-    current_students: 8,
-    max_students: 12,
-    status: 'active'
-  },
-  {
-    id: 'group-002',
-    group_name: 'Группа Б',
-    course_title: 'Робототехника',
-    schedule: 'Вт/Чт 16:00',
-    current_students: 7,
-    max_students: 10,
-    status: 'active'
-  },
-  {
-    id: 'group-003',
-    group_name: 'Python Junior',
-    course_title: 'Программирование',
-    schedule: 'Сб 10:00',
-    current_students: 12,
-    max_students: 15,
-    status: 'inactive'
-  }
-];
+import { useTeacherGroups } from "../../../hooks/usePlatformData";
 
 export default function TeacherGroupsScreen() {
   const router = useRouter();
@@ -43,7 +13,7 @@ export default function TeacherGroupsScreen() {
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? 40 : 24;
 
-  const groups = MOCK_TEACHER_GROUPS;
+  const { groups, studentCounts } = useTeacherGroups();
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
@@ -87,7 +57,7 @@ export default function TeacherGroupsScreen() {
                         >
                             <View style={styles.cardHeader}>
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.groupName}>{group.group_name}</Text>
+                                    <Text style={styles.groupName}>{group.name}</Text>
                                     <Text style={styles.courseTitle}>{group.course_title}</Text>
                                 </View>
                                 <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
@@ -98,7 +68,7 @@ export default function TeacherGroupsScreen() {
                                     <View style={styles.infoIconBox}>
                                         <Feather name="users" size={14} color="#6C5CE7" />
                                     </View>
-                                    <Text style={styles.infoText}>{group.current_students} / {group.max_students} учеников</Text>
+                                    <Text style={styles.infoText}>{studentCounts[group.id] ?? 0} / {group.capacity} учеников</Text>
                                 </View>
                                 <View style={styles.infoItem}>
                                     <View style={styles.infoIconBox}>
@@ -109,12 +79,12 @@ export default function TeacherGroupsScreen() {
                             </View>
 
                             <View style={styles.cardFooter}>
-                                <View style={[styles.statusBadge, group.status === 'active' ? styles.statusActive : styles.statusInactive]}>
-                                    <Text style={[styles.statusText, group.status === 'active' ? styles.statusActiveText : styles.statusInactiveText]}>
-                                        {group.status === 'active' ? 'Активна' : 'Неактивна'}
+                                <View style={[styles.statusBadge, group.active ? styles.statusActive : styles.statusInactive]}>
+                                    <Text style={[styles.statusText, group.active ? styles.statusActiveText : styles.statusInactiveText]}>
+                                        {group.active ? 'Активна' : 'Неактивна'}
                                     </Text>
                                 </View>
-                                {group.current_students >= group.max_students && (
+                                {(studentCounts[group.id] ?? 0) >= group.capacity && (
                                     <View style={styles.fullBadge}>
                                         <Text style={styles.fullText}>Группа заполнена</Text>
                                     </View>

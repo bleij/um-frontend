@@ -14,10 +14,8 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useChats } from "../../../hooks/useChats";
-import { useAuth } from "../../../contexts/AuthContext";
 
 const DEFAULT_TABS = ["все", "непрочитанные", "архив"];
-const MENTOR_TABS = ["родители", "подростки", "уведомления"];
 
 function formatChatTime(isoString: string): string {
     const d = new Date(isoString);
@@ -35,43 +33,16 @@ function formatChatTime(isoString: string): string {
     return d.toLocaleDateString("ru", { day: "numeric", month: "short" });
 }
 
-// Mock teacher notifications for mentors
-const TEACHER_NOTIFICATIONS = [
-    { id: 'n1', teacher: 'Игорь Соколов', subject: 'Робототехника', message: 'Алихан отлично справился с проектом по Arduino', time: '2 часа назад', type: 'feedback' },
-    { id: 'n2', teacher: 'Мария Иванова', subject: 'Рисование', message: 'София пропустила 2 занятия подряд', time: 'Вчера', type: 'alert' },
-    { id: 'n3', teacher: 'Александр Петров', subject: 'Шахматы', message: 'Тимур показывает отличный прогресс', time: '3 дня назад', type: 'feedback' },
-];
-
 export default function ChatsScreen() {
     const router = useRouter();
     const { width } = useWindowDimensions();
-    const { user } = useAuth();
     const IS_DESKTOP = Platform.OS === "web" && width >= 900;
-    const isMentor = user?.role === "mentor";
-    const TABS = isMentor ? MENTOR_TABS : DEFAULT_TABS;
-    const [activeTab, setActiveTab] = useState(isMentor ? "родители" : "все");
+    const TABS = DEFAULT_TABS;
+    const [activeTab, setActiveTab] = useState("все");
     const [search, setSearch] = useState("");
     const { chats, loading } = useChats();
 
     const filteredChats = useMemo(() => {
-        if (isMentor) {
-            // For mentors, filter by chat category
-            return chats.filter((chat) => {
-                // Mock categorization based on chat name/icon
-                const isParentChat = chat.name.toLowerCase().includes('мама') || 
-                                     chat.name.toLowerCase().includes('папа') ||
-                                     chat.name.toLowerCase().includes('родитель') ||
-                                     chat.icon_name === 'heart';
-                const isTeenChat = !isParentChat && chat.icon_name !== 'bell';
-                
-                if (activeTab === "родители") return isParentChat && !chat.archived;
-                if (activeTab === "подростки") return isTeenChat && !chat.archived;
-                // "уведомления" tab uses separate data (TEACHER_NOTIFICATIONS)
-                return false;
-            }).filter(chat => chat.name.toLowerCase().includes(search.toLowerCase()));
-        }
-        
-        // Default behavior for non-mentors
         return chats.filter((chat) => {
             const byTab =
                 activeTab === "все"
@@ -82,7 +53,7 @@ export default function ChatsScreen() {
             const bySearch = chat.name.toLowerCase().includes(search.toLowerCase());
             return byTab && bySearch;
         });
-    }, [activeTab, search, chats, isMentor]);
+    }, [activeTab, search, chats]);
 
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
@@ -150,66 +121,9 @@ export default function ChatsScreen() {
                         })}
                     </View>
 
-                    {/* Chat List / Notifications Feed */}
+                    {/* Chat List */}
                     <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}>
-                        {/* Mentor Notifications Feed */}
-                        {isMentor && activeTab === "уведомления" ? (
-                            <>
-                                <Text style={{ fontSize: 14, fontWeight: "600", color: COLORS.mutedForeground, marginBottom: 16 }}>
-                                    Обновления от учителей
-                                </Text>
-                                {TEACHER_NOTIFICATIONS.map((notif, idx) => (
-                                    <MotiView
-                                        key={notif.id}
-                                        from={{ opacity: 0, translateY: 15 }}
-                                        animate={{ opacity: 1, translateY: 0 }}
-                                        transition={{ duration: 300, delay: idx * 50 }}
-                                        style={{
-                                            backgroundColor: "white",
-                                            borderRadius: RADIUS.lg,
-                                            padding: 16,
-                                            marginBottom: 12,
-                                            borderLeftWidth: 4,
-                                            borderLeftColor: notif.type === 'alert' ? '#F59E0B' : '#10B981',
-                                            ...SHADOWS.sm,
-                                        }}
-                                    >
-                                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-                                            <View style={{
-                                                width: 36, height: 36, borderRadius: 18,
-                                                backgroundColor: notif.type === 'alert' ? '#FEF3C7' : '#D1FAE5',
-                                                alignItems: "center", justifyContent: "center", marginRight: 12,
-                                            }}>
-                                                <Feather
-                                                    name={notif.type === 'alert' ? 'alert-circle' : 'message-circle'}
-                                                    size={18}
-                                                    color={notif.type === 'alert' ? '#D97706' : '#059669'}
-                                                />
-                                            </View>
-                                            <View style={{ flex: 1 }}>
-                                                <Text style={{ fontSize: 14, fontWeight: "700", color: COLORS.foreground }}>
-                                                    {notif.teacher}
-                                                </Text>
-                                                <Text style={{ fontSize: 12, color: COLORS.mutedForeground }}>
-                                                    {notif.subject}
-                                                </Text>
-                                            </View>
-                                            <Text style={{ fontSize: 11, color: COLORS.mutedForeground }}>
-                                                {notif.time}
-                                            </Text>
-                                        </View>
-                                        <Text style={{ fontSize: 14, color: COLORS.foreground, lineHeight: 20 }}>
-                                            {notif.message}
-                                        </Text>
-                                    </MotiView>
-                                ))}
-                                {TEACHER_NOTIFICATIONS.length === 0 && (
-                                    <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
-                                        Нет уведомлений
-                                    </Text>
-                                )}
-                            </>
-                        ) : loading ? (
+                        {loading ? (
                             <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
                                 Загрузка...
                             </Text>
@@ -283,9 +197,9 @@ export default function ChatsScreen() {
                             ))
                         )}
 
-                        {!loading && filteredChats.length === 0 && activeTab !== "уведомления" && (
+                        {!loading && filteredChats.length === 0 && (
                             <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
-                                {isMentor ? (activeTab === "родители" ? "Нет чатов с родителями" : "Нет чатов с подростками") : "Чатов нет"}
+                                Чатов нет
                             </Text>
                         )}
                     </ScrollView>

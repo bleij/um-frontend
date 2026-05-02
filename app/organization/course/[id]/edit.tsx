@@ -17,32 +17,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
+import {
+  LEVEL_OPTIONS, STATUS_OPTIONS, ICON_OPTIONS, SKILL_OPTIONS,
+  type CourseLevel as Level, type CourseStatus as Status,
+} from "../../../../constants/courseOptions";
 import { useOrgCourseById, useOrgCourses } from "../../../../hooks/useOrgData";
-
-type Level = "beginner" | "intermediate" | "advanced";
-type Status = "draft" | "active" | "archived";
-
-const LEVEL_OPTIONS: { value: Level; label: string }[] = [
-  { value: "beginner", label: "Начальный" },
-  { value: "intermediate", label: "Средний" },
-  { value: "advanced", label: "Продвинутый" },
-];
-
-const STATUS_OPTIONS: { value: Status; label: string; color: string }[] = [
-  { value: "draft", label: "На модерации", color: "#F59E0B" },
-  { value: "active", label: "Активный", color: COLORS.success },
-  { value: "archived", label: "Архив", color: COLORS.mutedForeground },
-];
-
-const ICON_OPTIONS = [
-  "book", "cpu", "code", "target", "music", "activity",
-  "globe", "star", "pen-tool", "zap",
-] as const;
-
-const SKILL_OPTIONS = [
-  "Логика", "Креативность", "Команда", "Лидерство", "Крит. мышление",
-  "Коммуникация", "Код", "Дизайн", "Математика", "Языки",
-];
 
 export default function CourseEditScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

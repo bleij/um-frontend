@@ -40,7 +40,9 @@ export default function MentorStudentDetailScreen() {
   
   // State for monthly report modal
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportMonth, setReportMonth] = useState('Апрель 2026');
+  const [reportMonth, setReportMonth] = useState(
+    new Date().toLocaleDateString("ru-RU", { month: "long", year: "numeric" }),
+  );
 
   // Load notes from Supabase
   useEffect(() => {
@@ -129,14 +131,13 @@ export default function MentorStudentDetailScreen() {
       const now = new Date();
       const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      // Generate report data
       const reportData = {
-        sessions_count: 8,
+        sessions_count: 0,
         progress_percentage: student.progress,
-        average_rating: 4.8,
+        average_rating: null,
         skills: studentDetails.skills.map(s => ({ label: s.label, value: s.value })),
-        highlights: `${student.student_name} показывает отличные результаты в этом месяце.`,
-        areas_for_improvement: "Рекомендуется больше практики в командных проектах.",
+        highlights: notes,
+        areas_for_improvement: "",
       };
 
       const { error } = await supabase
@@ -168,26 +169,22 @@ export default function MentorStudentDetailScreen() {
     }
   };
 
-  // Mock data additions for high-fidelity
+  const skillMap = student.skills ?? { com: 0, lead: 0, cre: 0, log: 0, dis: 0 };
   const studentDetails = {
-    parentName: 'Айгуль Нурмуханбетова',
-    parentPhone: '+7 (701) 234-56-78',
-    city: 'Алматы',
-    school: 'Гимназия №159',
-    grade: '7 класс',
-    subjects: ['Креативность', 'Коммуникация'],
-    goals: 'Развитие творческого мышления и уверенности в публичных выступлениях',
+    parentName: null,
+    parentPhone: null,
+    city: null,
+    school: null,
+    grade: student.student_age ? `${student.student_age} лет` : "Возраст не указан",
+    subjects: [] as string[],
+    goals: null,
     skills: [
-        { label: 'Креативность', value: 75, color: '#6C5CE7' },
-        { label: 'Коммуникация', value: 60, color: '#A78BFA' },
-        { label: 'Лидерство', value: 50, color: '#3B82F6' },
-        { label: 'Критическое мышление', value: 70, color: '#10B981' },
+        { label: 'Креативность', value: skillMap.cre ?? 0, color: '#6C5CE7' },
+        { label: 'Коммуникация', value: skillMap.com ?? 0, color: '#A78BFA' },
+        { label: 'Лидерство', value: skillMap.lead ?? 0, color: '#3B82F6' },
+        { label: 'Логика', value: skillMap.log ?? 0, color: '#10B981' },
     ],
-    history: [
-        { id: 1, date: '12 апр', subject: 'Креативность', duration: '60 мин', rating: 5 },
-        { id: 2, date: '10 апр', subject: 'Коммуникация', duration: '60 мин', rating: 5 },
-        { id: 3, date: '08 апр', subject: 'Креативность', duration: '60 мин', rating: 4 },
-    ]
+    history: [] as Array<{ id: string; date: string; subject: string; duration: string; rating: number }>,
   };
 
   return (
@@ -217,7 +214,7 @@ export default function MentorStudentDetailScreen() {
                         </View>
                         <View style={{ flex: 1 }}>
                             <Text style={styles.studentName}>{student.student_name}</Text>
-                            <Text style={styles.studentGrade}>{studentDetails.grade} • {studentDetails.school}</Text>
+                            <Text style={styles.studentGrade}>{studentDetails.grade}</Text>
                         </View>
                     </View>
 
@@ -248,15 +245,15 @@ export default function MentorStudentDetailScreen() {
                 <View style={styles.infoCard}>
                     <View style={styles.infoItem}>
                         <Feather name="user" size={18} color="#6C5CE7" />
-                        <Text style={styles.infoText}>{studentDetails.parentName}</Text>
+                        <Text style={styles.infoText}>{studentDetails.parentName || "Не указан"}</Text>
                     </View>
                     <View style={styles.infoItem}>
                         <Feather name="phone" size={18} color="#6C5CE7" />
-                        <Text style={styles.infoText}>{studentDetails.parentPhone}</Text>
+                        <Text style={styles.infoText}>{studentDetails.parentPhone || "Не указан"}</Text>
                     </View>
                     <View style={styles.infoItem}>
                         <Feather name="map-pin" size={18} color="#6C5CE7" />
-                        <Text style={styles.infoText}>{studentDetails.city}</Text>
+                        <Text style={styles.infoText}>{studentDetails.city || "Не указан"}</Text>
                     </View>
                 </View>
             </View>
@@ -265,6 +262,9 @@ export default function MentorStudentDetailScreen() {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Направления и цели</Text>
                 <View style={styles.tagsRow}>
+                    {studentDetails.subjects.length === 0 && (
+                        <Text style={styles.emptyText}>Направления пока не указаны.</Text>
+                    )}
                     {studentDetails.subjects.map(sub => (
                         <View key={sub} style={styles.tag}>
                             <Text style={styles.tagText}>{sub}</Text>
@@ -272,7 +272,7 @@ export default function MentorStudentDetailScreen() {
                     ))}
                 </View>
                 <View style={styles.goalCard}>
-                    <Text style={styles.goalText}>{studentDetails.goals}</Text>
+                    <Text style={styles.goalText}>{studentDetails.goals || "Цели пока не указаны."}</Text>
                 </View>
             </View>
 
@@ -303,6 +303,11 @@ export default function MentorStudentDetailScreen() {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>История сессий</Text>
                 <View style={{ gap: 12 }}>
+                    {studentDetails.history.length === 0 && (
+                        <View style={styles.historyCard}>
+                            <Text style={styles.emptyText}>Истории сессий пока нет.</Text>
+                        </View>
+                    )}
                     {studentDetails.history.map(session => (
                         <View key={session.id} style={styles.historyCard}>
                             <View style={{ flex: 1 }}>
@@ -389,16 +394,6 @@ export default function MentorStudentDetailScreen() {
                 </TouchableOpacity>
             </View>
 
-            {/* CTA Button */}
-            <TouchableOpacity style={styles.mainActionBtn}>
-                <LinearGradient 
-                    colors={["#6C5CE7", "#A78BFA"]} 
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                    style={styles.actionGradient}
-                >
-                    <Text style={styles.actionBtnText}>Начать сессию</Text>
-                </LinearGradient>
-            </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -422,7 +417,7 @@ export default function MentorStudentDetailScreen() {
 
               <View style={styles.reportStats}>
                 <View style={styles.reportStatItem}>
-                  <Text style={styles.reportStatValue}>8</Text>
+                  <Text style={styles.reportStatValue}>0</Text>
                   <Text style={styles.reportStatLabel}>Сессий проведено</Text>
                 </View>
                 <View style={styles.reportStatItem}>
@@ -430,7 +425,7 @@ export default function MentorStudentDetailScreen() {
                   <Text style={styles.reportStatLabel}>Общий прогресс</Text>
                 </View>
                 <View style={styles.reportStatItem}>
-                  <Text style={styles.reportStatValue}>4.8</Text>
+                  <Text style={styles.reportStatValue}>—</Text>
                   <Text style={styles.reportStatLabel}>Средняя оценка</Text>
                 </View>
               </View>
@@ -584,6 +579,11 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: COLORS.foreground,
     marginBottom: 16,
+  },
+  emptyText: {
+    color: COLORS.mutedForeground,
+    fontSize: 13,
+    fontWeight: '600',
   },
   infoCard: {
     backgroundColor: "white",

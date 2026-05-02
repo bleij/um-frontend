@@ -125,7 +125,7 @@ export default function CreateProfileParent() {
     );
   }
 
-  const handleMockSubmit = async () => {
+  const handleSubmit = async () => {
     await saveParentProfile(
       parentData,
       children.map((c) => ({
@@ -486,7 +486,7 @@ export default function CreateProfileParent() {
 
               {/* Submit Button */}
               <TouchableOpacity
-                onPress={handleMockSubmit}
+                onPress={handleSubmit}
                 disabled={!canContinue}
                 style={{ marginTop: 8, marginBottom: 40 }}
                 activeOpacity={0.8}

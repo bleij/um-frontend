@@ -22,7 +22,8 @@ import {
     TYPOGRAPHY,
 } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
-import { useMentorStudents, useMentorRequests } from "../../hooks/useMentorData";
+import { useMentorStudents, useMentorRequests, useMentorOwnProfile } from "../../hooks/useMentorData";
+import { useWalletData } from "../../hooks/usePlatformData";
 
 export default function MentorHome() {
   const router = useRouter();
@@ -33,15 +34,12 @@ export default function MentorHome() {
   const { user } = useAuth();
   const { students } = useMentorStudents();
   const { requests, respond } = useMentorRequests();
+  const { profile: mentorProfile } = useMentorOwnProfile();
+  const { summary: walletSummary } = useWalletData("mentor");
   const [isAcceptingOrders, setIsAcceptingOrders] = useState(true);
 
-  const displayName = user?.firstName || "Арман";
-  
-  const todayTasks = [
-    { id: 1, time: '14:00', child: 'Алишер Н.', status: 'paid', subject: 'Креативность' },
-    { id: 2, time: '16:00', child: 'Мирас К.', status: 'paid', subject: 'Лидерство' },
-    { id: 3, time: '18:00', child: 'София П.', status: 'awaiting_report', subject: 'Коммуникация' },
-  ];
+  const displayName = user?.firstName || "Ментор";
+  const todayTasks = requests.filter((request) => request.request_type === "session" && request.status === "pending");
 
   const mentorshipRequests = requests.filter((r) => r.request_type === "mentorship" && r.status === "pending");
 
@@ -64,7 +62,9 @@ export default function MentorHome() {
                         </View>
                         <View>
                             <Text style={styles.greeting}>Добрый день, {displayName}!</Text>
-                            <Text style={styles.roleLabel}>Ментор • Психолог</Text>
+                            {mentorProfile?.specialization ? (
+                              <Text style={styles.roleLabel}>Ментор • {mentorProfile.specialization}</Text>
+                            ) : null}
                         </View>
                     </View>
                     <TouchableOpacity style={styles.bellBtn}>
@@ -108,29 +108,33 @@ export default function MentorHome() {
                     </TouchableOpacity>
                 </View>
                 <View style={{ gap: 12 }}>
+                    {todayTasks.length === 0 && (
+                        <View style={styles.emptyCard}>
+                            <Text style={styles.emptyText}>На сегодня нет заявок на сессии.</Text>
+                        </View>
+                    )}
                     {todayTasks.map((task) => (
                         <TouchableOpacity 
                             key={task.id} 
                             style={styles.taskCard}
                             onPress={() => {
-                                // Find student by name (mock logic) or use first available
-                                const targetStudent = students.find(s => s.student_name.includes(task.child.split(' ')[0])) || students[0];
+                                const targetStudent = students.find(s => task.child_name && s.student_name.includes(task.child_name.split(' ')[0]));
                                 if (targetStudent) {
                                     router.push(`/(tabs)/mentor/student/${targetStudent.id}` as any);
                                 }
                             }}
                         >
                             <View style={styles.taskTimeBox}>
-                                <Text style={styles.taskTimeHour}>{task.time.split(':')[0]}</Text>
-                                <Text style={styles.taskTimeMin}>{task.time.split(':')[1]}</Text>
+                                <Text style={styles.taskTimeHour}>{new Date(task.created_at).getHours().toString().padStart(2, "0")}</Text>
+                                <Text style={styles.taskTimeMin}>{new Date(task.created_at).getMinutes().toString().padStart(2, "0")}</Text>
                             </View>
                             <View style={{ flex: 1 }}>
-                                <Text style={styles.taskChild}>{task.child}</Text>
-                                <Text style={styles.taskSubject}>{task.subject}</Text>
+                                <Text style={styles.taskChild}>{task.child_name || "Новый ученик"}</Text>
+                                <Text style={styles.taskSubject}>{task.interest_text || "Запрос на сессию"}</Text>
                             </View>
-                            <View style={[styles.statusBadge, task.status === 'paid' ? styles.statusPaid : styles.statusWait]}>
-                                <Text style={[styles.statusText, task.status === 'paid' ? styles.statusPaidText : styles.statusWaitText]}>
-                                    {task.status === 'paid' ? 'Оплачено' : 'Ждет отчета'}
+                            <View style={[styles.statusBadge, styles.statusWait]}>
+                                <Text style={[styles.statusText, styles.statusWaitText]}>
+                                    Ожидает
                                 </Text>
                             </View>
                         </TouchableOpacity>
@@ -178,7 +182,7 @@ export default function MentorHome() {
                         <Feather name="trending-up" size={18} color="#16A34A" />
                    </View>
                    <View>
-                        <Text style={styles.statInfoVal}>87 000 ₸</Text>
+                        <Text style={styles.statInfoVal}>{walletSummary.periodRevenue.toLocaleString()} ₸</Text>
                         <Text style={styles.statInfoLabel}>Доход (мес)</Text>
                    </View>
                 </TouchableOpacity>
@@ -320,6 +324,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 16,
         ...SHADOWS.sm
+    },
+    emptyCard: {
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 16,
+        ...SHADOWS.sm
+    },
+    emptyText: {
+        color: COLORS.mutedForeground,
+        fontSize: 13,
+        fontWeight: '600'
     },
     taskTimeBox: {
         alignItems: 'center',

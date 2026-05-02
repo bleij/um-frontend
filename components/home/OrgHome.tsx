@@ -15,6 +15,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import { MotiView } from "moti";
 import { useOrgProfile, useOrgStats, useOrgSchedule } from "../../hooks/useOrgData";
+import { useWalletData } from "../../hooks/usePlatformData";
 
 const QUICK_ACTIONS = [
   { label: "Заявки", icon: "clipboard", route: "/organization/applications", color: '#F59E0B' },
@@ -31,6 +32,7 @@ export default function OrgHome() {
   const { status: orgStatus, name: orgName } = useOrgProfile();
   const isVerified = orgStatus === "verified";
   const { stats } = useOrgStats();
+  const { summary: walletSummary } = useWalletData("org");
   const todayDow = (new Date().getDay() + 6) % 7; // Mon=0
   const { items: todaySchedule } = useOrgSchedule(todayDow);
   const firstClass = todaySchedule[0] ?? null;
@@ -334,7 +336,7 @@ export default function OrgHome() {
            >
               <View className="flex-row justify-between items-start mb-6">
                  <View>
-                    <Text style={{ fontSize: TYPOGRAPHY.size.huge, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, letterSpacing: -1 }}>450 000 ₸</Text>
+                    <Text style={{ fontSize: TYPOGRAPHY.size.huge, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, letterSpacing: -1 }}>{walletSummary.periodRevenue.toLocaleString()} ₸</Text>
                     <Text style={{ fontSize: 12, color: COLORS.mutedForeground, fontWeight: '700', textTransform: 'uppercase', marginTop: 4 }}>Баланс текущего месяца</Text>
                  </View>
                  <TouchableOpacity className="w-12 h-12 bg-gray-50 rounded-full items-center justify-center border border-gray-100">
@@ -348,18 +350,18 @@ export default function OrgHome() {
                        <View className="w-2 h-2 rounded-full bg-green-500" />
                        <Text className="text-sm font-bold text-gray-700">Ваша доля (90%)</Text>
                     </View>
-                    <Text className="text-sm font-black text-gray-900">405 000 ₸</Text>
+                    <Text className="text-sm font-black text-gray-900">{walletSummary.availableBalance.toLocaleString()} ₸</Text>
                  </View>
                  <View className="flex-row justify-between items-center opacity-40">
                     <View className="flex-row items-center gap-2">
                        <View className="w-2 h-2 rounded-full bg-gray-400" />
                        <Text className="text-sm font-medium text-gray-700">Комиссия (10%)</Text>
                     </View>
-                    <Text className="text-sm font-bold text-gray-900">-45 000 ₸</Text>
+                    <Text className="text-sm font-bold text-gray-900">-{walletSummary.commission.toLocaleString()} ₸</Text>
                  </View>
               </View>
               
-              <TouchableOpacity className="bg-gray-900 py-4 rounded-2xl items-center shadow-sm">
+              <TouchableOpacity onPress={() => router.push("/(tabs)/organization/wallet" as any)} className="bg-gray-900 py-4 rounded-2xl items-center shadow-sm">
                  <Text className="text-white font-bold uppercase tracking-widest text-xs">Вывод средств</Text>
               </TouchableOpacity>
            </MotiView>

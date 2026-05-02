@@ -21,6 +21,7 @@ import {
   SPACING,
   TYPOGRAPHY,
 } from "../../constants/theme";
+import { LEVEL_LABELS } from "../../constants/courseOptions";
 import { useAuth } from "../../contexts/AuthContext";
 import { isSupabaseConfigured, supabase } from "../../lib/supabase";
 import {
@@ -649,7 +650,6 @@ export default function AdminHome() {
   };
 
   const renderOrgsView = () => {
-    const LEVEL_LABELS: Record<string, string> = { beginner: "Начальный", intermediate: "Средний", advanced: "Продвинутый" };
     return (
     <View style={{ flex: 1 }}>
       <View style={{ padding: paddingX, borderBottomWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface }}>

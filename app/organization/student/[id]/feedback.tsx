@@ -15,6 +15,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
+import { useAuth } from "../../../../contexts/AuthContext";
+import { useOrgApplications } from "../../../../hooks/useOrgData";
+import { isSupabaseConfigured, supabase } from "../../../../lib/supabase";
 
 const FEEDBACK_TAGS = [
    "Внимательно слушал", "Проявил лидерство", "Задавал вопросы", "Старался",
@@ -27,6 +30,9 @@ export default function FeedbackFormScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+  const { user } = useAuth();
+  const { apps } = useOrgApplications();
+  const student = apps.find((app) => app.id === id);
 
   const [comment, setComment] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -40,8 +46,15 @@ export default function FeedbackFormScreen() {
       }
   };
 
-  const handleSave = () => {
-      alert("Отзыв сохранен! ИИ обновит карту талантов ученика.");
+  const handleSave = async () => {
+      if (!supabase || !isSupabaseConfigured || !student) return;
+      await supabase.from("mentor_feedback").insert({
+        mentor_user_id: user?.id ?? null,
+        teacher_name: [user?.firstName, user?.lastName].filter(Boolean).join(" ") || null,
+        student_name: student.child_name,
+        tag: selectedTags.join(", "),
+        text: comment || `Оценка: ${rating}`,
+      });
       router.back();
   };
 
@@ -78,8 +91,8 @@ export default function FeedbackFormScreen() {
                     <Feather name="user" size={28} color="white" />
                  </View>
                  <View>
-                   <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>Алихан Сериков</Text>
-                   <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>Робототехника (Группа К-1)</Text>
+                   <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", marginBottom: 2 }}>{student?.child_name || "Ученик"}</Text>
+                   <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium }}>{student?.club || "Курс не указан"}</Text>
                  </View>
               </View>
             </View>

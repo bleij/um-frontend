@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {
     View,
     Text,
@@ -13,52 +13,12 @@ import {MotiView} from "moti";
 import {LinearGradient} from "expo-linear-gradient";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {Feather} from "@expo/vector-icons";
+import { useSubscriptionPlans } from "../../../hooks/usePlatformData";
 
 const {width} = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
 
 type Role = "parent" | "youth" | "child" | "young-adult" | "org" | "mentor";
-
-const SUBSCRIPTIONS = {
-    parent: [
-        {title: "Базовый", price: "4 900 ₸ / мес", features: ["Диагностика ребёнка", "Подбор курсов", "Рекомендации"]},
-        {
-            title: "Стандарт",
-            price: "9 900 ₸ / мес",
-            popular: true,
-            features: ["Детальная диагностика", "Индивидуальная дорожная карта", "Подбор курсов", "Еженедельные отчёты"],
-        },
-        {
-            title: "Премиум",
-            price: "14 900 ₸ / мес",
-            features: ["Полное сопровождение", "Личный ментор", "Аналитика прогресса", "Отчёты + рекомендации"]
-        },
-    ],
-    youth: [
-        {title: "Старт", price: "3 900 ₸ / мес", features: ["Тестирование", "Подбор направления", "Доступ к курсам"]},
-        {
-            title: "Развитие",
-            price: "7 900 ₸ / мес",
-            popular: true,
-            features: ["Полный доступ к курсам", "Прогресс и достижения", "Отчёты"],
-        },
-        {title: "Про", price: "11 900 ₸ / мес", features: ["Ментор", "Индивидуальный план", "Полная аналитика"]},
-    ],
-    org: [
-        {
-            title: "Базовый",
-            price: "19 900 ₸ / мес",
-            features: ["Профиль организации", "Приём заявок", "Список учеников"]
-        },
-        {
-            title: "Команда",
-            price: "29 900 ₸ / мес",
-            popular: true,
-            features: ["Менторы", "Отчёты", "Аналитика групп"],
-        },
-        {title: "Бизнес", price: "49 900 ₸ / мес", features: ["Финансовые отчёты", "Экспорт данных", "API доступ"]},
-    ],
-} as const;
 
 function planKey(role: Role) {
     return `subscription_plan_${role}`;
@@ -68,6 +28,7 @@ export default function SubscribeScreen() {
     const router = useRouter();
     const [role, setRole] = useState<Role | null>(null);
     const [selected, setSelected] = useState<string | null>(null);
+    const { plans, loading } = useSubscriptionPlans(role);
 
     useEffect(() => {
         AsyncStorage.getItem("user_role").then((v) => setRole((v as Role) || "parent"));
@@ -78,18 +39,16 @@ export default function SubscribeScreen() {
         AsyncStorage.getItem(planKey(role)).then((v) => setSelected(v));
     }, [role]);
 
-    const plans = useMemo(() => {
-        if (!role) return [];
-        if (role === "mentor") return [];
-        const key = (role === "child" || role === "young-adult") ? "youth" : role;
-        return SUBSCRIPTIONS[key as keyof typeof SUBSCRIPTIONS] ?? [];
-    }, [role]);
-
     async function choosePlan(title: string) {
         if (!role) return;
         await AsyncStorage.setItem(planKey(role), title);
         setSelected(title);
         router.replace("/(tabs)/home"); // после выбора подписки отправляем на home (первый таб)
+    }
+
+    function formatPrice(priceKzt: number, billingPeriod: string) {
+        const period = billingPeriod === "month" ? "мес" : billingPeriod;
+        return `${priceKzt.toLocaleString()} ₸ / ${period}`;
     }
 
     return (
@@ -129,9 +88,18 @@ export default function SubscribeScreen() {
                         выберите подходящий план
                     </Text>
 
+                    {!loading && plans.length === 0 && (
+                        <View style={{backgroundColor: "white", borderRadius: 24, padding: 24, alignItems: "center"}}>
+                            <Feather name="credit-card" size={28} color="#A1A1AA" />
+                            <Text style={{marginTop: 12, fontSize: 15, color: "#71717A", textAlign: "center"}}>
+                                Для этой роли пока нет активных тарифов.
+                            </Text>
+                        </View>
+                    )}
+
                     {plans.map((plan, i) => {
                         const isSelected = selected === plan.title;
-                        const isPopular = "popular" in plan && plan.popular === true;
+                        const isPopular = plan.popular === true;
 
                         return (
                             <MotiView
@@ -191,7 +159,7 @@ export default function SubscribeScreen() {
                                 <Text style={{fontSize: 22, fontWeight: "700", marginBottom: 6}}>{plan.title}</Text>
 
                                 <Text style={{fontSize: 18, fontWeight: "800", color: "#6C5CE7", marginBottom: 16}}>
-                                    {plan.price}
+                                    {formatPrice(plan.price_kzt, plan.billing_period)}
                                 </Text>
 
                                 {plan.features.map((f, idx) => (

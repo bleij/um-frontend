@@ -4,15 +4,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ActivityIndicator, Dimensions, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { courseGradient, usePublicCourseById } from "../../hooks/usePublicData";
 import { COLORS, SHADOWS } from "../../constants/theme";
+import { LEVEL_LABELS } from "../../constants/courseOptions";
 
 const { width } = Dimensions.get("window");
 const IS_DESKTOP = Platform.OS === "web" && width >= 900;
-
-const LEVEL_LABELS: Record<string, string> = {
-  beginner: "Начальный",
-  intermediate: "Средний",
-  advanced: "Продвинутый",
-};
 
 export default function CourseModal() {
   const router = useRouter();

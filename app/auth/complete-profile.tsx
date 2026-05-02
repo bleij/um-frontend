@@ -75,15 +75,23 @@ const ROLES: {
 
 export default function CompleteProfile() {
   const router = useRouter();
-  const { user, setUserRole } = useAuth();
+  const { user, setUserRole, logout, isLoading } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const horizontalPadding = isDesktop
     ? LAYOUT.authHorizontalPaddingDesktop
     : LAYOUT.authHorizontalPaddingMobile;
 
-  const [selectedRole, setSelectedRole] = useState<UserRole>("parent");
+  const [selectedRole, setSelectedRole] = useState<UserRole>(
+    user?.hasSelectedRole ? user.role : "parent",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  if (isLoading) return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background, alignItems: "center", justifyContent: "center" }}>
+      <ActivityIndicator size="large" color={COLORS.primary} />
+    </View>
+  );
 
   const currentRoleInfo = ROLES.find((r) => r.role === selectedRole)!;
 
@@ -91,8 +99,8 @@ export default function CompleteProfile() {
     setIsSubmitting(true);
     try {
       await setUserRole(selectedRole);
-      router.replace(currentRoleInfo.route as any);
-    } catch {
+      router.push(currentRoleInfo.route as any);
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -222,9 +230,20 @@ export default function CompleteProfile() {
               </PressableScale>
             </MotiView>
 
-            <Text style={styles.note}>
-              Вы сможете изменить роль позже в настройках профиля
-            </Text>
+            <MotiView
+              from={{ opacity: 0, translateY: 8 }}
+              animate={{ opacity: 1, translateY: 0 }}
+              transition={{ delay: 500 }}
+            >
+              <Text style={styles.note}>
+                Вы сможете изменить роль позже в настройках профиля
+              </Text>
+
+              <PressableScale onPress={() => logout()} style={styles.signOutBtn} scaleTo={0.97}>
+                <Feather name="log-out" size={15} color="#EF4444" />
+                <Text style={styles.signOutText}>Выйти из аккаунта</Text>
+              </PressableScale>
+            </MotiView>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -328,6 +347,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 16,
     opacity: 0.7,
-    paddingBottom: 40,
+  },
+  signOutBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 40,
+    paddingVertical: 14,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1.5,
+    borderColor: "#FECACA",
+    backgroundColor: "#FEF2F2",
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#EF4444",
   },
 });

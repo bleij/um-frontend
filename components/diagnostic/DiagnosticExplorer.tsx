@@ -83,32 +83,8 @@ export default function DiagnosticExplorer() {
 
   const handleSkip = useCallback(async () => {
     stopSpeech();
-    
-    // Create mock data for quick preview
-    const mockDiagnostic: any = {
-      childId: activeChildId || user?.id || "unknown",
-      scores: { logical: 75, creative: 80, social: 65, physical: 60, linguistic: 70 },
-      summary: "Демо-отчет: У вашего ребенка отличный баланс творческого и логического мышления. Он проявляет интерес к конструированию и искусству.",
-      recommendedConstellation: "Творческий инженер",
-      timestamp: new Date().toISOString(),
-      tier: isPro ? "pro" : "basic",
-      ageGroup: "6-8",
-      ...(isPro ? {
-        intellectType: "Визуально-пространственный",
-        personalityBehavior: "Уверенный Аналитик",
-        careerArchetypes: ["Архитектор VR-миров", "Робототехник", "Промышленный дизайнер"],
-        parentAdvice: "Поддерживайте интерес к сложным конструкторам и давайте больше пространства для свободного творчества.",
-        topStrengths: ["Пространственное мышление", "Креативность", "Логика"],
-        developmentAreas: ["Социальная коммуникация"]
-      } : {})
-    };
-
-    if (activeChildId) {
-      await updateChildDiagnostic(activeChildId, mockDiagnostic);
-    }
-    
-    router.push("/profile/youth/results");
-  }, [activeChildId, user?.id, isPro]);
+    router.back();
+  }, [stopSpeech, router]);
 
   const handleLike = useCallback(() => {
     stopSpeech();

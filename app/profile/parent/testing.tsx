@@ -3,6 +3,7 @@ import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import { useState } from "react";
 import {
+    ActivityIndicator,
     Platform,
     ScrollView,
     Text,
@@ -11,43 +12,7 @@ import {
     View,
 } from "react-native";
 import { LAYOUT } from "../../../constants/theme";
-
-/* ------------------- */
-/* ВОПРОСЫ ДЛЯ РОДИТЕЛЯ */
-/* ------------------- */
-
-const PARENT_QUESTIONS = [
-  {
-    id: 1,
-    question: "Сколько лет вашему ребёнку?",
-    answers: ["6–8 лет", "9–11 лет", "12–14 лет", "15–17 лет"],
-  },
-  {
-    id: 2,
-    question: "Что ему интересно больше всего?",
-    answers: ["Технологии", "Творчество", "Спорт", "Точные науки"],
-  },
-  {
-    id: 3,
-    question: "Какой формат обучения вам подходит?",
-    answers: ["Онлайн", "Офлайн", "Смешанный"],
-  },
-  {
-    id: 4,
-    question: "Какая цель обучения для вас важнее?",
-    answers: [
-      "Подготовка к экзаменам",
-      "Развитие мышления",
-      "Профориентация",
-      "Общее развитие",
-    ],
-  },
-  {
-    id: 5,
-    question: "Сколько времени в неделю ребёнок готов учиться дополнительно?",
-    answers: ["1–2 раза", "3–4 раза", "Каждый день"],
-  },
-];
+import { useOnboardingQuestions } from "../../../hooks/usePlatformData";
 
 export default function ParentTesting() {
   const router = useRouter();
@@ -57,11 +22,12 @@ export default function ParentTesting() {
     ? LAYOUT.profileHorizontalPaddingDesktop
     : LAYOUT.profileHorizontalPaddingMobile;
 
+  const { questions, loading } = useOnboardingQuestions("parent");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
 
-  const current = PARENT_QUESTIONS[step];
-  const progress = ((step + 1) / PARENT_QUESTIONS.length) * 100;
+  const current = questions[step];
+  const progress = questions.length > 0 ? ((step + 1) / questions.length) * 100 : 0;
 
   const selectAnswer = (index: number) => {
     const updated = [...answers];
@@ -70,12 +36,20 @@ export default function ParentTesting() {
   };
 
   const next = () => {
-    if (step < PARENT_QUESTIONS.length - 1) {
+    if (step < questions.length - 1) {
       setStep(step + 1);
     } else {
       router.push("/profile/parent/results");
     }
   };
+
+  if (loading || !current) {
+    return (
+      <LinearGradient colors={["#6A63D8", "#C7C4F2"]} style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator color="white" size="large" />
+      </LinearGradient>
+    );
+  }
 
   return (
     <LinearGradient
@@ -104,14 +78,7 @@ export default function ParentTesting() {
             animate={{ opacity: 1, translateY: 0 }}
             transition={{ duration: 400 }}
           >
-            <Text
-              style={{
-                fontSize: 28,
-                fontWeight: "700",
-                color: "white",
-                marginBottom: 16,
-              }}
-            >
+            <Text style={{ fontSize: 28, fontWeight: "700", color: "white", marginBottom: 16 }}>
               Тестирование
             </Text>
           </MotiView>
@@ -126,13 +93,7 @@ export default function ParentTesting() {
               marginBottom: 30,
             }}
           >
-            <View
-              style={{
-                width: `${progress}%`,
-                height: "100%",
-                backgroundColor: "white",
-              }}
-            />
+            <View style={{ width: `${progress}%`, height: "100%", backgroundColor: "white" }} />
           </View>
 
           {/* QUESTION CARD */}
@@ -151,30 +112,16 @@ export default function ParentTesting() {
               shadowRadius: 10,
             }}
           >
-            <Text
-              style={{
-                fontSize: 14,
-                fontWeight: "700",
-                opacity: 0.6,
-                marginBottom: 10,
-              }}
-            >
-              Вопрос {step + 1} из {PARENT_QUESTIONS.length}
+            <Text style={{ fontSize: 14, fontWeight: "700", opacity: 0.6, marginBottom: 10 }}>
+              Вопрос {step + 1} из {questions.length}
             </Text>
 
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: "700",
-                marginBottom: 20,
-              }}
-            >
-              {current.question}
+            <Text style={{ fontSize: 18, fontWeight: "700", marginBottom: 20 }}>
+              {current.question_text}
             </Text>
 
             {current.answers.map((text, i) => {
               const active = answers[step] === i;
-
               return (
                 <TouchableOpacity
                   key={i}
@@ -212,17 +159,8 @@ export default function ParentTesting() {
               borderRadius: 30,
             }}
           >
-            <Text
-              style={{
-                textAlign: "center",
-                color: "white",
-                fontSize: 18,
-                fontWeight: "600",
-              }}
-            >
-              {step === PARENT_QUESTIONS.length - 1
-                ? "Завершить"
-                : "Следующий вопрос"}
+            <Text style={{ textAlign: "center", color: "white", fontSize: 18, fontWeight: "600" }}>
+              {step === questions.length - 1 ? "Завершить" : "Следующий вопрос"}
             </Text>
           </TouchableOpacity>
         </View>

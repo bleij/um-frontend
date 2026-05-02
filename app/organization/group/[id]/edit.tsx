@@ -2,8 +2,9 @@ import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { MotiView } from "moti";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Platform,
   ScrollView,
   Text,
@@ -14,6 +15,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, SPACING, TYPOGRAPHY } from "../../../../constants/theme";
+import { useOrgGroupById } from "../../../../hooks/useOrgData";
+import { isSupabaseConfigured, supabase } from "../../../../lib/supabase";
 
 export default function GroupEditScreen() {
   const router = useRouter();
@@ -21,23 +24,57 @@ export default function GroupEditScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
   const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : SPACING.xl;
+  const { group, loading: groupLoading } = useOrgGroupById(id as string);
 
   const [formData, setFormData] = useState({
-    name: "Группа К-1",
-    courseId: "1",
-    teacherId: "1",
-    maxStudents: "15",
-    schedule: "Пн, Ср, Пт 15:00-16:30",
+    name: "",
+    maxStudents: "",
+    schedule: "",
   });
 
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  useEffect(() => {
+    if (!group) return;
+    setFormData({
+      name: group.name ?? "",
+      maxStudents: String(group.capacity ?? ""),
+      schedule: group.schedule ?? "",
+    });
+  }, [group]);
+
+  const handleSubmit = async () => {
+    if (!supabase || !isSupabaseConfigured || !id) {
+      Alert.alert("Ошибка", "Supabase не настроен");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    const res = await supabase
+      .from("org_groups")
+      .update({
+        name: formData.name,
+        schedule: formData.schedule || null,
+        capacity: parseInt(formData.maxStudents, 10) || 0,
+      })
+      .eq("id", id);
+    setLoading(false);
+    if (res.error) {
+      Alert.alert("Ошибка", res.error.message);
+      return;
+    }
       router.back();
-    }, 1000);
+  };
+
+  const handleArchive = async () => {
+    if (!supabase || !isSupabaseConfigured || !id) return;
+    setLoading(true);
+    const res = await supabase.from("org_groups").update({ active: false }).eq("id", id);
+    setLoading(false);
+    if (res.error) {
+      Alert.alert("Ошибка", res.error.message);
+      return;
+    }
+    router.back();
   };
 
   return (
@@ -98,14 +135,6 @@ export default function GroupEditScreen() {
                 </View>
 
                 <View>
-                   <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Преподаватель</Text>
-                   <TouchableOpacity style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: COLORS.border }}>
-                      <Text style={{ fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground }}>Игорь Соколов</Text>
-                      <Feather name="chevron-down" size={18} color={COLORS.mutedForeground} />
-                   </TouchableOpacity>
-                </View>
-
-                <View>
                    <Text style={{ fontSize: 10, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.mutedForeground, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>Расписание</Text>
                    <TextInput
                       style={{ height: 56, backgroundColor: COLORS.background, borderRadius: RADIUS.lg, paddingHorizontal: 16, fontSize: 16, fontWeight: TYPOGRAPHY.weight.medium, color: COLORS.foreground, borderWidth: 1, borderColor: COLORS.border }}
@@ -132,15 +161,15 @@ export default function GroupEditScreen() {
 
           <TouchableOpacity
             onPress={handleSubmit}
-            disabled={loading}
-            style={{ height: 60, borderRadius: RADIUS.xl, alignItems: 'center', justifyContent: 'center', marginTop: SPACING.xxl, backgroundColor: loading ? COLORS.border : COLORS.primary, ...SHADOWS.md }}
+            disabled={loading || groupLoading || !formData.name}
+            style={{ height: 60, borderRadius: RADIUS.xl, alignItems: 'center', justifyContent: 'center', marginTop: SPACING.xxl, backgroundColor: loading || groupLoading || !formData.name ? COLORS.border : COLORS.primary, ...SHADOWS.md }}
           >
              <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold, fontSize: 16 }}>
                 {loading ? "СОХРАНЕНИЕ..." : "СОХРАНИТЬ ИЗМЕНЕНИЯ"}
              </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={{ height: 56, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginTop: SPACING.md }}>
+          <TouchableOpacity onPress={handleArchive} disabled={loading || groupLoading} style={{ height: 56, borderRadius: RADIUS.lg, alignItems: 'center', justifyContent: 'center', marginTop: SPACING.md }}>
              <Text style={{ color: COLORS.destructive, fontWeight: TYPOGRAPHY.weight.bold, fontSize: 14 }}>АРХИВИРОВАТЬ ГРУППУ</Text>
           </TouchableOpacity>
         </MotiView>

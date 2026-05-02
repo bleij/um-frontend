@@ -19,7 +19,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
 import { useAuth } from "../../../contexts/AuthContext";
-import { useMentorProfileStats } from "../../../hooks/useMentorData";
+import { useMentorProfileStats, useMentorOwnProfile } from "../../../hooks/useMentorData";
 
 export default function MentorProfile() {
   const router = useRouter();
@@ -29,21 +29,38 @@ export default function MentorProfile() {
   const paddingX = isDesktop ? 40 : 24;
 
   const { stats } = useMentorProfileStats();
+  const { profile: mentorProfile, updateProfile } = useMentorOwnProfile();
   const [isAcceptingOrders, setIsAcceptingOrders] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({ 
-    firstName: user?.firstName || "", 
-    lastName: user?.lastName || "", 
+  const [editForm, setEditForm] = useState({
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
     phone: user?.phone || "",
-    specialization: "Психолог",
-    bio: "Помогаю детям и подросткам раскрыть их потенциал через развитие эмоционального интеллекта и soft skills."
+    specialization: "",
+    bio: "",
   });
 
+  React.useEffect(() => {
+    if (mentorProfile) {
+      setEditForm(prev => ({
+        ...prev,
+        specialization: mentorProfile.specialization ?? "",
+        bio: mentorProfile.bio ?? "",
+      }));
+    }
+  }, [mentorProfile]);
+
   const handleUpdateProfile = async () => {
-    // Logic to update profile (e.g. via Supabase or local state)
-    // For now we just close the modal. In a real app we'd call an update function.
+    const { error } = await updateProfile({
+      specialization: editForm.specialization || null,
+      bio: editForm.bio || null,
+    });
     setShowEditModal(false);
-    Alert.alert("Успех", "Профиль обновлен");
+    if (error) {
+      Alert.alert("Ошибка", error);
+    } else {
+      Alert.alert("Успех", "Профиль обновлен");
+    }
   };
 
   const handleLogout = async () => {
@@ -63,7 +80,7 @@ export default function MentorProfile() {
     }
   };
 
-  const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Арман Сейтказиев";
+  const displayName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Ментор";
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
@@ -110,11 +127,15 @@ export default function MentorProfile() {
               </View>
               <View style={{ flex: 1 }}>
                   <Text style={styles.profileName}>{editForm.firstName} {editForm.lastName}</Text>
-                  <Text style={styles.profileRole}>Ментор • {editForm.specialization}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
-                      <Feather name="star" size={14} color="#FBBF24" fill="#FBBF24" />
-                      <Text style={styles.ratingText}>4.9 (47 отзывов)</Text>
-                  </View>
+                  {editForm.specialization ? (
+                    <Text style={styles.profileRole}>Ментор • {editForm.specialization}</Text>
+                  ) : null}
+                  {mentorProfile?.rating ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                      <Feather name="star" size={14} color="#FBBF24" />
+                      <Text style={styles.ratingText}>{mentorProfile.rating.toFixed(1)}</Text>
+                    </View>
+                  ) : null}
               </View>
               <TouchableOpacity onPress={() => setShowEditModal(true)}>
                   <Feather name="edit-3" size={20} color={COLORS.primary} />
@@ -123,17 +144,19 @@ export default function MentorProfile() {
 
             <View style={styles.statsGrid}>
               <View style={styles.statBox}>
-                  <Text style={styles.statValue}>156</Text>
+                  <Text style={styles.statValue}>{mentorProfile?.sessions ?? 0}</Text>
                   <Text style={styles.statLabel}>Сессий</Text>
               </View>
               <View style={[styles.statBox, { backgroundColor: '#F5F3FF' }]}>
                   <Text style={[styles.statValue, { color: COLORS.primary }]}>{stats.studentCount}</Text>
                   <Text style={styles.statLabel}>Учеников</Text>
               </View>
-              <View style={styles.statBox}>
-                  <Text style={styles.statValue}>8 лет</Text>
-                  <Text style={styles.statLabel}>Опыт</Text>
-              </View>
+              {mentorProfile?.experience ? (
+                <View style={styles.statBox}>
+                    <Text style={styles.statValue}>{mentorProfile.experience}</Text>
+                    <Text style={styles.statLabel}>Опыт</Text>
+                </View>
+              ) : null}
             </View>
         </View>
 
@@ -160,41 +183,44 @@ export default function MentorProfile() {
         </View>
 
         {/* Contact Info Card */}
-        <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Контактная информация</Text>
-            <View style={{ gap: 16 }}>
-                <InfoRow icon="mail" label={user?.phone || "arman@mentor.app"} />
-                <InfoRow icon="phone" label={user?.phone || "+7 (777) 123-45-67"} />
-                <InfoRow icon="map-pin" label="Алматы" />
-            </View>
-        </View>
+        {(user?.email || user?.phone) ? (
+          <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Контактная информация</Text>
+              <View style={{ gap: 16 }}>
+                  {user?.email ? <InfoRow icon="mail" label={user.email} /> : null}
+                  {user?.phone ? <InfoRow icon="phone" label={user.phone} /> : null}
+              </View>
+          </View>
+        ) : null}
 
         {/* Professional Info Card */}
-        <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>Профессиональная информация</Text>
-            <View style={{ gap: 20 }}>
-                <View style={{ flex: 1 }}>
-                    <Text style={styles.infoLabel}>Специализация</Text>
-                    <Text style={styles.infoValue}>{editForm.specialization}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.infoLabel}>Образование</Text>
-                  <Text style={styles.infoValue}>КазНУ им. аль-Фараби</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.infoLabel}>Языки</Text>
-                  <Text style={styles.infoValue}>Казахский, Русский, Английский</Text>
-                </View>
-            </View>
-        </View>
+        {(editForm.specialization || mentorProfile?.education) ? (
+          <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Профессиональная информация</Text>
+              <View style={{ gap: 20 }}>
+                  {editForm.specialization ? (
+                    <View style={{ flex: 1 }}>
+                        <Text style={styles.infoLabel}>Специализация</Text>
+                        <Text style={styles.infoValue}>{editForm.specialization}</Text>
+                    </View>
+                  ) : null}
+                  {mentorProfile?.education ? (
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.infoLabel}>Образование</Text>
+                      <Text style={styles.infoValue}>{mentorProfile.education}</Text>
+                    </View>
+                  ) : null}
+              </View>
+          </View>
+        ) : null}
 
         {/* Bio */}
-        <View style={styles.sectionCard}>
-            <Text style={styles.sectionTitle}>О себе</Text>
-            <Text style={styles.bioText}>
-                {editForm.bio}
-            </Text>
-        </View>
+        {editForm.bio ? (
+          <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>О себе</Text>
+              <Text style={styles.bioText}>{editForm.bio}</Text>
+          </View>
+        ) : null}
 
         {/* Logout */}
         <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>

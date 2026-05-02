@@ -36,7 +36,7 @@ export default function CreateProfileYoungAdult() {
     goals: "",
   });
 
-  const handleMockSubmit = () => {
+  const handleSubmit = () => {
     router.push("/profile/youth/testing");
   };
 
@@ -331,7 +331,7 @@ export default function CreateProfileYoungAdult() {
             </View>
 
             <TouchableOpacity
-              onPress={handleMockSubmit}
+              onPress={handleSubmit}
               className="w-full rounded-xl overflow-hidden shadow-md mt-2"
             >
               <LinearGradient
