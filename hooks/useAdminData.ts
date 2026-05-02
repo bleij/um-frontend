@@ -11,6 +11,7 @@ export interface AdminFamily {
 
 export interface MentorApp {
   id: string;
+  user_id: string | null;
   name: string;
   specialization: string | null;
   email: string | null;
@@ -72,12 +73,6 @@ export interface AIRule {
   enabled: boolean;
 }
 
-export interface TestQuestion {
-  id: string;
-  question: string;
-  tag_id: string | null;
-  order: number;
-}
 
 export interface AdminStats {
   pendingMentors: number;
@@ -398,27 +393,30 @@ export function useAdminEnrollments() {
   return { data, loading, refresh, markPaid, activate, reject };
 }
 
-export function useTestQuestions() {
-  const [data, setData] = useState<(TestQuestion & { tag?: string | null })[]>([]);
+export type OnboardingAudience = "parent" | "org" | "child" | "youth" | "parent_diagnostic";
+
+export interface AdminOnboardingQuestion {
+  id: string;
+  audience: OnboardingAudience;
+  display_order: number;
+  question_text: string;
+  answers: string[];
+  active: boolean;
+}
+
+export function useAdminOnboardingQuestions() {
+  const [data, setData] = useState<AdminOnboardingQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!supabase || !isSupabaseConfigured) { setLoading(false); return; }
     setLoading(true);
-    const [qRes, tagRes] = await Promise.all([
-      supabase.from("test_questions").select("*").order("order"),
-      supabase.from("tags").select("id, name"),
-    ]);
-    const tagMap = new Map<string, string>(ok<any>(tagRes).map((t) => [t.id, t.name]));
-    setData(
-      ok<any>(qRes).map((q) => ({
-        id: q.id,
-        question: q.question,
-        tag_id: q.tag_id,
-        order: q.order,
-        tag: q.tag_id ? tagMap.get(q.tag_id) ?? null : null,
-      })),
-    );
+    const { data: rows } = await supabase
+      .from("onboarding_questions")
+      .select("id, audience, display_order, question_text, answers, active")
+      .order("audience")
+      .order("display_order");
+    setData((rows ?? []) as AdminOnboardingQuestion[]);
     setLoading(false);
   }, []);
 
@@ -426,11 +424,17 @@ export function useTestQuestions() {
 
   const remove = async (id: string) => {
     if (!supabase) return;
-    await supabase.from("test_questions").delete().eq("id", id);
+    await supabase.from("onboarding_questions").delete().eq("id", id);
     refresh();
   };
 
-  return { data, loading, refresh, remove };
+  const toggleActive = async (id: string, active: boolean) => {
+    if (!supabase) return;
+    await supabase.from("onboarding_questions").update({ active }).eq("id", id);
+    refresh();
+  };
+
+  return { data, loading, refresh, remove, toggleActive };
 }
 
 export interface AdminCourse {
@@ -495,9 +499,9 @@ export function useAdminCourses() {
     await supabase.from("org_courses").update({ status: "active" }).eq("id", id);
     refresh();
   };
-  const rejectCourse = async (id: string) => {
+  const rejectCourse = async (id: string, reason?: string) => {
     if (!supabase) return;
-    await supabase.from("org_courses").update({ status: "archived" }).eq("id", id);
+    await supabase.from("org_courses").update({ status: "archived", rejection_reason: reason ?? null }).eq("id", id);
     refresh();
   };
 

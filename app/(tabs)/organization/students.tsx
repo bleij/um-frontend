@@ -1,16 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, TextInput, TouchableOpacity } from "react-native";
+import { Platform, View, Text, Pressable, ScrollView, TextInput, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useIsDesktop } from "../../../lib/useIsDesktop";
 import { useOrgApplications } from "../../../hooks/useOrgData";
 
 export default function OrgStudents() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
+  const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
   const [search, setSearch] = useState("");
   const [activeClub, setActiveClub] = useState("Все");
 
@@ -37,21 +38,20 @@ export default function OrgStudents() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <LinearGradient
-        colors={COLORS.gradients.header as any}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}
-      >
-        <SafeAreaView edges={["top"]}>
-          <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 8 }}>
-            <TouchableOpacity onPress={() => router.back()} style={{ padding: 8, marginRight: 8 }}>
-              <Feather name="arrow-left" size={24} color="white" />
-            </TouchableOpacity>
-            <Text style={{ fontSize: 20, fontWeight: "700", color: "white" }}>Ученики</Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
+      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: 12, paddingBottom: 32 }}>
+              <Text style={{ fontSize: 20, fontWeight: "700", color: "white" }}>Ученики</Text>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ padding: 16, paddingBottom: isDesktop ? 32 : 100 }}

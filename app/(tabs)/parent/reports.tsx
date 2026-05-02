@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Platform, Pressable, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { COLORS, LAYOUT, SHADOWS } from "../../../constants/theme";
@@ -15,8 +15,14 @@ export default function ParentReports() {
   const horizontalPadding = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
 
   const { childrenProfile, setActiveChildId } = useParentData();
-   const children = childrenProfile.map((c) => c.name).filter(Boolean);
-  const [selectedChild, setSelectedChild] = useState(children[0] ?? "");
+  const children = childrenProfile.map((c) => c.name).filter(Boolean);
+  const [selectedChild, setSelectedChild] = useState<string>("");
+
+  useEffect(() => {
+    if (children.length > 0 && !children.includes(selectedChild)) {
+      setSelectedChild(children[0]);
+    }
+  }, [children.join(",")]);
 
   const selectedChildProfile = childrenProfile.find(c => c.name === selectedChild);
 
@@ -27,21 +33,24 @@ export default function ParentReports() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
       <LinearGradient
         colors={COLORS.gradients.header as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+        style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
       >
         <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 16 }}>
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
+              {!isDesktop && (
+                <Pressable
+                  onPress={() => router.back()}
+                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </Pressable>
+              )}
               <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Отчеты</Text>
             </View>
 
@@ -61,6 +70,7 @@ export default function ParentReports() {
           </View>
         </SafeAreaView>
       </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: horizontalPadding, paddingTop: 24, paddingBottom: 120 }}
@@ -188,24 +198,24 @@ export default function ParentReports() {
           </View>
         )}
 
-        {/* AI Insight */}
-        <View className="bg-purple-600 rounded-[40px] p-8 overflow-hidden">
-          <LinearGradient
-            colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0)"]}
-            style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
-          />
-          <View className="flex-row items-center gap-3 mb-4">
-            <View className="w-10 h-10 bg-white/20 rounded-2xl items-center justify-center">
-              <Feather name="cpu" size={20} color="white" />
+        {/* AI Insight — only shown when real diagnostic data exists */}
+        {selectedChildProfile?.talentProfile?.summary && (
+          <View className="bg-purple-600 rounded-[40px] p-8 overflow-hidden">
+            <LinearGradient
+              colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0)"]}
+              style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}
+            />
+            <View className="flex-row items-center gap-3 mb-4">
+              <View className="w-10 h-10 bg-white/20 rounded-2xl items-center justify-center">
+                <Feather name="cpu" size={20} color="white" />
+              </View>
+              <Text className="text-white text-lg font-black">AI Аналитика</Text>
             </View>
-            <Text className="text-white text-lg font-black">AI Аналитика</Text>
+            <Text className="text-white/80 text-sm leading-6 font-medium">
+              {selectedChildProfile.talentProfile.summary}
+            </Text>
           </View>
-          <Text className="text-white/80 text-sm leading-6 font-medium">
-            {selectedChild
-              ? `${selectedChild} — отличные результаты! Продолжайте развивать сильные стороны и работайте над областями для роста.`
-              : "Выберите ребёнка, чтобы увидеть персональные рекомендации."}
-          </Text>
-        </View>
+        )}
       </ScrollView>
     </View>
   );

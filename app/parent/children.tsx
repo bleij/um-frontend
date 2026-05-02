@@ -193,7 +193,7 @@ export default function ParentChildren() {
             >
               {/* Main row */}
               <TouchableOpacity
-                onPress={() => router.push(`/parent/child/${child.id}` as any)}
+                onPress={() => router.push(`/(tabs)/parent/child/${child.id}` as any)}
                 style={{ padding: 20, flexDirection: "row", alignItems: "center" }}
               >
                 <View style={{

@@ -311,12 +311,22 @@ export default function MentorSessionsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8F7FF" }}>
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-        <View style={{ paddingHorizontal: paddingX, paddingTop: 20, paddingBottom: 10 }}>
-          <View style={{ marginBottom: 20 }}>
-            <Text style={styles.mainTitle}>Пробные уроки</Text>
-            <Text style={styles.subtitle}>Заявки от родителей</Text>
-          </View>
+      <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: 12, paddingBottom: 20 }}>
+              <Text style={[styles.mainTitle, { color: 'white' }]}>Пробные уроки</Text>
+              <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.7)' }]}>Заявки от родителей</Text>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
+      <View style={{ paddingHorizontal: paddingX, paddingTop: 10, paddingBottom: 10 }}>
 
           {/* Tabs */}
           <View style={styles.tabsContainer}>
@@ -383,7 +393,6 @@ export default function MentorSessionsScreen() {
             }
           />
         )}
-      </SafeAreaView>
     </View>
   );
 }

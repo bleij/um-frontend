@@ -48,6 +48,7 @@ export default function MentorHome() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
         
         {/* Violet Header Section */}
+        <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
         <LinearGradient
             colors={COLORS.gradients.header as any}
             start={{ x: 0, y: 0 }}
@@ -56,25 +57,22 @@ export default function MentorHome() {
         >
             <SafeAreaView edges={["top"]}>
                 <View style={[styles.headerContent, { paddingHorizontal: paddingX }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                        <View style={styles.avatarContainer}>
-                           <Text style={styles.avatarText}>{displayName.charAt(0)}</Text>
-                        </View>
-                        <View>
-                            <Text style={styles.greeting}>Добрый день, {displayName}!</Text>
-                            {mentorProfile?.specialization ? (
-                              <Text style={styles.roleLabel}>Ментор • {mentorProfile.specialization}</Text>
-                            ) : null}
-                        </View>
+                    <View>
+                        <Text style={styles.greeting}>Добрый день, {displayName}!</Text>
+                        {mentorProfile?.specialization ? (
+                          <Text style={styles.roleLabel}>Ментор • {mentorProfile.specialization}</Text>
+                        ) : null}
                     </View>
+                    {!isDesktop && (
                     <TouchableOpacity style={styles.bellBtn}>
                         <Feather name="bell" size={20} color="white" />
                         <View style={styles.bellDot} />
                     </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* Status Toggle Card */}
-                <View style={[styles.statusToggle, { marginHorizontal: paddingX }]}>
+                <View style={[styles.statusToggle, { marginHorizontal: paddingX, marginTop: 0 }]}>
                     <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                              <View style={[styles.statusDot, { backgroundColor: isAcceptingOrders ? '#4ADE80' : '#9CA3AF' }]} />
@@ -96,6 +94,7 @@ export default function MentorHome() {
                 </View>
             </SafeAreaView>
         </LinearGradient>
+        </View>
 
         <View style={{ paddingHorizontal: paddingX, marginTop: 24 }}>
             
@@ -206,17 +205,14 @@ export default function MentorHome() {
 
 const styles = StyleSheet.create({
     headerGradient: {
-        paddingBottom: 40,
-        borderBottomLeftRadius: 40,
-        borderBottomRightRadius: 40,
-        ...(SHADOWS.md as any)
+        paddingTop: Platform.OS === "ios" ? 0 : 20,
     },
     headerContent: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingTop: 20,
-        marginBottom: 24
+        paddingTop: 12,
+        paddingBottom: 16,
     },
     avatarContainer: {
         width: 48,
@@ -268,6 +264,7 @@ const styles = StyleSheet.create({
         padding: 16,
         flexDirection: 'row',
         alignItems: 'center',
+        marginBottom: 32,
     },
     statusDot: {
         width: 8,

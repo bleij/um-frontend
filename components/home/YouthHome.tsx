@@ -179,7 +179,7 @@ export default function YouthHome() {
                 </Pressable>
               </View>
 
-              <View className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20">
+              <View className="bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20" style={{ marginTop: 16 }}>
                 <View className="flex-row justify-between items-center mb-3">
                   <Text className="text-white text-xs font-bold uppercase tracking-wider">
                     Энергия обучения
@@ -536,6 +536,12 @@ export default function YouthHome() {
           <Text className="text-lg font-bold text-gray-900 mb-4 px-1">
             Твои ачивки
           </Text>
+          {achievements.length === 0 ? (
+            <View style={{ backgroundColor: "#F9FAFB", borderRadius: 24, padding: 24, alignItems: "center", borderWidth: 1, borderColor: "#F3F4F6" }}>
+              <Feather name="award" size={28} color="#D1D5DB" />
+              <Text style={{ color: "#9CA3AF", fontWeight: "700", fontSize: 13, marginTop: 10 }}>Достижений пока нет</Text>
+            </View>
+          ) : (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -581,6 +587,7 @@ export default function YouthHome() {
               </View>
             ))}
           </ScrollView>
+          )}
         </View>
 
         {/* Browse Clubs - Student can request enrollment with parent approval */}
@@ -593,6 +600,12 @@ export default function YouthHome() {
               <Text style={{ fontSize: 13, fontWeight: "700", color: COLORS.primary }}>Все →</Text>
             </TouchableOpacity>
           </View>
+          {courses.length === 0 ? (
+            <View style={{ backgroundColor: "#F9FAFB", borderRadius: 24, padding: 24, alignItems: "center", borderWidth: 1, borderColor: "#F3F4F6" }}>
+              <Feather name="inbox" size={28} color="#D1D5DB" />
+              <Text style={{ color: "#9CA3AF", fontWeight: "700", fontSize: 13, marginTop: 10 }}>Кружки скоро появятся</Text>
+            </View>
+          ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -4 }}>
             {courses.slice(0, 4).map((course, idx) => {
               const isRequested = enrollmentRequested.includes(course.id);
@@ -641,6 +654,7 @@ export default function YouthHome() {
               );
             })}
           </ScrollView>
+          )}
         </View>
       </ScrollView>
 

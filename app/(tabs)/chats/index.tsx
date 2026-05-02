@@ -12,7 +12,8 @@ import { MotiView } from "moti";
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../../constants/theme";
 import { useChats } from "../../../hooks/useChats";
 
 const DEFAULT_TABS = ["все", "непрочитанные", "архив"];
@@ -57,34 +58,32 @@ export default function ChatsScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-                {/* Header */}
-                <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 }}>
-                    <Text style={{ fontSize: 24, fontWeight: "700", color: COLORS.foreground }}>Чаты</Text>
-                </View>
+            <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
+                <LinearGradient
+                    colors={COLORS.gradients.header as any}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
+                >
+                    <SafeAreaView edges={["top"]}>
+                        <View style={{ paddingHorizontal: IS_DESKTOP ? LAYOUT.dashboardHorizontalPaddingDesktop : 20, paddingTop: 12, paddingBottom: 20 }}>
+                            <Text style={{ fontSize: 24, fontWeight: "700", color: "white", marginBottom: 12 }}>Чаты</Text>
+                            <View style={{ flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: RADIUS.md, paddingHorizontal: 16, height: 44, borderWidth: 1, borderColor: "rgba(255,255,255,0.2)" }}>
+                                <Feather name="search" size={18} color="rgba(255,255,255,0.6)" />
+                                <TextInput
+                                    placeholder="Поиск чатов"
+                                    value={search}
+                                    onChangeText={setSearch}
+                                    placeholderTextColor="rgba(255,255,255,0.6)"
+                                    style={{ flex: 1, marginLeft: 10, fontSize: 15, color: "white" }}
+                                />
+                            </View>
+                        </View>
+                    </SafeAreaView>
+                </LinearGradient>
+            </View>
 
-                <View style={{ width: IS_DESKTOP ? "50%" : "100%", alignSelf: "center" }}>
-                    {/* Search */}
-                    <View style={{
-                        backgroundColor: COLORS.muted,
-                        borderRadius: RADIUS.md,
-                        flexDirection: "row",
-                        alignItems: "center",
-                        paddingHorizontal: 16,
-                        height: 48,
-                        marginHorizontal: 20,
-                        marginBottom: 16,
-                    }}>
-                        <Feather name="search" size={18} color={COLORS.mutedForeground} />
-                        <TextInput
-                            placeholder="Поиск чатов"
-                            value={search}
-                            onChangeText={setSearch}
-                            placeholderTextColor={COLORS.mutedForeground}
-                            style={{ flex: 1, marginLeft: 10, fontSize: 15, color: COLORS.foreground }}
-                        />
-                    </View>
-
+                <View style={{ flex: 1, width: IS_DESKTOP ? "50%" : "100%", alignSelf: "center" }}>
                     {/* Tabs */}
                     <View style={{
                         flexDirection: "row",
@@ -135,7 +134,7 @@ export default function ChatsScreen() {
                                     style={{ width: "100%" }}
                                     onPress={() =>
                                         router.push({
-                                            pathname: "/modal/chat",
+                                            pathname: "/(tabs)/chats/[id]",
                                             params: { id: chat.id, name: chat.name },
                                         })
                                     }
@@ -204,7 +203,6 @@ export default function ChatsScreen() {
                         )}
                     </ScrollView>
                 </View>
-            </SafeAreaView>
         </View>
     );
 }

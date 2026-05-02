@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, {
     createContext,
     useContext,
@@ -8,6 +9,8 @@ import React, {
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import { Child, Diagnostic } from "../models/types";
 import { useAuth } from "./AuthContext";
+
+const devTariffKey = (userId: string) => `um_dev_tariff_${userId}`;
 
 type AgeGroup = "6-11" | "12-17" | "18-20";
 
@@ -116,7 +119,8 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
 
         if (!realSession) {
           // Dev-bypass or unauthenticated: skip DB, hydrate from auth user only.
-          setParentProfile({ firstName: user.firstName, lastName: user.lastName, phone: user.phone });
+          const storedTariff = await AsyncStorage.getItem(devTariffKey(user.id));
+          setParentProfile({ firstName: user.firstName, lastName: user.lastName, phone: user.phone, tariff: (storedTariff as "basic" | "pro") || "basic" });
           setChildrenProfile([]);
           setActiveChildId(null);
           setIsLoading(false);
@@ -383,9 +387,9 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     setParentProfile(updatedProfile);
 
     if (supabase && isSupabaseConfigured && hasRealSession) {
-      await supabase.from("parent_profiles").update({
-        tariff,
-      }).eq("user_id", user.id);
+      await supabase.from("parent_profiles").update({ tariff }).eq("user_id", user.id);
+    } else {
+      await AsyncStorage.setItem(devTariffKey(user.id), tariff);
     }
   };
 

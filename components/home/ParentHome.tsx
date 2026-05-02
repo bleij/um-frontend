@@ -99,6 +99,7 @@ export default function ParentHome() {
                   Привет, {user?.firstName || parentProfile?.firstName || "Родитель"}
                   !
                 </Text>
+                {!isDesktop && (
                 <Pressable
                   onPress={() => setNotificationsVisible(true)}
                   style={{
@@ -129,6 +130,7 @@ export default function ParentHome() {
                     }}
                   />
                 </Pressable>
+                )}
               </View>
               <Text
                 style={{
@@ -170,7 +172,7 @@ export default function ParentHome() {
                 key={child.id}
                 onPress={() => {
                   setActiveChildId(child.id);
-                  router.push(`/parent/child/${child.id}` as any);
+                  router.push(`/(tabs)/parent/child/${child.id}` as any);
                 }}
                 style={SHADOWS.md}
                 className={`mr-4 w-36 p-5 bg-white rounded-[32px] items-center border ${activeChildId === child.id ? "border-purple-200" : "border-gray-50"}`}
@@ -247,7 +249,7 @@ export default function ParentHome() {
                 </View>
               </View>
             </View>
-          ) : (
+          ) : activeChild ? (
             <View
               style={SHADOWS.sm}
               className="bg-blue-50 rounded-[32px] p-6 border border-blue-100 flex-row items-center"
@@ -257,23 +259,22 @@ export default function ParentHome() {
               </View>
               <View className="flex-1 pr-2">
                 <Text className="text-blue-900 font-bold text-sm mb-1">
-                  AI Ассистент
+                  AI Диагностика
                 </Text>
                 <Text className="text-blue-700 text-xs leading-4">
-                  Я проанализировал первичный тест. У {activeChild?.name}{" "}
-                  склонность к творчеству!
+                  Пройдите диагностику талантов для {activeChild.name}, чтобы получить персональные рекомендации по развитию.
                 </Text>
                 <Pressable
-                  onPress={() => router.push("/parent/subscription" as any)}
+                  onPress={() => router.push("/profile/youth/umo-intro" as any)}
                   className="mt-3 bg-white self-start px-3 py-1.5 rounded-full border border-blue-200"
                 >
                   <Text className="text-blue-600 font-black text-[10px] uppercase tracking-widest">
-                    PRO Подробности
+                    Начать тест
                   </Text>
                 </Pressable>
               </View>
             </View>
-          )}
+          ) : null}
         </View>
 
         {/* AI Recommendations Section */}

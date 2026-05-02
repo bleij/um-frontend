@@ -282,28 +282,6 @@ export function DevRoleSwitcher() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Dev Youth Age toggle */}
-                {['parent', 'youth', 'child'].includes(user?.role || '') && (
-                  <View style={styles.devModeRow}>
-                    <View style={{ flex: 1, marginRight: 12 }}>
-                      <Text style={styles.devModeTitle}>
-                        Test Age: {devYouthAge}
-                      </Text>
-                      <Text style={styles.devModeSubtitle}>Set child's mock age for testing</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <TouchableOpacity onPress={() => setDevYouthAge(Math.max(4, devYouthAge - 1))} style={styles.ageButton}>
-                        <Feather name="minus" size={16} color={COLORS.foreground} />
-                      </TouchableOpacity>
-                      <Text style={{ fontSize: 16, fontWeight: '600', width: 24, textAlign: 'center', color: COLORS.foreground }}>
-                        {devYouthAge}
-                      </Text>
-                      <TouchableOpacity onPress={() => setDevYouthAge(Math.min(18, devYouthAge + 1))} style={styles.ageButton}>
-                        <Feather name="plus" size={16} color={COLORS.foreground} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
               </View>
             </ScrollView>
           </Pressable>

@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
+  Modal,
   Platform,
   ScrollView,
   Text,
@@ -28,6 +30,7 @@ import {
   MentorApp,
   useAdminCourses,
   useAdminEnrollments,
+  useAdminOnboardingQuestions,
   useAdminStats,
   useAIRules,
   useAllUsers,
@@ -35,7 +38,6 @@ import {
   useMentorApps,
   useOrganizations,
   useTags,
-  useTestQuestions,
   useTickets,
   useTransactions,
 } from "../../hooks/useAdminData";
@@ -59,6 +61,27 @@ function formatDate(iso: string): string {
   }
 }
 
+const USER_ROLES = ["all", "parent", "youth", "child", "mentor", "org", "admin"] as const;
+
+const ROLE_LABELS: Record<string, string> = {
+  all: "Все",
+  parent: "Родители",
+  youth: "Молодёжь",
+  child: "Дети",
+  mentor: "Менторы",
+  org: "Организации",
+  admin: "Администраторы",
+};
+
+const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
+  parent: { bg: "#EDE9FE", color: "#6C5CE7" },
+  youth: { bg: "#DBEAFE", color: "#2563EB" },
+  child: { bg: "#DCFCE7", color: "#16A34A" },
+  mentor: { bg: "#FEF9C3", color: "#CA8A04" },
+  org: { bg: "#FEE2E2", color: "#DC2626" },
+  admin: { bg: "#F3F4F6", color: "#374151" },
+};
+
 export default function AdminHome() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -77,7 +100,7 @@ export default function AdminHome() {
   const tickets = useTickets();
   const tags = useTags();
   const aiRules = useAIRules();
-  const questions = useTestQuestions();
+  const onboardingQuestions = useAdminOnboardingQuestions();
   const adminCourses = useAdminCourses();
   const allUsers = useAllUsers();
   const enrollments = useAdminEnrollments();
@@ -92,7 +115,9 @@ export default function AdminHome() {
     pendingMentors[0] ??
     null;
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [crmSearchMentors, setCrmSearchMentors] = useState("");
+  const [crmSearchUsers, setCrmSearchUsers] = useState("");
+  const [crmSearchActiveMentors, setCrmSearchActiveMentors] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [newTagName, setNewTagName] = useState("");
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
@@ -100,9 +125,12 @@ export default function AdminHome() {
   const [activeTab, setActiveTab] = useState("overview");
   const [crmSubTab, setCrmSubTab] = useState("mentors");
   const [orgsSubTab, setOrgsSubTab] = useState("orgs");
-  const [contentSubTab, setContentSubTab] = useState("tests");
+  const [contentSubTab, setContentSubTab] = useState("onboarding");
   const [billingSubTab, setBillingSubTab] = useState("transactions");
   const [qcSubTab, setQcSubTab] = useState("logs");
+  const [pendingReject, setPendingReject] = useState<{ type: "mentor" | "course"; id: string; name: string } | null>(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState("");
+  const [commissionDrafts, setCommissionDrafts] = useState<Record<string, string>>({});
 
   // Start or resume a conversation between admin and an org owner
   const handleStartOrgChat = async (orgId: string, orgName: string, ownerUserId: string | null) => {
@@ -136,7 +164,7 @@ export default function AdminHome() {
       ]);
     }
 
-    router.push({ pathname: "/modal/chat", params: { id: convId, name: orgName } } as any);
+    router.push({ pathname: "/(tabs)/chats/[id]", params: { id: convId, name: orgName } } as any);
   };
 
   const orgsNeedingAction = orgs.data.filter((o) => o.status === "pending" || o.status === "ready_for_review");
@@ -162,37 +190,19 @@ export default function AdminHome() {
   ];
 
   const filteredMentors = mentorApps.data.filter((m) =>
-    searchQuery.trim() === ""
+    crmSearchMentors.trim() === ""
       ? true
-      : m.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      : m.name.toLowerCase().includes(crmSearchMentors.toLowerCase()),
   );
 
   const renderCRMView = () => {
-    const USER_ROLES = ["all", "parent", "youth", "child", "mentor", "org", "admin"];
-    const ROLE_LABELS: Record<string, string> = {
-      all: "Все",
-      parent: "Родители",
-      youth: "Молодёжь",
-      child: "Дети",
-      mentor: "Менторы",
-      org: "Организации",
-      admin: "Администраторы",
-    };
     const filteredUsers = allUsers.data.filter((u) => {
       const matchesRole = userRoleFilter === "all" || u.role === userRoleFilter;
-      const matchesSearch = searchQuery.trim() === "" ||
-        `${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (u.phone ?? "").includes(searchQuery);
+      const matchesSearch = crmSearchUsers.trim() === "" ||
+        `${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase().includes(crmSearchUsers.toLowerCase()) ||
+        (u.phone ?? "").includes(crmSearchUsers);
       return matchesRole && matchesSearch;
     });
-    const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
-      parent: { bg: "#EDE9FE", color: "#6C5CE7" },
-      youth: { bg: "#DBEAFE", color: "#2563EB" },
-      child: { bg: "#DCFCE7", color: "#16A34A" },
-      mentor: { bg: "#FEF9C3", color: "#CA8A04" },
-      org: { bg: "#FEE2E2", color: "#DC2626" },
-      admin: { bg: "#F3F4F6", color: "#374151" },
-    };
     return (
     <View style={{ flex: 1 }}>
       <View
@@ -243,8 +253,8 @@ export default function AdminHome() {
               color: COLORS.foreground,
             }}
             placeholder="Поиск по имени или телефону..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={crmSubTab === "users" ? crmSearchUsers : crmSubTab === "active_mentors" ? crmSearchActiveMentors : crmSearchMentors}
+            onChangeText={crmSubTab === "users" ? setCrmSearchUsers : crmSubTab === "active_mentors" ? setCrmSearchActiveMentors : setCrmSearchMentors}
           />
         </View>
       </View>
@@ -394,7 +404,7 @@ export default function AdminHome() {
           })}
 
           {crmSubTab === "active_mentors" && mentorApps.data
-            .filter((m) => m.status === "approved" && (searchQuery.trim() === "" || m.name.toLowerCase().includes(searchQuery.toLowerCase())))
+            .filter((m) => m.status === "approved" && (crmSearchActiveMentors.trim() === "" || m.name.toLowerCase().includes(crmSearchActiveMentors.toLowerCase())))
             .map((m) => (
               <View
                 key={m.id}
@@ -414,7 +424,14 @@ export default function AdminHome() {
                     <Text style={{ fontSize: 10, fontWeight: "bold", color: COLORS.success, textTransform: "uppercase" }}>Активен</Text>
                   </View>
                   <TouchableOpacity
-                    onPress={() => mentorApps.reject(m.id)}
+                    onPress={() => Alert.alert(
+                      "Деактивировать ментора?",
+                      `${m.name} будет удалён из списка активных менторов.`,
+                      [
+                        { text: "Отмена", style: "cancel" },
+                        { text: "Деактивировать", style: "destructive", onPress: () => mentorApps.reject(m.id) },
+                      ],
+                    )}
                     style={{ width: 32, height: 32, borderRadius: RADIUS.md, backgroundColor: COLORS.destructive + "15", alignItems: "center", justifyContent: "center" }}
                   >
                     <Feather name="user-x" size={14} color={COLORS.destructive} />
@@ -600,6 +617,40 @@ export default function AdminHome() {
                 </>
               )}
 
+              <TouchableOpacity
+                onPress={async () => {
+                  if (!supabase || !isSupabaseConfigured || !user?.id || !selectedMentor.user_id) {
+                    Alert.alert("Чат недоступен", "У ментора нет привязанного аккаунта.");
+                    return;
+                  }
+                  const ownerUserId = selectedMentor.user_id;
+                  const [adminParts, ownerParts] = await Promise.all([
+                    supabase.from("conversation_participants").select("conversation_id").eq("user_id", user.id),
+                    supabase.from("conversation_participants").select("conversation_id").eq("user_id", ownerUserId),
+                  ]);
+                  const adminIds = new Set((adminParts.data ?? []).map((p: any) => p.conversation_id));
+                  const shared = (ownerParts.data ?? []).find((p: any) => adminIds.has(p.conversation_id));
+                  let convId: string | null = shared?.conversation_id ?? null;
+                  if (!convId) {
+                    const { data: conv, error } = await supabase
+                      .from("conversations")
+                      .insert({ name: selectedMentor.name, icon_name: "user", last_message_at: new Date().toISOString() })
+                      .select().single();
+                    if (error || !conv) { Alert.alert("Ошибка", error?.message ?? "Не удалось создать чат"); return; }
+                    convId = conv.id;
+                    await supabase.from("conversation_participants").insert([
+                      { conversation_id: convId, user_id: user.id, unread_count: 0 },
+                      { conversation_id: convId, user_id: ownerUserId, unread_count: 0 },
+                    ]);
+                  }
+                  router.push({ pathname: "/(tabs)/chats/[id]", params: { id: convId, name: selectedMentor.name } } as any);
+                }}
+                style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: SPACING.sm, padding: SPACING.md, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.sm }}
+              >
+                <Feather name="message-circle" size={16} color={COLORS.foreground} />
+                <Text style={{ fontWeight: "600", color: COLORS.foreground }}>Написать ментору</Text>
+              </TouchableOpacity>
+
               {selectedMentor.status === "pending" && (
                 <View style={{ gap: SPACING.sm }}>
                   <TouchableOpacity
@@ -622,7 +673,7 @@ export default function AdminHome() {
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => mentorApps.reject(selectedMentor.id)}
+                    onPress={() => { setPendingReject({ type: "mentor", id: selectedMentor.id, name: selectedMentor.name }); setRejectReasonInput(""); }}
                     style={{
                       backgroundColor: COLORS.destructive,
                       padding: SPACING.md,
@@ -825,7 +876,7 @@ export default function AdminHome() {
                     <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>✓ Опубликовать</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() => adminCourses.rejectCourse(course.id)}
+                    onPress={() => { setPendingReject({ type: "course", id: course.id, name: course.title }); setRejectReasonInput(""); }}
                     style={{ flex: 1, backgroundColor: COLORS.destructive, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, alignItems: "center" }}
                   >
                     <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>✗ Отклонить</Text>
@@ -952,7 +1003,7 @@ export default function AdminHome() {
           marginVertical: SPACING.md,
         }}
       >
-        {(["tests", "tags", "logic"] as const).map((t) => (
+        {(["onboarding", "tags", "logic"] as const).map((t) => (
           <TouchableOpacity
             key={t}
             onPress={() => setContentSubTab(t)}
@@ -970,8 +1021,8 @@ export default function AdminHome() {
                 fontWeight: "600",
               }}
             >
-              {t === "tests"
-                ? "Вопросы (Тест)"
+              {t === "onboarding"
+                ? "Вопросы Онбординга"
                 : t === "tags"
                   ? "Справочник Тегов"
                   : "AI Логика"}
@@ -981,61 +1032,73 @@ export default function AdminHome() {
       </View>
 
       <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {contentSubTab === "tests" && (
-          <View style={{ paddingHorizontal: paddingX }}>
-            {questions.loading && (
+        {contentSubTab === "onboarding" && (
+          <View style={{ paddingHorizontal: paddingX, paddingBottom: SPACING.xl }}>
+            {onboardingQuestions.loading && (
               <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
             )}
-            {!questions.loading && questions.data.length === 0 && (
-              <Text style={{ color: COLORS.mutedForeground }}>
-                Вопросов нет.
-              </Text>
+            {!onboardingQuestions.loading && onboardingQuestions.data.length === 0 && (
+              <Text style={{ color: COLORS.mutedForeground }}>Вопросов нет.</Text>
             )}
-            {questions.data.map((q) => (
-              <View
-                key={q.id}
-                style={{
-                  padding: SPACING.lg,
-                  borderRadius: RADIUS.lg,
-                  backgroundColor: COLORS.surface,
-                  marginBottom: SPACING.md,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  flexDirection: "row",
-                  alignItems: "center",
-                }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={{
-                      fontSize: TYPOGRAPHY.size.md,
-                      fontWeight: "500",
-                      color: COLORS.foreground,
-                    }}
-                  >
-                    {q.question}
+            {(["parent", "org", "child", "youth", "parent_diagnostic"] as const).map((audience) => {
+              const rows = onboardingQuestions.data.filter((q) => q.audience === audience);
+              if (rows.length === 0) return null;
+              const AUDIENCE_LABELS: Record<string, string> = {
+                parent: "Родитель (онбординг)",
+                org: "Организация (онбординг)",
+                child: "Ребёнок (диагностика)",
+                youth: "Молодёжь (диагностика)",
+                parent_diagnostic: "Родитель (диагностика ребёнка)",
+              };
+              return (
+                <View key={audience} style={{ marginBottom: SPACING.xl }}>
+                  <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "700", color: COLORS.mutedForeground, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: SPACING.sm }}>
+                    {AUDIENCE_LABELS[audience]}
                   </Text>
-                  {q.tag && (
-                    <Text
+                  {rows.map((q) => (
+                    <View
+                      key={q.id}
                       style={{
-                        fontSize: TYPOGRAPHY.size.sm,
-                        color: COLORS.primary,
-                        marginTop: 4,
+                        padding: SPACING.lg,
+                        borderRadius: RADIUS.lg,
+                        backgroundColor: COLORS.surface,
+                        marginBottom: SPACING.sm,
+                        borderWidth: 1,
+                        borderColor: q.active ? COLORS.border : COLORS.border + "60",
+                        opacity: q.active ? 1 : 0.55,
+                        flexDirection: "row",
+                        alignItems: "flex-start",
+                        gap: SPACING.sm,
                       }}
                     >
-                      Привязка: {q.tag}
-                    </Text>
-                  )}
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: "500", color: COLORS.foreground, marginBottom: 4 }}>
+                          {q.display_order}. {q.question_text}
+                        </Text>
+                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground }}>
+                          {q.answers.join(" · ")}
+                        </Text>
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => onboardingQuestions.toggleActive(q.id, !q.active)}
+                        style={{ padding: 4 }}
+                      >
+                        <Feather name={q.active ? "eye" : "eye-off"} size={16} color={COLORS.mutedForeground} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => Alert.alert("Удалить вопрос?", q.question_text, [
+                          { text: "Отмена", style: "cancel" },
+                          { text: "Удалить", style: "destructive", onPress: () => onboardingQuestions.remove(q.id) },
+                        ])}
+                        style={{ padding: 4 }}
+                      >
+                        <Feather name="trash-2" size={16} color={COLORS.destructive} />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
                 </View>
-                <TouchableOpacity onPress={() => questions.remove(q.id)}>
-                  <Feather
-                    name="trash-2"
-                    size={18}
-                    color={COLORS.destructive}
-                  />
-                </TouchableOpacity>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
 
@@ -1519,52 +1582,49 @@ export default function AdminHome() {
                   Категория: {org.category ?? "—"}
                 </Text>
               </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  backgroundColor: COLORS.background,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  borderRadius: RADIUS.md,
-                  paddingHorizontal: SPACING.md,
-                  paddingVertical: SPACING.sm,
-                }}
-              >
-                <Text
+              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
+                <View
                   style={{
-                    fontSize: TYPOGRAPHY.size.sm,
-                    fontWeight: "bold",
-                    color: COLORS.foreground,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: COLORS.background,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                    borderRadius: RADIUS.md,
+                    paddingHorizontal: SPACING.md,
+                    paddingVertical: SPACING.sm,
                   }}
                 >
-                  Комиссия:{" "}
-                </Text>
-                <TextInput
-                  defaultValue={String(org.commission_pct)}
-                  keyboardType="numeric"
-                  onEndEditing={(e) => {
-                    const val = parseFloat(e.nativeEvent.text);
-                    if (Number.isFinite(val) && val !== org.commission_pct)
+                  <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "bold", color: COLORS.foreground }}>
+                    Комиссия:{" "}
+                  </Text>
+                  <TextInput
+                    value={commissionDrafts[org.id] ?? String(org.commission_pct)}
+                    keyboardType="numeric"
+                    onChangeText={(v) => setCommissionDrafts((prev) => ({ ...prev, [org.id]: v }))}
+                    style={{
+                      fontSize: TYPOGRAPHY.size.sm,
+                      fontWeight: "bold",
+                      color: COLORS.primary,
+                      width: 40,
+                      textAlign: "center",
+                    }}
+                  />
+                  <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "bold", color: COLORS.foreground }}>%</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => {
+                    const raw = commissionDrafts[org.id] ?? String(org.commission_pct);
+                    const val = parseFloat(raw);
+                    if (Number.isFinite(val)) {
                       orgs.setCommission(org.id, val);
+                      setCommissionDrafts((prev) => { const next = { ...prev }; delete next[org.id]; return next; });
+                    }
                   }}
-                  style={{
-                    fontSize: TYPOGRAPHY.size.sm,
-                    fontWeight: "bold",
-                    color: COLORS.primary,
-                    width: 40,
-                    textAlign: "center",
-                  }}
-                />
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.sm,
-                    fontWeight: "bold",
-                    color: COLORS.foreground,
-                  }}
+                  style={{ paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, backgroundColor: COLORS.primary, borderRadius: RADIUS.md }}
                 >
-                  %
-                </Text>
+                  <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.xs }}>Сохранить</Text>
+                </TouchableOpacity>
               </View>
             </View>
           ))}
@@ -1574,7 +1634,7 @@ export default function AdminHome() {
 
   const renderQCView = () => {
     const filtered = tickets.data.filter((t) =>
-      qcSubTab === "tickets" ? t.kind === "complaint" : true,
+      qcSubTab === "tickets" ? t.kind === "complaint" : t.kind === "feedback",
     );
     return (
       <View style={{ flex: 1 }}>
@@ -1843,15 +1903,6 @@ export default function AdminHome() {
       acc[u.role] = (acc[u.role] ?? 0) + 1;
       return acc;
     }, {});
-    const ROLE_LABELS_OV: Record<string, string> = { parent: "Родители", youth: "Молодёжь", child: "Дети", mentor: "Менторы", org: "Организации", admin: "Администраторы" };
-    const ROLE_COLORS_OV: Record<string, { bg: string; color: string }> = {
-      parent: { bg: "#EDE9FE", color: "#6C5CE7" },
-      youth: { bg: "#DBEAFE", color: "#2563EB" },
-      child: { bg: "#DCFCE7", color: "#16A34A" },
-      mentor: { bg: "#FEF9C3", color: "#CA8A04" },
-      org: { bg: "#FEE2E2", color: "#DC2626" },
-      admin: { bg: "#F3F4F6", color: "#374151" },
-    };
     const activeCourses = adminCourses.data.filter((c) => c.status === "active").length;
     const draftCourses = adminCourses.data.filter((c) => c.status === "draft").length;
     const verifiedOrgs = orgs.data.filter((o) => o.status === "verified").length;
@@ -1862,9 +1913,17 @@ export default function AdminHome() {
     return (
       <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
         <View style={{ padding: paddingX }}>
-          <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, marginBottom: 4, marginTop: SPACING.md }}>
-            Обзор платформы
-          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: SPACING.md, marginBottom: 4 }}>
+            <Text style={{ flex: 1, fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
+              Обзор платформы
+            </Text>
+            <TouchableOpacity
+              onPress={() => { families.refresh(); mentorApps.refresh(); orgs.refresh(); txs.refresh(); adminCourses.refresh(); allUsers.refresh(); enrollments.refresh(); }}
+              style={{ width: 36, height: 36, borderRadius: RADIUS.md, backgroundColor: COLORS.muted, alignItems: "center", justifyContent: "center" }}
+            >
+              <Feather name="refresh-cw" size={16} color={COLORS.mutedForeground} />
+            </TouchableOpacity>
+          </View>
           <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, marginBottom: SPACING.xl }}>
             Состояние платформы в реальном времени
           </Text>
@@ -1910,9 +1969,9 @@ export default function AdminHome() {
             Пользователи по ролям
           </Text>
           <View style={{ backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.xl, overflow: "hidden" }}>
-            {Object.entries(ROLE_LABELS_OV).map(([role, label], i) => {
+            {Object.entries(ROLE_LABELS).filter(([role]) => role !== "all").map(([role, label], i) => {
               const count = roleGroups[role] ?? 0;
-              const rc = ROLE_COLORS_OV[role] ?? { bg: "#F3F4F6", color: "#374151" };
+              const rc = ROLE_COLORS[role] ?? { bg: "#F3F4F6", color: "#374151" };
               const total = allUsers.data.length || 1;
               const pct = Math.round((count / total) * 100);
               return (
@@ -2079,7 +2138,7 @@ export default function AdminHome() {
                       {tab.label}
                     </Text>
                   )}
-                  {isTablet && tab.badge !== undefined && (
+                  {tab.badge !== undefined && (
                     <View
                       style={{
                         backgroundColor:
@@ -2137,6 +2196,52 @@ export default function AdminHome() {
           {renderContent()}
         </View>
       </SafeAreaView>
+
+      {/* Rejection-reason modal */}
+      <Modal visible={!!pendingReject} transparent animationType="fade" onRequestClose={() => setPendingReject(null)}>
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)", padding: SPACING.xl }}>
+          <View style={{ width: "100%", maxWidth: 480, backgroundColor: COLORS.surface, borderRadius: RADIUS.xl, padding: SPACING.xl, gap: SPACING.lg }}>
+            <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
+              Причина отклонения
+            </Text>
+            <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground }} numberOfLines={2}>
+              {pendingReject?.name}
+            </Text>
+            <TextInput
+              value={rejectReasonInput}
+              onChangeText={setRejectReasonInput}
+              placeholder="Укажите причину (необязательно)"
+              placeholderTextColor={COLORS.mutedForeground}
+              multiline
+              numberOfLines={3}
+              style={{ borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.foreground, backgroundColor: COLORS.background, minHeight: 80, textAlignVertical: "top" }}
+            />
+            <View style={{ flexDirection: "row", gap: SPACING.md }}>
+              <TouchableOpacity
+                onPress={() => setPendingReject(null)}
+                style={{ flex: 1, padding: SPACING.md, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, alignItems: "center" }}
+              >
+                <Text style={{ color: COLORS.foreground, fontWeight: "600" }}>Отмена</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={async () => {
+                  if (!pendingReject) return;
+                  const reason = rejectReasonInput.trim() || undefined;
+                  if (pendingReject.type === "mentor") {
+                    await mentorApps.reject(pendingReject.id, reason);
+                  } else {
+                    await adminCourses.rejectCourse(pendingReject.id, reason);
+                  }
+                  setPendingReject(null);
+                }}
+                style={{ flex: 1, padding: SPACING.md, borderRadius: RADIUS.lg, backgroundColor: COLORS.destructive, alignItems: "center" }}
+              >
+                <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold }}>Отклонить</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }

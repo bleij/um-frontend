@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React from "react";
@@ -17,20 +18,26 @@ export default function TeacherGroupsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-        
-        {/* Sticky Header */}
-        <View style={styles.header}>
-            <View style={{ paddingHorizontal: paddingX, paddingVertical: 16 }}>
-                <Text style={styles.headerTitle}>Мои группы</Text>
-                <Text style={styles.headerSubtitle}>
-                    {groups.length} {groups.length === 1 ? 'группа' : 'групп'}
-                </Text>
+      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: 12, paddingBottom: 32 }}>
+              <Text style={styles.headerTitle}>Мои группы</Text>
+              <Text style={styles.headerSubtitle}>
+                {groups.length} {groups.length === 1 ? 'группа' : 'групп'}
+              </Text>
             </View>
-        </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
-        <ScrollView 
-            showsVerticalScrollIndicator={false} 
+        <ScrollView
+            showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: paddingX, paddingTop: 20, paddingBottom: 100 }}
         >
           {groups.length === 0 ? (
@@ -96,7 +103,6 @@ export default function TeacherGroupsScreen() {
             </View>
           )}
         </ScrollView>
-      </SafeAreaView>
     </View>
   );
 }
@@ -114,12 +120,12 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 24,
         fontWeight: '900',
-        color: COLORS.foreground,
+        color: 'white',
         letterSpacing: -0.5
     },
     headerSubtitle: {
         fontSize: 14,
-        color: COLORS.mutedForeground,
+        color: 'rgba(255,255,255,0.7)',
         marginTop: 2,
         fontWeight: '500'
     },

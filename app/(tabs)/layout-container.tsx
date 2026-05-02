@@ -492,17 +492,6 @@ export function SideNav({ role }: Props) {
           }}
         >
           <Feather name="bell" size={18} color={COLORS.mutedForeground} />
-          <View
-            style={{
-              position: "absolute",
-              top: 7,
-              right: 7,
-              width: 7,
-              height: 7,
-              borderRadius: 4,
-              backgroundColor: COLORS.primary,
-            }}
-          />
         </Pressable>
       </View>
 

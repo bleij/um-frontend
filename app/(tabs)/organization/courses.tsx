@@ -56,17 +56,11 @@ export default function OrgCourses() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Header */}
-      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: "hidden" }}>
-        <LinearGradient colors={COLORS.gradients.header as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingBottom: SPACING.xl }}>
+      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
+        <LinearGradient colors={COLORS.gradients.header as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}>
           <SafeAreaView edges={["top"]}>
-            <View style={{ paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: 12, paddingBottom: 32 }}>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: SPACING.xl }}>
-                <TouchableOpacity
-                  onPress={() => router.back()}
-                  style={{ width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: SPACING.md }}
-                >
-                  <Feather name="arrow-left" size={20} color="white" />
-                </TouchableOpacity>
                 <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.semibold, color: "white", flex: 1 }}>Курсы</Text>
                 <TouchableOpacity
                   onPress={() => router.push("/organization/course/create" as any)}

@@ -316,7 +316,7 @@ export default function ParentProfile() {
             <View style={{ marginTop: 32 }}>
                 <Text style={styles.sectionTitle}>Отчеты и аналитика ({selectedChild?.name})</Text>
                 <TouchableOpacity 
-                   onPress={() => router.push(`/parent/child/${selectedChild?.id}` as any)}
+                   onPress={() => router.push(`/(tabs)/parent/child/${selectedChild?.id}` as any)}
                    style={styles.reportCard}
                 >
                     <View style={styles.reportIcon}>

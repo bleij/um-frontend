@@ -119,29 +119,35 @@ export default function MentorStudentsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
-      <SafeAreaView edges={["top"]} style={{ flex: 1 }}>
-        <View style={{ paddingHorizontal: paddingX, paddingTop: 20, paddingBottom: 10 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+      <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingTop: Platform.OS === 'ios' ? 0 : 20 }}
+        >
+          <SafeAreaView edges={["top"]}>
+            <View style={{ paddingHorizontal: paddingX, paddingTop: 12, paddingBottom: 20 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
                 <View>
-                    <Text style={styles.mainTitle}>Мои ученики</Text>
-                    <Text style={styles.subtitle}>Сопровождение и прогресс</Text>
+                  <Text style={[styles.mainTitle, { color: 'white' }]}>Мои ученики</Text>
+                  <Text style={[styles.subtitle, { color: 'rgba(255,255,255,0.7)' }]}>Сопровождение и прогресс</Text>
                 </View>
-                <TouchableOpacity style={styles.filterBtn}>
-                    <Feather name="filter" size={20} color={COLORS.mutedForeground} />
-                </TouchableOpacity>
-            </View>
-
-            {/* Search Bar */}
-            <View style={styles.searchContainer}>
-                <Feather name="search" size={18} color={COLORS.mutedForeground} />
-                <TextInput 
-                  placeholder="Поиск ученика..." 
-                  style={styles.searchInput}
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14, paddingHorizontal: 14, height: 44, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' }}>
+                <Feather name="search" size={18} color="rgba(255,255,255,0.6)" />
+                <TextInput
+                  placeholder="Поиск ученика..."
+                  placeholderTextColor="rgba(255,255,255,0.6)"
+                  style={{ flex: 1, marginLeft: 10, fontSize: 15, color: 'white' }}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                 />
+              </View>
             </View>
-        </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
         <FlatList
           data={filteredStudents}
@@ -155,7 +161,6 @@ export default function MentorStudentsScreen() {
             </View>
           }
         />
-      </SafeAreaView>
     </View>
   );
 }

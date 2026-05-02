@@ -54,15 +54,15 @@ export default function OrgStaffScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       {/* Header - Unified Brand Style */}
-      <View style={{ backgroundColor: COLORS.primary, borderBottomLeftRadius: RADIUS.xxl, borderBottomRightRadius: RADIUS.xxl, overflow: 'hidden' }}>
+      <View style={{ backgroundColor: COLORS.primary, overflow: 'hidden' }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ paddingBottom: SPACING.xl }}
+          style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
         >
           <SafeAreaView edges={["top"]}>
-            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: paddingX, paddingTop: SPACING.md }}>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: paddingX, paddingTop: 12, paddingBottom: 32 }}>
               <View>
                 <Text style={{ fontSize: TYPOGRAPHY.size.xxl, fontWeight: TYPOGRAPHY.weight.bold, color: "white" }}>Учителя</Text>
                 <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: TYPOGRAPHY.size.sm, fontWeight: TYPOGRAPHY.weight.medium, marginTop: 2 }}>Преподавательский состав</Text>

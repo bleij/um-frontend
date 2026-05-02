@@ -1,16 +1,14 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image, Dimensions, Modal, Platform } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Modal, Platform, useWindowDimensions } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { COLORS, SHADOWS, RADIUS, SPACING } from "../../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, RADIUS, SPACING } from "../../../constants/theme";
 import MemoryGame from "../../../components/games/MemoryGame";
 import Game2048 from "../../../components/games/Game2048";
 import Minesweeper from "../../../components/games/Minesweeper";
 import Sudoku from "../../../components/games/Sudoku";
-
-const { width } = Dimensions.get("window");
 
 type GameCard = {
     id: string;
@@ -32,6 +30,10 @@ const GAMES: GameCard[] = [
 export default function GamesLobby() {
     const [selectedGame, setSelectedGame] = useState<string | null>(null);
     const [score, setScore] = useState(1240);
+    const { width } = useWindowDimensions();
+    const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+    const paddingX = isDesktop ? LAYOUT.dashboardHorizontalPaddingDesktop : 24;
+    const cardWidth = isDesktop ? Math.min((width - LAYOUT.dashboardHorizontalPaddingDesktop * 2 - 260 - 48) / 4, 220) : (width - 64) / 2;
 
     const handleFinishGame = (points: number) => {
         setScore((s: number) => s + points);
@@ -40,28 +42,30 @@ export default function GamesLobby() {
 
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <LinearGradient
-                colors={COLORS.gradients.header as any}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{ paddingBottom: 32, borderBottomLeftRadius: 40, borderBottomRightRadius: 40 }}
-            >
-                <SafeAreaView edges={["top"]}>
-                    <View style={{ paddingHorizontal: 24, paddingTop: 12 }}>
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-                            <View>
-                                <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>Игровой Центр</Text>
-                                <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>Развивайся играя</Text>
-                            </View>
-                            <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 }}>
-                                <Text style={{ color: 'white', fontWeight: '900' }}>{score} IQ</Text>
+            <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
+                <LinearGradient
+                    colors={COLORS.gradients.header as any}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
+                >
+                    <SafeAreaView edges={["top"]}>
+                        <View style={{ paddingHorizontal: paddingX, paddingTop: 12, paddingBottom: 32 }}>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                                <View>
+                                    <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 }}>Игровой Центр</Text>
+                                    <Text style={{ color: 'white', fontSize: 24, fontWeight: '900' }}>Развивайся играя</Text>
+                                </View>
+                                <View style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20 }}>
+                                    <Text style={{ color: 'white', fontWeight: '900' }}>{score} IQ</Text>
+                                </View>
                             </View>
                         </View>
-                    </View>
-                </SafeAreaView>
-            </LinearGradient>
+                    </SafeAreaView>
+                </LinearGradient>
+            </View>
 
-            <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={{ paddingHorizontal: paddingX, paddingTop: 24, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
                 {/* Daily Challenge Card */}
                 <TouchableOpacity style={{ marginBottom: 32 }}>
                     <LinearGradient
@@ -85,13 +89,13 @@ export default function GamesLobby() {
 
                 <Text style={{ fontSize: 18, fontWeight: '900', color: COLORS.foreground, marginBottom: 20 }}>Тренажеры когнитивных навыков</Text>
 
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: 16 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: isDesktop ? 'flex-start' : 'space-between', gap: 16 }}>
                     {GAMES.map((game) => (
                         <TouchableOpacity
                             key={game.id}
                             onPress={() => !game.locked && setSelectedGame(game.id)}
-                            style={{ 
-                                width: (width - 64) / 2, 
+                            style={{
+                                width: cardWidth,
                                 backgroundColor: 'white', 
                                 padding: 20, 
                                 borderRadius: 32, 

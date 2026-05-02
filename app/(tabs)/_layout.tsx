@@ -61,11 +61,15 @@ export default function TabsLayout() {
         }}
       />
 
+      {/* SHARED SCREENS */}
+      <Tabs.Screen name="chats/[id]" options={{ href: null }} />
+
       {/* PARENT SCREENS */}
       <Tabs.Screen name="parent/calendar" options={{ href: null }} />
       <Tabs.Screen name="parent/clubs" options={{ href: null }} />
       <Tabs.Screen name="parent/reports" options={{ href: null }} />
       <Tabs.Screen name="parent/club/[id]" options={{ href: null }} />
+      <Tabs.Screen name="parent/child/[id]" options={{ href: null }} />
 
       {/* YOUTH SCREENS */}
       <Tabs.Screen name="youth/goals" options={{ href: null }} />

@@ -75,21 +75,24 @@ export default function ParentClubs() {
 
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
       <LinearGradient
         colors={COLORS.gradients.header as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
+        style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
       >
         <SafeAreaView edges={["top"]}>
-          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
+          <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 32 }}>
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-              <Pressable
-                onPress={() => router.back()}
-                style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
-              >
-                <Feather name="arrow-left" size={20} color="white" />
-              </Pressable>
+              {!isDesktop && (
+                <Pressable
+                  onPress={() => router.back()}
+                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
+                </Pressable>
+              )}
               <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>
                 Каталог кружков
               </Text>
@@ -116,6 +119,7 @@ export default function ParentClubs() {
           </View>
         </SafeAreaView>
       </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: horizontalPadding, paddingTop: 24, paddingBottom: 120 }}
