@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { useDevDataVersion } from "../lib/devDataEvents";
 
 export interface Chat {
   id: string;
@@ -19,6 +20,7 @@ function ok<T = any>(res: { data: any; error: any }): T[] {
 
 export function useChats() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +63,7 @@ export function useChats() {
       }))
     );
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -98,6 +100,7 @@ export interface ChatMessage {
 
 export function useChatMessages(conversationId: string | null) {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -125,7 +128,7 @@ export function useChatMessages(conversationId: string | null) {
       }))
     );
     setLoading(false);
-  }, [conversationId, user?.id]);
+  }, [conversationId, user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();

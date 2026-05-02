@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { useDevSettings } from '../contexts/DevSettingsContext';
 import { useParentData } from '../contexts/ParentDataContext';
+import { emitDevDataChanged } from '../lib/devDataEvents';
 import { clearDevData, getDevDataSeeded, seedDevData } from '../lib/devSeedData';
 import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
 import { Feather } from '@expo/vector-icons';
@@ -31,7 +32,7 @@ export function DevRoleSwitcher() {
   const { mentorApproved, setMentorApproved, orgVerified, setOrgVerified, useRealOtp, setUseRealOtp, devYouthAge, setDevYouthAge } = useDevSettings();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
-  const canManageDevData = devToolsEnabled && user?.role === 'admin' && !syncingDevData;
+  const canManageDevData = devToolsEnabled && Boolean(user) && !syncingDevData;
 
   const notifyDevDataError = (message: string) => {
     Alert.alert('Dev data sync failed', message);
@@ -66,6 +67,7 @@ export function DevRoleSwitcher() {
 
       setDevDataEnabled(value);
       await AsyncStorage.setItem(DEV_DATA_KEY, value ? 'true' : 'false');
+      emitDevDataChanged();
     } catch (error) {
       notifyDevDataError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -180,9 +182,9 @@ export function DevRoleSwitcher() {
                 <View style={{ flex: 1, marginRight: 12 }}>
                   <Text style={styles.devModeTitle}>Populated Dev Data</Text>
                   <Text style={styles.devModeSubtitle}>
-                    {user?.role === 'admin'
-                      ? 'Seed or clear deterministic Supabase demo records'
-                      : 'Switch to admin to seed or clear database records'}
+                    {user
+                      ? 'Seed or restore deterministic Supabase demo records'
+                      : 'Switch into any dev role first'}
                   </Text>
                 </View>
                 {syncingDevData ? (

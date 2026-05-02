@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { COLORS, LAYOUT } from "../../../constants/theme";
 import { useChatMessages } from "../../../hooks/useChats";
 
@@ -50,8 +51,19 @@ export default function ChatScreen() {
           >
             <SafeAreaView edges={["top"]}>
               <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: IS_DESKTOP ? LAYOUT.dashboardHorizontalPaddingDesktop : 20, paddingTop: 12, paddingBottom: 20 }}>
-                <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 12 }}>
-                  <Text style={{ fontSize: 22, color: "white" }}>←</Text>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    backgroundColor: "rgba(255,255,255,0.2)",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginRight: 12,
+                  }}
+                >
+                  <Feather name="arrow-left" size={20} color="white" />
                 </TouchableOpacity>
                 <Text style={{ fontSize: 18, fontWeight: "700", color: "white" }}>
                   {name}

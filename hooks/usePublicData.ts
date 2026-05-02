@@ -6,6 +6,7 @@
  * Run COURSES_MIGRATION.sql first to enable those policies.
  */
 import { useCallback, useEffect, useState } from "react";
+import { useDevDataVersion } from "../lib/devDataEvents";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 import type { OrgCourse, OrgGroup } from "./useOrgData";
 
@@ -55,6 +56,7 @@ function mapRow(row: any): PublicCourse {
 // ── usePublicCourses ──────────────────────────────────────────────────────────
 
 export function usePublicCourses() {
+  const devDataVersion = useDevDataVersion();
   const [courses, setCourses] = useState<PublicCourse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -78,7 +80,7 @@ export function usePublicCourses() {
     }
     setCourses((res.data as any[]).map(mapRow));
     setLoading(false);
-  }, []);
+  }, [devDataVersion]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -88,6 +90,7 @@ export function usePublicCourses() {
 // ── usePublicCourseById ───────────────────────────────────────────────────────
 
 export function usePublicCourseById(id: string | undefined) {
+  const devDataVersion = useDevDataVersion();
   const [course, setCourse] = useState<PublicCourse | null>(null);
   const [groups, setGroups] = useState<OrgGroup[]>([]);
   const [reviews, setReviews] = useState<CourseReview[]>([]);
@@ -130,7 +133,7 @@ export function usePublicCourseById(id: string | undefined) {
       setTrialSlots((slotsRes.data ?? []) as TrialLessonSlot[]);
       setLoading(false);
     });
-  }, [id]);
+  }, [id, devDataVersion]);
 
   return { course, groups, reviews, trialSlots, loading };
 }

@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { COLORS, LAYOUT, SHADOWS } from "../../constants/theme";
+import { COLORS, LAYOUT, SHADOWS, TYPOGRAPHY } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 import { useTeacherGroups } from "../../hooks/usePlatformData";
 
@@ -42,7 +42,6 @@ export default function TeacherHome() {
 
   return (
     <View style={styles.container}>
-      {/* Premium Header */}
       <View style={styles.topHeader}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
@@ -188,37 +187,27 @@ export default function TeacherHome() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F7FF",
+    backgroundColor: COLORS.background,
   },
   topHeader: {
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
     overflow: "hidden",
-    elevation: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#6C5CE7",
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.2,
-        shadowRadius: 20,
-      },
-    }),
   },
   headerGradient: {
+    paddingTop: Platform.OS === "ios" ? 0 : 20,
     paddingBottom: 24,
   },
   headerContent: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 16,
-    marginBottom: 24,
+    paddingTop: 12,
+    marginBottom: 20,
   },
   greeting: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "white",
-    letterSpacing: -0.5,
+    fontSize: TYPOGRAPHY.size.xxxl,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+    color: COLORS.white,
+    letterSpacing: TYPOGRAPHY.letterSpacing.tight,
   },
   dateText: {
     fontSize: 14,

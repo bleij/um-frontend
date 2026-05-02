@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { useDevDataVersion } from "../lib/devDataEvents";
 
 export interface StudentTask {
   id: string;
@@ -19,6 +20,7 @@ function ok<T = any>(res: { data: any; error: any }): T[] {
 
 export function useStudentTasks() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [tasks, setTasks] = useState<StudentTask[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,7 +38,7 @@ export function useStudentTasks() {
       .order("created_at", { ascending: true });
     setTasks(ok<StudentTask>(res));
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -74,6 +76,7 @@ export interface YouthGoal {
 
 export function useYouthGoals() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [goals, setGoals] = useState<YouthGoal[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -116,7 +119,7 @@ export function useYouthGoals() {
       }))
     );
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -136,6 +139,7 @@ export interface UserAchievement {
 
 export function useYouthAchievements() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [achievements, setAchievements] = useState<UserAchievement[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -174,7 +178,7 @@ export function useYouthAchievements() {
       }))
     );
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();

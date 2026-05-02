@@ -7,6 +7,7 @@ import React, {
     type ReactNode,
 } from "react";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
+import { useDevDataVersion } from "../lib/devDataEvents";
 import { Child, Diagnostic } from "../models/types";
 import { useAuth } from "./AuthContext";
 
@@ -86,6 +87,7 @@ function normalizeChild(child: Child): Child {
 
 export function ParentDataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [parentProfile, setParentProfile] = useState<ParentProfileData | null>(
     null,
   );
@@ -201,7 +203,7 @@ export function ParentDataProvider({ children }: { children: ReactNode }) {
     };
 
     loadParentData();
-  }, [user]);
+  }, [user, devDataVersion]);
 
   const updateParentProfile = async (
     profile: Partial<ParentProfileData>,

@@ -8,6 +8,7 @@ import {
     Platform,
     Pressable,
     ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
@@ -23,6 +24,7 @@ import { formatPhone } from "../../../lib/formatPhone";
 
 // Age options from 6 to 20
 const AGE_OPTIONS = Array.from({ length: 15 }, (_, i) => i + 6);
+const ROLE_COLOR = "#6C5CE7";
 
 export default function CreateProfileChild() {
   const router = useRouter();
@@ -111,218 +113,183 @@ export default function CreateProfileChild() {
   };
 
   const pageContent = (
-    <LinearGradient colors={["#FDF2F8", "#FAF5FF"]} style={{ flex: 1 }}>
-      <LinearGradient
-        colors={COLORS.gradients.header as any}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        className="pt-12 pb-4 shadow-sm z-10 rounded-b-3xl"
-      >
-        <SafeAreaView
-          edges={["top"]}
-          style={{
-            width: "100%",
-            maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined,
-            alignSelf: "center",
-            flexDirection: "row",
-            alignItems: "center",
-            paddingHorizontal: horizontalPadding,
-          }}
+    <View style={styles.page}>
+      <View style={{ ...StyleSheet.absoluteFillObject, overflow: "hidden" }} pointerEvents="none">
+        <View style={styles.bgOrbTop} />
+        <View style={styles.bgOrbBottom} />
+      </View>
+      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
+        <LinearGradient
+          colors={COLORS.gradients.header as any}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
         >
-          <TouchableOpacity onPress={handleBack} className="p-2 mr-2">
-            <Feather name="arrow-left" size={24} color="white" />
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-white">
-            Создать профиль ребенка
-          </Text>
-        </SafeAreaView>
-      </LinearGradient>
+          <SafeAreaView edges={["top"]}>
+            <View style={[styles.gradientHeader, { paddingHorizontal: horizontalPadding }]}>
+              <TouchableOpacity onPress={handleBack} style={styles.headerBackButton}>
+                <Feather name="arrow-left" size={20} color={COLORS.white} />
+                <Text style={styles.headerBackText}>Назад</Text>
+              </TouchableOpacity>
+              <Text style={styles.headerTitle}>Профиль ребенка</Text>
+              <Text style={styles.headerSubtitle}>
+                Данные для кружков, целей и диагностики
+              </Text>
+            </View>
+          </SafeAreaView>
+        </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{
+          flexGrow: 1,
           paddingHorizontal: horizontalPadding,
-          paddingTop: 16,
+          paddingTop: 24,
           paddingBottom: 60,
           alignItems: "center",
         }}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined }}>
-          <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-pink-50">
-            <View className="flex-row items-center mb-4">
-              <Feather name="user" size={20} color="#8B7FE8" />
-              <Text className="text-lg font-semibold text-gray-900 ml-2">О ребенке</Text>
+        <View style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.authMaxWidth : undefined }}>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Feather name="user" size={20} color={ROLE_COLOR} />
+              <Text style={styles.cardTitle}>Основная информация</Text>
             </View>
 
-            <View className="space-y-4">
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-1">Имя</Text>
+            <View style={styles.fieldStack}>
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Имя</Text>
                 <TextInput
                   value={formData.firstName}
                   onChangeText={(text) => setFormData({ ...formData, firstName: text })}
                   placeholder="Как зовут ребенка?"
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                  placeholderTextColor={COLORS.mutedForeground}
+                  style={styles.input}
                 />
               </View>
 
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-1">Телефон (необязательно)</Text>
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Телефон</Text>
                 <TextInput
                   value={formData.phone}
                   onChangeText={(text) => setFormData({ ...formData, phone: formatPhone(text) })}
                   placeholder="+7 777 777 7777"
+                  placeholderTextColor={COLORS.mutedForeground}
                   keyboardType="phone-pad"
-                  className="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200"
+                  style={styles.input}
                 />
-                <Text className="text-[10px] text-gray-400 mt-1 ml-1">Если нет номера, ребенок сможет зайти по QR коду</Text>
+                <Text style={styles.helpText}>Необязательно. Если номера нет, ребенок сможет войти по QR-коду.</Text>
               </View>
 
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-1">Возраст ребенка</Text>
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Возраст</Text>
                 <TouchableOpacity
                   onPress={() => setShowAgePicker(true)}
-                  style={{
-                    backgroundColor: '#F9FAFB',
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: '#E5E7EB',
-                    padding: 14,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
+                  style={styles.selectInput}
                 >
-                  <Text style={{ color: formData.age ? COLORS.foreground : '#9CA3AF', fontSize: 15 }}>
+                  <Text style={[styles.selectText, !formData.age && styles.placeholderText]}>
                     {formData.age ? `${formData.age} лет` : 'Выберите возраст'}
                   </Text>
-                  <Feather name="chevron-down" size={18} color="#9CA3AF" />
+                  <Feather name="chevron-down" size={18} color={COLORS.mutedForeground} />
                 </TouchableOpacity>
               </View>
 
-              <View>
-                <Text className="text-sm font-medium text-gray-700 mb-1">Пол</Text>
-                <View className="flex-row gap-3">
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Пол</Text>
+                <View style={styles.segmented}>
                   <TouchableOpacity
                     onPress={() => setFormData({ ...formData, gender: "boy" })}
-                    style={{
-                      flex: 1,
-                      paddingVertical: 14,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: formData.gender === "boy" ? '#6C5CE7' : '#E5E7EB',
-                      backgroundColor: formData.gender === "boy" ? '#F3F0FF' : '#F9FAFB',
-                      alignItems: 'center',
-                    }}
+                    style={[styles.segment, formData.gender === "boy" && styles.segmentActive]}
                   >
-                    <Text style={{ color: formData.gender === "boy" ? '#6C5CE7' : '#6B7280', fontWeight: '600' }}>Мальчик</Text>
+                    <Text style={[styles.segmentText, formData.gender === "boy" && styles.segmentTextActive]}>Мальчик</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => setFormData({ ...formData, gender: "girl" })}
-                    style={{
-                      flex: 1,
-                      paddingVertical: 14,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: formData.gender === "girl" ? '#6C5CE7' : '#E5E7EB',
-                      backgroundColor: formData.gender === "girl" ? '#F3F0FF' : '#F9FAFB',
-                      alignItems: 'center',
-                    }}
+                    style={[styles.segment, formData.gender === "girl" && styles.segmentActive]}
                   >
-                    <Text style={{ color: formData.gender === "girl" ? '#6C5CE7' : '#6B7280', fontWeight: '600' }}>Девочка</Text>
+                    <Text style={[styles.segmentText, formData.gender === "girl" && styles.segmentTextActive]}>Девочка</Text>
                   </TouchableOpacity>
                 </View>
               </View>
             </View>
           </View>
 
-          <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-pink-50">
-            <View className="flex-row items-center mb-2">
-              <Feather name="heart" size={20} color="#8B7FE8" />
-              <Text className="text-lg font-semibold text-gray-900 ml-2">Интересы</Text>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Feather name="heart" size={20} color={ROLE_COLOR} />
+              <Text style={styles.cardTitle}>Интересы</Text>
             </View>
-            <Text className="text-xs text-gray-400 mb-4">Что нравится вашему ребенку?</Text>
-            <View className="flex-row flex-wrap justify-between">
+            <Text style={styles.cardDescription}>Что нравится ребенку сейчас?</Text>
+            <View style={styles.chipGrid}>
               {availableInterests.map((interest) => {
                 const isSelected = interests.includes(interest);
                 return (
                   <TouchableOpacity
                     key={interest}
                     onPress={() => toggleInterest(interest)}
-                    style={{
-                      width: '48%',
-                      paddingVertical: 12,
-                      paddingHorizontal: 8,
-                      borderRadius: 12,
-                      borderWidth: 2,
-                      borderColor: isSelected ? '#6C5CE7' : '#E5E7EB',
-                      backgroundColor: isSelected ? '#F3F0FF' : '#F9FAFB',
-                      marginBottom: 10,
-                      alignItems: 'center',
-                    }}
+                    style={[styles.chip, isSelected && styles.chipActive]}
                   >
-                    <Text style={{ fontWeight: '500', color: isSelected ? '#6C5CE7' : '#6B7280' }}>{interest}</Text>
+                    <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{interest}</Text>
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {/* Custom interest input */}
-            <Text className="text-xs text-gray-500 mt-2 mb-2">Другие интересы:</Text>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Text style={[styles.fieldLabel, { marginTop: 10 }]}>Другой интерес</Text>
+            <View style={styles.inlineInputRow}>
               <TextInput
                 value={formData.otherInterest}
                 onChangeText={(text) => setFormData({ ...formData, otherInterest: text })}
                 placeholder="Введите интерес ребенка"
-                style={{
-                  flex: 1,
-                  backgroundColor: '#F9FAFB',
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: '#E5E7EB',
-                  padding: 12,
-                  fontSize: 14,
-                }}
+                placeholderTextColor={COLORS.mutedForeground}
+                style={[styles.input, { flex: 1 }]}
               />
               <TouchableOpacity
                 onPress={addOtherInterest}
-                style={{
-                  width: 44,
-                  height: 44,
-                  backgroundColor: '#6C5CE7',
-                  borderRadius: 12,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+                style={styles.addButton}
               >
                 <Feather name="plus" size={20} color="white" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Goals Section */}
-          <View className="bg-white rounded-2xl p-6 shadow-sm mb-6 border border-pink-50">
-            <View className="flex-row items-center mb-2">
-              <Feather name="target" size={20} color="#8B7FE8" />
-              <Text className="text-lg font-semibold text-gray-900 ml-2">Твоя цель</Text>
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Feather name="target" size={20} color={ROLE_COLOR} />
+              <Text style={styles.cardTitle}>Цель</Text>
             </View>
-            <Text className="text-xs text-gray-400 mb-3">Чему ваш ребенок хочет научиться?</Text>
+            <Text style={styles.cardDescription}>Чему ребенок хочет научиться?</Text>
             <TextInput
               value={formData.goals}
               onChangeText={(text) => setFormData({ ...formData, goals: text })}
               placeholder="Например: научиться программировать, стать лучше в математике..."
+              placeholderTextColor={COLORS.mutedForeground}
               multiline
               numberOfLines={3}
-              style={{
-                backgroundColor: '#F9FAFB',
-                borderRadius: 12,
-                borderWidth: 1,
-                borderColor: '#E5E7EB',
-                padding: 14,
-                fontSize: 14,
-                minHeight: 80,
-                textAlignVertical: 'top',
-              }}
+              style={[styles.input, styles.textArea]}
             />
+          </View>
+
+          <View style={styles.footer}>
+            <TouchableOpacity
+                onPress={handleNext}
+                disabled={isSubmitting}
+                activeOpacity={0.8}
+                style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
+            >
+              <LinearGradient
+                colors={COLORS.gradients.header as any}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.submitGradient}
+              >
+                <Text style={styles.submitText}>
+                  {isSubmitting ? "Сохранение..." : "Добавить ребенка"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
 
         </View>
@@ -334,7 +301,7 @@ export default function CreateProfileChild() {
             onPress={() => setShowAgePicker(false)}
           >
             <Pressable
-              style={{ backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '50%' }}
+              style={styles.modalSheet}
               onPress={(e) => e.stopPropagation()}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -379,31 +346,7 @@ export default function CreateProfileChild() {
           </Pressable>
         </Modal>
       </ScrollView>
-
-      {/* Fixed Footer for Button */}
-      <View
-        className="p-6 bg-white border-t border-gray-100 shadow-lg"
-        style={{ width: "100%", maxWidth: isDesktop ? LAYOUT.profileFormMaxWidth : undefined, alignSelf: "center", borderTopLeftRadius: 32, borderTopRightRadius: 32 }}
-      >
-        <TouchableOpacity
-            onPress={handleNext}
-            disabled={isSubmitting}
-            activeOpacity={0.8}
-            style={{ overflow: 'hidden', borderRadius: 20 }}
-        >
-          <LinearGradient
-            colors={COLORS.gradients.header as any}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={{ paddingVertical: 18, alignItems: "center", justifyContent: "center" }}
-          >
-            <Text className="text-white font-black text-lg uppercase tracking-wider">
-              {isSubmitting ? "Сохранение..." : "Добавить ребенка"}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
-    </LinearGradient>
+    </View>
   );
 
   if (isDesktop) {
@@ -424,3 +367,236 @@ export default function CreateProfileChild() {
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  page: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  bgOrbTop: {
+    position: "absolute",
+    top: -70,
+    right: -70,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    backgroundColor: `${ROLE_COLOR}10`,
+  },
+  bgOrbBottom: {
+    position: "absolute",
+    bottom: "18%",
+    left: -90,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: `${ROLE_COLOR}06`,
+  },
+  gradientHeader: {
+    paddingTop: 12,
+    paddingBottom: 32,
+    width: "100%",
+    maxWidth: LAYOUT.authMaxWidth,
+    alignSelf: "center",
+  },
+  headerBackButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginBottom: 18,
+  },
+  headerBackText: {
+    color: COLORS.white,
+    marginLeft: 8,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: "800",
+    color: COLORS.white,
+    letterSpacing: -0.5,
+  },
+  headerSubtitle: {
+    color: "rgba(255,255,255,0.72)",
+    fontSize: 13,
+    fontWeight: "500",
+    marginTop: 4,
+  },
+  card: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.xxl,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.md,
+    marginBottom: 20,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  cardTitle: {
+    fontSize: 17,
+    fontWeight: "700",
+    color: COLORS.foreground,
+    marginLeft: 10,
+  },
+  cardDescription: {
+    color: COLORS.mutedForeground,
+    fontSize: 13,
+    marginBottom: 18,
+  },
+  fieldStack: {
+    gap: 16,
+  },
+  field: {
+    width: "100%",
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: COLORS.foreground,
+    marginBottom: 8,
+  },
+  input: {
+    width: "100%",
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: "#F9FAFB",
+    color: COLORS.foreground,
+    fontSize: 15,
+  },
+  helpText: {
+    color: COLORS.mutedForeground,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 6,
+  },
+  selectInput: {
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: 14,
+    backgroundColor: "#F9FAFB",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  selectText: {
+    color: COLORS.foreground,
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  placeholderText: {
+    color: COLORS.mutedForeground,
+    fontWeight: "400",
+  },
+  segmented: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  segment: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: "#F9FAFB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  segmentActive: {
+    borderColor: ROLE_COLOR,
+    backgroundColor: `${ROLE_COLOR}12`,
+  },
+  segmentText: {
+    color: COLORS.mutedForeground,
+    fontWeight: "700",
+  },
+  segmentTextActive: {
+    color: ROLE_COLOR,
+  },
+  chipGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  chip: {
+    minHeight: 42,
+    paddingHorizontal: 14,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: "#F9FAFB",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chipActive: {
+    borderColor: ROLE_COLOR,
+    backgroundColor: `${ROLE_COLOR}12`,
+  },
+  chipText: {
+    color: COLORS.mutedForeground,
+    fontWeight: "700",
+    fontSize: 13,
+  },
+  chipTextActive: {
+    color: ROLE_COLOR,
+  },
+  inlineInputRow: {
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+  },
+  addButton: {
+    width: 50,
+    height: 50,
+    backgroundColor: ROLE_COLOR,
+    borderRadius: RADIUS.md,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  textArea: {
+    minHeight: 96,
+    textAlignVertical: "top",
+    paddingTop: 14,
+  },
+  modalSheet: {
+    backgroundColor: COLORS.card,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: "50%",
+  },
+  footer: {
+    width: "100%",
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 12,
+    ...SHADOWS.lg,
+  },
+  submitButton: {
+    overflow: "hidden",
+    borderRadius: RADIUS.lg,
+  },
+  submitGradient: {
+    minHeight: 54,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  submitText: {
+    color: COLORS.white,
+    fontWeight: "900",
+    fontSize: 15,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+});

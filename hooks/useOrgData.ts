@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
+import { useDevDataVersion } from "../lib/devDataEvents";
 
 export interface OrgStaffMember {
   id: string;
@@ -86,6 +87,7 @@ async function resolveOrgId(userId: string): Promise<string | null> {
 // ─── useOrgStaff ──────────────────────────────────────────────
 export function useOrgStaff() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [staff, setStaff] = useState<OrgStaffMember[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -109,7 +111,7 @@ export function useOrgStaff() {
       .order("created_at", { ascending: true });
     setStaff(ok<OrgStaffMember>(res));
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -121,6 +123,7 @@ export function useOrgStaff() {
 // ─── useOrgGroups ─────────────────────────────────────────────
 export function useOrgGroups() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [groups, setGroups] = useState<OrgGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -144,7 +147,7 @@ export function useOrgGroups() {
       .order("created_at", { ascending: true });
     setGroups(ok<OrgGroup>(res));
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -156,6 +159,7 @@ export function useOrgGroups() {
 // ─── useOrgApplications ───────────────────────────────────────
 export function useOrgApplications() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [apps, setApps] = useState<OrgApplication[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -179,7 +183,7 @@ export function useOrgApplications() {
       .order("created_at", { ascending: false });
     setApps(ok<OrgApplication>(res));
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -209,6 +213,7 @@ export function useOrgApplications() {
 // ─── useOrgTasks ──────────────────────────────────────────────
 export function useOrgTasks() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [tasks, setTasks] = useState<OrgTask[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -232,7 +237,7 @@ export function useOrgTasks() {
       .order("created_at", { ascending: false });
     setTasks(ok<OrgTask>(res));
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -246,6 +251,7 @@ export type OrgStatus = "new" | "ready_for_review" | "verified" | "rejected" | "
 
 export function useOrgProfile() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{
     id: string | null;
@@ -284,7 +290,7 @@ export function useOrgProfile() {
       });
     }
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -303,6 +309,7 @@ export interface OrgStats {
 
 export function useOrgStats() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [stats, setStats] = useState<OrgStats>({ groupCount: 0, studentCount: 0, pendingCount: 0, staffCount: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -324,7 +331,7 @@ export function useOrgStats() {
       staffCount: staff.count ?? 0,
     });
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -333,6 +340,7 @@ export function useOrgStats() {
 
 // ─── useOrgGroupById ─────────────────────────────────────────
 export function useOrgGroupById(id: string | undefined) {
+  const devDataVersion = useDevDataVersion();
   const [group, setGroup] = useState<OrgGroup | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -342,13 +350,14 @@ export function useOrgGroupById(id: string | undefined) {
       setGroup(res.data ?? null);
       setLoading(false);
     });
-  }, [id]);
+  }, [id, devDataVersion]);
 
   return { group, loading };
 }
 
 // ─── useOrgStaffById ─────────────────────────────────────────
 export function useOrgStaffById(id: string | undefined) {
+  const devDataVersion = useDevDataVersion();
   const [member, setMember] = useState<OrgStaffMember | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -358,7 +367,7 @@ export function useOrgStaffById(id: string | undefined) {
       setMember(res.data ?? null);
       setLoading(false);
     });
-  }, [id]);
+  }, [id, devDataVersion]);
 
   return { member, loading };
 }
@@ -389,6 +398,7 @@ type CourseInput = {
 
 export function useOrgCourses() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [courses, setCourses] = useState<OrgCourse[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -408,7 +418,7 @@ export function useOrgCourses() {
       .order("created_at", { ascending: true });
     setCourses(ok<OrgCourse>(res));
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -458,6 +468,7 @@ export function useOrgCourses() {
 
 // ─── useOrgCourseById ─────────────────────────────────────────
 export function useOrgCourseById(id: string | undefined) {
+  const devDataVersion = useDevDataVersion();
   const [course, setCourse] = useState<OrgCourse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -472,7 +483,7 @@ export function useOrgCourseById(id: string | undefined) {
         setCourse(res.data ?? null);
         setLoading(false);
       });
-  }, [id]);
+  }, [id, devDataVersion]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -482,6 +493,7 @@ export function useOrgCourseById(id: string | undefined) {
 // ─── useOrgSchedule ───────────────────────────────────────────
 export function useOrgSchedule(dayOfWeek?: number) {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [items, setItems] = useState<OrgScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -507,7 +519,7 @@ export function useOrgSchedule(dayOfWeek?: number) {
     const res = await q;
     setItems(ok<OrgScheduleItem>(res));
     setLoading(false);
-  }, [user?.id, dayOfWeek]);
+  }, [user?.id, dayOfWeek, devDataVersion]);
 
   useEffect(() => {
     refresh();

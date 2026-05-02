@@ -13,40 +13,10 @@ import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { StatusBar } from "expo-status-bar";
-import { COLORS, RADIUS, SHADOWS } from "../../../constants/theme";
+import { COLORS, LAYOUT, RADIUS, SHADOWS, TYPOGRAPHY } from "../../../constants/theme";
 import { useChats } from "../../../hooks/useChats";
-import { useAuth } from "../../../contexts/AuthContext";
 
-const DEFAULT_TABS = ["все", "непрочитанные", "уведомления"];
-
-// Mock teacher notifications for demo
-const TEACHER_NOTIFICATIONS = [
-    {
-        id: '1',
-        teacher: 'Марат Калжанов',
-        subject: 'Робототехника',
-        message: 'Алихан сегодня собрал свой первый автономный манипулятор! Очень хороший прогресс в логике программирования.',
-        time: '12:45',
-        type: 'update'
-    },
-    {
-        id: '2',
-        teacher: 'Елена Белова',
-        subject: 'Шахматы',
-        message: 'Завтра в 15:00 будет дополнительная подготовка к турниру. Просьба подтвердить участие.',
-        time: '10:30',
-        type: 'alert'
-    },
-    {
-        id: '3',
-        teacher: 'Арман Сериков',
-        subject: 'Программирование Python',
-        message: 'Дана успешно прошла тест по циклам и функциям. Переходим к изучению объектов.',
-        time: 'Вчера',
-        type: 'update'
-    }
-];
+const DEFAULT_TABS = ["все", "непрочитанные", "архив"];
 
 function formatChatTime(isoString: string): string {
     const d = new Date(isoString);
@@ -66,14 +36,10 @@ function formatChatTime(isoString: string): string {
 
 export default function ChatsScreen() {
     const router = useRouter();
-    const { user } = useAuth();
     const { width } = useWindowDimensions();
-    const IS_DESKTOP = Platform.OS === "web" && width >= 900;
-    const isMentor = user?.role === 'mentor';
-    
-    // For parents, we show "updates" instead of generic tabs sometimes, 
-    // but let's stick to the requested 3 tabs.
-    const TABS = isMentor ? ["все", "родители", "уведомления"] : DEFAULT_TABS;
+    const IS_DESKTOP = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
+    const horizontalPadding = IS_DESKTOP ? LAYOUT.dashboardHorizontalPaddingDesktop : 20;
+    const TABS = DEFAULT_TABS;
     
     const [activeTab, setActiveTab] = useState("все");
     const [search, setSearch] = useState("");
@@ -94,21 +60,32 @@ export default function ChatsScreen() {
 
     return (
         <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-            <StatusBar style="light" />
-            
-            {/* Header with Gradient */}
-            <LinearGradient
-                colors={COLORS.gradients.header as any}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 }}
-            >
-                <SafeAreaView edges={["top"]}>
-                    <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
-                        <Text style={{ fontSize: 32, fontWeight: "900", color: "white", letterSpacing: -1 }}>Чаты</Text>
-                    </View>
-                </SafeAreaView>
-            </LinearGradient>
+            <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
+                <LinearGradient
+                    colors={COLORS.gradients.header as any}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
+                >
+                    <SafeAreaView edges={["top"]}>
+                        <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 32 }}>
+                            <Text
+                                style={{
+                                    fontSize: TYPOGRAPHY.size.xxxl,
+                                    fontWeight: TYPOGRAPHY.weight.semibold,
+                                    color: COLORS.white,
+                                    letterSpacing: TYPOGRAPHY.letterSpacing.tight,
+                                }}
+                            >
+                                Чаты
+                            </Text>
+                            <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, fontWeight: "500", marginTop: 4 }}>
+                                Сообщения и обновления по вашим занятиям
+                            </Text>
+                        </View>
+                    </SafeAreaView>
+                </LinearGradient>
+            </View>
 
             <View style={{ width: IS_DESKTOP ? "50%" : "100%", alignSelf: "center", flex: 1, marginTop: 24 }}>
                 {/* Search */}
@@ -174,65 +151,7 @@ export default function ChatsScreen() {
 
                 {/* Content List */}
                 <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}>
-                    {activeTab === "уведомления" ? (
-                        <>
-                            <Text style={{ fontSize: 15, fontWeight: "700", color: COLORS.foreground, marginBottom: 16, marginLeft: 4 }}>
-                                Обновления от учителей
-                            </Text>
-                            {TEACHER_NOTIFICATIONS.map((notif, idx) => (
-                                <MotiView
-                                    key={notif.id}
-                                    from={{ opacity: 0, translateY: 15 }}
-                                    animate={{ opacity: 1, translateY: 0 }}
-                                    transition={{ duration: 300, delay: idx * 50 }}
-                                    style={{
-                                        backgroundColor: "white",
-                                        borderRadius: 24,
-                                        padding: 16,
-                                        marginBottom: 12,
-                                        borderLeftWidth: 4,
-                                        borderLeftColor: notif.type === 'alert' ? '#FBBF24' : '#34D399',
-                                        borderWidth: 1,
-                                        borderColor: "#F3F4F6",
-                                        ...SHADOWS.sm,
-                                    }}
-                                >
-                                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
-                                        <View style={{
-                                            width: 36, height: 36, borderRadius: 18,
-                                            backgroundColor: notif.type === 'alert' ? '#FEF3C7' : '#D1FAE5',
-                                            alignItems: "center", justifyContent: "center", marginRight: 12,
-                                        }}>
-                                            <Feather
-                                                name={notif.type === 'alert' ? 'alert-circle' : 'message-circle'}
-                                                size={18}
-                                                color={notif.type === 'alert' ? '#D97706' : '#059669'}
-                                            />
-                                        </View>
-                                        <View style={{ flex: 1 }}>
-                                            <Text style={{ fontSize: 15, fontWeight: "700", color: COLORS.foreground }}>
-                                                {notif.teacher}
-                                            </Text>
-                                            <Text style={{ fontSize: 13, color: COLORS.mutedForeground }}>
-                                                {notif.subject}
-                                            </Text>
-                                        </View>
-                                        <Text style={{ fontSize: 12, color: COLORS.mutedForeground }}>
-                                            {notif.time}
-                                        </Text>
-                                    </View>
-                                    <Text style={{ fontSize: 14, color: COLORS.foreground, lineHeight: 20 }}>
-                                        {notif.message}
-                                    </Text>
-                                </MotiView>
-                            ))}
-                            {TEACHER_NOTIFICATIONS.length === 0 && (
-                                <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
-                                    Нет уведомлений
-                                </Text>
-                            )}
-                        </>
-                    ) : loading ? (
+                    {loading ? (
                         <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
                             Загрузка...
                         </Text>
@@ -244,7 +163,7 @@ export default function ChatsScreen() {
                                 style={{ width: "100%" }}
                                 onPress={() =>
                                     router.push({
-                                        pathname: "/modal/chat",
+                                        pathname: "/(tabs)/chats/[id]",
                                         params: { id: chat.id, name: chat.name },
                                     })
                                 }
@@ -310,7 +229,7 @@ export default function ChatsScreen() {
                         ))
                     )}
 
-                    {!loading && filteredChats.length === 0 && activeTab !== "уведомления" && (
+                    {!loading && filteredChats.length === 0 && (
                         <Text style={{ textAlign: "center", marginTop: 40, color: COLORS.mutedForeground }}>
                             Чатов нет
                         </Text>

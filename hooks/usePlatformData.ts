@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth, type UserRole } from "../contexts/AuthContext";
+import { useDevDataVersion } from "../lib/devDataEvents";
 import { isSupabaseConfigured, supabase } from "../lib/supabase";
 
 function ok<T = any>(res: { data: any; error: any }): T[] {
@@ -39,6 +40,7 @@ function subscriptionRole(role: UserRole | null | undefined): SubscriptionPlanRo
 
 export function useSubscriptionPlans(role: UserRole | null | undefined) {
   const planRole = subscriptionRole(role);
+  const devDataVersion = useDevDataVersion();
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -58,7 +60,7 @@ export function useSubscriptionPlans(role: UserRole | null | undefined) {
       .order("display_order", { ascending: true });
     setPlans(ok<SubscriptionPlan>(res));
     setLoading(false);
-  }, [planRole]);
+  }, [planRole, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -93,6 +95,7 @@ function monthLabel(date: Date) {
 
 export function useWalletData(ownerType: "mentor" | "org") {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [orgId, setOrgId] = useState<string | null>(null);
@@ -128,7 +131,7 @@ export function useWalletData(ownerType: "mentor" | "org") {
     const res = await query;
     setTransactions(ok<WalletTransaction>(res));
     setLoading(false);
-  }, [ownerType, user?.id]);
+  }, [ownerType, user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -222,6 +225,7 @@ export interface TeacherAttendanceEntry {
 
 export function useTeacherGroups() {
   const { user } = useAuth();
+  const devDataVersion = useDevDataVersion();
   const [groups, setGroups] = useState<TeacherGroup[]>([]);
   const [studentCounts, setStudentCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -257,7 +261,7 @@ export function useTeacherGroups() {
     setGroups(rows);
     setStudentCounts(counts);
     setLoading(false);
-  }, [user?.id]);
+  }, [user?.id, devDataVersion]);
 
   useEffect(() => {
     refresh();
@@ -387,6 +391,7 @@ const QUESTION_FALLBACKS: Record<OnboardingAudience, OnboardingQuestion[]> = {
 };
 
 export function useOnboardingQuestions(audience: OnboardingAudience) {
+  const devDataVersion = useDevDataVersion();
   const [questions, setQuestions] = useState<OnboardingQuestion[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -409,7 +414,7 @@ export function useOnboardingQuestions(audience: OnboardingAudience) {
           : QUESTION_FALLBACKS[audience]);
         setLoading(false);
       });
-  }, [audience]);
+  }, [audience, devDataVersion]);
 
   return { questions, loading };
 }
