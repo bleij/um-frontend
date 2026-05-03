@@ -1,13 +1,11 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React, { useState } from "react";
 import {
   Alert,
   Modal,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -22,7 +20,6 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { useMentorProfileStats, useMentorOwnProfile } from "../../../hooks/useMentorData";
 
 export default function MentorProfile() {
-  const router = useRouter();
   const { logout, user } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -94,12 +91,6 @@ export default function MentorProfile() {
           <SafeAreaView edges={["top"]}>
             <View style={{ paddingHorizontal: paddingX, paddingTop: 12 }}>
               <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-                <Pressable
-                  onPress={() => router.back()}
-                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
-                >
-                  <Feather name="arrow-left" size={20} color="white" />
-                </Pressable>
                 <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>
                   Профиль ментора
                 </Text>

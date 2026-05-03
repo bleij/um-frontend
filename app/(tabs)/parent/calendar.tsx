@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -61,7 +60,6 @@ function getScheduleTime(schedule: string | null) {
 }
 
 export default function ParentCalendar() {
-  const router = useRouter();
   const { user } = useAuth();
   const { childrenProfile, activeChildId } = useParentData();
   const { width } = useWindowDimensions();
@@ -135,22 +133,6 @@ export default function ParentCalendar() {
         <SafeAreaView edges={["top"]}>
           <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 32 }}>
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-              {!isDesktop && (
-                <Pressable
-                  onPress={() => router.back()}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: "rgba(255,255,255,0.2)",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginRight: 12,
-                  }}
-                >
-                  <Feather name="arrow-left" size={20} color="white" />
-                </Pressable>
-              )}
               <Text style={{ fontSize: 20, fontWeight: "800", color: "white" }}>Календарь</Text>
             </View>
             

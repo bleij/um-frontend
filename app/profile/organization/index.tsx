@@ -1,6 +1,5 @@
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
 import { MotiView } from "moti";
 import React, { useState, useEffect } from "react";
 import {
@@ -21,7 +20,6 @@ import { useOrgProfile } from "../../../hooks/useOrgData";
 import { isSupabaseConfigured, supabase } from "../../../lib/supabase";
 
 export default function OrgProfile() {
-  const router = useRouter();
   const { user, logout } = useAuth();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -107,12 +105,6 @@ export default function OrgProfile() {
           <SafeAreaView edges={["top"]}>
             <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-                <TouchableOpacity
-                   onPress={() => router.back()}
-                   style={styles.backButton}
-                >
-                  <Feather name="arrow-left" size={20} color="white" />
-                </TouchableOpacity>
                 <Text style={{ fontSize: 13, fontWeight: '800', color: 'white', opacity: 0.8, textTransform: 'uppercase', letterSpacing: 1 }}>
                   Настройки профиля
                 </Text>

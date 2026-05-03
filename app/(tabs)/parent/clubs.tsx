@@ -85,14 +85,6 @@ export default function ParentClubs() {
         <SafeAreaView edges={["top"]}>
           <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 32 }}>
             <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-              {!isDesktop && (
-                <Pressable
-                  onPress={() => router.back()}
-                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
-                >
-                  <Feather name="arrow-left" size={20} color="white" />
-                </Pressable>
-              )}
               <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>
                 Каталог кружков
               </Text>
