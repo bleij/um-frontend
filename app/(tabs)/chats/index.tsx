@@ -163,7 +163,7 @@ export default function ChatsScreen() {
                                 style={{ width: "100%" }}
                                 onPress={() =>
                                     router.push({
-                                        pathname: "/(tabs)/chats/[id]",
+                                        pathname: "/chats/[id]",
                                         params: { id: chat.id, name: chat.name },
                                     })
                                 }

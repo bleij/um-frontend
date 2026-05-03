@@ -35,6 +35,10 @@ export default function ChatScreen() {
     scrollRef.current?.scrollToEnd({ animated: true });
   };
 
+  const handleBackToChats = () => {
+    router.replace("/chats");
+  };
+
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
@@ -52,7 +56,7 @@ export default function ChatScreen() {
             <SafeAreaView edges={["top"]}>
               <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: IS_DESKTOP ? LAYOUT.dashboardHorizontalPaddingDesktop : 20, paddingTop: 12, paddingBottom: 20 }}>
                 <TouchableOpacity
-                  onPress={() => router.back()}
+                  onPress={handleBackToChats}
                   style={{
                     width: 40,
                     height: 40,
