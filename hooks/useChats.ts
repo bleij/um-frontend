@@ -25,31 +25,39 @@ export function useChats() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!supabase || !isSupabaseConfigured) {
+    if (!supabase || !isSupabaseConfigured || !user?.id) {
       setChats([]);
       setLoading(false);
       return;
     }
     setLoading(true);
 
-    // Fetch all conversations (RLS is permissive in dev; in prod participants join)
+    const partRes = await supabase
+      .from("conversation_participants")
+      .select("conversation_id, unread_count")
+      .eq("user_id", user.id);
+    const participantRows = ok<any>(partRes);
+    const conversationIds = participantRows
+      .map((row) => row.conversation_id)
+      .filter(Boolean);
+
+    if (conversationIds.length === 0) {
+      setChats([]);
+      setLoading(false);
+      return;
+    }
+
+    const unreadMap = new Map<string, number>();
+    for (const row of participantRows) {
+      unreadMap.set(row.conversation_id, row.unread_count ?? 0);
+    }
+
     const convRes = await supabase
       .from("conversations")
       .select("id, name, icon_name, last_message, last_message_at, archived")
+      .in("id", conversationIds)
       .order("last_message_at", { ascending: false });
     const convRows = ok<any>(convRes);
-
-    // Fetch unread counts for current user if available
-    const unreadMap = new Map<string, number>();
-    if (user?.id) {
-      const partRes = await supabase
-        .from("conversation_participants")
-        .select("conversation_id, unread_count")
-        .eq("user_id", user.id);
-      for (const row of ok<any>(partRes)) {
-        unreadMap.set(row.conversation_id, row.unread_count ?? 0);
-      }
-    }
 
     setChats(
       convRows.map((c: any) => ({
