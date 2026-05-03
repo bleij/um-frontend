@@ -24,6 +24,12 @@ export async function clearDevData() {
   if (error) throw new Error(formatSupabaseError(error));
 }
 
+export async function clearAllDevData() {
+  const client = requireSupabase();
+  const { error } = await client.rpc("clear_all_dev_data");
+  if (error) throw new Error(formatSupabaseError(error));
+}
+
 export async function getDevDataSeeded() {
   const client = requireSupabase();
   const { data, error } = await client.rpc("is_dev_data_seeded");

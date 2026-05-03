@@ -9,7 +9,7 @@ import { useAuth, UserRole } from '../contexts/AuthContext';
 import { useDevSettings } from '../contexts/DevSettingsContext';
 import { useParentData } from '../contexts/ParentDataContext';
 import { emitDevDataChanged } from '../lib/devDataEvents';
-import { clearDevData, getDevDataSeeded, seedDevData } from '../lib/devSeedData';
+import { clearAllDevData, clearDevData, getDevDataSeeded, seedDevData } from '../lib/devSeedData';
 import { COLORS, RADIUS, SHADOWS } from '../constants/theme';
 import { Feather } from '@expo/vector-icons';
 
@@ -73,6 +73,43 @@ export function DevRoleSwitcher() {
     } finally {
       setSyncingDevData(false);
     }
+  };
+
+  const runClearAllPopulatedDevData = async () => {
+    setSyncingDevData(true);
+    try {
+      await clearAllDevData();
+      setDevDataEnabled(false);
+      await AsyncStorage.setItem(DEV_DATA_KEY, 'false');
+      emitDevDataChanged();
+    } catch (error) {
+      notifyDevDataError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      setSyncingDevData(false);
+    }
+  };
+
+  const clearAllPopulatedDevData = async () => {
+    if (!canManageDevData) return;
+
+    const title = 'Clear all populated data?';
+    const message = 'This restores every active dev snapshot and removes populated records for everyone.';
+
+    if (Platform.OS === 'web') {
+      if (globalThis.confirm(`${title}\n\n${message}`)) {
+        await runClearAllPopulatedDevData();
+      }
+      return;
+    }
+
+    Alert.alert(title, message, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear all',
+        style: 'destructive',
+        onPress: runClearAllPopulatedDevData,
+      },
+    ]);
   };
 
   // Restore persisted master state when modal opens
@@ -198,6 +235,24 @@ export function DevRoleSwitcher() {
                   />
                 )}
               </View>
+
+              <TouchableOpacity
+                style={[
+                  styles.clearAllDevDataButton,
+                  (!canManageDevData || syncingDevData) && styles.disabledRoleButton,
+                ]}
+                onPress={clearAllPopulatedDevData}
+                disabled={!canManageDevData || syncingDevData}
+                activeOpacity={0.75}
+              >
+                <Feather
+                  name="trash-2"
+                  size={14}
+                  color={COLORS.destructive}
+                  style={styles.roleButtonSpinner}
+                />
+                <Text style={styles.clearAllDevDataText}>Clear all populated data</Text>
+              </TouchableOpacity>
 
               {/* ── All options gated by devToolsEnabled ── */}
               <View style={{ opacity: devToolsEnabled ? 1 : 0.35 }} pointerEvents={devToolsEnabled ? 'auto' : 'none'}>
@@ -491,6 +546,25 @@ const styles = StyleSheet.create({
   clearRoleButton: {
     backgroundColor: COLORS.background,
     borderColor: COLORS.destructive,
+  },
+  clearAllDevDataButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 40,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginTop: -4,
+    marginBottom: 16,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.destructive,
+    backgroundColor: COLORS.background,
+  },
+  clearAllDevDataText: {
+    color: COLORS.destructive,
+    fontWeight: '600',
+    fontSize: 13,
   },
   disabledRoleButton: {
     opacity: 0.5,
