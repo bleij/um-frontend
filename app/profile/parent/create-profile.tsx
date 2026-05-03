@@ -29,7 +29,7 @@ function generateQRPin(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-type AgeGroup = "6-11" | "12-17" | "18-20";
+type AgeGroup = "6-8" | "9-11" | "12-14" | "15-17";
 
 type Child = {
   id: string;
@@ -43,8 +43,10 @@ type Child = {
 };
 
 const AGE_OPTIONS: { label: string; value: AgeGroup }[] = [
-  { label: "Ребенок (6-11)", value: "6-11" },
-  { label: "Подросток (12-17)", value: "12-17" },
+  { label: "6-8", value: "6-8" },
+  { label: "9-11", value: "9-11" },
+  { label: "12-14", value: "12-14" },
+  { label: "15-17", value: "15-17" },
 ];
 
 function makeId() {
