@@ -10,9 +10,8 @@ import {
   Pressable,
   Text,
   useWindowDimensions,
-  View
+  View,
 } from "react-native";
-import { Easing } from "react-native-reanimated";
 import { COLORS, LAYOUT, RADIUS, SHADOWS } from "../../constants/theme";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -23,7 +22,8 @@ export type Role =
   | "young-adult"
   | "mentor"
   | "org"
-  | "teacher";
+  | "teacher"
+  | "admin";
 
 type TabItem = {
   key: string;
@@ -32,19 +32,27 @@ type TabItem = {
   icon: (props: { color: string; size: number }) => React.ReactNode;
 };
 
-export function TabIcon({ icon, color, focused }: { icon: any; color: string; focused: boolean }) {
+export function TabIcon({
+  icon,
+  color,
+  focused,
+}: {
+  icon: any;
+  color: string;
+  focused: boolean;
+}) {
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ alignItems: "center", justifyContent: "center" }}>
       <Feather name={icon} size={22} color={color} />
       {focused && (
         <View
           style={{
-            position: 'absolute',
+            position: "absolute",
             bottom: -8,
             width: 4,
             height: 4,
             borderRadius: 2,
-            backgroundColor: color
+            backgroundColor: color,
           }}
         />
       )}
@@ -297,6 +305,57 @@ const TABS_BY_ROLE: Record<string, TabItem[]> = {
       ),
     },
   ],
+
+  admin: [
+    {
+      key: "home",
+      label: "Очередь",
+      route: "home",
+      icon: ({ color, size }) => (
+        <Feather name="inbox" size={size} color={color} />
+      ),
+    },
+    {
+      key: "admin/users",
+      label: "Пользователи",
+      route: "admin/users",
+      icon: ({ color, size }) => (
+        <Feather name="users" size={size} color={color} />
+      ),
+    },
+    {
+      key: "admin/organizations",
+      label: "Организации",
+      route: "admin/organizations",
+      icon: ({ color, size }) => (
+        <Feather name="briefcase" size={size} color={color} />
+      ),
+    },
+    {
+      key: "admin/billing",
+      label: "Биллинг",
+      route: "admin/billing",
+      icon: ({ color, size }) => (
+        <Feather name="dollar-sign" size={size} color={color} />
+      ),
+    },
+    {
+      key: "admin/support",
+      label: "Поддержка",
+      route: "admin/support",
+      icon: ({ color, size }) => (
+        <Feather name="shield" size={size} color={color} />
+      ),
+    },
+    {
+      key: "admin/settings",
+      label: "Настройки",
+      route: "admin/settings",
+      icon: ({ color, size }) => (
+        <Feather name="sliders" size={size} color={color} />
+      ),
+    },
+  ],
 };
 
 const DEFAULT_TABS: TabItem[] = [
@@ -430,6 +489,7 @@ export function NotificationsModal({
 // ─── Desktop side nav ────────────────────────────────────────────────────────
 
 export function SideNav({ role }: Props) {
+  const router = useRouter();
   const { tabs, go, isActive } = useTabNav(role);
   const { user, logout } = useAuth();
 
@@ -457,7 +517,7 @@ export function SideNav({ role }: Props) {
         borderRightWidth: 1,
         borderRightColor: COLORS.border,
         flexDirection: "column",
-        height: '100%'
+        height: "100%",
       }}
     >
       {/* Brand header */}
@@ -556,11 +616,12 @@ export function SideNav({ role }: Props) {
             alignItems: "center",
             padding: 10,
             borderRadius: RADIUS.sm,
-            backgroundColor: dropdownVisible || pressed
-              ? COLORS.muted
-              : hovered
-                ? `${COLORS.muted}CC`
-                : "transparent",
+            backgroundColor:
+              dropdownVisible || pressed
+                ? COLORS.muted
+                : hovered
+                  ? `${COLORS.muted}CC`
+                  : "transparent",
           })}
         >
           <View
@@ -631,7 +692,10 @@ export function SideNav({ role }: Props) {
               {
                 label: "Редактировать профиль",
                 icon: "user" as const,
-                onPress: () => { setDropdownVisible(false); go("profile"); },
+                onPress: () => {
+                  setDropdownVisible(false);
+                  go("profile");
+                },
                 destructive: false,
               },
               {
@@ -675,13 +739,19 @@ export function SideNav({ role }: Props) {
                 <Feather
                   name={item.icon}
                   size={16}
-                  color={item.destructive ? COLORS.destructive : COLORS.mutedForeground}
+                  color={
+                    item.destructive
+                      ? COLORS.destructive
+                      : COLORS.mutedForeground
+                  }
                   style={{ marginRight: 12 }}
                 />
                 <Text
                   style={{
                     fontSize: 14,
-                    color: item.destructive ? COLORS.destructive : COLORS.foreground,
+                    color: item.destructive
+                      ? COLORS.destructive
+                      : COLORS.foreground,
                     fontWeight: item.destructive ? "500" : "400",
                   }}
                 >
@@ -710,7 +780,9 @@ export default function CustomTabBar({ role }: Props) {
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
 
-  const isClubDetail = segments.includes('club') && segments.some(s => s === '[id]' || s.startsWith('club-'));
+  const isClubDetail =
+    segments.includes("club") &&
+    segments.some((s) => s === "[id]" || s.startsWith("club-"));
 
   if (isClubDetail && !isDesktop) return null;
 
@@ -718,11 +790,13 @@ export default function CustomTabBar({ role }: Props) {
   const padding = 12;
   const safeAreaBottom = Platform.OS === "ios" ? 24 : 12;
 
-  const containerWidth = isDesktop ? Math.min(width, LAYOUT.dashboardMaxWidth) : width;
-  const usableWidth = containerWidth - (padding * 2);
+  const containerWidth = isDesktop
+    ? Math.min(width, LAYOUT.dashboardMaxWidth)
+    : width;
+  const usableWidth = containerWidth - padding * 2;
   const tabWidth = usableWidth / numTabs;
 
-  const activeIndex = tabs.findIndex(t => isActive(t.route));
+  const activeIndex = tabs.findIndex((t) => isActive(t.route));
 
   return (
     <View
@@ -740,7 +814,7 @@ export default function CustomTabBar({ role }: Props) {
           width: containerWidth,
           borderTopLeftRadius: 40,
           borderTopRightRadius: 40,
-          backgroundColor: 'transparent'
+          backgroundColor: "transparent",
         }}
       >
         <BlurView
@@ -790,7 +864,7 @@ export default function CustomTabBar({ role }: Props) {
             >
               <MotiView
                 animate={{
-                  translateX: (-activeIndex * tabWidth) - 20,
+                  translateX: -activeIndex * tabWidth - 20,
                 }}
                 transition={{
                   type: "spring",

@@ -1,2247 +1,617 @@
-import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
 import {
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  ScrollView,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+  AdminCard,
+  AdminHeader,
+  formatKZT,
+  useAdminLayout,
+  useAdminNavigation,
+} from "@/components/admin/shared";
 import {
   COLORS,
-  LAYOUT,
   RADIUS,
   SHADOWS,
   SPACING,
   TYPOGRAPHY,
-} from "../../constants/theme";
-import { LEVEL_LABELS } from "../../constants/courseOptions";
-import { useAuth } from "../../contexts/AuthContext";
-import { isSupabaseConfigured, supabase } from "../../lib/supabase";
+} from "@/constants/theme";
 import {
-  MentorApp,
   useAdminCourses,
   useAdminEnrollments,
-  useAdminOnboardingQuestions,
   useAdminStats,
-  useAIRules,
   useAllUsers,
   useFamilies,
   useMentorApps,
   useOrganizations,
-  useTags,
   useTickets,
   useTransactions,
-} from "../../hooks/useAdminData";
+} from "@/hooks/useAdminData";
+import { Feather } from "@expo/vector-icons";
+import React from "react";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-function formatKZT(n: number): string {
-  if (!Number.isFinite(n)) return "0 ₸";
-  return `${Math.round(n).toLocaleString("ru-RU")} ₸`;
-}
-
-function formatDate(iso: string): string {
-  try {
-    const d = new Date(iso);
-    return d.toLocaleDateString("ru-RU", {
-      day: "2-digit",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-const USER_ROLES = ["all", "parent", "youth", "child", "mentor", "org", "admin"] as const;
-
-const ROLE_LABELS: Record<string, string> = {
-  all: "Все",
-  parent: "Родители",
-  youth: "Молодёжь",
-  child: "Дети",
-  mentor: "Менторы",
-  org: "Организации",
-  admin: "Администраторы",
-};
-
-const ROLE_COLORS: Record<string, { bg: string; color: string }> = {
-  parent: { bg: "#EDE9FE", color: "#6C5CE7" },
-  youth: { bg: "#DBEAFE", color: "#2563EB" },
-  child: { bg: "#DCFCE7", color: "#16A34A" },
-  mentor: { bg: "#FEF9C3", color: "#CA8A04" },
-  org: { bg: "#FEE2E2", color: "#DC2626" },
-  admin: { bg: "#F3F4F6", color: "#374151" },
-};
-
-export default function AdminHome() {
-  const { width } = useWindowDimensions();
-  const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
-  const isTablet = width >= 768;
-  const paddingX = isDesktop
-    ? LAYOUT.dashboardHorizontalPaddingDesktop
-    : SPACING.xl;
-
-  const router = useRouter();
-  const { user, logout } = useAuth();
-
+export default function AdminOverviewScreen() {
+  const { isTablet, paddingX } = useAdminLayout();
+  const goAdmin = useAdminNavigation();
   const families = useFamilies();
   const mentorApps = useMentorApps();
   const orgs = useOrganizations();
   const txs = useTransactions();
   const tickets = useTickets();
-  const tags = useTags();
-  const aiRules = useAIRules();
-  const onboardingQuestions = useAdminOnboardingQuestions();
-  const adminCourses = useAdminCourses();
-  const allUsers = useAllUsers();
+  const courses = useAdminCourses();
+  const users = useAllUsers();
   const enrollments = useAdminEnrollments();
   const stats = useAdminStats(mentorApps.data, txs.data, families.data);
 
-  const pendingMentors = mentorApps.data.filter((m) => m.status === "pending");
-  const pendingCourses = adminCourses.data.filter((c) => c.status === "draft");
-  const pendingEnrollments = enrollments.data.filter((e) => e.status === "awaiting_payment");
-  const [selectedMentorId, setSelectedMentorId] = useState<string | null>(null);
-  const selectedMentor: MentorApp | null =
-    mentorApps.data.find((m) => m.id === selectedMentorId) ??
-    pendingMentors[0] ??
-    null;
+  const draftCourses = courses.data.filter((c) => c.status === "draft").length;
+  const activeCourses = courses.data.filter(
+    (c) => c.status === "active",
+  ).length;
+  const orgsNeedingAction = orgs.data.filter(
+    (o) => o.status === "pending" || o.status === "ready_for_review",
+  ).length;
+  const verifiedOrgs = orgs.data.filter((o) => o.status === "verified").length;
+  const pendingEnrollments = enrollments.data.filter(
+    (e) => e.status === "awaiting_payment",
+  ).length;
+  const unresolvedTickets = tickets.data.filter(
+    (t) => t.status !== "resolved",
+  ).length;
+  const totalPending =
+    stats.pendingMentors +
+    orgsNeedingAction +
+    draftCourses +
+    pendingEnrollments;
 
-  const [crmSearchMentors, setCrmSearchMentors] = useState("");
-  const [crmSearchUsers, setCrmSearchUsers] = useState("");
-  const [crmSearchActiveMentors, setCrmSearchActiveMentors] = useState("");
-  const [userRoleFilter, setUserRoleFilter] = useState("all");
-  const [newTagName, setNewTagName] = useState("");
-  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
-  const [editingRule, setEditingRule] = useState<{ name: string; condition: string; recommendation_title: string; recommendation_body: string }>({ name: "", condition: "", recommendation_title: "", recommendation_body: "" });
-  const [activeTab, setActiveTab] = useState("overview");
-  const [crmSubTab, setCrmSubTab] = useState("mentors");
-  const [orgsSubTab, setOrgsSubTab] = useState("orgs");
-  const [contentSubTab, setContentSubTab] = useState("onboarding");
-  const [billingSubTab, setBillingSubTab] = useState("transactions");
-  const [qcSubTab, setQcSubTab] = useState("logs");
-  const [pendingReject, setPendingReject] = useState<{ type: "mentor" | "course"; id: string; name: string } | null>(null);
-  const [rejectReasonInput, setRejectReasonInput] = useState("");
-  const [commissionDrafts, setCommissionDrafts] = useState<Record<string, string>>({});
-
-  // Start or resume a conversation between admin and an org owner
-  const handleStartOrgChat = async (orgId: string, orgName: string, ownerUserId: string | null) => {
-    if (!supabase || !isSupabaseConfigured || !user?.id) return;
-    if (!ownerUserId) {
-      Alert.alert("Нет владельца", "У организации не указан владелец.");
-      return;
-    }
-
-    // Look for an existing conversation shared by admin + org owner
-    const [adminParts, ownerParts] = await Promise.all([
-      supabase.from("conversation_participants").select("conversation_id").eq("user_id", user.id),
-      supabase.from("conversation_participants").select("conversation_id").eq("user_id", ownerUserId),
-    ]);
-    const adminIds = new Set((adminParts.data ?? []).map((p: any) => p.conversation_id));
-    const shared = (ownerParts.data ?? []).find((p: any) => adminIds.has(p.conversation_id));
-
-    let convId: string | null = shared?.conversation_id ?? null;
-
-    if (!convId) {
-      const { data: conv, error } = await supabase
-        .from("conversations")
-        .insert({ name: orgName, icon_name: "briefcase", last_message_at: new Date().toISOString() })
-        .select()
-        .single();
-      if (error || !conv) { Alert.alert("Ошибка", error?.message ?? "Не удалось создать чат"); return; }
-      convId = conv.id;
-      await supabase.from("conversation_participants").insert([
-        { conversation_id: convId, user_id: user.id, unread_count: 0 },
-        { conversation_id: convId, user_id: ownerUserId, unread_count: 0 },
-      ]);
-    }
-
-    router.push({ pathname: "/(tabs)/chats/[id]", params: { id: convId, name: orgName } } as any);
-  };
-
-  const orgsNeedingAction = orgs.data.filter((o) => o.status === "pending" || o.status === "ready_for_review");
-  const totalPendingActions = stats.pendingMentors + pendingCourses.length + orgsNeedingAction.length + pendingEnrollments.length;
-
-  const NAV_ITEMS = [
-    { id: "overview", label: "Обзор платформы", icon: "activity" },
+  const queue = [
     {
-      id: "crm",
-      label: "Пользователи & CRM",
-      icon: "users",
-      badge: stats.pendingMentors || undefined,
+      title: "Заявки менторов",
+      count: stats.pendingMentors,
+      description: "Проверьте профиль, специализацию и описание",
+      icon: "user-check",
+      color: COLORS.primary,
+      action: () => goAdmin("users"),
     },
-    { id: "content", label: "ИИ & Контент", icon: "cpu" },
-    { id: "billing", label: "Биллинг", icon: "dollar-sign" },
     {
-      id: "orgs",
-      label: "Организации",
+      title: "Проверка организаций",
+      count: orgsNeedingAction,
+      description: "Активируйте или отклоните центры на проверке",
       icon: "briefcase",
-      badge: (orgsNeedingAction.length + pendingCourses.length + pendingEnrollments.length) || undefined,
+      color: "#2563EB",
+      action: () => goAdmin("organizations"),
     },
-    { id: "qc", label: "Контроль качества", icon: "shield" },
+    {
+      title: "Модерация курсов",
+      count: draftCourses,
+      description: "Опубликуйте курс или верните с причиной отказа",
+      icon: "book-open",
+      color: "#CA8A04",
+      action: () => goAdmin("organizations"),
+    },
+    {
+      title: "Оплаты записей",
+      count: pendingEnrollments,
+      description: "Отметьте оплату, активируйте запись или отклоните",
+      icon: "credit-card",
+      color: COLORS.destructive,
+      action: () => goAdmin("organizations"),
+    },
+  ];
+  const visibleQueue = queue.filter((item) => item.count > 0);
+  const metrics = [
+    {
+      label: "Пользователи",
+      value: users.data.length,
+      detail: `${families.data.length} семей`,
+      icon: "users",
+      color: COLORS.primary,
+      action: () => goAdmin("users"),
+    },
+    {
+      label: "Проверенные орг.",
+      value: verifiedOrgs,
+      detail: `${orgs.data.length} всего`,
+      icon: "briefcase",
+      color: "#2563EB",
+      action: () => goAdmin("organizations"),
+    },
+    {
+      label: "Активные курсы",
+      value: activeCourses,
+      detail: `${draftCourses} на проверке`,
+      icon: "book-open",
+      color: COLORS.success,
+      action: () => goAdmin("organizations"),
+    },
+    {
+      label: "Поддержка",
+      value: unresolvedTickets,
+      detail: "открытых обращений",
+      icon: "shield",
+      color: COLORS.destructive,
+      action: () => goAdmin("support"),
+    },
+    {
+      label: "Доход",
+      value: formatKZT(stats.revenue),
+      detail: `${formatKZT(stats.gmv)} оборот`,
+      icon: "dollar-sign",
+      color: "#CA8A04",
+      action: () => goAdmin("billing"),
+    },
   ];
 
-  const filteredMentors = mentorApps.data.filter((m) =>
-    crmSearchMentors.trim() === ""
-      ? true
-      : m.name.toLowerCase().includes(crmSearchMentors.toLowerCase()),
-  );
-
-  const renderCRMView = () => {
-    const filteredUsers = allUsers.data.filter((u) => {
-      const matchesRole = userRoleFilter === "all" || u.role === userRoleFilter;
-      const matchesSearch = crmSearchUsers.trim() === "" ||
-        `${u.first_name ?? ""} ${u.last_name ?? ""}`.toLowerCase().includes(crmSearchUsers.toLowerCase()) ||
-        (u.phone ?? "").includes(crmSearchUsers);
-      return matchesRole && matchesSearch;
-    });
-    return (
-    <View style={{ flex: 1 }}>
-      <View
-        style={{
-          padding: paddingX,
-          borderBottomWidth: 1,
-          borderColor: COLORS.border,
-          backgroundColor: COLORS.surface,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: TYPOGRAPHY.size.xl,
-            fontWeight: TYPOGRAPHY.weight.bold,
-            color: COLORS.foreground,
-            marginBottom: 4,
-          }}
-        >
-          Пользователи & CRM
-        </Text>
-        <Text
-          style={{
-            fontSize: TYPOGRAPHY.size.sm,
-            color: COLORS.mutedForeground,
-            marginBottom: SPACING.lg,
-          }}
-        >
-          Управление аккаунтами и модерация заявок
-        </Text>
-
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "center",
-            backgroundColor: COLORS.background,
-            borderRadius: RADIUS.md,
-            paddingHorizontal: SPACING.md,
-            borderWidth: 1,
-            borderColor: COLORS.border,
-          }}
-        >
-          <Feather name="search" size={18} color={COLORS.mutedForeground} />
-          <TextInput
-            style={{
-              flex: 1,
-              padding: SPACING.md,
-              fontSize: TYPOGRAPHY.size.sm,
-              color: COLORS.foreground,
+  return (
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <AdminHeader
+        title="Очередь проверки"
+        subtitle="Сначала разберите операционные задачи, потом отчеты и настройки."
+        trailing={
+          <TouchableOpacity
+            onPress={() => {
+              families.refresh();
+              mentorApps.refresh();
+              orgs.refresh();
+              txs.refresh();
+              courses.refresh();
+              users.refresh();
+              enrollments.refresh();
+              tickets.refresh();
             }}
-            placeholder="Поиск по имени или телефону..."
-            value={crmSubTab === "users" ? crmSearchUsers : crmSubTab === "active_mentors" ? crmSearchActiveMentors : crmSearchMentors}
-            onChangeText={crmSubTab === "users" ? setCrmSearchUsers : crmSubTab === "active_mentors" ? setCrmSearchActiveMentors : setCrmSearchMentors}
-          />
-        </View>
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row",
-          gap: SPACING.sm,
-          paddingHorizontal: paddingX,
-          marginVertical: SPACING.md,
-        }}
-      >
-        {(["mentors", "active_mentors", "users", "families"] as const).map((t) => {
-          const activeMentorCount = mentorApps.data.filter((m) => m.status === "approved").length;
-          const labels: Record<string, string> = {
-            mentors: `Заявки${stats.pendingMentors > 0 ? ` (${stats.pendingMentors})` : ""}`,
-            active_mentors: `Менторы (${activeMentorCount})`,
-            users: "Все пользователи",
-            families: "Семьи",
-          };
-          return (
-            <TouchableOpacity
-              key={t}
-              onPress={() => setCrmSubTab(t)}
-              style={{
-                paddingVertical: 8,
-                paddingHorizontal: 16,
-                backgroundColor: crmSubTab === t ? COLORS.primary : COLORS.muted,
-                borderRadius: RADIUS.full,
-              }}
-            >
-              <Text style={{ color: crmSubTab === t ? "white" : COLORS.foreground, fontWeight: "600", fontSize: 13 }}>
-                {labels[t]}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {crmSubTab === "users" && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingLeft: paddingX, marginBottom: SPACING.sm, flexGrow: 0 }}>
-          {USER_ROLES.map((r) => (
-            <TouchableOpacity
-              key={r}
-              onPress={() => setUserRoleFilter(r)}
-              style={{
-                paddingVertical: 5,
-                paddingHorizontal: 12,
-                marginRight: 6,
-                backgroundColor: userRoleFilter === r ? COLORS.foreground : COLORS.muted,
-                borderRadius: RADIUS.full,
-              }}
-            >
-              <Text style={{ color: userRoleFilter === r ? "white" : COLORS.mutedForeground, fontWeight: "600", fontSize: 12 }}>
-                {ROLE_LABELS[r]}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      )}
-
-      <View style={{ flex: 1, flexDirection: isTablet ? "row" : "column" }}>
-        <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
-          {crmSubTab === "mentors" && mentorApps.loading && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
-            </View>
-          )}
-          {crmSubTab === "mentors" && !mentorApps.loading && filteredMentors.length === 0 && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Заявок нет.</Text>
-            </View>
-          )}
-          {crmSubTab === "mentors" && filteredMentors.map((m) => {
-            const statusLabel = m.status === "pending" ? "В ожидании" : m.status === "approved" ? "Одобрен" : "Отклонён";
-            const statusBg = m.status === "pending" ? "#FEF9C3" : m.status === "approved" ? COLORS.success + "20" : COLORS.destructive + "20";
-            const statusColor = m.status === "pending" ? "#854D0E" : m.status === "approved" ? COLORS.success : COLORS.destructive;
-            return (
-              <TouchableOpacity
-                key={m.id}
-                onPress={() => setSelectedMentorId(m.id)}
-                style={{
-                  padding: SPACING.lg,
-                  borderBottomWidth: 1,
-                  borderColor: COLORS.border,
-                  backgroundColor: selectedMentor?.id === m.id ? COLORS.primary + "05" : COLORS.surface,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: SPACING.md,
-                }}
-              >
-                <View style={{ width: 48, height: 48, borderRadius: RADIUS.full, backgroundColor: COLORS.primary + "15", alignItems: "center", justifyContent: "center" }}>
-                  <Text style={{ fontSize: 24 }}>{m.photo_emoji}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{m.name}</Text>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 2 }}>{m.specialization ?? "—"}</Text>
-                </View>
-                <View style={{ backgroundColor: statusBg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 10, fontWeight: "bold", color: statusColor, textTransform: "uppercase" }}>{statusLabel}</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-
-          {crmSubTab === "users" && allUsers.loading && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
-            </View>
-          )}
-          {crmSubTab === "users" && !allUsers.loading && filteredUsers.length === 0 && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Пользователей не найдено.</Text>
-            </View>
-          )}
-          {crmSubTab === "users" && !allUsers.loading && filteredUsers.map((u) => {
-            const rc = ROLE_COLORS[u.role] ?? { bg: "#F3F4F6", color: "#374151" };
-            const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() || "—";
-            const roleLabel = ROLE_LABELS[u.role] ?? u.role;
-            return (
-              <View
-                key={u.id}
-                style={{
-                  padding: SPACING.lg,
-                  borderBottomWidth: 1,
-                  borderColor: COLORS.border,
-                  backgroundColor: COLORS.surface,
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: SPACING.md,
-                }}
-              >
-                <View style={{ width: 44, height: 44, borderRadius: RADIUS.full, backgroundColor: rc.bg, alignItems: "center", justifyContent: "center" }}>
-                  <Text style={{ fontSize: 18, fontWeight: "bold", color: rc.color }}>{(u.first_name ?? "?").charAt(0).toUpperCase()}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{name}</Text>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 1 }}>
-                    {u.phone ?? "—"} • {formatDate(u.updated_at)}
-                  </Text>
-                </View>
-                <View style={{ backgroundColor: rc.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 10, fontWeight: "bold", color: rc.color, textTransform: "uppercase" }}>{roleLabel}</Text>
-                </View>
-              </View>
-            );
-          })}
-
-          {crmSubTab === "active_mentors" && mentorApps.data
-            .filter((m) => m.status === "approved" && (crmSearchActiveMentors.trim() === "" || m.name.toLowerCase().includes(crmSearchActiveMentors.toLowerCase())))
-            .map((m) => (
-              <View
-                key={m.id}
-                style={{ padding: SPACING.lg, borderBottomWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface, flexDirection: "row", alignItems: "center", gap: SPACING.md }}
-              >
-                <View style={{ width: 48, height: 48, borderRadius: RADIUS.full, backgroundColor: COLORS.success + "15", alignItems: "center", justifyContent: "center" }}>
-                  <Text style={{ fontSize: 24 }}>{m.photo_emoji}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{m.name}</Text>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 2 }}>
-                    {m.specialization ?? "—"} • {m.sessions} сессий • ★ {m.rating.toFixed(1)}
-                  </Text>
-                </View>
-                <View style={{ flexDirection: "row", gap: SPACING.sm, alignItems: "center" }}>
-                  <View style={{ backgroundColor: COLORS.success + "20", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full }}>
-                    <Text style={{ fontSize: 10, fontWeight: "bold", color: COLORS.success, textTransform: "uppercase" }}>Активен</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => Alert.alert(
-                      "Деактивировать ментора?",
-                      `${m.name} будет удалён из списка активных менторов.`,
-                      [
-                        { text: "Отмена", style: "cancel" },
-                        { text: "Деактивировать", style: "destructive", onPress: () => mentorApps.reject(m.id) },
-                      ],
-                    )}
-                    style={{ width: 32, height: 32, borderRadius: RADIUS.md, backgroundColor: COLORS.destructive + "15", alignItems: "center", justifyContent: "center" }}
-                  >
-                    <Feather name="user-x" size={14} color={COLORS.destructive} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))}
-
-          {crmSubTab === "families" && families.loading && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
-            </View>
-          )}
-          {crmSubTab === "families" && !families.loading && families.data.length === 0 && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Пока нет зарегистрированных семей.</Text>
-            </View>
-          )}
-          {crmSubTab === "families" && !families.loading && families.data.map((f) => (
-            <View
-              key={f.id}
-              style={{
-                padding: SPACING.lg,
-                borderBottomWidth: 1,
-                borderColor: COLORS.border,
-                backgroundColor: COLORS.surface,
-                flexDirection: "row",
-                alignItems: "center",
-                gap: SPACING.md,
-              }}
-            >
-              <View style={{ width: 48, height: 48, borderRadius: RADIUS.full, backgroundColor: COLORS.muted, alignItems: "center", justifyContent: "center" }}>
-                <Feather name="users" size={24} color={COLORS.mutedForeground} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{f.parentName}</Text>
-                <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 2 }}>Детей: {f.children}</Text>
-              </View>
-              <View style={{ backgroundColor: f.plan === "Pro" ? COLORS.primary + "20" : COLORS.muted, paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full }}>
-                <Text style={{ fontSize: 10, fontWeight: "bold", color: f.plan === "Pro" ? COLORS.primary : COLORS.mutedForeground, textTransform: "uppercase" }}>{f.plan}</Text>
-              </View>
-            </View>
-          ))}
-        </ScrollView>
-
-        {crmSubTab === "mentors" && selectedMentor && (
-          <View
             style={{
-              width: isTablet ? 320 : "100%",
-              backgroundColor: COLORS.surface,
-              borderLeftWidth: 1,
-              borderColor: COLORS.border,
-              padding: SPACING.xl,
-            }}
-          >
-            <ScrollView showsVerticalScrollIndicator={false}>
-              <View style={{ alignItems: "center", marginBottom: SPACING.xl }}>
-                <View
-                  style={{
-                    width: 80,
-                    height: 80,
-                    borderRadius: 40,
-                    backgroundColor: COLORS.primary + "15",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    marginBottom: SPACING.sm,
-                  }}
-                >
-                  <Text style={{ fontSize: 40 }}>
-                    {selectedMentor.photo_emoji}
-                  </Text>
-                </View>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.lg,
-                    fontWeight: TYPOGRAPHY.weight.bold,
-                    color: COLORS.foreground,
-                  }}
-                >
-                  {selectedMentor.name}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.sm,
-                    color: COLORS.mutedForeground,
-                  }}
-                >
-                  {selectedMentor.specialization ?? "—"}
-                </Text>
-              </View>
-
-              <View style={{ gap: SPACING.md, marginBottom: SPACING.xl }}>
-                {selectedMentor.email && (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: SPACING.sm,
-                      backgroundColor: COLORS.background,
-                      padding: SPACING.md,
-                      borderRadius: RADIUS.md,
-                    }}
-                  >
-                    <Feather name="mail" size={16} color={COLORS.primary} />
-                    <Text
-                      style={{
-                        fontSize: TYPOGRAPHY.size.sm,
-                        color: COLORS.foreground,
-                      }}
-                    >
-                      {selectedMentor.email}
-                    </Text>
-                  </View>
-                )}
-                {selectedMentor.phone && (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: SPACING.sm,
-                      backgroundColor: COLORS.background,
-                      padding: SPACING.md,
-                      borderRadius: RADIUS.md,
-                    }}
-                  >
-                    <Feather name="phone" size={16} color={COLORS.primary} />
-                    <Text
-                      style={{
-                        fontSize: TYPOGRAPHY.size.sm,
-                        color: COLORS.foreground,
-                      }}
-                    >
-                      {selectedMentor.phone}
-                    </Text>
-                  </View>
-                )}
-                {selectedMentor.experience && (
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: SPACING.sm,
-                      backgroundColor: COLORS.background,
-                      padding: SPACING.md,
-                      borderRadius: RADIUS.md,
-                    }}
-                  >
-                    <Feather name="award" size={16} color={COLORS.primary} />
-                    <Text
-                      style={{
-                        fontSize: TYPOGRAPHY.size.sm,
-                        color: COLORS.foreground,
-                      }}
-                    >
-                      {selectedMentor.experience}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {selectedMentor.bio && (
-                <>
-                  <Text
-                    style={{
-                      fontSize: TYPOGRAPHY.size.sm,
-                      fontWeight: TYPOGRAPHY.weight.semibold,
-                      color: COLORS.foreground,
-                      marginBottom: SPACING.xs,
-                    }}
-                  >
-                    О себе
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: TYPOGRAPHY.size.sm,
-                      color: COLORS.mutedForeground,
-                      lineHeight: 20,
-                      marginBottom: SPACING.xl,
-                    }}
-                  >
-                    {selectedMentor.bio}
-                  </Text>
-                </>
-              )}
-
-              <TouchableOpacity
-                onPress={async () => {
-                  if (!supabase || !isSupabaseConfigured || !user?.id || !selectedMentor.user_id) {
-                    Alert.alert("Чат недоступен", "У ментора нет привязанного аккаунта.");
-                    return;
-                  }
-                  const ownerUserId = selectedMentor.user_id;
-                  const [adminParts, ownerParts] = await Promise.all([
-                    supabase.from("conversation_participants").select("conversation_id").eq("user_id", user.id),
-                    supabase.from("conversation_participants").select("conversation_id").eq("user_id", ownerUserId),
-                  ]);
-                  const adminIds = new Set((adminParts.data ?? []).map((p: any) => p.conversation_id));
-                  const shared = (ownerParts.data ?? []).find((p: any) => adminIds.has(p.conversation_id));
-                  let convId: string | null = shared?.conversation_id ?? null;
-                  if (!convId) {
-                    const { data: conv, error } = await supabase
-                      .from("conversations")
-                      .insert({ name: selectedMentor.name, icon_name: "user", last_message_at: new Date().toISOString() })
-                      .select().single();
-                    if (error || !conv) { Alert.alert("Ошибка", error?.message ?? "Не удалось создать чат"); return; }
-                    convId = conv.id;
-                    await supabase.from("conversation_participants").insert([
-                      { conversation_id: convId, user_id: user.id, unread_count: 0 },
-                      { conversation_id: convId, user_id: ownerUserId, unread_count: 0 },
-                    ]);
-                  }
-                  router.push({ pathname: "/(tabs)/chats/[id]", params: { id: convId, name: selectedMentor.name } } as any);
-                }}
-                style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: SPACING.sm, padding: SPACING.md, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.sm }}
-              >
-                <Feather name="message-circle" size={16} color={COLORS.foreground} />
-                <Text style={{ fontWeight: "600", color: COLORS.foreground }}>Написать ментору</Text>
-              </TouchableOpacity>
-
-              {selectedMentor.status === "pending" && (
-                <View style={{ gap: SPACING.sm }}>
-                  <TouchableOpacity
-                    onPress={() => mentorApps.approve(selectedMentor.id)}
-                    style={{
-                      backgroundColor: COLORS.success,
-                      padding: SPACING.md,
-                      borderRadius: RADIUS.lg,
-                      alignItems: "center",
-                      ...SHADOWS.sm,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: TYPOGRAPHY.weight.bold,
-                      }}
-                    >
-                      Одобрить
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => { setPendingReject({ type: "mentor", id: selectedMentor.id, name: selectedMentor.name }); setRejectReasonInput(""); }}
-                    style={{
-                      backgroundColor: COLORS.destructive,
-                      padding: SPACING.md,
-                      borderRadius: RADIUS.lg,
-                      alignItems: "center",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontWeight: TYPOGRAPHY.weight.bold,
-                      }}
-                    >
-                      Отклонить
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        )}
-      </View>
-    </View>
-  );
-  };
-
-  const renderOrgsView = () => {
-    return (
-    <View style={{ flex: 1 }}>
-      <View style={{ padding: paddingX, borderBottomWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface }}>
-        <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, marginBottom: 4 }}>
-          Управление Организациями
-        </Text>
-        <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, marginBottom: SPACING.lg }}>
-          Модерация учебных центров, секций и курсов
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0 }}>
-          <View style={{ flexDirection: "row", gap: SPACING.sm }}>
-          {([
-            { key: "orgs", label: `Организации${orgsNeedingAction.length > 0 ? ` (${orgsNeedingAction.length})` : ""}` },
-            { key: "courses", label: `Курсы${pendingCourses.length > 0 ? ` (${pendingCourses.length})` : ""}` },
-            { key: "enrollments", label: `Записи${pendingEnrollments.length > 0 ? ` (${pendingEnrollments.length})` : ""}` },
-          ] as const).map(({ key, label }) => (
-            <TouchableOpacity
-              key={key}
-              onPress={() => setOrgsSubTab(key)}
-              style={{ paddingVertical: 8, paddingHorizontal: 16, backgroundColor: orgsSubTab === key ? COLORS.primary : COLORS.muted, borderRadius: RADIUS.full }}
-            >
-              <Text style={{ color: orgsSubTab === key ? "white" : COLORS.foreground, fontWeight: "600", fontSize: 13 }}>{label}</Text>
-            </TouchableOpacity>
-          ))}
-          </View>
-        </ScrollView>
-      </View>
-
-      <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {/* --- Organisations list --- */}
-        {orgsSubTab === "orgs" && orgs.loading && (
-          <View style={{ padding: SPACING.lg }}><Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text></View>
-        )}
-        {orgsSubTab === "orgs" && !orgs.loading && orgs.data.length === 0 && (
-          <View style={{ padding: SPACING.lg }}><Text style={{ color: COLORS.mutedForeground }}>Организаций пока нет.</Text></View>
-        )}
-        {orgsSubTab === "orgs" && orgs.data.map((org) => (
-          <View
-            key={org.id}
-            style={{
-              padding: SPACING.lg,
-              borderBottomWidth: 1,
-              borderColor: COLORS.border,
-              backgroundColor: COLORS.surface,
               flexDirection: "row",
               alignItems: "center",
+              gap: SPACING.sm,
+              paddingHorizontal: SPACING.md,
+              height: 38,
+              borderRadius: RADIUS.md,
+              backgroundColor: "rgba(255,255,255,0.16)",
+              borderWidth: 1,
+              borderColor: "rgba(255,255,255,0.24)",
+            }}
+          >
+            <Feather name="refresh-cw" size={15} color={COLORS.white} />
+            <Text
+              style={{
+                color: COLORS.white,
+                fontWeight: "800",
+                fontSize: TYPOGRAPHY.size.sm,
+              }}
+            >
+              Обновить
+            </Text>
+          </TouchableOpacity>
+        }
+      />
+      <ScrollView style={{ flex: 1 }}>
+        <View
+          style={{
+            width: "100%",
+            maxWidth: 1180,
+            alignSelf: "center",
+            padding: paddingX,
+            gap: SPACING.lg,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: isTablet ? "row" : "column",
+              alignItems: "flex-start",
               gap: SPACING.md,
             }}
           >
-            <View style={{ width: 48, height: 48, borderRadius: RADIUS.lg, backgroundColor: COLORS.primary + "15", alignItems: "center", justifyContent: "center" }}>
-              <Feather name="briefcase" size={24} color={COLORS.primary} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{org.name}</Text>
-              <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 2 }}>
-                {org.category ?? "—"} • {org.active_students} учеников •{" "}
-                {adminCourses.data.filter((c) => c.org_id === org.id && c.status === "active").length} активных курсов
-              </Text>
-            </View>
-            <View style={{ flexDirection: "row", gap: SPACING.sm, alignItems: "center" }}>
-              {/* Chat button always visible */}
-              <TouchableOpacity
-                onPress={() => handleStartOrgChat(org.id, org.name, org.owner_user_id)}
-                style={{ width: 34, height: 34, borderRadius: RADIUS.md, backgroundColor: COLORS.primary + "15", alignItems: "center", justifyContent: "center" }}
-              >
-                <Feather name="message-circle" size={16} color={COLORS.primary} />
-              </TouchableOpacity>
-
-              {org.status === "ready_for_review" ? (
-                <View style={{ flexDirection: "row", gap: SPACING.sm, alignItems: "center" }}>
-                  <View style={{ backgroundColor: "#FEF9C3", paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full, borderWidth: 1, borderColor: "#FDE047" }}>
-                    <Text style={{ fontSize: 9, fontWeight: "800", color: "#854D0E", textTransform: "uppercase" }}>На проверке</Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => orgs.verify(org.id)}
-                    style={{ backgroundColor: COLORS.success, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md }}
-                  >
-                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Активировать</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => orgs.reject(org.id)}
-                    style={{ backgroundColor: COLORS.destructive, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md }}
-                  >
-                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Отклонить</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : org.status === "pending" ? (
-                <View style={{ flexDirection: "row", gap: SPACING.sm }}>
-                  <TouchableOpacity
-                    onPress={() => orgs.verify(org.id)}
-                    style={{ backgroundColor: COLORS.success, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md }}
-                  >
-                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Активировать</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => orgs.reject(org.id)}
-                    style={{ backgroundColor: COLORS.destructive, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.md }}
-                  >
-                    <Text style={{ color: "white", fontSize: TYPOGRAPHY.size.xs, fontWeight: "bold" }}>Отклонить</Text>
-                  </TouchableOpacity>
-                </View>
-              ) : org.status === "new" ? (
-                <View style={{ backgroundColor: "#EDE9FE", paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 10, fontWeight: "bold", color: "#6C5CE7", textTransform: "uppercase" }}>Новая</Text>
-                </View>
-              ) : (
-                <View style={{ backgroundColor: (org.status === "verified" ? COLORS.success : COLORS.destructive) + "20", paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 10, fontWeight: "bold", color: org.status === "verified" ? COLORS.success : COLORS.destructive, textTransform: "uppercase" }}>
-                    {org.status === "verified" ? "✓ Активна" : "Отклонена"}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-        ))}
-
-        {/* --- Course moderation queue --- */}
-        {orgsSubTab === "courses" && adminCourses.loading && (
-          <View style={{ padding: SPACING.lg }}><Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text></View>
-        )}
-        {orgsSubTab === "courses" && !adminCourses.loading && adminCourses.data.length === 0 && (
-          <View style={{ padding: SPACING.lg, alignItems: "center", paddingTop: 48 }}>
-            <Feather name="check-circle" size={48} color="#D1D5DB" />
-            <Text style={{ marginTop: 12, color: COLORS.mutedForeground, fontWeight: "700" }}>Нет курсов на модерации</Text>
-          </View>
-        )}
-        {orgsSubTab === "courses" && adminCourses.data.map((course) => {
-          const isPending = course.status === "draft";
-          const isActive = course.status === "active";
-          const statusBg = isPending ? "#FEF9C3" : isActive ? COLORS.success + "20" : COLORS.destructive + "20";
-          const statusColor = isPending ? "#854D0E" : isActive ? COLORS.success : COLORS.destructive;
-          const statusLabel = isPending ? "На модерации" : isActive ? "Активен" : "Отклонён";
-          return (
-            <View
-              key={course.id}
+            <AdminCard
               style={{
-                padding: SPACING.lg,
-                borderBottomWidth: 1,
-                borderColor: COLORS.border,
-                backgroundColor: COLORS.surface,
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: SPACING.md, marginBottom: SPACING.sm }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>{course.title}</Text>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 2 }}>
-                    {course.org_name} • {LEVEL_LABELS[course.level] ?? course.level} • {course.price.toLocaleString()} ₸/мес
-                    {(course.age_min || course.age_max) ? ` • ${course.age_min ?? ""}–${course.age_max ?? ""} лет` : ""}
-                  </Text>
-                  {course.description ? (
-                    <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 4, lineHeight: 18 }} numberOfLines={2}>{course.description}</Text>
-                  ) : null}
-                  {course.skills.length > 0 && (
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 6 }}>
-                      {course.skills.slice(0, 4).map((s) => (
-                        <View key={s} style={{ backgroundColor: COLORS.primary + "15", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
-                          <Text style={{ fontSize: 10, color: COLORS.primary, fontWeight: "700" }}>{s}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-                <View style={{ backgroundColor: statusBg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 10, fontWeight: "bold", color: statusColor, textTransform: "uppercase" }}>{statusLabel}</Text>
-                </View>
-              </View>
-              {isPending && (
-                <View style={{ flexDirection: "row", gap: SPACING.sm, marginTop: SPACING.sm }}>
-                  <TouchableOpacity
-                    onPress={() => adminCourses.approveCourse(course.id)}
-                    style={{ flex: 1, backgroundColor: COLORS.success, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, alignItems: "center" }}
-                  >
-                    <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>✓ Опубликовать</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => { setPendingReject({ type: "course", id: course.id, name: course.title }); setRejectReasonInput(""); }}
-                    style={{ flex: 1, backgroundColor: COLORS.destructive, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, alignItems: "center" }}
-                  >
-                    <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>✗ Отклонить</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          );
-        })}
-
-        {/* --- Enrollment pipeline --- */}
-        {orgsSubTab === "enrollments" && enrollments.loading && (
-          <View style={{ padding: SPACING.lg }}><Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text></View>
-        )}
-        {orgsSubTab === "enrollments" && !enrollments.loading && enrollments.data.length === 0 && (
-          <View style={{ padding: SPACING.lg, alignItems: "center", paddingTop: 48 }}>
-            <Feather name="inbox" size={48} color="#D1D5DB" />
-            <Text style={{ marginTop: 12, color: COLORS.mutedForeground, fontWeight: "700" }}>Заявок нет</Text>
-          </View>
-        )}
-        {orgsSubTab === "enrollments" && enrollments.data.map((enr) => {
-          const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-            awaiting_payment: { label: "Ждёт оплаты", bg: "#FEF9C3", color: "#854D0E" },
-            paid:             { label: "Оплачено",    bg: COLORS.success + "20", color: COLORS.success },
-            activated:        { label: "Активирован", bg: COLORS.primary + "20", color: COLORS.primary },
-            completed:        { label: "Завершён",    bg: "#F3F4F6", color: "#6B7280" },
-            rejected:         { label: "Отклонён",    bg: COLORS.destructive + "20", color: COLORS.destructive },
-          };
-          const st = STATUS_MAP[enr.status] ?? STATUS_MAP.awaiting_payment;
-          return (
-            <View key={enr.id} style={{ padding: SPACING.lg, borderBottomWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface }}>
-              <View style={{ flexDirection: "row", alignItems: "flex-start", gap: SPACING.md }}>
-                <View style={{ width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primary + "15", alignItems: "center", justifyContent: "center" }}>
-                  <Feather name="user" size={18} color={COLORS.primary} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.foreground }}>
-                    {enr.child_name}{enr.child_age ? `, ${enr.child_age} лет` : ""}
-                  </Text>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 1 }}>
-                    {enr.parent_name ? `Родитель: ${enr.parent_name} • ` : ""}{enr.club ?? "—"} • {enr.org_name}
-                  </Text>
-                  {enr.applied_date && (
-                    <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 1 }}>
-                      Подал: {enr.applied_date}
-                    </Text>
-                  )}
-                </View>
-                <View style={{ backgroundColor: st.bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full }}>
-                  <Text style={{ fontSize: 10, fontWeight: "bold", color: st.color, textTransform: "uppercase" }}>{st.label}</Text>
-                </View>
-              </View>
-              {(enr.status === "awaiting_payment" || enr.status === "paid") && (
-                <View style={{ flexDirection: "row", gap: SPACING.sm, marginTop: SPACING.sm }}>
-                  {enr.status === "awaiting_payment" && (
-                    <TouchableOpacity
-                      onPress={() => enrollments.markPaid(enr.id)}
-                      style={{ flex: 1, backgroundColor: COLORS.success, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, alignItems: "center" }}
-                    >
-                      <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>✓ Отметить оплаченным</Text>
-                    </TouchableOpacity>
-                  )}
-                  {enr.status === "paid" && (
-                    <TouchableOpacity
-                      onPress={() => enrollments.activate(enr.id)}
-                      style={{ flex: 1, backgroundColor: COLORS.primary, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, alignItems: "center" }}
-                    >
-                      <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>▶ Активировать</Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
-                    onPress={() => enrollments.reject(enr.id)}
-                    style={{ flex: 1, backgroundColor: COLORS.destructive, paddingVertical: SPACING.sm, borderRadius: RADIUS.md, alignItems: "center" }}
-                  >
-                    <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>✗ Отклонить</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            </View>
-          );
-        })}
-      </ScrollView>
-    </View>
-  );
-  };
-
-  const renderContentView = () => (
-    <View style={{ flex: 1 }}>
-      <View
-        style={{
-          padding: paddingX,
-          borderBottomWidth: 1,
-          borderColor: COLORS.border,
-          backgroundColor: COLORS.surface,
-        }}
-      >
-        <View>
-          <Text
-            style={{
-              fontSize: TYPOGRAPHY.size.xl,
-              fontWeight: TYPOGRAPHY.weight.bold,
-              color: COLORS.foreground,
-              marginBottom: 4,
-            }}
-          >
-            ИИ & Контент
-          </Text>
-          <Text
-            style={{
-              fontSize: TYPOGRAPHY.size.sm,
-              color: COLORS.mutedForeground,
-            }}
-          >
-            Конструктор тестирования и настройка ИИ
-          </Text>
-        </View>
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row",
-          gap: SPACING.md,
-          paddingHorizontal: paddingX,
-          marginVertical: SPACING.md,
-        }}
-      >
-        {(["onboarding", "tags", "logic"] as const).map((t) => (
-          <TouchableOpacity
-            key={t}
-            onPress={() => setContentSubTab(t)}
-            style={{
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              backgroundColor:
-                contentSubTab === t ? COLORS.primary : COLORS.muted,
-              borderRadius: RADIUS.full,
-            }}
-          >
-            <Text
-              style={{
-                color: contentSubTab === t ? "white" : COLORS.foreground,
-                fontWeight: "600",
-              }}
-            >
-              {t === "onboarding"
-                ? "Вопросы Онбординга"
-                : t === "tags"
-                  ? "Справочник Тегов"
-                  : "AI Логика"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {contentSubTab === "onboarding" && (
-          <View style={{ paddingHorizontal: paddingX, paddingBottom: SPACING.xl }}>
-            {onboardingQuestions.loading && (
-              <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
-            )}
-            {!onboardingQuestions.loading && onboardingQuestions.data.length === 0 && (
-              <Text style={{ color: COLORS.mutedForeground }}>Вопросов нет.</Text>
-            )}
-            {(["parent", "org", "child", "youth", "parent_diagnostic"] as const).map((audience) => {
-              const rows = onboardingQuestions.data.filter((q) => q.audience === audience);
-              if (rows.length === 0) return null;
-              const AUDIENCE_LABELS: Record<string, string> = {
-                parent: "Родитель (онбординг)",
-                org: "Организация (онбординг)",
-                child: "Ребёнок (диагностика)",
-                youth: "Молодёжь (диагностика)",
-                parent_diagnostic: "Родитель (диагностика ребёнка)",
-              };
-              return (
-                <View key={audience} style={{ marginBottom: SPACING.xl }}>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "700", color: COLORS.mutedForeground, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: SPACING.sm }}>
-                    {AUDIENCE_LABELS[audience]}
-                  </Text>
-                  {rows.map((q) => (
-                    <View
-                      key={q.id}
-                      style={{
-                        padding: SPACING.lg,
-                        borderRadius: RADIUS.lg,
-                        backgroundColor: COLORS.surface,
-                        marginBottom: SPACING.sm,
-                        borderWidth: 1,
-                        borderColor: q.active ? COLORS.border : COLORS.border + "60",
-                        opacity: q.active ? 1 : 0.55,
-                        flexDirection: "row",
-                        alignItems: "flex-start",
-                        gap: SPACING.sm,
-                      }}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: TYPOGRAPHY.size.md, fontWeight: "500", color: COLORS.foreground, marginBottom: 4 }}>
-                          {q.display_order}. {q.question_text}
-                        </Text>
-                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground }}>
-                          {q.answers.join(" · ")}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => onboardingQuestions.toggleActive(q.id, !q.active)}
-                        style={{ padding: 4 }}
-                      >
-                        <Feather name={q.active ? "eye" : "eye-off"} size={16} color={COLORS.mutedForeground} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => Alert.alert("Удалить вопрос?", q.question_text, [
-                          { text: "Отмена", style: "cancel" },
-                          { text: "Удалить", style: "destructive", onPress: () => onboardingQuestions.remove(q.id) },
-                        ])}
-                        style={{ padding: 4 }}
-                      >
-                        <Feather name="trash-2" size={16} color={COLORS.destructive} />
-                      </TouchableOpacity>
-                    </View>
-                  ))}
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {contentSubTab === "tags" && (
-          <View style={{ padding: paddingX }}>
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                gap: SPACING.md,
-                marginBottom: SPACING.lg,
-              }}
-            >
-              {tags.data.map((tag) => (
-                <TouchableOpacity
-                  key={tag.id}
-                  onLongPress={() => tags.remove(tag.id)}
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: RADIUS.full,
-                    backgroundColor: COLORS.primary + "15",
-                    borderWidth: 1,
-                    borderColor: COLORS.primary + "30",
-                  }}
-                >
-                  <Text style={{ color: COLORS.primary, fontWeight: "bold" }}>
-                    {tag.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View
-              style={{
-                flexDirection: "row",
-                gap: SPACING.sm,
-                alignItems: "center",
-              }}
-            >
-              <TextInput
-                value={newTagName}
-                onChangeText={setNewTagName}
-                placeholder="новый тег"
-                style={{
-                  flex: 1,
-                  padding: SPACING.md,
-                  borderRadius: RADIUS.md,
-                  borderWidth: 1,
-                  borderColor: COLORS.border,
-                  backgroundColor: COLORS.surface,
-                  color: COLORS.foreground,
-                }}
-              />
-              <TouchableOpacity
-                onPress={async () => {
-                  await tags.add(newTagName);
-                  setNewTagName("");
-                }}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 10,
-                  borderRadius: RADIUS.md,
-                  backgroundColor: COLORS.primary,
-                }}
-              >
-                <Text style={{ color: "white", fontWeight: "bold" }}>
-                  + Добавить
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.xs,
-                color: COLORS.mutedForeground,
-                marginTop: SPACING.sm,
-              }}
-            >
-              Долгое нажатие на тег — удалить.
-            </Text>
-          </View>
-        )}
-
-        {contentSubTab === "logic" && (
-          <View style={{ paddingHorizontal: paddingX, paddingBottom: SPACING.xl }}>
-            {aiRules.loading && <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>}
-            {!aiRules.loading && aiRules.data.length === 0 && <Text style={{ color: COLORS.mutedForeground }}>Правил нет.</Text>}
-            {aiRules.data.map((r) => {
-              const isEditing = editingRuleId === r.id;
-              return (
-                <View
-                  key={r.id}
-                  style={{
-                    backgroundColor: COLORS.surface,
-                    borderRadius: RADIUS.lg,
-                    borderWidth: 1,
-                    borderColor: isEditing ? COLORS.primary + "60" : COLORS.border,
-                    marginBottom: SPACING.md,
-                    overflow: "hidden",
-                  }}
-                >
-                  {/* Header row */}
-                  <View style={{ flexDirection: "row", alignItems: "center", padding: SPACING.lg, gap: SPACING.md }}>
-                    {/* Toggle */}
-                    <TouchableOpacity
-                      onPress={() => aiRules.toggle(r.id, !r.enabled)}
-                      style={{
-                        width: 44, height: 24, borderRadius: 12,
-                        backgroundColor: r.enabled ? COLORS.success : COLORS.muted,
-                        justifyContent: "center",
-                        paddingHorizontal: 2,
-                      }}
-                    >
-                      <View style={{
-                        width: 20, height: 20, borderRadius: 10, backgroundColor: "white",
-                        alignSelf: r.enabled ? "flex-end" : "flex-start",
-                        ...SHADOWS.sm,
-                      }} />
-                    </TouchableOpacity>
-
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: "bold", fontSize: TYPOGRAPHY.size.md, color: r.enabled ? COLORS.foreground : COLORS.mutedForeground }}>
-                        {r.name}
-                      </Text>
-                      {!isEditing && (
-                        <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, marginTop: 2 }} numberOfLines={1}>
-                          {r.condition} → {r.recommendation_title}
-                        </Text>
-                      )}
-                    </View>
-
-                    <TouchableOpacity
-                      onPress={() => {
-                        if (isEditing) {
-                          setEditingRuleId(null);
-                        } else {
-                          setEditingRuleId(r.id);
-                          setEditingRule({
-                            name: r.name,
-                            condition: r.condition,
-                            recommendation_title: r.recommendation_title,
-                            recommendation_body: r.recommendation_body ?? "",
-                          });
-                        }
-                      }}
-                      style={{ width: 32, height: 32, borderRadius: RADIUS.md, backgroundColor: isEditing ? COLORS.primary + "15" : COLORS.muted, alignItems: "center", justifyContent: "center" }}
-                    >
-                      <Feather name={isEditing ? "x" : "edit-2"} size={14} color={isEditing ? COLORS.primary : COLORS.mutedForeground} />
-                    </TouchableOpacity>
-                  </View>
-
-                  {/* Edit form */}
-                  {isEditing && (
-                    <View style={{ paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg, gap: SPACING.sm }}>
-                      {([
-                        { field: "name" as const, label: "Название правила" },
-                        { field: "condition" as const, label: "Условие (если...)" },
-                        { field: "recommendation_title" as const, label: "Рекомендация (заголовок)" },
-                        { field: "recommendation_body" as const, label: "Рекомендация (описание)" },
-                      ]).map(({ field, label }) => (
-                        <View key={field}>
-                          <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground, fontWeight: "600", marginBottom: 4 }}>{label}</Text>
-                          <TextInput
-                            value={editingRule[field]}
-                            onChangeText={(v) => setEditingRule((prev) => ({ ...prev, [field]: v }))}
-                            style={{
-                              borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
-                              padding: SPACING.md, fontSize: TYPOGRAPHY.size.sm, color: COLORS.foreground,
-                              backgroundColor: COLORS.background,
-                              minHeight: field === "recommendation_body" ? 60 : undefined,
-                            }}
-                            multiline={field === "recommendation_body"}
-                          />
-                        </View>
-                      ))}
-                      <TouchableOpacity
-                        onPress={async () => {
-                          await aiRules.updateRule(r.id, editingRule);
-                          setEditingRuleId(null);
-                        }}
-                        style={{ backgroundColor: COLORS.primary, paddingVertical: SPACING.md, borderRadius: RADIUS.md, alignItems: "center", marginTop: SPACING.sm }}
-                      >
-                        <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.sm }}>Сохранить</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-          </View>
-        )}
-      </ScrollView>
-    </View>
-  );
-
-  const renderBillingView = () => (
-    <View style={{ flex: 1 }}>
-      <View
-        style={{
-          padding: paddingX,
-          borderBottomWidth: 1,
-          borderColor: COLORS.border,
-          backgroundColor: COLORS.surface,
-        }}
-      >
-        <View style={{ marginBottom: SPACING.md }}>
-          <Text
-            style={{
-              fontSize: TYPOGRAPHY.size.xl,
-              fontWeight: TYPOGRAPHY.weight.bold,
-              color: COLORS.foreground,
-              marginBottom: 4,
-            }}
-          >
-            Финансы & Биллинг
-          </Text>
-          <Text
-            style={{
-              fontSize: TYPOGRAPHY.size.sm,
-              color: COLORS.mutedForeground,
-            }}
-          >
-            Мониторинг транзакций и сплит-платежей
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flexDirection: isTablet ? "row" : "column",
-            gap: SPACING.md,
-            paddingBottom: SPACING.lg,
-          }}
-        >
-          <View
-            style={{
-              flex: 1,
-              padding: SPACING.lg,
-              borderRadius: RADIUS.lg,
-              backgroundColor: COLORS.primary + "10",
-              borderWidth: 1,
-              borderColor: COLORS.primary + "30",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.sm,
-                color: COLORS.mutedForeground,
-              }}
-            >
-              Общий оборот (GMV)
-            </Text>
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.xxl,
-                fontWeight: "bold",
-                color: COLORS.foreground,
-                marginTop: 8,
-              }}
-            >
-              {formatKZT(stats.gmv)}
-            </Text>
-          </View>
-          <View
-            style={{
-              flex: 1,
-              padding: SPACING.lg,
-              borderRadius: RADIUS.lg,
-              backgroundColor: COLORS.success + "10",
-              borderWidth: 1,
-              borderColor: COLORS.success + "30",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.sm,
-                color: COLORS.mutedForeground,
-              }}
-            >
-              Доход платформы
-            </Text>
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.xxl,
-                fontWeight: "bold",
-                color: COLORS.success,
-                marginTop: 8,
-              }}
-            >
-              {formatKZT(stats.revenue)}
-            </Text>
-          </View>
-          <View
-            style={{
-              flex: 1,
-              padding: SPACING.lg,
-              borderRadius: RADIUS.lg,
-              backgroundColor: COLORS.background,
-              borderWidth: 1,
-              borderColor: COLORS.border,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.sm,
-                color: COLORS.mutedForeground,
-              }}
-            >
-              Платные подписчики (Pro)
-            </Text>
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.xxl,
-                fontWeight: "bold",
-                color: COLORS.foreground,
-                marginTop: 8,
-              }}
-            >
-              {stats.proSubscribers} / {stats.totalSubscribers}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      <View
-        style={{
-          flexDirection: "row",
-          gap: SPACING.md,
-          paddingHorizontal: paddingX,
-          marginVertical: SPACING.md,
-        }}
-      >
-        {(["transactions", "fees"] as const).map((t) => (
-          <TouchableOpacity
-            key={t}
-            onPress={() => setBillingSubTab(t)}
-            style={{
-              paddingVertical: 8,
-              paddingHorizontal: 16,
-              backgroundColor:
-                billingSubTab === t ? COLORS.primary : COLORS.muted,
-              borderRadius: RADIUS.full,
-            }}
-          >
-            <Text
-              style={{
-                color: billingSubTab === t ? "white" : COLORS.foreground,
-                fontWeight: "600",
-              }}
-            >
-              {t === "transactions"
-                ? "Сплит-Транзакции"
-                : "Управление комиссией"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        {billingSubTab === "transactions" && txs.loading && (
-          <View style={{ padding: SPACING.lg }}>
-            <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
-          </View>
-        )}
-        {billingSubTab === "transactions" &&
-          !txs.loading &&
-          txs.data.length === 0 && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>
-                Транзакций нет.
-              </Text>
-            </View>
-          )}
-        {billingSubTab === "transactions" &&
-          txs.data.map((t) => (
-            <View
-              key={t.id}
-              style={{
-                padding: SPACING.lg,
-                borderBottomWidth: 1,
-                borderColor: COLORS.border,
-                backgroundColor: COLORS.surface,
-                flexDirection: "row",
-                alignItems: "center",
+                width: isTablet ? undefined : "100%",
+                flex: isTablet ? 1.5 : undefined,
+                minHeight: isTablet ? 312 : undefined,
+                overflow: "hidden",
               }}
             >
               <View
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: RADIUS.full,
-                  backgroundColor: COLORS.success + "15",
+                  padding: SPACING.lg,
+                  borderBottomWidth: 1,
+                  borderColor: COLORS.border,
+                  flexDirection: "row",
                   alignItems: "center",
-                  justifyContent: "center",
+                  gap: SPACING.sm,
                 }}
               >
                 <Feather
-                  name="arrow-up-right"
-                  size={24}
-                  color={COLORS.success}
+                  name="alert-circle"
+                  size={18}
+                  color={totalPending > 0 ? COLORS.destructive : COLORS.success}
                 />
-              </View>
-              <View style={{ flex: 1, marginLeft: SPACING.md }}>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.md,
-                    fontWeight: "bold",
-                    color: COLORS.foreground,
-                  }}
-                >
-                  {t.parent_name} → {t.org_name}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.xs,
-                    color: COLORS.mutedForeground,
-                    marginTop: 2,
-                  }}
-                >
-                  {formatDate(t.created_at)}{" "}
-                  {t.external_ref ? `• ${t.external_ref}` : ""}
-                </Text>
-              </View>
-              <View style={{ alignItems: "flex-end" }}>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.md,
-                    fontWeight: "bold",
-                    color: COLORS.foreground,
-                  }}
-                >
-                  {formatKZT(t.amount)}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.xs,
-                    color: COLORS.mutedForeground,
-                    marginTop: 2,
-                  }}
-                >
-                  <Text style={{ color: COLORS.success }}>
-                    +{formatKZT(t.org_amount)} партнёру
-                  </Text>{" "}
-                  |{" "}
-                  <Text style={{ color: COLORS.primary }}>
-                    +{formatKZT(t.platform_amount)} платформе
-                  </Text>
-                </Text>
-              </View>
-            </View>
-          ))}
-
-        {billingSubTab === "fees" &&
-          orgs.data.map((org) => (
-            <View
-              key={org.id}
-              style={{
-                padding: SPACING.lg,
-                borderBottomWidth: 1,
-                borderColor: COLORS.border,
-                backgroundColor: COLORS.surface,
-                flexDirection: "row",
-                alignItems: "center",
-              }}
-            >
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.md,
-                    fontWeight: "bold",
-                    color: COLORS.foreground,
-                  }}
-                >
-                  {org.name}
-                </Text>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.xs,
-                    color: COLORS.mutedForeground,
-                    marginTop: 2,
-                  }}
-                >
-                  Категория: {org.category ?? "—"}
-                </Text>
-              </View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: SPACING.sm }}>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: COLORS.background,
-                    borderWidth: 1,
-                    borderColor: COLORS.border,
-                    borderRadius: RADIUS.md,
-                    paddingHorizontal: SPACING.md,
-                    paddingVertical: SPACING.sm,
-                  }}
-                >
-                  <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "bold", color: COLORS.foreground }}>
-                    Комиссия:{" "}
-                  </Text>
-                  <TextInput
-                    value={commissionDrafts[org.id] ?? String(org.commission_pct)}
-                    keyboardType="numeric"
-                    onChangeText={(v) => setCommissionDrafts((prev) => ({ ...prev, [org.id]: v }))}
+                <View style={{ flex: 1 }}>
+                  <Text
                     style={{
-                      fontSize: TYPOGRAPHY.size.sm,
-                      fontWeight: "bold",
-                      color: COLORS.primary,
-                      width: 40,
-                      textAlign: "center",
-                    }}
-                  />
-                  <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "bold", color: COLORS.foreground }}>%</Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => {
-                    const raw = commissionDrafts[org.id] ?? String(org.commission_pct);
-                    const val = parseFloat(raw);
-                    if (Number.isFinite(val)) {
-                      orgs.setCommission(org.id, val);
-                      setCommissionDrafts((prev) => { const next = { ...prev }; delete next[org.id]; return next; });
-                    }
-                  }}
-                  style={{ paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, backgroundColor: COLORS.primary, borderRadius: RADIUS.md }}
-                >
-                  <Text style={{ color: "white", fontWeight: "bold", fontSize: TYPOGRAPHY.size.xs }}>Сохранить</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
-      </ScrollView>
-    </View>
-  );
-
-  const renderQCView = () => {
-    const filtered = tickets.data.filter((t) =>
-      qcSubTab === "tickets" ? t.kind === "complaint" : t.kind === "feedback",
-    );
-    return (
-      <View style={{ flex: 1 }}>
-        <View
-          style={{
-            padding: paddingX,
-            borderBottomWidth: 1,
-            borderColor: COLORS.border,
-            backgroundColor: COLORS.surface,
-          }}
-        >
-          <View>
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.xl,
-                fontWeight: TYPOGRAPHY.weight.bold,
-                color: COLORS.foreground,
-                marginBottom: 4,
-              }}
-            >
-              Контроль Качества
-            </Text>
-            <Text
-              style={{
-                fontSize: TYPOGRAPHY.size.sm,
-                color: COLORS.mutedForeground,
-              }}
-            >
-              Логи активности и система жалоб
-            </Text>
-          </View>
-        </View>
-
-        <View
-          style={{
-            flexDirection: "row",
-            gap: SPACING.md,
-            paddingHorizontal: paddingX,
-            marginVertical: SPACING.md,
-          }}
-        >
-          {(["logs", "tickets"] as const).map((t) => (
-            <TouchableOpacity
-              key={t}
-              onPress={() => setQcSubTab(t)}
-              style={{
-                paddingVertical: 8,
-                paddingHorizontal: 16,
-                backgroundColor: qcSubTab === t ? COLORS.primary : COLORS.muted,
-                borderRadius: RADIUS.full,
-              }}
-            >
-              <Text
-                style={{
-                  color: qcSubTab === t ? "white" : COLORS.foreground,
-                  fontWeight: "600",
-                }}
-              >
-                {t === "logs" ? "Лог фидбеков" : "Тикеты и Жалобы"}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
-          {tickets.loading && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>Загрузка...</Text>
-            </View>
-          )}
-          {!tickets.loading && filtered.length === 0 && (
-            <View style={{ padding: SPACING.lg }}>
-              <Text style={{ color: COLORS.mutedForeground }}>
-                Записей нет.
-              </Text>
-            </View>
-          )}
-          {filtered.map((tick) => {
-            const kindLabel = tick.kind === "complaint" ? "Жалоба" : "Отзыв";
-            const statusLabel =
-              tick.status === "open"
-                ? "Открыт"
-                : tick.status === "in_progress"
-                  ? "В работе"
-                  : "Решен";
-            const statusBg =
-              tick.status === "open"
-                ? "#FEF9C3"
-                : tick.status === "in_progress"
-                  ? COLORS.primary + "20"
-                  : COLORS.success + "20";
-            const statusColor =
-              tick.status === "open"
-                ? "#854D0E"
-                : tick.status === "in_progress"
-                  ? COLORS.primary
-                  : COLORS.success;
-            return (
-              <View
-                key={tick.id}
-                style={{
-                  padding: SPACING.lg,
-                  borderRadius: RADIUS.lg,
-                  marginHorizontal: paddingX,
-                  marginBottom: SPACING.md,
-                  backgroundColor: COLORS.surface,
-                  borderWidth: 1,
-                  borderColor:
-                    tick.kind === "complaint"
-                      ? COLORS.destructive + "30"
-                      : COLORS.border,
-                }}
-              >
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    marginBottom: SPACING.sm,
-                  }}
-                >
-                  <View style={{ flexDirection: "row", gap: SPACING.sm }}>
-                    <View
-                      style={{
-                        backgroundColor:
-                          tick.kind === "complaint"
-                            ? COLORS.destructive + "15"
-                            : COLORS.primary + "15",
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: RADIUS.sm,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color:
-                            tick.kind === "complaint"
-                              ? COLORS.destructive
-                              : COLORS.primary,
-                          fontSize: 10,
-                          fontWeight: "bold",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {kindLabel}
-                      </Text>
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: TYPOGRAPHY.size.xs,
-                        color: COLORS.mutedForeground,
-                      }}
-                    >
-                      {formatDate(tick.created_at)}
-                    </Text>
-                  </View>
-                  <View
-                    style={{
-                      backgroundColor: statusBg,
-                      paddingHorizontal: 8,
-                      paddingVertical: 2,
-                      borderRadius: RADIUS.full,
+                      fontSize: TYPOGRAPHY.size.md,
+                      fontWeight: "900",
+                      color: COLORS.foreground,
                     }}
                   >
-                    <Text
-                      style={{
-                        color: statusColor,
-                        fontSize: 10,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      {statusLabel}
-                    </Text>
-                  </View>
-                </View>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.md,
-                    fontWeight: "bold",
-                    color: COLORS.foreground,
-                    marginBottom: 4,
-                  }}
-                >
-                  От: {tick.reporter_name}
-                </Text>
-                {tick.target && (
+                    Требует внимания
+                  </Text>
                   <Text
                     style={{
                       fontSize: TYPOGRAPHY.size.xs,
                       color: COLORS.mutedForeground,
-                      marginBottom: SPACING.md,
+                      marginTop: 2,
                     }}
                   >
-                    Цель: {tick.target}
+                    {totalPending > 0
+                      ? `${totalPending} открытых задач`
+                      : "Срочных задач нет"}
                   </Text>
-                )}
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.sm,
-                    color: COLORS.foreground,
-                    lineHeight: 20,
-                  }}
-                >
-                  {tick.body}
-                </Text>
-
+                </View>
+              </View>
+              {visibleQueue.length > 0 ? (
+                visibleQueue.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.title}
+                    onPress={item.action}
+                    activeOpacity={0.75}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: SPACING.md,
+                      padding: SPACING.lg,
+                      borderTopWidth: index > 0 ? 1 : 0,
+                      borderColor: COLORS.border,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 42,
+                        height: 42,
+                        borderRadius: RADIUS.md,
+                        backgroundColor: item.color + "15",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Feather
+                        name={item.icon as any}
+                        size={18}
+                        color={item.color}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: TYPOGRAPHY.size.sm,
+                          fontWeight: "800",
+                          color: COLORS.foreground,
+                        }}
+                      >
+                        {item.title}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: TYPOGRAPHY.size.xs,
+                          color: COLORS.mutedForeground,
+                          marginTop: 2,
+                        }}
+                      >
+                        {item.description}
+                      </Text>
+                    </View>
+                    <Text
+                      style={{
+                        fontSize: TYPOGRAPHY.size.xl,
+                        fontWeight: "900",
+                        color: item.color,
+                      }}
+                    >
+                      {item.count}
+                    </Text>
+                    <Feather
+                      name="chevron-right"
+                      size={18}
+                      color={COLORS.mutedForeground}
+                    />
+                  </TouchableOpacity>
+                ))
+              ) : (
                 <View
                   style={{
-                    flexDirection: "row",
-                    gap: SPACING.sm,
-                    marginTop: SPACING.md,
+                    flex: isTablet ? 1 : undefined,
+                    minHeight: isTablet ? 232 : 170,
+                    padding: SPACING.xl,
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
-                  {tick.status === "open" && (
-                    <TouchableOpacity
-                      onPress={() => tickets.takeInProgress(tick.id)}
-                      style={{
-                        paddingVertical: SPACING.sm,
-                        paddingHorizontal: SPACING.md,
-                        backgroundColor: COLORS.primary,
-                        borderRadius: RADIUS.md,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontWeight: "bold",
-                          fontSize: TYPOGRAPHY.size.sm,
-                        }}
-                      >
-                        Взять в работу
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                  {tick.status !== "resolved" && (
-                    <TouchableOpacity
-                      onPress={() => tickets.resolve(tick.id)}
-                      style={{
-                        paddingVertical: SPACING.sm,
-                        paddingHorizontal: SPACING.md,
-                        backgroundColor: COLORS.success,
-                        borderRadius: RADIUS.md,
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontWeight: "bold",
-                          fontSize: TYPOGRAPHY.size.sm,
-                        }}
-                      >
-                        Отметить решённым
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: RADIUS.lg,
+                      backgroundColor: COLORS.success + "15",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: SPACING.sm,
+                    }}
+                  >
+                    <Feather
+                      name="check-circle"
+                      size={22}
+                      color={COLORS.success}
+                    />
+                  </View>
+                  <Text
+                    style={{
+                      color: COLORS.foreground,
+                      fontWeight: "800",
+                      textAlign: "center",
+                    }}
+                  >
+                    Очередь пуста
+                  </Text>
+                  <Text
+                    style={{
+                      maxWidth: 320,
+                      color: COLORS.mutedForeground,
+                      fontSize: TYPOGRAPHY.size.xs,
+                      marginTop: 4,
+                      textAlign: "center",
+                    }}
+                  >
+                    Новые задачи модерации и поддержки появятся здесь.
+                  </Text>
                 </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-      </View>
-    );
-  };
-
-  const renderOverviewView = () => {
-    const roleGroups = allUsers.data.reduce<Record<string, number>>((acc, u) => {
-      acc[u.role] = (acc[u.role] ?? 0) + 1;
-      return acc;
-    }, {});
-    const activeCourses = adminCourses.data.filter((c) => c.status === "active").length;
-    const draftCourses = adminCourses.data.filter((c) => c.status === "draft").length;
-    const verifiedOrgs = orgs.data.filter((o) => o.status === "verified").length;
-    const pendingOrgsCount = orgsNeedingAction.length;
-    const activeEnrollments = enrollments.data.filter((e) => e.status === "activated").length;
-    const pendingEnrollmentsCount = enrollments.data.filter((e) => e.status === "awaiting_payment").length;
-
-    return (
-      <ScrollView style={{ flex: 1, backgroundColor: COLORS.background }}>
-        <View style={{ padding: paddingX }}>
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: SPACING.md, marginBottom: 4 }}>
-            <Text style={{ flex: 1, fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
-              Обзор платформы
-            </Text>
-            <TouchableOpacity
-              onPress={() => { families.refresh(); mentorApps.refresh(); orgs.refresh(); txs.refresh(); adminCourses.refresh(); allUsers.refresh(); enrollments.refresh(); }}
-              style={{ width: 36, height: 36, borderRadius: RADIUS.md, backgroundColor: COLORS.muted, alignItems: "center", justifyContent: "center" }}
+              )}
+            </AdminCard>
+            <AdminCard
+              style={{
+                width: isTablet ? undefined : "100%",
+                flex: isTablet ? 1 : undefined,
+                minHeight: isTablet ? 312 : undefined,
+                padding: SPACING.lg,
+              }}
             >
-              <Feather name="refresh-cw" size={16} color={COLORS.mutedForeground} />
-            </TouchableOpacity>
-          </View>
-          <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground, marginBottom: SPACING.xl }}>
-            Состояние платформы в реальном времени
-          </Text>
-
-          {/* Pending actions banner */}
-          {totalPendingActions > 0 && (
-            <View style={{ backgroundColor: "#FEF9C3", borderRadius: RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.xl, flexDirection: "row", alignItems: "center", gap: SPACING.md, borderWidth: 1, borderColor: "#FEF08A" }}>
-              <Feather name="alert-circle" size={20} color="#CA8A04" />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontWeight: "bold", color: "#854D0E", fontSize: TYPOGRAPHY.size.sm }}>Требуют вашего внимания</Text>
-                <Text style={{ color: "#92400E", fontSize: TYPOGRAPHY.size.xs, marginTop: 2 }}>
-                  {pendingOrgsCount > 0 ? `${pendingOrgsCount} орг. на проверке  ` : ""}
-                  {stats.pendingMentors > 0 ? `${stats.pendingMentors} заявок менторов  ` : ""}
-                  {draftCourses > 0 ? `${draftCourses} курсов на модерации  ` : ""}
-                  {pendingEnrollmentsCount > 0 ? `${pendingEnrollmentsCount} записей ждут оплаты` : ""}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          {/* Quick stats grid */}
-          <View style={{ flexDirection: isTablet ? "row" : "column", gap: SPACING.md, marginBottom: SPACING.xl }}>
-            {[
-              { label: "Всего пользователей", value: allUsers.data.length, icon: "users", bg: COLORS.primary + "15", color: COLORS.primary },
-              { label: "Активных курсов", value: activeCourses, icon: "book-open", bg: "#DCFCE7", color: "#16A34A" },
-              { label: "Верифицированных орг.", value: verifiedOrgs, icon: "briefcase", bg: "#DBEAFE", color: "#2563EB" },
-              { label: "Доход платформы", value: formatKZT(stats.revenue), icon: "dollar-sign", bg: "#FEF9C3", color: "#CA8A04" },
-            ].map((card, i) => (
-              <View key={i} style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: SPACING.md, padding: SPACING.lg, borderRadius: RADIUS.lg, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm }}>
-                <View style={{ width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: card.bg, alignItems: "center", justifyContent: "center" }}>
-                  <Feather name={card.icon as any} size={20} color={card.color} />
-                </View>
-                <View>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xl, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>{String(card.value)}</Text>
-                  <Text style={{ fontSize: TYPOGRAPHY.size.xs, color: COLORS.mutedForeground }}>{card.label}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-
-          {/* Users by role */}
-          <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, marginBottom: SPACING.md, fontSize: TYPOGRAPHY.size.md }}>
-            Пользователи по ролям
-          </Text>
-          <View style={{ backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.xl, overflow: "hidden" }}>
-            {Object.entries(ROLE_LABELS).filter(([role]) => role !== "all").map(([role, label], i) => {
-              const count = roleGroups[role] ?? 0;
-              const rc = ROLE_COLORS[role] ?? { bg: "#F3F4F6", color: "#374151" };
-              const total = allUsers.data.length || 1;
-              const pct = Math.round((count / total) * 100);
-              return (
-                <View key={role} style={{ flexDirection: "row", alignItems: "center", gap: SPACING.md, padding: SPACING.lg, borderTopWidth: i > 0 ? 1 : 0, borderColor: COLORS.border }}>
-                  <View style={{ width: 32, height: 32, borderRadius: RADIUS.md, backgroundColor: rc.bg, alignItems: "center", justifyContent: "center" }}>
-                    <Feather name="user" size={14} color={rc.color} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 4 }}>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "600", color: COLORS.foreground }}>{label}</Text>
-                      <Text style={{ fontSize: TYPOGRAPHY.size.sm, fontWeight: "bold", color: COLORS.foreground }}>{count}</Text>
+              <Text
+                style={{
+                  fontSize: TYPOGRAPHY.size.md,
+                  fontWeight: "900",
+                  color: COLORS.foreground,
+                  marginBottom: SPACING.md,
+                }}
+              >
+                Состояние платформы
+              </Text>
+              <View style={{ gap: SPACING.md }}>
+                {metrics.map((metric) => (
+                  <TouchableOpacity
+                    key={metric.label}
+                    onPress={metric.action}
+                    activeOpacity={0.75}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: SPACING.md,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: RADIUS.md,
+                        backgroundColor: metric.color + "15",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Feather
+                        name={metric.icon as any}
+                        size={15}
+                        color={metric.color}
+                      />
                     </View>
-                    <View style={{ height: 4, borderRadius: 2, backgroundColor: COLORS.muted }}>
-                      <View style={{ height: 4, borderRadius: 2, width: `${pct}%` as any, backgroundColor: rc.color }} />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: TYPOGRAPHY.size.xs,
+                          color: COLORS.mutedForeground,
+                          fontWeight: "700",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {metric.label}
+                      </Text>
+                      <Text
+                        style={{
+                          color: COLORS.foreground,
+                          fontWeight: "900",
+                          marginTop: 1,
+                        }}
+                      >
+                        {String(metric.value)}
+                      </Text>
                     </View>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-
-          {/* Courses & Enrollments summary */}
-          <Text style={{ fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground, marginBottom: SPACING.md, fontSize: TYPOGRAPHY.size.md }}>
-            Курсы & Записи
-          </Text>
-          <View style={{ flexDirection: isTablet ? "row" : "column", gap: SPACING.md, marginBottom: SPACING.xl }}>
-            {[
-              { label: "Активных курсов", value: activeCourses, color: COLORS.success, bg: COLORS.success + "15" },
-              { label: "На модерации", value: draftCourses, color: "#CA8A04", bg: "#FEF9C3" },
-              { label: "Активных записей", value: activeEnrollments, color: COLORS.primary, bg: COLORS.primary + "15" },
-              { label: "Ждут оплаты", value: pendingEnrollmentsCount, color: "#DC2626", bg: "#FEE2E2" },
-            ].map((item, i) => (
-              <View key={i} style={{ flex: 1, padding: SPACING.lg, borderRadius: RADIUS.lg, backgroundColor: item.bg, alignItems: "center" }}>
-                <Text style={{ fontSize: 28, fontWeight: "900", color: item.color }}>{item.value}</Text>
-                <Text style={{ fontSize: TYPOGRAPHY.size.xs, fontWeight: "600", color: item.color, marginTop: 2, textAlign: "center" }}>{item.label}</Text>
+                    <Text
+                      style={{
+                        color: COLORS.mutedForeground,
+                        fontSize: TYPOGRAPHY.size.xs,
+                      }}
+                    >
+                      {metric.detail}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-            ))}
+            </AdminCard>
           </View>
-        </View>
-      </ScrollView>
-    );
-  };
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case "overview":
-        return renderOverviewView();
-      case "crm":
-        return renderCRMView();
-      case "orgs":
-        return renderOrgsView();
-      case "content":
-        return renderContentView();
-      case "billing":
-        return renderBillingView();
-      case "qc":
-        return renderQCView();
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
-      <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-        <View style={{ flex: 1, flexDirection: isTablet ? "row" : "column" }}>
-          <View
+          <TouchableOpacity
+            onPress={() => goAdmin("support")}
+            activeOpacity={0.75}
             style={{
-              width: isTablet ? 260 : "100%",
+              flexDirection: isTablet ? "row" : "column",
+              alignItems: isTablet ? "center" : "flex-start",
+              gap: SPACING.md,
               backgroundColor: COLORS.surface,
-              borderRightWidth: isTablet ? 1 : 0,
-              borderBottomWidth: isTablet ? 0 : 1,
+              borderRadius: RADIUS.lg,
+              borderWidth: 1,
               borderColor: COLORS.border,
               padding: SPACING.lg,
+              ...SHADOWS.sm,
             }}
           >
             <View
               style={{
-                flexDirection: "row",
+                width: 42,
+                height: 42,
+                borderRadius: RADIUS.md,
+                backgroundColor: COLORS.destructive + "12",
                 alignItems: "center",
-                gap: 12,
-                marginBottom: SPACING.xl,
+                justifyContent: "center",
               }}
             >
-              <LinearGradient
-                colors={COLORS.gradients.primary as any}
+              <Feather name="shield" size={18} color={COLORS.destructive} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text
                 style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: RADIUS.lg,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  color: COLORS.foreground,
+                  fontWeight: "900",
+                  fontSize: TYPOGRAPHY.size.md,
                 }}
               >
-                <Text
-                  style={{ color: "white", fontWeight: "bold", fontSize: 20 }}
-                >
-                  UM
-                </Text>
-              </LinearGradient>
-              <View>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.lg,
-                    fontWeight: TYPOGRAPHY.weight.bold,
-                    color: COLORS.foreground,
-                  }}
-                >
-                  UM Admin
-                </Text>
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.xs,
-                    color: COLORS.mutedForeground,
-                  }}
-                >
-                  Панель управления
-                </Text>
-              </View>
+                Поддержка и контроль качества
+              </Text>
+              <Text
+                style={{
+                  color: COLORS.mutedForeground,
+                  fontSize: TYPOGRAPHY.size.sm,
+                  marginTop: 2,
+                }}
+              >
+                {unresolvedTickets > 0
+                  ? `${unresolvedTickets} обращений ждут обработки`
+                  : "Открытых обращений нет. Журнал качества доступен в разделе поддержки."}
+              </Text>
             </View>
-
             <View
               style={{
-                gap: SPACING.sm,
-                flex: isTablet ? 1 : undefined,
-                flexDirection: isTablet ? "column" : "row",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: SPACING.xs,
               }}
             >
-              {NAV_ITEMS.map((tab) => (
+              <Text
+                style={{
+                  color: COLORS.primary,
+                  fontWeight: "800",
+                  fontSize: TYPOGRAPHY.size.sm,
+                }}
+              >
+                Открыть
+              </Text>
+              <Feather name="chevron-right" size={16} color={COLORS.primary} />
+            </View>
+          </TouchableOpacity>
+
+          <AdminCard style={{ padding: SPACING.lg }}>
+            <Text
+              style={{
+                fontSize: TYPOGRAPHY.size.md,
+                fontWeight: "900",
+                color: COLORS.foreground,
+                marginBottom: SPACING.md,
+              }}
+            >
+              Операционные разделы
+            </Text>
+            <View
+              style={{
+                flexDirection: isTablet ? "row" : "column",
+                gap: SPACING.md,
+              }}
+            >
+              {queue.map((item) => (
                 <TouchableOpacity
-                  key={tab.id}
-                  onPress={() => setActiveTab(tab.id)}
+                  key={item.title}
+                  onPress={item.action}
+                  activeOpacity={0.75}
                   style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    gap: 12,
+                    flex: 1,
+                    minHeight: 92,
+                    borderWidth: 1,
+                    borderColor: COLORS.border,
+                    borderRadius: RADIUS.md,
+                    backgroundColor: COLORS.background,
                     padding: SPACING.md,
-                    borderRadius: RADIUS.lg,
-                    backgroundColor:
-                      activeTab === tab.id ? COLORS.primary : "transparent",
-                    flex: isTablet ? undefined : 1,
-                    justifyContent: isTablet ? "flex-start" : "center",
+                    justifyContent: "space-between",
                   }}
                 >
-                  <Feather
-                    name={tab.icon as any}
-                    size={18}
-                    color={
-                      activeTab === tab.id ? "white" : COLORS.mutedForeground
-                    }
-                  />
-                  {isTablet && (
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: SPACING.sm,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: RADIUS.md,
+                        backgroundColor: item.color + "15",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Feather
+                        name={item.icon as any}
+                        size={15}
+                        color={item.color}
+                      />
+                    </View>
                     <Text
                       style={{
                         flex: 1,
+                        color: COLORS.foreground,
+                        fontWeight: "800",
                         fontSize: TYPOGRAPHY.size.sm,
-                        fontWeight: TYPOGRAPHY.weight.medium,
-                        color:
-                          activeTab === tab.id
-                            ? "white"
-                            : COLORS.mutedForeground,
                       }}
+                      numberOfLines={1}
                     >
-                      {tab.label}
+                      {item.title}
                     </Text>
-                  )}
-                  {tab.badge !== undefined && (
-                    <View
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "flex-end",
+                      justifyContent: "space-between",
+                      gap: SPACING.sm,
+                    }}
+                  >
+                    <Text
                       style={{
-                        backgroundColor:
-                          activeTab === tab.id
-                            ? "rgba(255,255,255,0.2)"
-                            : COLORS.primary,
-                        paddingHorizontal: 8,
-                        paddingVertical: 2,
-                        borderRadius: RADIUS.md,
+                        flex: 1,
+                        color: COLORS.mutedForeground,
+                        fontSize: TYPOGRAPHY.size.xs,
+                      }}
+                      numberOfLines={2}
+                    >
+                      {item.description}
+                    </Text>
+                    <Text
+                      style={{
+                        color: item.color,
+                        fontSize: TYPOGRAPHY.size.xl,
+                        fontWeight: "900",
                       }}
                     >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontSize: 10,
-                          fontWeight: "bold",
-                        }}
-                      >
-                        {tab.badge}
-                      </Text>
-                    </View>
-                  )}
+                      {item.count}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </View>
-            
-            <TouchableOpacity
-              onPress={async () => {
-                await logout();
-              }}
-              style={{
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 12,
-                padding: SPACING.md,
-                borderRadius: RADIUS.lg,
-                marginTop: isTablet ? 'auto' : 0,
-              }}
-            >
-              <Feather name="log-out" size={18} color={COLORS.destructive} />
-              {isTablet && (
-                <Text
-                  style={{
-                    fontSize: TYPOGRAPHY.size.sm,
-                    fontWeight: TYPOGRAPHY.weight.medium,
-                    color: COLORS.destructive,
-                  }}
-                >
-                  Выйти
-                </Text>
-              )}
-            </TouchableOpacity>
-          </View>
-
-          {renderContent()}
+          </AdminCard>
         </View>
-      </SafeAreaView>
-
-      {/* Rejection-reason modal */}
-      <Modal visible={!!pendingReject} transparent animationType="fade" onRequestClose={() => setPendingReject(null)}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)", padding: SPACING.xl }}>
-          <View style={{ width: "100%", maxWidth: 480, backgroundColor: COLORS.surface, borderRadius: RADIUS.xl, padding: SPACING.xl, gap: SPACING.lg }}>
-            <Text style={{ fontSize: TYPOGRAPHY.size.lg, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.foreground }}>
-              Причина отклонения
-            </Text>
-            <Text style={{ fontSize: TYPOGRAPHY.size.sm, color: COLORS.mutedForeground }} numberOfLines={2}>
-              {pendingReject?.name}
-            </Text>
-            <TextInput
-              value={rejectReasonInput}
-              onChangeText={setRejectReasonInput}
-              placeholder="Укажите причину (необязательно)"
-              placeholderTextColor={COLORS.mutedForeground}
-              multiline
-              numberOfLines={3}
-              style={{ borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: SPACING.md, color: COLORS.foreground, backgroundColor: COLORS.background, minHeight: 80, textAlignVertical: "top" }}
-            />
-            <View style={{ flexDirection: "row", gap: SPACING.md }}>
-              <TouchableOpacity
-                onPress={() => setPendingReject(null)}
-                style={{ flex: 1, padding: SPACING.md, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, alignItems: "center" }}
-              >
-                <Text style={{ color: COLORS.foreground, fontWeight: "600" }}>Отмена</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={async () => {
-                  if (!pendingReject) return;
-                  const reason = rejectReasonInput.trim() || undefined;
-                  if (pendingReject.type === "mentor") {
-                    await mentorApps.reject(pendingReject.id, reason);
-                  } else {
-                    await adminCourses.rejectCourse(pendingReject.id, reason);
-                  }
-                  setPendingReject(null);
-                }}
-                style={{ flex: 1, padding: SPACING.md, borderRadius: RADIUS.lg, backgroundColor: COLORS.destructive, alignItems: "center" }}
-              >
-                <Text style={{ color: "white", fontWeight: TYPOGRAPHY.weight.bold }}>Отклонить</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      </ScrollView>
     </View>
   );
 }

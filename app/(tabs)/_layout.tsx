@@ -10,7 +10,6 @@ export default function TabsLayout() {
   const { width } = useWindowDimensions();
 
   const role = useMemo(() => user?.role || "parent", [user?.role]);
-  const isAdmin = role === "admin";
   const hideForMentor = role === "mentor" || role === "org";
 
   const isDesktop = Platform.OS === "web" && width >= LAYOUT.desktopBreakpoint;
@@ -27,14 +26,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="analytics/index"
         options={{
-          href: isAdmin ? null : "/analytics",
+          href: "/analytics",
         }}
       />
 
       <Tabs.Screen
         name="profile/index"
         options={{
-          href: isAdmin ? null : "/profile",
+          href: "/profile",
         }}
       />
 
@@ -42,7 +41,7 @@ export default function TabsLayout() {
         name="chats/index"
         options={{
           title: "Чаты",
-          href: (user?.role === "child" || isAdmin) ? null : "/chats",
+          href: user?.role === "child" ? null : "/chats",
           tabBarIcon: ({ color, focused }) => (
             <TabIcon
               icon={focused ? "message-square" : "message-square"}
@@ -96,13 +95,20 @@ export default function TabsLayout() {
       <Tabs.Screen name="teacher/group/[id]/index" options={{ href: null }} />
       <Tabs.Screen name="teacher/group/[id]/journal" options={{ href: null }} />
       <Tabs.Screen name="teacher/student/[id]" options={{ href: null }} />
+
+      {/* ADMIN SCREENS */}
+      <Tabs.Screen name="admin/users" options={{ href: null }} />
+      <Tabs.Screen name="admin/organizations" options={{ href: null }} />
+      <Tabs.Screen name="admin/billing" options={{ href: null }} />
+      <Tabs.Screen name="admin/support" options={{ href: null }} />
+      <Tabs.Screen name="admin/settings" options={{ href: null }} />
     </Tabs>
   );
 
   if (isDesktop) {
     return (
       <View style={{ flex: 1, flexDirection: "row" }}>
-        {!isAdmin && <SideNav role={role} />}
+        <SideNav role={role} />
         <View style={{ flex: 1 }}>{screens}</View>
       </View>
     );
@@ -111,7 +117,7 @@ export default function TabsLayout() {
   return (
     <>
       {screens}
-      {!isAdmin && <CustomTabBar role={role} />}
+      <CustomTabBar role={role} />
     </>
   );
 }
