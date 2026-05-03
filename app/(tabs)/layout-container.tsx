@@ -694,20 +694,26 @@ export function SideNav({ role }: Props) {
                 icon: "user" as const,
                 onPress: () => {
                   setDropdownVisible(false);
-                  go("profile");
+                  router.push("/profile");
                 },
                 destructive: false,
               },
               {
                 label: "Способы оплаты",
                 icon: "credit-card" as const,
-                onPress: () => setDropdownVisible(false),
+                onPress: () => {
+                  setDropdownVisible(false);
+                  router.push("/parent/subscription" as any);
+                },
                 destructive: false,
               },
               {
                 label: "Настройки",
                 icon: "settings" as const,
-                onPress: () => setDropdownVisible(false),
+                onPress: () => {
+                  setDropdownVisible(false);
+                  router.push("/profile");
+                },
                 destructive: false,
               },
               {
