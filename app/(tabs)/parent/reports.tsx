@@ -37,6 +37,7 @@ export default function ParentReports() {
   const selectedChildProfile = childrenProfile.find(
     (c) => c.name === selectedChild,
   );
+  const hasChildren = childrenProfile.length > 0;
 
   const { report, loading } = useChildReports(selectedChild || null);
   const maxAttendance = report.attendance.length
@@ -106,6 +107,28 @@ export default function ParentReports() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        {!hasChildren && (
+          <TouchableOpacity
+            onPress={() =>
+              router.push("/profile/youth/create-profile-child" as any)
+            }
+            activeOpacity={0.8}
+            style={SHADOWS.sm}
+            className="bg-white rounded-[32px] p-6 border border-gray-50 items-center mb-8"
+          >
+            <View className="w-12 h-12 rounded-2xl bg-purple-50 items-center justify-center mb-4">
+              <Feather name="user-plus" size={22} color="#6C5CE7" />
+            </View>
+            <Text className="text-lg font-black text-gray-900 mb-2">
+              Добавьте профиль ребёнка
+            </Text>
+            <Text className="text-sm text-gray-400 text-center leading-5">
+              Отчёты, посещаемость и диагностика появятся после создания
+              детского профиля.
+            </Text>
+          </TouchableOpacity>
+        )}
+
         {loading && (
           <Text
             style={{
@@ -119,44 +142,50 @@ export default function ParentReports() {
         )}
 
         {/* Stats Row */}
-        <View className="flex-row gap-4 mb-8">
-          {[
-            {
-              label: "Занятий",
-              value: String(report.totalClasses || "—"),
-              icon: "calendar",
-              color: "#6C5CE7",
-            },
-            {
-              label: "Посещаемость",
-              value: report.avgAttendance ? `${report.avgAttendance}%` : "—",
-              icon: "check-circle",
-              color: "#10B981",
-            },
-          ].map((stat) => (
-            <View
-              key={stat.label}
-              style={SHADOWS.sm}
-              className="flex-1 bg-white p-5 rounded-[32px] border border-gray-50 items-center"
-            >
+        {hasChildren && (
+          <View className="flex-row gap-4 mb-8">
+            {[
+              {
+                label: "Занятий",
+                value: String(report.totalClasses || "—"),
+                icon: "calendar",
+                color: "#6C5CE7",
+              },
+              {
+                label: "Посещаемость",
+                value: report.avgAttendance ? `${report.avgAttendance}%` : "—",
+                icon: "check-circle",
+                color: "#10B981",
+              },
+            ].map((stat) => (
               <View
-                style={{ backgroundColor: stat.color + "10" }}
-                className="w-10 h-10 rounded-xl items-center justify-center mb-3"
+                key={stat.label}
+                style={SHADOWS.sm}
+                className="flex-1 bg-white p-5 rounded-[32px] border border-gray-50 items-center"
               >
-                <Feather name={stat.icon as any} size={20} color={stat.color} />
+                <View
+                  style={{ backgroundColor: stat.color + "10" }}
+                  className="w-10 h-10 rounded-xl items-center justify-center mb-3"
+                >
+                  <Feather
+                    name={stat.icon as any}
+                    size={20}
+                    color={stat.color}
+                  />
+                </View>
+                <Text className="text-2xl font-black text-gray-900">
+                  {stat.value}
+                </Text>
+                <Text className="text-[10px] text-gray-400 font-bold uppercase mt-1 text-center">
+                  {stat.label}
+                </Text>
               </View>
-              <Text className="text-2xl font-black text-gray-900">
-                {stat.value}
-              </Text>
-              <Text className="text-[10px] text-gray-400 font-bold uppercase mt-1 text-center">
-                {stat.label}
-              </Text>
-            </View>
-          ))}
-        </View>
+            ))}
+          </View>
+        )}
 
         {/* Skills */}
-        {report.skills.length > 0 && (
+        {hasChildren && report.skills.length > 0 && (
           <View
             style={SHADOWS.md}
             className="bg-white rounded-[40px] p-6 mb-8 border border-gray-50"
@@ -198,7 +227,7 @@ export default function ParentReports() {
         )}
 
         {/* Attendance chart (bar) */}
-        {report.attendance.length > 0 && (
+        {hasChildren && report.attendance.length > 0 && (
           <View
             style={SHADOWS.md}
             className="bg-white rounded-[40px] p-6 mb-8 border border-gray-50"
@@ -246,7 +275,7 @@ export default function ParentReports() {
         )}
 
         {/* ── Diagnostic Results (If available) ── */}
-        {selectedChildProfile?.talentProfile ? (
+        {hasChildren && selectedChildProfile?.talentProfile ? (
           <View
             style={SHADOWS.md}
             className="bg-white rounded-[40px] p-6 mb-8 border border-gray-50"
@@ -287,7 +316,7 @@ export default function ParentReports() {
               </Text>
             </TouchableOpacity>
           </View>
-        ) : (
+        ) : hasChildren ? (
           <View
             style={SHADOWS.md}
             className="bg-gray-900 rounded-[40px] p-8 mb-8 overflow-hidden"
@@ -328,10 +357,10 @@ export default function ParentReports() {
               </Text>
             </TouchableOpacity>
           </View>
-        )}
+        ) : null}
 
         {/* AI Insight — only shown when real diagnostic data exists */}
-        {selectedChildProfile?.talentProfile?.summary && (
+        {hasChildren && selectedChildProfile?.talentProfile?.summary && (
           <View className="bg-purple-600 rounded-[40px] p-8 overflow-hidden">
             <LinearGradient
               colors={["rgba(255,255,255,0.1)", "rgba(255,255,255,0)"]}
