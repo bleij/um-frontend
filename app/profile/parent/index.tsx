@@ -162,46 +162,21 @@ export default function ParentProfile() {
       );
   }
 
-  if (!selectedChild && children.length === 0) {
-      return (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8F7FF' }}>
-              <Feather name="users" size={48} color={COLORS.mutedForeground} style={{ marginBottom: 16 }} />
-              <Text style={{ color: COLORS.foreground, fontSize: 18, fontWeight: '600', marginBottom: 8 }}>
-                  Нет детей
-              </Text>
-              <Text style={{ color: COLORS.mutedForeground, fontSize: 14 }}>
-                  Добавьте профиль ребёнка
-              </Text>
-          </View>
-      );
-  }
-
   return (
-    <View style={{ flex: 1, backgroundColor: '#F8F7FF' }}>
-      <View style={{ zIndex: 10 }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <View style={{ backgroundColor: COLORS.primary, overflow: "hidden" }}>
         <LinearGradient
           colors={COLORS.gradients.header as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ paddingBottom: 24, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, position: 'absolute', top: 0, left: 0, right: 0 }}
+          style={{ paddingTop: Platform.OS === "ios" ? 0 : 20 }}
         >
           <SafeAreaView edges={["top"]}>
-            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12 }}>
-              <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-                <Pressable
-                  onPress={() => router.back()}
-                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center", marginRight: 12 }}
-                >
-                  <Feather name="arrow-left" size={20} color="white" />
-                </Pressable>
+            <View style={{ paddingHorizontal: horizontalPadding, paddingTop: 12, paddingBottom: 32 }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Text style={{ fontSize: 20, fontWeight: "800", color: "white", flex: 1 }}>
                   Профиль
                 </Text>
-                <TouchableOpacity onPress={() => setShowEditModal(true)}>
-                    <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: "600" }}>
-                      Изм.
-                    </Text>
-                </TouchableOpacity>
               </View>
             </View>
           </SafeAreaView>
@@ -209,7 +184,7 @@ export default function ParentProfile() {
       </View>
  
         <ScrollView
-          contentContainerStyle={{ paddingTop: 160, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingTop: 24, paddingBottom: 100 }}
           showsVerticalScrollIndicator={false}
         >
           <View style={{ paddingHorizontal: horizontalPadding }}>
@@ -249,39 +224,55 @@ export default function ParentProfile() {
             {/* Children Selector */}
             <View style={{ marginTop: 32 }}>
                 <Text style={styles.sectionTitle}>Мои дети</Text>
-                <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false} 
-                    contentContainerStyle={{ gap: 12, paddingVertical: 10, paddingHorizontal: 4 }}
-                >
-                    {children.map((child) => {
-                        const isSelected = selectedChildId === child.id;
-                        return (
-                            <TouchableOpacity
-                                key={child.id}
-                                onPress={() => setSelectedChildId(child.id)}
-                                activeOpacity={0.8}
-                                style={[styles.childSelector, isSelected && styles.childSelectorActive]}
-                            >
-                                <View style={[styles.childAvatar, isSelected && styles.childAvatarActive]}>
-                                    <Text style={{ fontSize: 28 }}>{child.ageCategory === 'child' ? '👦' : '🧑'}</Text>
-                                </View>
-                                <Text style={[styles.childName, isSelected && styles.childNameActive]}>{child.name}</Text>
-                                <Text style={[styles.childAge, isSelected && styles.childAgeActive]}>{child.age} лет</Text>
-                            </TouchableOpacity>
-                        );
-                    })}
-                    <TouchableOpacity 
-                        onPress={() => router.push("/profile/youth/create-profile-child" as any)}
-                        style={styles.addChildSelector}
-                    >
-                         <Feather name="plus" size={24} color={COLORS.mutedForeground} />
-                    </TouchableOpacity>
-                </ScrollView>
+                {children.length > 0 ? (
+                  <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 12, paddingVertical: 10, paddingHorizontal: 4 }}
+                  >
+                      {children.map((child) => {
+                          const isSelected = selectedChildId === child.id;
+                          return (
+                              <TouchableOpacity
+                                  key={child.id}
+                                  onPress={() => setSelectedChildId(child.id)}
+                                  activeOpacity={0.8}
+                                  style={[styles.childSelector, isSelected && styles.childSelectorActive]}
+                              >
+                                  <View style={[styles.childAvatar, isSelected && styles.childAvatarActive]}>
+                                      <Text style={{ fontSize: 28 }}>{child.ageCategory === 'child' ? '👦' : '🧑'}</Text>
+                                  </View>
+                                  <Text style={[styles.childName, isSelected && styles.childNameActive]}>{child.name}</Text>
+                                  <Text style={[styles.childAge, isSelected && styles.childAgeActive]}>{child.age} лет</Text>
+                              </TouchableOpacity>
+                          );
+                      })}
+                      <TouchableOpacity
+                          onPress={() => router.push("/profile/youth/create-profile-child" as any)}
+                          style={styles.addChildSelector}
+                      >
+                           <Feather name="plus" size={24} color={COLORS.mutedForeground} />
+                      </TouchableOpacity>
+                  </ScrollView>
+                ) : (
+                  <TouchableOpacity
+                    onPress={() => router.push("/profile/youth/create-profile-child" as any)}
+                    style={styles.createChildPrompt}
+                  >
+                      <View style={styles.createChildIcon}>
+                          <Feather name="user-plus" size={22} color="#6C5CE7" />
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
+                          <Text style={styles.createChildTitle}>Добавьте профиль ребёнка</Text>
+                          <Text style={styles.createChildSubtitle}>После создания здесь появятся QR-код, отчёты и записи</Text>
+                      </View>
+                      <Feather name="chevron-right" size={20} color={COLORS.primary} />
+                  </TouchableOpacity>
+                )}
             </View>
 
             {/* QR Section - Only show if child profile exists */}
-            {selectedChild && selectedChild.name ? (
+            {selectedChild && selectedChild.name && (
               <View style={styles.qrRow}>
                   <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}>
                       <View style={styles.smallAvatar}>
@@ -296,24 +287,11 @@ export default function ParentProfile() {
                       <Feather name="maximize" size={20} color="white" />
                   </TouchableOpacity>
               </View>
-            ) : (
-              <TouchableOpacity
-                onPress={() => router.push("/profile/parent/create-profile" as any)}
-                style={styles.createChildPrompt}
-              >
-                  <View style={styles.createChildIcon}>
-                      <Feather name="user-plus" size={22} color="#6C5CE7" />
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={styles.createChildTitle}>Добавьте профиль ребёнка</Text>
-                      <Text style={styles.createChildSubtitle}>QR-код для входа будет доступен после создания профиля</Text>
-                  </View>
-                  <Feather name="chevron-right" size={20} color={COLORS.primary} />
-              </TouchableOpacity>
             )}
 
             {/* Assessment & Reports Section */}
-            <View style={{ marginTop: 32 }}>
+            {selectedChild && (
+              <View style={{ marginTop: 32 }}>
                 <Text style={styles.sectionTitle}>Отчеты и аналитика ({selectedChild?.name})</Text>
                 <TouchableOpacity 
                    onPress={() => router.push(`/(tabs)/parent/child/${selectedChild?.id}` as any)}
@@ -328,7 +306,8 @@ export default function ParentProfile() {
                     </View>
                     <Feather name="chevron-right" size={20} color={COLORS.mutedForeground} />
                 </TouchableOpacity>
-            </View>
+              </View>
+            )}
 
             {/* Clubs List */}
             <View style={{ marginTop: 32 }}>
@@ -370,9 +349,20 @@ export default function ParentProfile() {
         </ScrollView>
  
       {/* Edit Profile Modal */}
-      <Modal visible={showEditModal} animationType="slide">
-          <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-              <View style={{ padding: 24 }}>
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType={isDesktop ? "fade" : "slide"}
+        onRequestClose={() => setShowEditModal(false)}
+      >
+          <Pressable
+            style={[styles.editModalOverlay, !isDesktop && styles.editModalOverlayMobile]}
+            onPress={() => setShowEditModal(false)}
+          >
+              <Pressable
+                style={[styles.editModalContent, isDesktop && styles.editModalContentDesktop]}
+                onPress={(e) => e.stopPropagation()}
+              >
                   <View style={styles.modalHeader}>
                       <Text style={styles.modalTitle}>Редактировать профиль</Text>
                       <TouchableOpacity onPress={() => setShowEditModal(false)}>
@@ -415,8 +405,8 @@ export default function ParentProfile() {
                           <Text style={{ color: 'white', fontWeight: '800', fontSize: 16 }}>СОХРАНИТЬ</Text>
                       </TouchableOpacity>
                   </View>
-              </View>
-          </SafeAreaView>
+              </Pressable>
+          </Pressable>
       </Modal>
 
       {/* QR Modal */}
@@ -830,6 +820,30 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         marginTop: 12,
         ...SHADOWS.md
+    },
+    editModalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24
+    },
+    editModalOverlayMobile: {
+        justifyContent: 'flex-end',
+        alignItems: 'stretch',
+        padding: 0
+    },
+    editModalContent: {
+        width: '100%',
+        backgroundColor: 'white',
+        padding: 24,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24
+    },
+    editModalContentDesktop: {
+        maxWidth: 460,
+        borderRadius: RADIUS.xl,
+        ...SHADOWS.lg
     },
     modalOverlay: {
         flex: 1,
