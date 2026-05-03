@@ -295,13 +295,17 @@ export default function CreateProfileChild() {
         </View>
 
         {/* Age Picker Modal */}
-        <Modal visible={showAgePicker} transparent animationType="slide">
+        <Modal
+          visible={showAgePicker}
+          transparent
+          animationType={isDesktop ? "fade" : "slide"}
+        >
           <Pressable
-            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+            style={[styles.agePickerOverlay, isDesktop && styles.agePickerOverlayDesktop]}
             onPress={() => setShowAgePicker(false)}
           >
             <Pressable
-              style={styles.modalSheet}
+              style={[styles.modalSheet, isDesktop && styles.modalSheetDesktop]}
               onPress={(e) => e.stopPropagation()}
             >
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -395,8 +399,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 32,
     width: "100%",
-    maxWidth: LAYOUT.authMaxWidth,
-    alignSelf: "center",
   },
   headerBackButton: {
     flexDirection: "row",
@@ -573,6 +575,22 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 20,
     maxHeight: "50%",
+  },
+  modalSheetDesktop: {
+    width: 360,
+    maxHeight: 520,
+    borderRadius: RADIUS.xl,
+    ...SHADOWS.lg,
+  },
+  agePickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  agePickerOverlayDesktop: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 24,
   },
   footer: {
     width: "100%",
